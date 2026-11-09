@@ -1,4 +1,4 @@
-# Lumen 4.1 — sécurité, vie privée et organisation du code
+# Lumen 4.17 — sécurité, vie privée et organisation du code
 
 ## Ce que Lumen ne fait jamais
 - Aucune télémétrie, aucune statistique, aucun compte, aucune publicité, aucun identifiant envoyé.
@@ -19,6 +19,8 @@
 - Les redirections sont suivies à la main et chaque destination est revérifiée.
 - Certificats validés par le magasin système d'Android ; les certificats ajoutés par l'utilisateur ne sont pas acceptés (cible Android 29). Le trafic en clair est interdit (`usesCleartextTraffic=false`).
 - Réponses et fichiers plafonnés en taille.
+- Home Assistant (facultatif) : seule exception à la liste blanche, l'adresse de TON Home Assistant, réglée depuis le téléphone (action protégée par le code PIN s'il existe). En HTTP, l'adresse doit être sur le réseau local, et elle est revérifiée après résolution : le jeton ne part jamais en clair sur Internet. En HTTPS, tout hôte est permis (accès à distance). Aucune redirection n'est suivie. Le jeton reste sur la TV : il n'est jamais renvoyé au téléphone et n'est pas dans la sauvegarde. Actions en liste fermée (allumer/éteindre, scène, script, bouton, volet, lecture) ; serrures et alarmes exclues.
+- « À l'affiche » (facultatif) : `api.themoviedb.org` et `image.tmdb.org` ne sont joignables que si l'utilisateur a réglé sa propre clé TMDB (depuis le téléphone, code PIN demandé s'il existe) ; la clé n'est jamais renvoyée au téléphone ni sauvegardée dans la sauvegarde. Seules des listes publiques de films sont demandées : rien sur ce que tu regardes n'est envoyé.
 
 ## Contenus légaux uniquement
 - NASA : domaine public.
@@ -44,7 +46,14 @@
 - En-têtes stricts : CSP sans script externe ni inline, pas d'iframe, `nosniff`, `no-referrer`.
 - Requêtes strictement analysées : méthodes GET et POST seulement, chemins sans « .. », en-têtes et corps plafonnés, envoi fragmenté refusé, 4 connexions au plus.
 - Les favoris reçus sont filtrés : uniquement des applis installées, sans doublon.
-- Limite connue : sur le réseau local, la page n'est pas chiffrée (un certificat HTTPS local provoquerait des alertes dans le navigateur). Quelqu'un qui espionnerait activement ton Wi-Fi pendant l'utilisation pourrait voir le trafic. Le jeton est à usage unique et la session est courte, et c'est sans risque sur un Wi-Fi domestique protégé par mot de passe.
+- Télécommande du téléphone : liste fermée de touches (flèches, OK, Retour, Accueil, volume, lecture). Hors de Lumen, elle passe par le service d'accessibilité facultatif « Lumen télécommande », désactivé tant que l'utilisateur ne l'active pas : il ne traite aucun événement, appuie seulement sur des touches globales (dont la veille de l'écran) et, quand le téléphone envoie du texte, cherche le champ de saisie de l'appli à l'écran pour y écrire ; rien de ce qu'il voit n'est gardé ni envoyé. Avec ce service actif, le téléphone peut aussi ouvrir une appli quand une autre est à l'écran. Touches et texte en direct ont leur propre limite de débit (12 par seconde, rafale de 30).
+- Télécommande rapide : une connexion permanente (WebSocket, `/ws`) entre la page du téléphone et la TV. Mêmes garde-fous que le reste : session valide (cookie), page servie par la TV uniquement (en-tête Origin vérifié), 2 connexions au plus, messages en liste fermée (touche, texte, signe de vie), 4 Ko au plus, limite de débit ; coupée à la déconnexion du téléphone.
+- Acceptation sur la TV : un téléphone qui a scanné le QR code n'a accès à rien tant que quelqu'un devant la TV ne l'a pas accepté (« Autoriser », ou « Autoriser et se souvenir ») ; sans réponse en 60 s, il est refusé et le serveur s'arrête. Une photo du QR code ne suffit donc pas. La TV ne garde qu'une empreinte (SHA-256) de l'identifiant aléatoire du téléphone mémorisé ; « Oublier les téléphones mémorisés » efface tout.
+- Accès « Télécommande seulement » (TV › Réglages depuis le téléphone) : le téléphone ne peut plus que les touches, le texte, ouvrir une appli, la veille et les ambiances ; envois, favoris, sauvegarde, Home Assistant, clés et journal sont refusés par la TV.
+- Micro et caméra : Lumen ne demande ni l'un ni l'autre à Android (aucune autorisation RECORD_AUDIO ni CAMERA) ; personne ne peut donc y accéder par Lumen. La page du téléphone les interdit aussi (Permissions-Policy).
+- Session liée à l'appareil : la session ne fonctionne que depuis l'adresse Wi-Fi du téléphone qui a scanné le QR code ; un cookie intercepté sur le réseau est inutilisable depuis un autre appareil.
+- Signature des échanges : le QR code contient aussi une clé secrète (après « # », jamais envoyée sur le réseau). Chaque requête et chaque message de la connexion permanente portent un numéro à usage unique et une signature HMAC-SHA256 (méthode, adresse, numéro et contenu ; pour l'envoi de fichiers, adresse et numéro). Sans la clé, impossible de fabriquer, modifier ou rejouer une requête, même en écoutant le Wi-Fi. Seules les images (icônes, aperçus) en sont dispensées.
+- Limite connue : sur le réseau local, la page n'est pas chiffrée (un certificat HTTPS local provoquerait une alerte du navigateur à chaque connexion). Grâce à la signature des échanges et à la session liée à l'appareil, quelqu'un qui écouterait le Wi-Fi ne peut ni fabriquer, ni modifier, ni rejouer une requête ; il pourrait seulement **lire** le trafic pendant l'utilisation, dont les clés et le jeton Home Assistant au moment où tu les saisis sur le téléphone. Sur un Wi-Fi domestique protégé par mot de passe, ce risque est faible ; les clés TMDB et Pexels peuvent aussi être saisies directement sur la TV, sans passer par le réseau.
 
 ## Permissions Android
 - `INTERNET` : photos, vidéos, météo.
@@ -78,7 +87,20 @@
 | `Online` | Recherche et cache des photos et vidéos NASA / Wikimedia |
 | `Net`, `NetPolicy` | Réseau sortant sécurisé |
 | `MediaSniff`, `MediaGuard` | Contrôle des fichiers |
-| `PhoneServer`, `PhoneAuth`, `HttpRequest`, `QrCode` | Réglages depuis le téléphone |
+| `PhoneServer`, `PhoneAuth`, `HttpRequest`, `QrCode`, `PhonePanel` | Réglages depuis le téléphone : serveur local, appairage, QR code |
+| `PhoneGate` | Contrôles d'accès de la page du téléphone (Host, X-Lumen, session, acceptation, « télécommande seulement », signature, débit, code PIN, connexion permanente) |
+| `Signer`, `WsFrames`, `RateLimit` | Signature HMAC des échanges, connexion permanente (WebSocket), limite de débit |
+| `PhoneRemote`, `RemoteService` | Touches de la télécommande du téléphone, dans Lumen puis dans les autres applis (service d'accessibilité facultatif) |
+| `DeviceName` | Nom du téléphone affiché sur la TV |
+| `HomeAssistant`, `HaStates`, `HomePanel`, `Cinema` | Home Assistant : appareils et scènes, panneau « Maison », mode cinéma |
+| `Tmdb`, `TmdbPolicy`, `RecoPanel` | « À l'affiche » : films et séries du moment (clé TMDB personnelle) |
+| `KeyPanel` | Saisie des clés TMDB et Pexels directement sur la TV |
+| `Pin`, `PinDialog` | Code PIN |
+| `Backup`, `Habits` | Sauvegarde des réglages, habitudes selon l'heure |
+| `AppsPage`, `AppMenu`, `SmartSearch`, `SettingsIndex` | Page Applications, menu de l'appui long, recherche |
+| `Greeting`, `Messages`, `LumenScreen` | Bandeau d'accueil, messages à l'écran, écran « lumen » de mise à jour |
+| `About`, `StoragePanel`, `Perf`, `CrashLog` | À propos et licences, stockage, mesures, journal d'erreurs local |
+| `ScreenSaver` | Lumen comme économiseur d'écran |
 | `Sky` | Lever / coucher du soleil, phase de lune, saisons (calcul local, sans réseau) |
 | `TopShelf`, `WatchNext`, `WatchNextFormat` | « Reprendre » au-dessus des applis : lecture des « en cours » publiés par les applis, affiches contrôlées |
 | `Updater`, `UpdatePolicy` | Mise à jour automatique depuis le dépôt GitHub, vérification de l'empreinte et de la signature |
@@ -94,16 +116,7 @@
 ## Tests
 Le dépôt GitHub compile et lance les tests à chaque envoi (`.github/workflows/verifier.yml`) et vérifie que `dist/latest.json` décrit bien `dist/Lumen.apk`.
 
-`tests/run.sh` lance 180 tests sur la politique réseau, le code PIN, la sauvegarde, les habitudes, les licences, les signatures de fichiers, le parseur HTTP, l'authentification, les catalogues de vidéos (fonds et ambiances), l'option Pexels et les calculs du ciel (comparés aux éphémérides de l'IMCCE, ±3 min). Il vérifie aussi que le QR code est lisible par un vrai décodeur (`zbarimg`).
+`tests/run.sh` lance plus de 280 tests sur la politique réseau, le code PIN, la sauvegarde, les habitudes, les licences, les signatures de fichiers, le parseur HTTP, l'authentification, **les contrôles d'accès de la page du téléphone** (Host, X-Lumen, session volée, appareil, « télécommande seulement », signature, débit, code PIN, ouverture et messages de la connexion permanente, sur de vraies requêtes HTTP), la signature HMAC, le WebSocket, TMDB, Home Assistant, les catalogues de vidéos (fonds et ambiances), l'option Pexels et les calculs du ciel (comparés aux éphémérides de l'IMCCE, ±3 min). Il vérifie aussi que le QR code est lisible par un vrai décodeur (`zbarimg`).
 
 ## Licence
 Lumen est un logiciel libre sous licence GNU GPL version 3 ou ultérieure (fichier `LICENSE`, en-tête `SPDX-License-Identifier: GPL-3.0-or-later` dans chaque fichier source). La police Inter reste sous SIL Open Font License 1.1.
-- Télécommande du téléphone : liste fermée de touches (flèches, OK, Retour, Accueil, volume, lecture). Hors de Lumen, elle passe par le service d'accessibilité facultatif « Lumen télécommande », désactivé tant que l'utilisateur ne l'active pas : il ne traite aucun événement, appuie seulement sur des touches globales (dont la veille de l'écran) et, quand le téléphone envoie du texte, cherche le champ de saisie de l'appli à l'écran pour y écrire ; rien de ce qu'il voit n'est gardé ni envoyé. Avec ce service actif, le téléphone peut aussi ouvrir une appli quand une autre est à l'écran. Touches et texte en direct ont leur propre limite de débit (12 par seconde, rafale de 30).
-- Home Assistant (facultatif) : seule exception à la liste blanche, l'adresse de TON Home Assistant, réglée depuis le téléphone (action protégée par le code PIN s'il existe). En HTTP, l'adresse doit être sur le réseau local, et elle est revérifiée après résolution : le jeton ne part jamais en clair sur Internet. En HTTPS, tout hôte est permis (accès à distance). Aucune redirection n'est suivie. Le jeton reste sur la TV : il n'est jamais renvoyé au téléphone et n'est pas dans la sauvegarde. Actions en liste fermée (allumer/éteindre, scène, script, bouton, volet, lecture) ; serrures et alarmes exclues.
-- « À l'affiche » (facultatif) : `api.themoviedb.org` et `image.tmdb.org` ne sont joignables que si l'utilisateur a réglé sa propre clé TMDB (depuis le téléphone, code PIN demandé s'il existe) ; la clé n'est jamais renvoyée au téléphone ni sauvegardée dans la sauvegarde. Seules des listes publiques de films sont demandées : rien sur ce que tu regardes n'est envoyé.
-- Télécommande rapide : une connexion permanente (WebSocket, `/ws`) entre la page du téléphone et la TV. Mêmes garde-fous que le reste : session valide (cookie), page servie par la TV uniquement (en-tête Origin vérifié), 2 connexions au plus, messages en liste fermée (touche, texte, signe de vie), 4 Ko au plus, limite de débit ; coupée à la déconnexion du téléphone.
-- Acceptation sur la TV : un téléphone qui a scanné le QR code n'a accès à rien tant que quelqu'un devant la TV ne l'a pas accepté (« Autoriser », ou « Autoriser et se souvenir ») ; sans réponse en 60 s, il est refusé et le serveur s'arrête. Une photo du QR code ne suffit donc pas. La TV ne garde qu'une empreinte (SHA-256) de l'identifiant aléatoire du téléphone mémorisé ; « Oublier les téléphones mémorisés » efface tout.
-- Accès « Télécommande seulement » (TV › Réglages depuis le téléphone) : le téléphone ne peut plus que les touches, le texte, ouvrir une appli, la veille et les ambiances ; envois, favoris, sauvegarde, Home Assistant, clés et journal sont refusés par la TV.
-- Micro et caméra : Lumen ne demande ni l'un ni l'autre à Android (aucune autorisation RECORD_AUDIO ni CAMERA) ; personne ne peut donc y accéder par Lumen. La page du téléphone les interdit aussi (Permissions-Policy).
-- Session liée à l'appareil : la session ne fonctionne que depuis l'adresse Wi-Fi du téléphone qui a scanné le QR code ; un cookie intercepté sur le réseau est inutilisable depuis un autre appareil.
-- Signature des échanges : le QR code contient aussi une clé secrète (après « # », jamais envoyée sur le réseau). Chaque requête et chaque message de la connexion permanente portent un numéro à usage unique et une signature HMAC-SHA256 (méthode, adresse, numéro et contenu ; pour l'envoi de fichiers, adresse et numéro). Sans la clé, impossible de fabriquer, modifier ou rejouer une requête, même en écoutant le Wi-Fi. Seules les images (icônes, aperçus) en sont dispensées.
