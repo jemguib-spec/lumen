@@ -30,7 +30,7 @@ final class VideoPicker {
 
     private static java.util.concurrent.ExecutorService pool;
     private static synchronized java.util.concurrent.ExecutorService pool() {
-        if (pool == null) pool = java.util.concurrent.Executors.newFixedThreadPool(3);
+        if (pool == null) pool = java.util.concurrent.Executors.newFixedThreadPool(2);
         return pool;
     }
 
@@ -247,12 +247,21 @@ final class VideoPicker {
                 count.run();
             }
         });
+        final int[] tries = {0};
         pool().execute(new Runnable() {
             @Override public void run() {
+                final Runnable self = this;
                 File f = a.online.thumbOf(p);
                 if (f == null) {
                     final String why = a.online.thumbError;
-                    a.h.post(new Runnable() { @Override public void run() { failed(a, why); } });
+                    a.h.post(new Runnable() { @Override public void run() {
+                        // pas de panique : on redemande un peu plus tard tant que l'écran est ouvert
+                        if (++tries[0] <= 3 && cell.isAttachedToWindow()) {
+                            a.h.postDelayed(new Runnable() { @Override public void run() {
+                                if (cell.isAttachedToWindow()) pool().execute(self);
+                            } }, 4000L * tries[0]);
+                        } else failed(a, why);
+                    } });
                     return;
                 }
                 BitmapFactory.Options o = new BitmapFactory.Options();

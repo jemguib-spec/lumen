@@ -59,7 +59,11 @@ final class Net {
                 current = new URL(u, loc).toString(); // revérifiée au tour suivant
                 continue;
             }
-            if (code / 100 != 2) { c.disconnect(); throw new IOException("HTTP " + code); }
+            if (code / 100 != 2) {
+                int wait = c.getHeaderFieldInt("Retry-After", 0);
+                c.disconnect();
+                throw new HttpError(code, wait);
+            }
             return c;
         }
         throw new IOException("Trop de redirections");
@@ -122,5 +126,12 @@ final class Net {
         } finally {
             c.disconnect();
         }
+    }
+
+    /** Réponse HTTP non 2xx : garde le code (429 = « trop de demandes ») et le délai demandé par le serveur. */
+    static final class HttpError extends IOException {
+        final int code, retryAfterSec;
+        HttpError(int code, int retryAfterSec) { super("HTTP " + code); this.code = code; this.retryAfterSec = retryAfterSec; }
+        boolean busy() { return code == 429 || code == 503; }
     }
 }

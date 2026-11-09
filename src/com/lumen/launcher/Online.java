@@ -797,20 +797,52 @@ final class Online {
         for (String u : urls) {
             if (u == null || u.isEmpty()) continue;
             File raw = new File(d, name + ".raw");
-            try {
-                byte[] b = Net.getBytes(NetPolicy.https(u), 3 << 20);
-                try (OutputStream o = new FileOutputStream(raw)) { o.write(b); }
-                File ok = MediaGuard.accept(raw, d, name, false, true);
-                if (ok != null) return ok;
-                why = "image refusée (" + b.length + " octets)";
-            } catch (Exception e) {
-                raw.delete();
-                why = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+            for (int attempt = 0; ; attempt++) {
+                try {
+                    politeWait();
+                    byte[] b = Net.getBytes(NetPolicy.https(u), 3 << 20);
+                    try (OutputStream o = new FileOutputStream(raw)) { o.write(b); }
+                    File ok = MediaGuard.accept(raw, d, name, false, true);
+                    if (ok != null) return ok;
+                    why = "image refusée (" + b.length + " octets)";
+                    break;
+                } catch (Net.HttpError e) {
+                    raw.delete();
+                    why = e.getMessage();
+                    if (!e.busy()) break;                 // 404… : on passe à la taille suivante
+                    if (attempt >= 3) { thumbError = why; return null; } // le serveur sature : on réessaiera plus tard
+                    // le serveur demande de ralentir : tout le monde attend, puis on redemande la même image
+                    backOff(e.retryAfterSec > 0 ? e.retryAfterSec * 1000L : 2000L << attempt);
+                } catch (Exception e) {
+                    raw.delete();
+                    why = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+                    break;
+                }
             }
         }
         thumbError = why;
         CrashLog.note(ctx, "Aperçu indisponible : " + p.key + " → " + why);
         return null;
+    }
+
+    /** Aperçus Wikimedia : une demande à la fois, espacées, et pause commune quand le serveur dit « trop vite ». */
+    private static final Object THUMB_LOCK = new Object();
+    private static long thumbNext = 0;
+
+    private static void politeWait() throws InterruptedException {
+        long wait;
+        synchronized (THUMB_LOCK) {
+            long now = System.currentTimeMillis();
+            long at = Math.max(now, thumbNext);
+            thumbNext = at + 250;
+            wait = at - now;
+        }
+        if (wait > 0) Thread.sleep(wait);
+    }
+
+    private static void backOff(long ms) {
+        ms = Math.min(ms, 30_000);
+        synchronized (THUMB_LOCK) { thumbNext = Math.max(thumbNext, System.currentTimeMillis() + ms); }
     }
 
     /** Dernière raison d'échec d'un aperçu (affichée dans l'écran de choix). */
