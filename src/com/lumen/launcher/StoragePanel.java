@@ -40,19 +40,20 @@ final class StoragePanel {
         LinearLayout first = null;
         for (int i = 0; i < 3; i++) {
             final int k = i;
-            LinearLayout r = a.listRow("Vider · " + labels[i], new MainActivity.Value() {
+            LinearLayout r = a.iconRow(Glyph.TRASH, "Vider · " + labels[i], new MainActivity.Value() {
                 @Override public String get() { return Online.human(st[0][k]); }
             }, new View.OnClickListener() {
                 @Override public void onClick(View v) { clear(a, what[k], st, refreshFree); }
-            });
+            }, false);
             card.addView(r, a.rowLp());
             if (first == null) first = r;
         }
-        card.addView(a.listRow("Tout vider (sauf mes photos et vidéos)", new MainActivity.Value() {
+        card.addView(a.menuDivider());
+        card.addView(a.iconRow(Glyph.TRASH, "Tout vider (sauf mes photos et vidéos)", new MainActivity.Value() {
             @Override public String get() { return Online.human(st[0][0] + st[0][1] + st[0][2]); }
         }, new View.OnClickListener() {
             @Override public void onClick(View v) { clear(a, Online.CLEAR_ALL, st, refreshFree); }
-        }), a.rowLp());
+        }, true), a.rowLp());
         card.addView(a.listRow("Mes photos et vidéos", new MainActivity.Value() {
             @Override public String get() { return Online.human(st[0][3]) + " · à gérer depuis le téléphone"; }
         }, new View.OnClickListener() { @Override public void onClick(View v) { } }), a.rowLp());

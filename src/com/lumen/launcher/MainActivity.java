@@ -1385,6 +1385,85 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         return r;
     }
 
+    /**
+     * Ligne de menu avec pictogramme au trait. danger = action qui retire quelque chose
+     * (texte rouge doux, fond rouge à la sélection).
+     */
+    LinearLayout iconRow(int glyphType, String label, Value value, View.OnClickListener click, final boolean danger) {
+        final LinearLayout r = listRow(label, value, click);
+        final Glyph g = new Glyph(glyphType, danger ? 0xFFFF8A80 : 0xD9FFFFFF);
+        ImageView iv = new ImageView(this);
+        iv.setImageDrawable(g);
+        LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(u(34), u(34));
+        il.rightMargin = u(22);
+        r.addView(iv, 0, il);
+        final TextView l = (TextView) r.getChildAt(1);
+        if (danger) l.setTextColor(0xFFFF8A80);
+        final View.OnFocusChangeListener base = r.getOnFocusChangeListener();
+        r.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override public void onFocusChange(View v, boolean f) {
+                if (base != null) base.onFocusChange(v, f);
+                if (danger) {
+                    ((GradientDrawable) r.getBackground()).setColor(f ? 0xFFFF6B5E : 0x00FFFFFF);
+                    l.setTextColor(f ? 0xFFFFFFFF : 0xFFFF8A80);
+                    g.setColor(f ? 0xFFFFFFFF : 0xFFFF8A80);
+                } else g.setColor(f ? 0xFF111216 : 0xD9FFFFFF);
+            }
+        });
+        return r;
+    }
+
+    /**
+     * En-tête des petits menus : visuel arrondi (bannière ou icône), titre, ligne discrète dessous.
+     * Le tout centré, comme une fiche.
+     */
+    LinearLayout menuHeader(android.graphics.drawable.Drawable art, boolean wide, String title, String sub) {
+        LinearLayout h = new LinearLayout(this);
+        h.setOrientation(LinearLayout.VERTICAL);
+        h.setGravity(Gravity.CENTER_HORIZONTAL);
+        h.setPadding(0, u(8), 0, u(28));
+        if (art != null) {
+            ImageView iv = new ImageView(this);
+            iv.setImageDrawable(art);
+            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            final int rad = u(wide ? 16 : 22);
+            iv.setOutlineProvider(new android.view.ViewOutlineProvider() {
+                @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), rad); }
+            });
+            iv.setClipToOutline(true);
+            iv.setElevation(u(10));
+            LinearLayout.LayoutParams al = new LinearLayout.LayoutParams(wide ? u(240) : u(112), wide ? u(135) : u(112));
+            al.bottomMargin = u(22);
+            h.addView(iv, al);
+        }
+        TextView t = text(36, "sans-serif-light", 0xF5FFFFFF);
+        t.setText(title);
+        t.setGravity(Gravity.CENTER);
+        t.setSingleLine(true);
+        t.setEllipsize(TextUtils.TruncateAt.END);
+        h.addView(t, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        if (sub != null && !sub.isEmpty()) {
+            TextView st = text(18, "sans-serif-medium", 0x80FFFFFF);
+            st.setText(sub.toUpperCase(java.util.Locale.FRANCE));
+            st.setLetterSpacing(0.14f);
+            st.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            sl.topMargin = u(8);
+            h.addView(st, sl);
+        }
+        return h;
+    }
+
+    /** Fine séparation entre groupes d'actions d'un menu. */
+    View menuDivider() {
+        View d = new View(this);
+        d.setBackgroundColor(0x1AFFFFFF);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, u(1.5f)));
+        lp.setMargins(u(32), u(10), u(32), u(16));
+        d.setLayoutParams(lp);
+        return d;
+    }
+
     TextView section(String s) {
         TextView t = text(18, "sans-serif-medium", 0x80FFFFFF);
         t.setText(s.toUpperCase());

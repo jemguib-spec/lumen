@@ -55,12 +55,12 @@ final class InputsPanel {
             String type = info.getType() == android.media.tv.TvInputInfo.TYPE_HDMI ? "HDMI"
                     : info.getType() == android.media.tv.TvInputInfo.TYPE_TUNER ? "Chaînes TV"
                     : info.getType() == android.media.tv.TvInputInfo.TYPE_COMPOSITE ? "AV" : "";
-            LinearLayout r = a.listRow(String.valueOf(lbl), new MainActivity.Value() {
+            LinearLayout r = a.iconRow(Glyph.INPUT, String.valueOf(lbl), new MainActivity.Value() {
                 final String t = type;
                 @Override public String get() { return t; }
             }, new View.OnClickListener() {
                 @Override public void onClick(View v) { a.closeOverlay(false); switchInput(a, info); }
-            });
+            }, false);
             card.addView(r, a.rowLp());
             if (first == null) first = r;
         }

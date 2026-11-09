@@ -39,16 +39,11 @@ final class PhonePanel {
         FrameLayout o = a.openOverlay(null);
         LinearLayout card = a.glassCard(44);
         card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
-        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
-        title.setText("Téléphone connecté");
-        title.setGravity(Gravity.CENTER);
-        title.setPadding(0, 0, 0, a.u(30));
-        card.addView(title, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        LinearLayout off = a.listRow("Déconnecter le téléphone", null, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.closeOverlay(true); a.phone.disconnect(); a.showNotice("Téléphone déconnecté"); }
-        });
-        card.addView(off, a.rowLp());
-        card.addView(a.listRow("Télécommande dans les autres applis", new MainActivity.Value() {
+        card.addView(a.menuHeader(null, false, "Téléphone connecté", a.phone.deviceName()));
+        card.addView(a.iconRow(Glyph.PHONE, "Connecter un autre téléphone", null, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.closeOverlay(false); showQr(a); }
+        }, false), a.rowLp());
+        card.addView(a.iconRow(Glyph.SLIDERS, "Télécommande dans les autres applis", new MainActivity.Value() {
             @Override public String get() { return RemoteService.connected() ? "Activée" : "À activer"; }
         }, new View.OnClickListener() {
             @Override public void onClick(View v) {
@@ -58,12 +53,14 @@ final class PhonePanel {
                     a.showNotice("Choisis « Lumen télécommande » et active-le");
                 } catch (Exception e) { a.showNotice("Paramètres › Accessibilité › Lumen télécommande"); }
             }
-        }), a.rowLp());
-        card.addView(a.listRow("Connecter un autre téléphone", null, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.closeOverlay(false); showQr(a); }
-        }), a.rowLp());
+        }, false), a.rowLp());
+        card.addView(a.menuDivider());
+        LinearLayout off = a.iconRow(Glyph.TRASH, "Déconnecter le téléphone", null, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.closeOverlay(true); a.phone.disconnect(); a.showNotice("Téléphone déconnecté"); }
+        }, true);
+        card.addView(off, a.rowLp());
         o.addView(card, new FrameLayout.LayoutParams(a.u(680), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
-        off.requestFocus();
+        ((View) card.getChildAt(1)).requestFocus();
     }
 
     private static void showQr(final MainActivity a) {

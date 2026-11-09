@@ -24,21 +24,24 @@ final class AppMenu {
         LinearLayout card = a.glassCard(44);
         card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
 
-        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
-        title.setText(app.label);
-        title.setGravity(Gravity.CENTER);
-        title.setPadding(0, 0, 0, a.u(30));
-        card.addView(title, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        // fiche : bannière (ou icône), nom, version
+        android.graphics.drawable.Drawable banner = app.banner(a.getPackageManager());
+        String sub = app.isInput() ? "Entrée de la TV" : "";
+        if (!app.isInput()) try {
+            String v = a.getPackageManager().getPackageInfo(app.pkg, 0).versionName;
+            if (v != null && !v.isEmpty() && v.length() < 24) sub = "Version " + v;
+        } catch (Exception ignored) { }
+        card.addView(a.menuHeader(banner != null ? banner : app.icon(a.getPackageManager()), banner != null, app.label, sub));
 
         final boolean fav = a.prefs.favorites().contains(app.key);
         LinearLayout first = null;
         if (fromHome) {
-            first = a.listRow("Déplacer", null, new View.OnClickListener() {
+            first = a.iconRow(Glyph.MOVE, "Déplacer", null, new View.OnClickListener() {
                 @Override public void onClick(View v) { a.closeOverlay(true); a.startMoving(t); }
-            });
+            }, false);
             card.addView(first, a.rowLp());
         }
-        LinearLayout favRow = a.listRow(fav ? "Retirer des favoris" : "Ajouter aux favoris", null, new View.OnClickListener() {
+        LinearLayout favRow = a.iconRow(fav ? Glyph.STAR_OFF : Glyph.STAR, fav ? "Retirer des favoris" : "Ajouter aux favoris", null, new View.OnClickListener() {
             @Override public void onClick(View v) {
                 List<String> f = a.prefs.favorites();
                 if (fav) f.remove(app.key); else f.add(app.key);
@@ -48,10 +51,10 @@ final class AppMenu {
                 a.closeOverlay(true);
                 a.showNotice(app.label + (fav ? " retirée des favoris" : " ajoutée aux favoris"));
             }
-        });
+        }, false);
         card.addView(favRow, a.rowLp());
         if (first == null) first = favRow;
-        card.addView(a.listRow("Masquer l'appli", null, new View.OnClickListener() {
+        card.addView(a.iconRow(Glyph.HIDE, "Masquer l'appli", null, new View.OnClickListener() {
             @Override public void onClick(View v) {
                 a.focusBeforeOverlay = null;
                 a.closeOverlay(false);
@@ -64,10 +67,10 @@ final class AppMenu {
                     }
                 });
             }
-        }), a.rowLp());
+        }, false), a.rowLp());
         if (a.prefs.hasPin()) {
             final boolean locked = a.prefs.isLocked(app.key);
-            card.addView(a.listRow(locked ? "Ne plus demander le code" : "Verrouiller par code", null, new View.OnClickListener() {
+            card.addView(a.iconRow(locked ? Glyph.UNLOCK : Glyph.LOCK, locked ? "Ne plus demander le code" : "Verrouiller par code", null, new View.OnClickListener() {
                 @Override public void onClick(View v) {
                     a.closeOverlay(false);
                     PinDialog.ask(a, "Code PIN", new Runnable() {
@@ -77,10 +80,11 @@ final class AppMenu {
                         }
                     });
                 }
-            }), a.rowLp());
+            }, false), a.rowLp());
         }
         if (!app.isInput()) {
-            card.addView(a.listRow("Infos sur l'appli", null, new View.OnClickListener() {
+            card.addView(a.menuDivider());
+            card.addView(a.iconRow(Glyph.INFO, "Infos sur l'appli", null, new View.OnClickListener() {
                 @Override public void onClick(View v) {
                     a.closeOverlay(false);
                     try {
@@ -89,8 +93,8 @@ final class AppMenu {
                         a.startActivity(i);
                     } catch (Exception e) { a.showNotice("Infos indisponibles"); }
                 }
-            }), a.rowLp());
-            card.addView(a.listRow("Désinstaller", null, new View.OnClickListener() {
+            }, false), a.rowLp());
+            card.addView(a.iconRow(Glyph.TRASH, "Désinstaller", null, new View.OnClickListener() {
                 @Override public void onClick(View v) {
                     a.closeOverlay(false);
                     PinDialog.ask(a, "Code pour désinstaller " + app.label, new Runnable() {
@@ -103,10 +107,10 @@ final class AppMenu {
                         }
                     });
                 }
-            }), a.rowLp());
+            }, true), a.rowLp());
         }
 
-        o.addView(card, new FrameLayout.LayoutParams(a.u(680), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        o.addView(card, new FrameLayout.LayoutParams(a.u(640), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         first.requestFocus();
     }
 

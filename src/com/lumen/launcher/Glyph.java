@@ -12,7 +12,8 @@ import android.graphics.drawable.Drawable;
 
 /** Pictogrammes dessinés en vectoriel : boutons de l'accueil et rubriques des réglages. */
 final class Glyph extends Drawable {
-    static final int GRID = 0, SLIDERS = 1, INPUT = 2, MOON = 3, IMAGE = 4, HOME = 5, PHONE = 6, GEAR = 7, INFO = 8, DOC = 9, SPARK = 10;
+    static final int GRID = 0, SLIDERS = 1, INPUT = 2, MOON = 3, IMAGE = 4, HOME = 5, PHONE = 6, GEAR = 7, INFO = 8, DOC = 9, SPARK = 10,
+            MOVE = 11, STAR = 12, STAR_OFF = 13, HIDE = 14, LOCK = 15, TRASH = 16, UNLOCK = 17;
     private final int type;
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -129,6 +130,51 @@ final class Glyph extends Drawable {
                 q.lineTo(cx + s * .26f, cy + s * .36f); q.lineTo(cx - s * .26f, cy + s * .36f); q.close();
                 c.drawPath(q, p);
                 for (int i = 0; i < 3; i++) c.drawLine(cx - s * .14f, cy - s * .08f + i * s * .14f, cx + s * .14f, cy - s * .08f + i * s * .14f, p);
+                break;
+            }
+            case MOVE: { // flèches gauche-droite : déplacer
+                c.drawLine(cx - s * .34f, cy, cx + s * .34f, cy, p);
+                q.moveTo(cx - s * .20f, cy - s * .14f); q.lineTo(cx - s * .34f, cy); q.lineTo(cx - s * .20f, cy + s * .14f);
+                q.moveTo(cx + s * .20f, cy - s * .14f); q.lineTo(cx + s * .34f, cy); q.lineTo(cx + s * .20f, cy + s * .14f);
+                c.drawPath(q, p);
+                break;
+            }
+            case STAR: case STAR_OFF: { // étoile : favori (barrée : retirer)
+                for (int i = 0; i < 10; i++) {
+                    double ang = -Math.PI / 2 + i * Math.PI / 5;
+                    float r = i % 2 == 0 ? s * .38f : s * .16f;
+                    float x = cx + (float) Math.cos(ang) * r, y = cy + s * .03f + (float) Math.sin(ang) * r;
+                    if (i == 0) q.moveTo(x, y); else q.lineTo(x, y);
+                }
+                q.close();
+                c.drawPath(q, p);
+                if (t == STAR_OFF) c.drawLine(cx - s * .36f, cy - s * .32f, cx + s * .36f, cy + s * .36f, p);
+                break;
+            }
+            case HIDE: { // œil barré : masquer
+                q.moveTo(cx - s * .38f, cy); q.quadTo(cx, cy - s * .36f, cx + s * .38f, cy); q.quadTo(cx, cy + s * .36f, cx - s * .38f, cy);
+                c.drawPath(q, p);
+                c.drawCircle(cx, cy, s * .09f, p);
+                c.drawLine(cx - s * .30f, cy - s * .30f, cx + s * .30f, cy + s * .30f, p);
+                break;
+            }
+            case LOCK: case UNLOCK: { // cadenas (ouvert : déverrouiller)
+                c.drawRoundRect(new RectF(cx - s * .26f, cy - s * .04f, cx + s * .26f, cy + s * .34f), s * .06f, s * .06f, p);
+                float lift = t == UNLOCK ? s * .10f : 0;
+                q.moveTo(cx - s * .16f, cy - s * .04f - lift); q.lineTo(cx - s * .16f, cy - s * .16f - lift);
+                q.quadTo(cx - s * .16f, cy - s * .36f - lift, cx, cy - s * .36f - lift);
+                q.quadTo(cx + s * .16f, cy - s * .36f - lift, cx + s * .16f, cy - s * .16f - lift);
+                if (t == LOCK) q.lineTo(cx + s * .16f, cy - s * .04f);
+                c.drawPath(q, p);
+                break;
+            }
+            case TRASH: { // corbeille : désinstaller
+                c.drawLine(cx - s * .32f, cy - s * .22f, cx + s * .32f, cy - s * .22f, p);
+                c.drawLine(cx - s * .10f, cy - s * .32f, cx + s * .10f, cy - s * .32f, p);
+                q.moveTo(cx - s * .24f, cy - s * .22f); q.lineTo(cx - s * .19f, cy + s * .34f); q.lineTo(cx + s * .19f, cy + s * .34f); q.lineTo(cx + s * .24f, cy - s * .22f);
+                c.drawPath(q, p);
+                c.drawLine(cx - s * .06f, cy - s * .08f, cx - s * .06f, cy + s * .20f, p);
+                c.drawLine(cx + s * .06f, cy - s * .08f, cx + s * .06f, cy + s * .20f, p);
                 break;
             }
             default: { // étincelle : ambiances
