@@ -84,7 +84,7 @@ final class PhoneServer {
 
     /** Touches acceptées depuis le téléphone (liste fermée). */
     static final java.util.List<String> KEYS = java.util.Arrays.asList(
-            "up", "down", "left", "right", "ok", "back", "home", "volup", "voldown", "mute", "play");
+            "up", "down", "left", "right", "ok", "back", "home", "volup", "voldown", "mute", "play", "sleep");
     /** Sans nouvelle du téléphone depuis ce délai (page fermée, téléphone verrouillé), la pastille s'éteint. */
     private static final long SILENT_MS = 45_000L;
 
@@ -94,6 +94,8 @@ final class PhoneServer {
     private static final int MAX_TEXT = 100;
     /** Actions : rafale de 20, puis 4 par seconde (images exclues). */
     private final RateLimit limiter = new RateLimit(4, 20, System.currentTimeMillis());
+    /** Télécommande et frappe en direct : plus rapides (défilement continu), mais bornées aussi. */
+    private final RateLimit keyLimiter = new RateLimit(12, 30, System.currentTimeMillis());
 
     private final Context ctx;
     private final Host host;
@@ -280,7 +282,8 @@ final class PhoneServer {
 
         // images : nombreuses mais inoffensives ; tout le reste passe par la limite de débit
         boolean image = !post && (p.equals("/api/icon") || p.equals("/api/thumb") || p.equals("/api/pickthumb"));
-        if (!image && !limiter.allow(System.currentTimeMillis())) { json(out, 429, "{\"ok\":false,\"slow\":true}"); return; }
+        boolean fast = post && (p.equals("/api/key") || p.equals("/api/text"));
+        if (!image && !(fast ? keyLimiter : limiter).allow(System.currentTimeMillis())) { json(out, 429, "{\"ok\":false,\"slow\":true}"); return; }
         // action sensible avec un code PIN sur la TV : le code doit avoir été saisi sur ce téléphone
         final boolean pinNeeded = host.prefs().hasPin() && !auth.isElevated(sid);
 
@@ -317,7 +320,8 @@ final class PhoneServer {
             case "/api/log/clear": CrashLog.clear(ctx); ok(out, true); return;
             case "/api/pick": ok(out, setPick(r.query.get("scope"), r.query.get("key"), "1".equals(r.query.get("on")))); return;
             case "/api/launch": json(out, 200, launch(r.query.get("key"), pinNeeded)); return;
-            case "/api/text": json(out, 200, text(HttpRequest.readBody(in, r.contentLength, 4 * MAX_TEXT))); return;
+            case "/api/text": json(out, 200, text(HttpRequest.readBody(in, r.contentLength, 4 * MAX_TEXT),
+                    "1".equals(r.query.get("live")), "1".equals(r.query.get("enter")))); return;
             case "/api/ambiance": json(out, 200, ambiance(intParam(r, "kind", -2))); return;
             case "/api/timer": json(out, 200, timer(intParam(r, "min", -1))); return;
             case "/api/veille": json(out, 200, veille("1".equals(r.query.get("on")))); return;
@@ -598,7 +602,8 @@ final class PhoneServer {
                 AppRepo.App a = host.repo().get(key);
                 if (a == null || host.prefs().hiddenApps().contains(key)) return "{\"ok\":false}";
                 if (host.prefs().isLocked(key) && pinNeeded) return "{\"ok\":false,\"pin\":true}";
-                if (!host.onTvHome()) return "{\"ok\":false,\"busy\":true}";
+                // autre appli à l'écran : possible seulement avec « Lumen télécommande » (Android le permet alors)
+                if (!host.onTvHome() && !RemoteService.connected()) return "{\"ok\":false,\"busy\":true}";
                 host.phoneLaunch(a);
                 return "{\"ok\":true}";
             }
@@ -606,10 +611,25 @@ final class PhoneServer {
     }
 
     /** Texte tapé sur le téléphone : uniquement vers les champs de Lumen (recherche d'appli, ville). */
-    private String text(byte[] body) throws Exception {
+    /**
+     * Texte du téléphone. Lumen à l'écran : recherche d'appli ou champ ouvert. Autre appli : écrit
+     * dans son champ de saisie (recherche…) par le service « Lumen télécommande ».
+     * live = frappe en direct (le champ suit le téléphone, vide compris) ; enter = valider.
+     */
+    private String text(byte[] body, final boolean live, final boolean enter) throws Exception {
         final String t = new String(body, "UTF-8").trim();
-        if (t.isEmpty() || t.length() > MAX_TEXT || !Backup.textOk(t, MAX_TEXT)) return "{\"ok\":false}";
-        return onTv(new Runnable() { @Override public void run() { host.phoneText(t); } });
+        if ((t.isEmpty() && !live) || t.length() > MAX_TEXT || (!t.isEmpty() && !Backup.textOk(t, MAX_TEXT))) return "{\"ok\":false}";
+        return onMain(new Callable<String>() {
+            @Override public String call() {
+                if (host.onTvHome()) {
+                    if (!t.isEmpty() || live) host.phoneText(t);
+                    return "{\"ok\":true}";
+                }
+                int r = RemoteService.typeText(t, enter);
+                if (r > 0) return "{\"ok\":true}";
+                return r == 0 ? "{\"ok\":false,\"nofield\":true}" : "{\"ok\":false,\"service\":false}";
+            }
+        });
     }
 
     private String ambiance(final int kind) throws Exception {

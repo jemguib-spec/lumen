@@ -89,8 +89,8 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 
 ## Téléphone et Reprendre
 - **Réglages depuis le téléphone** (Réglages, première ligne) : un QR code s'affiche ; scanne-le avec le téléphone connecté au même Wi-Fi. Cinq onglets en bas :
-  - **TV** : télécommande (flèches, OK, Retour, Accueil, lecture/pause, volume), taper du texte sur la TV (recherche d'appli, ville), ouvrir une appli ou une source HDMI, lancer une ambiance et sa minuterie, mode veille, fond suivant, source du fond ;
-    La télécommande marche toujours dans Lumen. Pour les autres applis (Netflix, YouTube…), active une fois « Lumen télécommande » : Réglages › Réglages depuis le téléphone › Télécommande dans les autres applis (Paramètres › Accessibilité de la TV). Retour, Accueil, volume et lecture marchent partout ; les flèches et OK hors de Lumen demandent Android 13 ou plus sur la TV.
+  - **TV** : télécommande (glisser sur le pavé pour se déplacer, toucher pour OK, garder le doigt pour défiler ; Retour, Accueil, lecture/pause, veille de l'écran en deux touches, volume), tes trois premiers favoris en raccourcis, écrire ou dicter (micro du clavier) en direct dans la recherche à l'écran — de Lumen ou de l'appli ouverte, ouvrir une appli ou une source HDMI, lancer une ambiance et sa minuterie, mode veille, fond suivant, source du fond ;
+    La télécommande marche toujours dans Lumen. Pour les autres applis (Netflix, YouTube…), active une fois « Lumen télécommande » : Réglages › Réglages depuis le téléphone › Télécommande dans les autres applis (Paramètres › Accessibilité de la TV). Retour, Accueil, volume, lecture, raccourcis et texte marchent partout ; la veille demande Android 9, les flèches et OK hors de Lumen Android 13. Après la mise à jour 4.7, Android peut demander de réactiver le service (il peut maintenant écrire dans les champs de recherche).
   - **Accueil** : réorganiser, ajouter, retirer les favoris ; verrouiller une appli (avec le code PIN) ;
   - **Vidéos** : cocher les vidéos d'ambiance et de fond sur aperçus (liste fermée, décocher efface la vidéo) ;
   - **Envois** : envoyer tes photos et vidéos ;

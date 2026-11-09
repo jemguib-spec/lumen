@@ -28,19 +28,22 @@
       <button class="kb" data-k="back" aria-label="Retour"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
       <button class="kb" data-k="home" aria-label="Accueil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5"/><path d="M6.5 10v9h11v-9"/></svg></button>
       <button class="kb" data-k="play" aria-label="Lecture ou pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5v11l7.5-5.5z" class="f"/><path d="M16 6.5v11M20 6.5v11"/></svg></button>
+      <button class="kb power" id="sleepBtn" aria-label="Éteindre l'écran de la TV"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v7"/><path d="M7.2 7.2a7 7 0 1 0 9.6 0"/></svg></button>
     </div>
     <div class="vol" role="group" aria-label="Volume">
       <button data-k="voldown" aria-label="Baisser le volume"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
       <button data-k="mute" aria-label="Couper le son" class="mid"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/></svg><span>Volume</span></button>
       <button data-k="volup" aria-label="Monter le volume"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg></button>
     </div>
+    <div class="shortcuts" id="shortcuts"></div>
     <p class="note small" id="remoteHint" hidden></p>
   </div>
 
   <form class="field" id="typeForm" autocomplete="off">
-    <input type="text" id="typeText" placeholder="Taper sur la TV" maxlength="100" enterkeyhint="send">
-    <button class="go" aria-label="Envoyer">↑</button>
+    <input type="text" id="typeText" placeholder="Écrire ou dicter sur la TV" maxlength="100" enterkeyhint="search" autocapitalize="off">
+    <button class="go" aria-label="Rechercher"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg></button>
   </form>
+  <p class="note small">Le texte s’écrit en direct dans la recherche à l’écran. Pour dicter, touche le micro du clavier.</p>
 
   <h2>Ouvrir</h2>
   <input type="search" class="plain" id="appQ" placeholder="Rechercher une appli" autocomplete="off">

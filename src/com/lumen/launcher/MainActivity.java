@@ -1332,6 +1332,9 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     @Override public String phoneKey(String k) {
         android.media.AudioManager am = (android.media.AudioManager) getSystemService(AUDIO_SERVICE);
         switch (k) {
+            case "sleep":
+                if (RemoteService.perform(RemoteService.LOCK_SCREEN)) return "{\"ok\":true}";
+                return "{\"ok\":false,\"service\":" + RemoteService.connected() + ",\"sleep\":false}";
             case "volup": case "voldown": case "mute":
                 int dir = "volup".equals(k) ? android.media.AudioManager.ADJUST_RAISE
                         : "voldown".equals(k) ? android.media.AudioManager.ADJUST_LOWER : android.media.AudioManager.ADJUST_TOGGLE_MUTE;
@@ -1386,6 +1389,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     @Override public void phoneText(String text) {
         if (ambientOn) exitAmbient(false);
         View f = getCurrentFocus();
+        if (text.isEmpty() && !(f instanceof android.widget.EditText)) { if (appsOpen) appsPage.setQuery(""); return; }
         if (f instanceof android.widget.EditText) { // champ de Lumen déjà ouvert (recherche, ville)
             android.widget.EditText e = (android.widget.EditText) f;
             e.setText(text);

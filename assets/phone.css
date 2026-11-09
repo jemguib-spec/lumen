@@ -68,7 +68,7 @@ select option{background:#16171d;color:#f5f5f7}
 .k.right::after{transform:translate(-75%,-50%) rotate(45deg)}
 .k.okk{grid-area:2/2;border-radius:50%;background:#f5f5f7;color:#111;font-weight:600;font-size:17px;margin:6px}
 .k.okk:active{transform:scale(.94);background:#fff}
-.keys{display:flex;justify-content:center;gap:22px;margin-top:22px}
+.keys{display:flex;justify-content:center;gap:16px;margin-top:22px}
 .kb{width:62px;height:62px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;transition:.15s}
 .kb:active,.vol button:active{transform:scale(.93);background:rgba(255,255,255,.12)}
 #remote svg{width:22px;height:22px;fill:none;stroke:var(--txt);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
@@ -78,6 +78,18 @@ select option{background:#16171d;color:#f5f5f7}
 .vol .mid{flex:1.4;display:flex;align-items:center;justify-content:center;gap:8px;border-left:1px solid var(--line);border-right:1px solid var(--line);
   font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
 .vol .mid svg{width:18px;height:18px;opacity:.7}
+.pad{touch-action:none;user-select:none;-webkit-user-select:none}
+.pad.glide{background:rgba(255,255,255,.1)}
+#remote .power svg{stroke:#ff9b8f}
+.kb.arm{background:rgba(255,120,110,.18);border-color:rgba(255,120,110,.5)}
+.shortcuts{display:flex;justify-content:center;gap:26px;margin-top:22px}
+.shortcuts:empty{display:none}
+.sc{border:0;background:none;padding:0;display:flex;flex-direction:column;align-items:center;gap:7px;width:68px;min-width:0}
+.sc img,.sc .ph{width:56px;height:56px;border-radius:17px;object-fit:cover;background:#1d1e25;box-shadow:0 0 0 1px var(--line);transition:transform .15s}
+.sc .ph{display:grid;place-items:center;font-size:12px;font-weight:600;color:var(--dim)}
+.sc:active img{transform:scale(.92)}
+.sc span{font-size:12px;color:var(--dim);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.go svg{width:20px;height:20px;fill:none;stroke:#111;stroke-width:2;stroke-linecap:round}
 #remoteHint{text-align:center;margin-top:16px}
 
 /* cartes */

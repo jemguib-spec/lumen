@@ -96,7 +96,7 @@ function render() {
   else if (tv.ambiance >= 0) { d.className = 'on'; sub.textContent = 'Ambiance · ' + S.ambiances[tv.ambiance] + (tv.timer ? ' · ' + tv.timer + ' min' : ''); }
   else if (tv.home) { d.className = 'on'; sub.textContent = 'Connecté · accueil Lumen'; }
   else { d.className = 'busy'; sub.textContent = 'Connecté · une appli est ouverte'; }
-  renderRemote(); renderLaunch(); renderAmb(); renderScreen(); renderFav(); renderMine(); renderOpt();
+  renderRemote(); renderShortcuts(); renderLaunch(); renderAmb(); renderScreen(); renderFav(); renderMine(); renderOpt();
 }
 
 function renderLaunch() {
@@ -141,25 +141,90 @@ function renderAmb() {
 
 // ---- Télécommande : liste fermée de touches, la TV décide de ce qu'elle en fait
 let keyBusy = false;
-async function press(k) {
-  if (navigator.vibrate) navigator.vibrate(8);
+const NEED_SERVICE = 'Active « Lumen télécommande » sur la TV : Paramètres › Accessibilité';
+async function press(k, quiet) {
+  if (navigator.vibrate) navigator.vibrate(quiet ? 4 : 8);
   if (keyBusy) return;
   keyBusy = true;
   try {
     const r = await api('/api/key?k=' + k, {method: 'POST'});
     const j = await r.json().catch(() => ({ok: r.ok}));
-    if (!j.ok) toast(j.service && !j.dpad ? 'Flèches hors de Lumen : Android 13 minimum sur la TV'
-      : 'Active « Lumen télécommande » sur la TV : Paramètres › Accessibilité');
+    if (!j.ok) toast(j.sleep === false && j.service ? 'Veille : Android 9 minimum sur la TV'
+      : j.service && !j.dpad ? 'Flèches hors de Lumen : Android 13 minimum sur la TV' : NEED_SERVICE);
   } catch (e) { /* toast déjà affiché */ }
   finally { keyBusy = false; }
 }
-document.querySelectorAll('#remote [data-k]').forEach(b => b.addEventListener('click', () => press(b.dataset.k)));
+// boutons hors du pavé ; ceux du pavé seulement au clavier (detail 0), le doigt passe par les gestes
+document.querySelectorAll('#remote [data-k]').forEach(b => b.addEventListener('click', e => {
+  if (b.closest('.pad') && e.detail !== 0) return;
+  press(b.dataset.k);
+}));
+
+// ---- Pavé : glisser pour se déplacer, toucher pour OK, garder le doigt pour défiler vite
+const pad = document.querySelector('.pad');
+const STEP = 28; // px de glissement par case
+let g = null;
+function stopRepeat() { if (!g) return; clearTimeout(g.hold); clearInterval(g.rep); g.hold = g.rep = null; }
+function armRepeat(k) {
+  stopRepeat();
+  g.hold = setTimeout(() => { g.repeated = true; g.rep = setInterval(() => press(k, true), 130); }, 420);
+}
+pad.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  try { pad.setPointerCapture(e.pointerId); } catch (x) { }
+  const b = e.target.closest('[data-k]');
+  g = {x: e.clientX, y: e.clientY, moved: false, repeated: false, k: b ? b.dataset.k : 'ok', hold: null, rep: null};
+  if (g.k !== 'ok') armRepeat(g.k); // doigt gardé sur une flèche : défilement
+});
+pad.addEventListener('pointermove', e => {
+  if (!g) return;
+  const dx = e.clientX - g.x, dy = e.clientY - g.y;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < STEP) return;
+  const k = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+  g.x = e.clientX; g.y = e.clientY; g.moved = true;
+  pad.classList.add('glide');
+  press(k, true);
+  armRepeat(k); // doigt immobile au bout du geste : la sélection continue d'avancer
+});
+function endGesture() {
+  if (!g) return;
+  stopRepeat();
+  pad.classList.remove('glide');
+  if (!g.moved && !g.repeated) press(g.k);
+  g = null;
+}
+pad.addEventListener('pointerup', endGesture);
+pad.addEventListener('pointercancel', () => { stopRepeat(); pad.classList.remove('glide'); g = null; });
+
+// ---- Veille de la TV : deux touches pour éviter un appui par erreur
+$('sleepBtn').addEventListener('click', () => {
+  const b = $('sleepBtn');
+  if (!b.classList.contains('arm')) {
+    b.classList.add('arm'); toast('Touche encore pour éteindre l’écran de la TV');
+    clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('arm'), 3000);
+    return;
+  }
+  b.classList.remove('arm');
+  press('sleep');
+});
+
+// ---- Raccourcis : les trois premiers favoris
+function renderShortcuts() {
+  const c = $('shortcuts'); clear(c);
+  S.favorites.map(app).filter(a => !a.hidden && S.apps.some(x => x.key === a.key)).slice(0, 3).forEach(a => {
+    const b = el('button', 'sc');
+    b.appendChild(iconImg(a.key));
+    b.appendChild(el('span', null, a.label));
+    b.addEventListener('click', () => { if (navigator.vibrate) navigator.vibrate(8); act('/api/launch?key=' + encodeURIComponent(a.key), null, a.label); });
+    c.appendChild(b);
+  });
+}
 
 function renderRemote() {
   const tv = S.tv || {}, h = $('remoteHint');
   let msg = '';
   if (!tv.home && !tv.remote) msg = 'Pour piloter les autres applis : sur la TV, Réglages › Réglages depuis le téléphone › Télécommande dans les autres applis.';
-  else if (!tv.home && !tv.dpadOutside) msg = 'Dans les autres applis : Retour, Accueil, volume et lecture (flèches à partir d’Android 13).';
+  else if (!tv.home && !tv.dpadOutside) msg = 'Dans les autres applis : Retour, Accueil, volume, lecture, texte et raccourcis (flèches à partir d’Android 13).';
   h.textContent = msg; h.hidden = !msg;
 }
 
@@ -178,11 +243,31 @@ function renderScreen() {
 $('veilleBtn').addEventListener('click', () => act('/api/veille?on=' + (S.tv.veille ? 0 : 1)));
 $('nextBtn').addEventListener('click', () => act('/api/next', null, 'Fond suivant'));
 $('srcSel').addEventListener('change', e => act('/api/source?n=' + e.target.value, null, 'Fond : ' + e.target.selectedOptions[0].textContent));
+// ---- Texte : écrit en direct dans la recherche à l'écran (Lumen ou autre appli), Entrée valide
+let typeTimer = null, typeSent = '';
+async function sendText(t, enter) {
+  try {
+    const r = await api('/api/text?live=1' + (enter ? '&enter=1' : ''), {method: 'POST', body: t, headers: {'Content-Type': 'text/plain'}});
+    const j = await r.json().catch(() => ({ok: r.ok}));
+    if (!j.ok) toast(j.nofield ? 'Ouvre d’abord la recherche de l’appli sur la TV' : j.service === false ? NEED_SERVICE : 'Impossible');
+    return j.ok;
+  } catch (e) { return false; }
+}
+$('typeText').addEventListener('input', () => {
+  clearTimeout(typeTimer);
+  typeTimer = setTimeout(() => {
+    const t = $('typeText').value.trim();
+    if (t === typeSent) return;
+    typeSent = t; sendText(t, false);
+  }, 350);
+});
 $('typeForm').addEventListener('submit', async e => {
   e.preventDefault();
+  clearTimeout(typeTimer);
   const t = $('typeText').value.trim();
   if (!t) return;
-  if (await act('/api/text', t, 'Envoyé à la TV')) $('typeText').value = '';
+  typeSent = t;
+  if (await sendText(t, true)) { toast('Recherche envoyée'); $('typeText').value = ''; typeSent = ''; $('typeText').blur(); }
 });
 
 // ---- Accueil (favoris)

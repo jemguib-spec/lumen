@@ -2,5 +2,5 @@
 <resources>
     <string name="app_name">Lumen</string>
     <string name="remote_name">Lumen télécommande</string>
-    <string name="remote_desc">Permet à la page « Réglages depuis le téléphone » de Lumen d\'appuyer sur Retour, Accueil et les flèches dans les autres applis. Ne lit rien à l\'écran et n\'envoie rien sur Internet.</string>
+    <string name="remote_desc">Permet au téléphone connecté à Lumen d\'appuyer sur Retour, Accueil, Veille et les flèches, d\'ouvrir des applis et d\'écrire dans le champ de recherche de l\'appli à l\'écran. Rien n\'est enregistré ni envoyé sur Internet.</string>
 </resources>
