@@ -110,11 +110,6 @@ final class PhoneServer {
     /** Sessions acceptées sur la TV (les autres attendent la confirmation). */
     private final java.util.Set<String> approved = java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
 
-    /** Actions permises en « télécommande seulement ». */
-    static final java.util.Set<String> REMOTE_ONLY = new java.util.HashSet<>(java.util.Arrays.asList(
-            "/api/state", "/api/icon", "/api/key", "/api/text", "/api/ping", "/api/launch", "/api/bye", "/api/name",
-            "/api/closeapp", "/api/next", "/api/veille", "/api/ambiance", "/api/timer", "/api/pin", "/api/pickthumb"));
-
     /** Empreinte d'un identifiant de téléphone (on ne garde jamais l'identifiant). */
     static String fingerprint(String deviceId) {
         try {
@@ -146,9 +141,6 @@ final class PhoneServer {
         });
     }
 
-    /** Touches acceptées depuis le téléphone (liste fermée). */
-    static final java.util.List<String> KEYS = java.util.Arrays.asList(
-            "up", "down", "left", "right", "ok", "back", "home", "volup", "voldown", "mute", "play", "sleep");
     /** Sans nouvelle du téléphone depuis ce délai (page fermée, téléphone verrouillé), la pastille s'éteint. */
     private static final long SILENT_MS = 45_000L;
 
@@ -311,11 +303,9 @@ final class PhoneServer {
     private void webSocket(HttpRequest r, InputStream in, OutputStream out, Socket sock) throws Exception {
         String sid = r.cookie(COOKIE);
         String key = r.header("sec-websocket-key");
-        boolean upgrade = r.header("upgrade") != null && r.header("upgrade").equalsIgnoreCase("websocket");
-        boolean sameOrigin = ("http://" + hostHeader).equals(r.header("origin"));
-        if (!upgrade || !sameOrigin || !WsFrames.validKey(key) || !auth.check(sid) || !approved.contains(sid) || !sameDevice(sid, sock)) { send(out, 403, "text/plain", new byte[0], null); return; }
         synchronized (wsOpen) {
-            if (wsOpen.size() >= 2) { send(out, 429, "text/plain", new byte[0], null); return; }
+            int refused = PhoneGate.webSocket(r, hostHeader, auth.check(sid), approved.contains(sid), sameDevice(sid, sock), wsOpen.size());
+            if (refused != 0) { send(out, refused, "text/plain", new byte[0], null); return; }
             wsOpen.add(sock);
         }
         try {
@@ -337,20 +327,13 @@ final class PhoneServer {
                 setShown(true);
                 String m = new String(data, "UTF-8");
                 if (m.equals("p")) { WsFrames.sendText(out, "p"); continue; }
-                // message signé : « S <numéro> <signature> <contenu> »
-                if (!m.startsWith("S ")) continue;
-                String[] parts = m.split(" ", 4);
-                if (parts.length < 4) continue;
-                long seq;
-                try { seq = Long.parseLong(parts[1]); } catch (Exception e) { continue; }
-                Signer sg = signer;
-                if (sg == null || !sg.verify(seq, Signer.wsMessage(seq, parts[3]), parts[2])) continue;
-                m = parts[3];
+                // message signé « S <numéro> <signature> <contenu> », commande de la liste fermée
+                m = PhoneGate.wsCommand(m, signer);
+                if (m == null) continue;
                 if (!keyLimiter.allow(System.currentTimeMillis())) continue;
                 String reply = null;
                 if (m.startsWith("k ")) {
                     final String k = m.substring(2).trim();
-                    if (!KEYS.contains(k)) continue;
                     reply = onMain(new Callable<String>() { @Override public String call() { return host.phoneKey(k); } });
                     if (reply != null && !reply.contains("\"ok\":false")) reply = null;
                     else if (reply != null) reply = reply.replaceFirst("\\{", "{\"for\":\"k\",");
@@ -421,7 +404,7 @@ final class PhoneServer {
             sock.setSoTimeout(20_000);  // la requête est là : le corps a plus de temps
 
             // anti « DNS rebinding » : la page doit être demandée par l'adresse de la TV
-            if (!hostHeader.equals(r.header("host"))) { send(out, 421, "text/plain", new byte[0], null); sock.close(); return; }
+            if (PhoneGate.host(r, hostHeader) != null) { send(out, 421, "text/plain", new byte[0], null); sock.close(); return; }
             touch();
             route(r, in, out, sock);
             out.flush();
@@ -448,8 +431,8 @@ final class PhoneServer {
 
         // images (icônes, aperçus) : demandées par la page via <img>, qui ne peut pas ajouter d'en-tête ;
         // lecture seule, cookie de session (SameSite=Strict) et appareil vérifiés plus bas
-        boolean imgReq = !post && (p.equals("/api/icon") || p.equals("/api/thumb") || p.equals("/api/pickthumb") || p.equals("/api/wallthumb"));
-        if (!imgReq && !"1".equals(r.header("x-lumen"))) { send(out, 403, "text/plain", new byte[0], null); return; }
+        boolean image = PhoneGate.isImage(r);
+        if (PhoneGate.apiHeader(r) != null) { send(out, 403, "text/plain", new byte[0], null); return; }
 
         if (post && p.equals("/api/session")) {
             String sid = auth.openSession(r.header("x-lumen-token"));
@@ -466,15 +449,11 @@ final class PhoneServer {
         }
 
         final String sid = r.cookie(COOKIE);
-        if (!auth.check(sid) || !sameDevice(sid, sock)) { send(out, 401, "application/json", "{\"ok\":false}".getBytes("UTF-8"), null); return; }
-        // accepté sur la TV ? sinon le téléphone attend (seule la question « est-ce accepté ? » passe)
-        if (!approved.contains(sid)) { json(out, 403, "{\"ok\":false,\"pending\":true}"); return; }
-        // « télécommande seulement » : tout le reste est refusé
-        if (host.prefs().phoneRemoteOnly() && !REMOTE_ONLY.contains(p)) { json(out, 403, "{\"ok\":false,\"limited\":true}"); return; }
+        // session de cet appareil, acceptée sur la TV (sinon le téléphone attend), dans les droits
+        // (« télécommande seulement » : tout le reste est refusé)
+        PhoneGate.Refusal no = PhoneGate.access(r, auth.check(sid), sameDevice(sid, sock), approved.contains(sid), host.prefs().phoneRemoteOnly());
+        if (no != null) { json(out, no.code, no.body); return; }
         setShown(true); // le téléphone revient (page rouverte, téléphone déverrouillé)
-
-        // images : nombreuses mais inoffensives ; tout le reste passe par la limite de débit
-        boolean image = imgReq;
 
         // signature (sauf les images, demandées par la page sans en-têtes) : contenu compris, sauf
         // pour l'envoi de fichiers (trop gros pour être relu ; protégés par la session et l'appareil)
@@ -485,10 +464,12 @@ final class PhoneServer {
                 bodyHash = Signer.sha256Hex(body);
                 in = new java.io.ByteArrayInputStream(body);
             } else bodyHash = p.equals("/api/upload") ? null : Signer.sha256Hex(new byte[0]);
-            if (!signedOk(r, bodyHash)) { json(out, 401, "{\"ok\":false,\"sig\":true}"); return; }
+            no = PhoneGate.signature(r, signedOk(r, bodyHash));
+            if (no != null) { json(out, no.code, no.body); return; }
         }
-        boolean fast = post && (p.equals("/api/key") || p.equals("/api/text"));
-        if (!image && !(fast ? keyLimiter : limiter).allow(System.currentTimeMillis())) { json(out, 429, "{\"ok\":false,\"slow\":true}"); return; }
+        // images : nombreuses mais inoffensives ; tout le reste passe par la limite de débit
+        no = PhoneGate.rate(r, limiter, keyLimiter, System.currentTimeMillis());
+        if (no != null) { json(out, no.code, no.body); return; }
         // action sensible avec un code PIN sur la TV : le code doit avoir été saisi sur ce téléphone
         final boolean pinNeeded = host.prefs().hasPin() && !auth.isElevated(sid);
 
@@ -558,7 +539,7 @@ final class PhoneServer {
             }
             case "/api/key": {
                 final String k = r.query.get("k");
-                if (k == null || !KEYS.contains(k)) { json(out, 400, "{\"ok\":false}"); return; }
+                if (k == null || !PhoneGate.KEYS.contains(k)) { json(out, 400, "{\"ok\":false}"); return; }
                 json(out, 200, onMain(new Callable<String>() { @Override public String call() { return host.phoneKey(k); } }));
                 return;
             }
@@ -601,22 +582,17 @@ final class PhoneServer {
             default: break;
         }
         // ---- actions sensibles : code PIN exigé s'il existe
-        if (p.equals("/api/ha")) {
-            byte[] body = HttpRequest.readBody(in, r.contentLength, 2048);
-            if (pinNeeded) { json(out, 200, "{\"ok\":false,\"pin\":true}"); return; }
-            json(out, 200, setHa(body));
-            return;
-        }
+        no = PhoneGate.pin(r, pinNeeded);
+        if (no != null) { HttpRequest.readBody(in, r.contentLength, 256 * 1024); json(out, no.code, no.body); return; }
+        if (p.equals("/api/ha")) { json(out, 200, setHa(HttpRequest.readBody(in, r.contentLength, 2048))); return; }
         if (p.equals("/api/tmdb")) {
             final String k = new String(HttpRequest.readBody(in, r.contentLength, 1024), "UTF-8").trim();
-            if (pinNeeded) { json(out, 200, "{\"ok\":false,\"pin\":true}"); return; }
             if (!k.isEmpty() && !TmdbPolicy.validKey(k)) { json(out, 200, "{\"ok\":false,\"error\":\"Clé non reconnue : la clé API (32 caractères) ou le jeton de lecture\"}"); return; }
             host.prefs().setTmdbKey(k);
             ok(out, true);
             return;
         }
         if (p.equals("/api/pexels") || p.equals("/api/restore") || p.equals("/api/lock")) {
-            if (pinNeeded) { HttpRequest.readBody(in, r.contentLength, 256 * 1024); json(out, 200, "{\"ok\":false,\"pin\":true}"); return; }
             if (p.equals("/api/pexels")) { ok(out, setPexels(HttpRequest.readBody(in, r.contentLength, 256))); return; }
             if (p.equals("/api/lock")) { ok(out, setLock(r.query.get("key"), "1".equals(r.query.get("on")))); return; }
             int n = restore(HttpRequest.readBody(in, r.contentLength, 256 * 1024));

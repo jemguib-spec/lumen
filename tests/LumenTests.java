@@ -17,6 +17,84 @@ public class LumenTests {
 
     static int countAllowed(RateLimit r, long at) { int n = 0; for (int i = 0; i < 100; i++) if (r.allow(at)) n++; return n; }
 
+    static HttpRequest req(String method, String target, String... headers) {
+        StringBuilder b = new StringBuilder(method + " " + target + " HTTP/1.1\r\n");
+        for (String h : headers) b.append(h).append("\r\n");
+        b.append("\r\n");
+        try { return HttpRequest.read(new ByteArrayInputStream(b.toString().getBytes(StandardCharsets.UTF_8))); }
+        catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    static void phoneGate() throws Exception {
+        final String H = "192.168.1.20:8765";
+        // Host (DNS rebinding)
+        check("page du téléphone : bon Host accepté", PhoneGate.host(req("GET", "/api/state", "Host: " + H), H) == null);
+        check("page du téléphone : autre Host refusé (421)", PhoneGate.host(req("GET", "/api/state", "Host: evil.example:8765"), H) == PhoneGate.BAD_HOST);
+        check("page du téléphone : Host absent refusé", PhoneGate.host(req("GET", "/api/state"), H) == PhoneGate.BAD_HOST);
+        // X-Lumen
+        check("API sans X-Lumen refusée (403)", PhoneGate.apiHeader(req("POST", "/api/key?k=up", "Host: " + H)) == PhoneGate.NO_HEADER);
+        check("API avec X-Lumen: 0 refusée", PhoneGate.apiHeader(req("POST", "/api/key?k=up", "X-Lumen: 0")) == PhoneGate.NO_HEADER);
+        check("API avec X-Lumen acceptée", PhoneGate.apiHeader(req("POST", "/api/key?k=up", "X-Lumen: 1")) == null);
+        check("images sans X-Lumen acceptées (balise <img>)", PhoneGate.apiHeader(req("GET", "/api/icon?key=x")) == null);
+        check("POST sur une adresse d'image : X-Lumen exigé", PhoneGate.apiHeader(req("POST", "/api/icon")) == PhoneGate.NO_HEADER);
+        // session, appareil, acceptation
+        HttpRequest key = req("POST", "/api/key?k=up", "X-Lumen: 1");
+        check("sans session : 401", PhoneGate.access(key, false, true, true, false) == PhoneGate.NO_SESSION);
+        check("cookie volé, autre appareil : 401", PhoneGate.access(key, true, false, true, false) == PhoneGate.NO_SESSION);
+        check("pas encore accepté sur la TV : en attente", PhoneGate.access(key, true, true, false, false) == PhoneGate.PENDING);
+        check("session acceptée : permis", PhoneGate.access(key, true, true, true, false) == null);
+        // « télécommande seulement »
+        check("télécommande seulement : touche permise", PhoneGate.access(key, true, true, true, true) == null);
+        for (String p : new String[]{"/api/upload", "/api/favorites", "/api/backup", "/api/restore", "/api/ha", "/api/tmdb", "/api/pexels", "/api/log", "/api/lock", "/api/setting", "/api/storage/clear"})
+            check("télécommande seulement : " + p + " refusé", PhoneGate.access(req("POST", p, "X-Lumen: 1"), true, true, true, true) == PhoneGate.LIMITED);
+        // signature
+        check("requête non signée refusée", PhoneGate.signature(key, false) == PhoneGate.BAD_SIG);
+        check("requête signée acceptée", PhoneGate.signature(key, true) == null);
+        check("images dispensées de signature", PhoneGate.signature(req("GET", "/api/thumb?id=1"), false) == null);
+        Signer sg = new Signer("cle-du-qr");
+        String sig = Signer.hmacHex("cle-du-qr".getBytes("UTF-8"), Signer.httpMessage("POST", "/api/key?k=up", 7, Signer.sha256Hex(new byte[0])));
+        HttpRequest signed = req("POST", "/api/key?k=up", "X-Lumen: 1", "X-Lumen-Seq: 7", "X-Lumen-Sig: " + sig);
+        check("signature d'une vraie requête vérifiée", sg.verify(7, Signer.httpMessage(signed.method, signed.target, 7, Signer.sha256Hex(new byte[0])), signed.header("x-lumen-sig")));
+        HttpRequest moved = req("POST", "/api/key?k=down", "X-Lumen: 1", "X-Lumen-Seq: 8", "X-Lumen-Sig: " + sig);
+        check("signature recopiée sur une autre adresse refusée", !sg.verify(8, Signer.httpMessage(moved.method, moved.target, 8, Signer.sha256Hex(new byte[0])), moved.header("x-lumen-sig")));
+        // limite de débit
+        RateLimit actions = new RateLimit(4, 20, 0), keys = new RateLimit(12, 30, 0);
+        int passed = 0;
+        for (int i = 0; i < 50; i++) if (PhoneGate.rate(req("POST", "/api/setting?k=a&v=1", "X-Lumen: 1"), actions, keys, 1000) == null) passed++;
+        check("actions : rafale de 20 puis 429", passed == 20 && PhoneGate.rate(req("POST", "/api/ping"), actions, keys, 1000) == PhoneGate.SLOW);
+        check("touches : leur propre limite, encore libre", PhoneGate.rate(key, actions, keys, 1000) == null);
+        check("images : jamais limitées", PhoneGate.rate(req("GET", "/api/icon?key=x"), actions, keys, 1000) == null);
+        check("actions : reprennent après une seconde", PhoneGate.rate(req("POST", "/api/ping"), actions, keys, 2000) == null);
+        // code PIN
+        for (String p : new String[]{"/api/ha", "/api/tmdb", "/api/pexels", "/api/restore", "/api/lock"})
+            check("code PIN exigé : " + p, PhoneGate.pin(req("POST", p), true) == PhoneGate.PIN && PhoneGate.pin(req("POST", p), false) == null);
+        check("code PIN non exigé pour une touche", PhoneGate.pin(key, true) == null);
+        // WebSocket : ouverture
+        String[] ws = {"Host: " + H, "Upgrade: websocket", "Origin: http://" + H, "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ=="};
+        check("WebSocket : ouverture permise", PhoneGate.webSocket(req("GET", "/ws", ws), H, true, true, true, 0) == 0);
+        check("WebSocket : Origin d'un autre site refusé", PhoneGate.webSocket(req("GET", "/ws", ws[0], ws[1], "Origin: http://evil.example", ws[3]), H, true, true, true, 0) == 403);
+        check("WebSocket : sans Origin refusé", PhoneGate.webSocket(req("GET", "/ws", ws[0], ws[1], ws[3]), H, true, true, true, 0) == 403);
+        check("WebSocket : sans Upgrade refusé", PhoneGate.webSocket(req("GET", "/ws", ws[0], ws[2], ws[3]), H, true, true, true, 0) == 403);
+        check("WebSocket : sans session refusé", PhoneGate.webSocket(req("GET", "/ws", ws), H, false, true, true, 0) == 403);
+        check("WebSocket : non accepté sur la TV refusé", PhoneGate.webSocket(req("GET", "/ws", ws), H, true, false, true, 0) == 403);
+        check("WebSocket : autre appareil refusé", PhoneGate.webSocket(req("GET", "/ws", ws), H, true, true, false, 0) == 403);
+        check("WebSocket : 3e connexion refusée (429)", PhoneGate.webSocket(req("GET", "/ws", ws), H, true, true, true, 2) == 429);
+        // WebSocket : messages signés
+        Signer wsSg = new Signer("cle-ws");
+        String k1 = Signer.hmacHex("cle-ws".getBytes("UTF-8"), Signer.wsMessage(1, "k up"));
+        check("WebSocket : touche signée acceptée", "k up".equals(PhoneGate.wsCommand("S 1 " + k1 + " k up", wsSg)));
+        check("WebSocket : message rejoué refusé", PhoneGate.wsCommand("S 1 " + k1 + " k up", wsSg) == null);
+        check("WebSocket : message non signé refusé", PhoneGate.wsCommand("k up", wsSg) == null);
+        check("WebSocket : contenu modifié refusé", PhoneGate.wsCommand("S 2 " + k1 + " k down", wsSg) == null);
+        String k3 = Signer.hmacHex("cle-ws".getBytes("UTF-8"), Signer.wsMessage(3, "k reboot"));
+        check("WebSocket : touche hors liste refusée même signée", PhoneGate.wsCommand("S 3 " + k3 + " k reboot", wsSg) == null);
+        String k4 = Signer.hmacHex("cle-ws".getBytes("UTF-8"), Signer.wsMessage(4, "t1 bonjour"));
+        check("WebSocket : texte signé accepté", "t1 bonjour".equals(PhoneGate.wsCommand("S 4 " + k4 + " t1 bonjour", wsSg)));
+        String k5 = Signer.hmacHex("cle-ws".getBytes("UTF-8"), Signer.wsMessage(5, "x"));
+        check("WebSocket : commande inconnue refusée", PhoneGate.wsCommand("S 5 " + k5 + " x", wsSg) == null);
+        check("WebSocket : sans clé, tout est refusé", PhoneGate.wsCommand("S 6 " + k1 + " k up", null) == null);
+    }
+
     static void check(String name, boolean cond) {
         if (cond) ok++; else { ko++; System.out.println("ÉCHEC : " + name); }
     }
@@ -428,6 +506,8 @@ public class LumenTests {
         }
         Files.write(png2.toPath(), pgm.toString().getBytes(StandardCharsets.US_ASCII));
         System.out.println("QR_FILE=" + png2.getAbsolutePath() + " QR_EXPECT=" + url);
+
+        try { phoneGate(); } catch (Exception gateErr) { check("contrôles de la page du téléphone : " + gateErr, false); }
 
         // ---- ciel (références : éphémérides publiées, tolérance 4 min)
         java.util.TimeZone paris = java.util.TimeZone.getTimeZone("Europe/Paris");
