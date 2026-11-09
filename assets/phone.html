@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0c10">
+<meta name="referrer" content="no-referrer">
+<title>Lumen</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header><h1>Lumen</h1><div class="sub" id="sub">Connexion à la TV…</div></header>
+<div class="tabs"><button class="on" data-t="fav">Favoris</button><button data-t="mine">Envois</button><button data-t="opt">Pexels</button></div>
+
+<section id="fav" class="on">
+  <h2>Sur l'accueil</h2>
+  <div class="list" id="favList"></div>
+  <h2>Ajouter une appli</h2>
+  <input type="search" id="q" placeholder="Rechercher une appli" autocomplete="off">
+  <div class="list" id="allList"></div>
+</section>
+
+<section id="mine">
+  <h2>Envoyer à la TV</h2>
+  <select id="dest"><option value="fond">Fonds d'écran (photos et vidéos)</option></select>
+  <label class="upload"><input type="file" id="file" multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm">＋ Photos ou vidéos</label>
+  <div id="jobs"></div>
+  <h2>Sur la TV</h2>
+  <div class="grid" id="mineGrid"></div>
+</section>
+
+<section id="opt">
+  <h2>Pexels (facultatif)</h2>
+  <p class="note">Avec ta clé Pexels gratuite (pexels.com/api), Lumen propose aussi des vidéos Pexels dans le choix des vidéos sur la TV : villes en 4K, cheminées longues… Rien n'est téléchargé sans être coché. Sans clé, Lumen ne contacte jamais Pexels.</p>
+  <div class="list"><div class="row"><div class="name" id="pxState">…</div></div></div>
+  <input type="password" id="pxKey" placeholder="Colle ta clé Pexels" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <div class="btns"><button class="btn" id="pxSave">Enregistrer</button><button class="btn ghost" id="pxDel">Retirer la clé</button></div>
+</section>
+
+<div class="toast" id="toast"></div>
+<script src="/app.js"></script>
+</body>
+</html>

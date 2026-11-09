@@ -1,0 +1,48 @@
+:root{--bg:#0b0c10;--card:rgba(255,255,255,.07);--line:rgba(255,255,255,.12);--txt:#f5f5f7;--dim:rgba(245,245,247,.6)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:radial-gradient(120% 80% at 80% -10%,#2a2440 0%,var(--bg) 55%) fixed;color:var(--txt);
+  font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",Roboto,"Segoe UI",sans-serif;min-height:100vh;
+  padding:env(safe-area-inset-top) 0 calc(90px + env(safe-area-inset-bottom))}
+header{padding:28px 20px 8px}
+h1{font-weight:300;font-size:34px;letter-spacing:-.02em;margin:0}
+.sub{color:var(--dim);font-size:14px;margin-top:4px}
+.tabs{position:sticky;top:0;z-index:5;display:flex;gap:6px;margin:14px 16px;padding:5px;border-radius:14px;
+  background:rgba(20,20,26,.7);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--line)}
+.tabs button{flex:1;border:0;border-radius:10px;padding:10px;font:500 15px inherit;font-family:inherit;color:var(--dim);background:transparent}
+.tabs button.on{background:#f5f5f7;color:#111}
+section{display:none;padding:0 16px}section.on{display:block}
+h2{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:500;margin:26px 6px 10px}
+.list{border-radius:16px;background:var(--card);border:1px solid var(--line);overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row img{width:40px;height:40px;border-radius:10px;background:#222;object-fit:cover;flex:none}
+.row .name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .n{width:22px;color:var(--dim);font-size:13px;text-align:center;flex:none}
+.ib{width:38px;height:38px;border-radius:12px;border:0;background:rgba(255,255,255,.1);color:var(--txt);font-size:17px;flex:none}
+.ib:active{background:rgba(255,255,255,.25)}
+.ib.add{background:#f5f5f7;color:#111;font-weight:600}
+.ib:disabled{opacity:.25}
+input[type=search]{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--txt);font:16px inherit;font-family:inherit;margin-bottom:10px;outline:none}
+.upload{display:flex;align-items:center;justify-content:center;gap:10px;padding:22px;border-radius:18px;border:1.5px dashed rgba(255,255,255,.3);
+  background:var(--card);font-weight:500;font-size:17px;cursor:pointer}
+.upload input{display:none}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tile{position:relative;border-radius:14px;overflow:hidden;background:#1a1b22;aspect-ratio:16/9}
+.tile img{width:100%;height:100%;object-fit:cover;display:block}
+.tile .x{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:15px;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:15px}
+.tile .v{position:absolute;left:8px;bottom:6px;font-size:12px;background:rgba(0,0,0,.55);padding:2px 7px;border-radius:8px}
+.job{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:14px}
+.bar{height:4px;border-radius:2px;background:rgba(255,255,255,.12);margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:#f5f5f7;transition:width .2s}
+.empty{color:var(--dim);text-align:center;padding:22px;font-size:14px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(30px);opacity:0;
+  background:#f5f5f7;color:#111;padding:11px 18px;border-radius:22px;font-weight:500;font-size:15px;transition:.25s;pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%)}
+select,input[type=password]{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--txt);font:16px inherit;font-family:inherit;margin:0 0 10px;outline:none;-webkit-appearance:none;appearance:none}
+input[type=password]{margin-top:12px}
+select option{background:#16171d;color:#f5f5f7}
+.note{color:var(--dim);font-size:14px;margin:0 6px 14px}
+.btns{display:flex;gap:10px}
+.btn{flex:1;border:0;border-radius:12px;padding:13px;font:600 15px inherit;font-family:inherit;background:#f5f5f7;color:#111}
+.btn.ghost{background:rgba(255,255,255,.1);color:var(--txt)}
+.tile .a{position:absolute;left:8px;top:6px;font-size:12px;background:rgba(0,0,0,.55);padding:2px 7px;border-radius:8px}

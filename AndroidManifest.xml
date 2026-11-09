@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.lumen.launcher"
+    android:versionCode="23"
+    android:versionName="4.0.1">
+
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="29" />
+
+    <!-- Internet : photos et vidéos Wikimedia Commons (et Pexels si une clé est réglée), météo, affiches des épisodes en cours. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Permet de proposer la désinstallation d'une appli (l'utilisateur confirme). -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <!-- Facultatif : historique des applis pour « Reprendre » (à autoriser une fois par ADB) -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+    <!-- Facultatif : lire les films et épisodes en cours publiés par les applis (« Reprendre » au-dessus des applis).
+         Autorisation demandée une seule fois ; lecture seule, sur l'appareil. -->
+    <uses-permission android:name="android.permission.READ_TV_LISTINGS" />
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@drawable/icon"
+        android:banner="@drawable/banner"
+        android:allowBackup="false"
+        android:usesCleartextTraffic="false"
+        android:hardwareAccelerated="true"
+        android:largeHeap="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:excludeFromRecents="true"
+            android:clearTaskOnLaunch="true"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|uiMode|locale|layoutDirection|fontScale"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Économiseur d'écran système : le mode veille de Lumen par-dessus n'importe quelle appli -->
+        <service
+            android:name=".LumenDream"
+            android:exported="true"
+            android:label="Lumen"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>

@@ -1,0 +1,6 @@
+# compilation
+build/
+tests/out/
+# clé de signature personnelle : ne jamais la publier (build.sh en crée une si elle manque)
+*.keystore
+*.jks
