@@ -35,9 +35,38 @@ function show(t) {
 }
 
 // ------------------------------------------------------------------ réseau
+// identifiant aléatoire de ce téléphone (reste sur le téléphone) : la TV peut s'en souvenir
+// après acceptation, sous forme d'empreinte seulement
+function deviceId() {
+  try {
+    let id = localStorage.getItem('lumen-id');
+    if (!id || !/^[A-Za-z0-9]{32}$/.test(id)) {
+      const b = new Uint8Array(24); crypto.getRandomValues(b);
+      id = Array.from(b, x => 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'[x % 62]).join('').slice(0, 32);
+      while (id.length < 32) id += 'x';
+      localStorage.setItem('lumen-id', id);
+    }
+    return id;
+  } catch (e) { return ''; }
+}
+
+let pendingShown = false;
+function showPending(on) {
+  if (on === pendingShown) return;
+  pendingShown = on;
+  $('dot').className = on ? 'busy' : 'on';
+  $('sub').textContent = on ? 'Accepte ce téléphone sur la TV (OK sur « Autoriser »)' : 'Connecté';
+  if (on) toast('Regarde la TV : accepte ce téléphone');
+}
+
 async function api(path, opts) {
   if (!alive) throw new Error('auth');
   const r = await fetch(path, Object.assign({credentials: 'same-origin', cache: 'no-store'}, opts || {}, {headers: Object.assign({}, H, (opts || {}).headers)}));
+  if (r.status === 403) {
+    const j = await r.clone().json().catch(() => ({}));
+    if (j.pending) { showPending(true); throw new Error('pending'); }
+    if (j.limited) { toast('Désactivé sur la TV : accès « télécommande seulement »'); throw new Error('limited'); }
+  }
   if (r.status === 401 || r.status === 403) { lost(); throw new Error('auth'); }
   if (r.status === 429) { toast('Doucement…'); throw new Error('slow'); }
   return r;
@@ -64,9 +93,15 @@ async function start() {
   history.replaceState(null, '', location.pathname); // le jeton disparaît de l'adresse et de l'historique
   if (token) {
     const r = await fetch('/api/session', {method: 'POST', credentials: 'same-origin',
-      headers: Object.assign({'X-Lumen-Token': token, 'X-Lumen-Device': encodeURIComponent(savedName())}, H)});
+      headers: Object.assign({'X-Lumen-Token': token, 'X-Lumen-Device': encodeURIComponent(savedName()), 'X-Lumen-Id': deviceId()}, H)});
     if (!r.ok) { lost(); return; }
   }
+  // en attente d'acceptation sur la TV : on redemande toutes les 1,5 s
+  for (let i = 0; i < 45 && alive; i++) {
+    try { await api('/api/state'); break; }
+    catch (e) { if (e.message !== 'pending') break; await new Promise(res => setTimeout(res, 1500)); }
+  }
+  showPending(false);
   await load();
   openWs();
   poll = setInterval(() => { if (!document.hidden && (tab === 'tv' || tab === 'opt')) load(); }, 5000);
@@ -80,7 +115,7 @@ async function load() {
     const r = await api('/api/state');
     S = await r.json();
     render();
-  } catch (e) { if (e.message !== 'auth' && e.message !== 'slow') { $('dot').className = ''; $('sub').textContent = 'TV injoignable'; } }
+  } catch (e) { if (!['auth', 'slow', 'pending', 'limited'].includes(e.message)) { $('dot').className = ''; $('sub').textContent = 'TV injoignable'; } }
 }
 
 // ------------------------------------------------------------------ rendu

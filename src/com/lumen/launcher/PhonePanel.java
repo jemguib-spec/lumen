@@ -54,6 +54,16 @@ final class PhonePanel {
                 } catch (Exception e) { a.showNotice("Paramètres › Accessibilité › Lumen télécommande"); }
             }
         }, false), a.rowLp());
+        card.addView(a.iconRow(Glyph.LOCK, "Accès du téléphone", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.phoneRemoteOnly() ? "Télécommande seulement" : "Complet"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.setPhoneRemoteOnly(!a.prefs.phoneRemoteOnly()); }
+        }, false), a.rowLp());
+        card.addView(a.iconRow(Glyph.TRASH, "Oublier les téléphones mémorisés", new MainActivity.Value() {
+            @Override public String get() { int n = a.prefs.trustedPhones().size(); return n == 0 ? "Aucun" : String.valueOf(n); }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.forgetPhones(); a.showNotice("Chaque téléphone devra de nouveau être accepté sur la TV"); }
+        }, false), a.rowLp());
         card.addView(a.menuDivider());
         LinearLayout off = a.iconRow(Glyph.TRASH, "Déconnecter le téléphone", null, new View.OnClickListener() {
             @Override public void onClick(View v) { a.closeOverlay(true); a.phone.disconnect(); a.showNotice("Téléphone déconnecté"); }

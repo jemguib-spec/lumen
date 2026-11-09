@@ -245,6 +245,14 @@ final class Prefs {
     String recoType() { return sp.getString("reco_type", ""); }
     void setRecoType(String t) { sp.edit().putString("reco_type", t).apply(); }
 
+    /** Téléphones déjà acceptés sur la TV (empreintes, jamais l'identifiant lui-même). */
+    Set<String> trustedPhones() { return set("trusted_phones"); }
+    void trustPhone(String fp) { Set<String> s = trustedPhones(); s.add(fp); while (s.size() > 8) s.remove(s.iterator().next()); put("trusted_phones", s); }
+    void forgetPhones() { put("trusted_phones", new HashSet<String>()); }
+    /** Accès du téléphone : true = télécommande seulement (touches, texte, ouvrir une appli). */
+    boolean phoneRemoteOnly() { return sp.getBoolean("phone_remote_only", false); }
+    void setPhoneRemoteOnly(boolean b) { sp.edit().putBoolean("phone_remote_only", b).apply(); }
+
     String pexelsKey() { return sp.getString("pexels_key", ""); }
     void setPexelsKey(String k) {
         String v = Pexels.validKey(k) ? k : "";

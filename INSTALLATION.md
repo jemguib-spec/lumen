@@ -126,6 +126,11 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - Trouve aussi les appareils Home Assistant (« salon » → allumer/éteindre) et les ambiances (« feu », « mer », « pluie »).
 - Entrée sur le clavier lance le meilleur résultat. Champ vide : tes recherches récentes (effaçables).
 
+## Sécurité du téléphone
+- Chaque nouveau téléphone doit être **accepté sur la TV** après avoir scanné le QR code (« Autoriser », ou « Autoriser et se souvenir de ce téléphone » pour ne plus le redemander).
+- TV › Réglages › Réglages depuis le téléphone (téléphone connecté) : **Accès du téléphone** « Complet » ou « Télécommande seulement », **Oublier les téléphones mémorisés**, **Déconnecter**.
+- Lumen n'a accès ni au micro ni à la caméra de la TV.
+
 ## Stockage
 - Réglages › Système › Stockage (ou sur le téléphone : Plus › Stockage de la TV) : place prise par les photos, les vidéos de fond et celles des ambiances, avec de quoi vider chaque catégorie. Tes photos et vidéos envoyées du téléphone ne sont jamais effacées là.
 - Lumen garde toujours au moins 2 Go libres sur la TV : s'il manque de place, il réduit ses vidéos et n'en télécharge plus. Les téléchargements interrompus sont effacés au démarrage.

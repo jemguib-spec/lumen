@@ -88,6 +88,49 @@ final class PhoneServer {
         String phoneCloseApp();
         /** Redémarre Lumen (écran « redémarrage », puis retour). */
         void phoneRestart();
+        /** Un nouveau téléphone demande l'accès : la TV demande confirmation (réponse via cb). */
+        void askPhoneApproval(String name, Approval cb);
+    }
+
+    interface Approval { void answer(boolean allowed, boolean remember); }
+
+    /** Sessions acceptées sur la TV (les autres attendent la confirmation). */
+    private final java.util.Set<String> approved = java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
+
+    /** Actions permises en « télécommande seulement ». */
+    static final java.util.Set<String> REMOTE_ONLY = new java.util.HashSet<>(java.util.Arrays.asList(
+            "/api/state", "/api/icon", "/api/key", "/api/text", "/api/ping", "/api/launch", "/api/bye", "/api/name",
+            "/api/closeapp", "/api/next", "/api/veille", "/api/ambiance", "/api/timer", "/api/pin"));
+
+    /** Empreinte d'un identifiant de téléphone (on ne garde jamais l'identifiant). */
+    static String fingerprint(String deviceId) {
+        try {
+            byte[] d = java.security.MessageDigest.getInstance("SHA-256").digest(("lumen-phone:" + deviceId).getBytes("UTF-8"));
+            StringBuilder b = new StringBuilder();
+            for (int i = 0; i < 12; i++) b.append(String.format(java.util.Locale.ROOT, "%02x", d[i]));
+            return b.toString();
+        } catch (Exception e) { return ""; }
+    }
+
+    private void requestApproval(final String sid, String deviceId) {
+        final String fp = deviceId != null && deviceId.matches("[A-Za-z0-9]{24,64}") ? fingerprint(deviceId) : "";
+        if (!fp.isEmpty() && host.prefs().trustedPhones().contains(fp)) { approved.add(sid); return; }
+        final String name = deviceName;
+        main.post(new Runnable() {
+            @Override public void run() {
+                host.askPhoneApproval(name, new Approval() {
+                    @Override public void answer(boolean allowed, boolean remember) {
+                        if (allowed) {
+                            approved.add(sid);
+                            if (remember && !fp.isEmpty()) host.prefs().trustPhone(fp);
+                        } else {
+                            auth.revokeAll();
+                            stop();
+                        }
+                    }
+                });
+            }
+        });
     }
 
     /** Touches acceptées depuis le téléphone (liste fermée). */
@@ -136,6 +179,7 @@ final class PhoneServer {
     /** Déconnecte le téléphone et arrête le serveur (bouton sur la TV, extinction de l'écran). */
     void disconnect() {
         auth.revokeAll();
+        approved.clear();
         stop();
     }
 
@@ -230,7 +274,7 @@ final class PhoneServer {
         String key = r.header("sec-websocket-key");
         boolean upgrade = r.header("upgrade") != null && r.header("upgrade").equalsIgnoreCase("websocket");
         boolean sameOrigin = ("http://" + hostHeader).equals(r.header("origin"));
-        if (!upgrade || !sameOrigin || !WsFrames.validKey(key) || !auth.check(sid)) { send(out, 403, "text/plain", new byte[0], null); return; }
+        if (!upgrade || !sameOrigin || !WsFrames.validKey(key) || !auth.check(sid) || !approved.contains(sid)) { send(out, 403, "text/plain", new byte[0], null); return; }
         synchronized (wsOpen) {
             if (wsOpen.size() >= 2) { send(out, 429, "text/plain", new byte[0], null); return; }
             wsOpen.add(sock);
@@ -359,6 +403,8 @@ final class PhoneServer {
             String sid = auth.openSession(r.header("x-lumen-token"));
             if (sid == null) { send(out, 403, "application/json", "{\"ok\":false}".getBytes("UTF-8"), null); return; }
             deviceName = DeviceName.pick(decode(r.header("x-lumen-device")), r.header("user-agent"));
+            approved.remove(sid);
+            requestApproval(sid, r.header("x-lumen-id"));
             String cookie = COOKIE + "=" + sid + "; HttpOnly; SameSite=Strict; Path=/; Max-Age=1800";
             setShown(true);
             send(out, 200, "application/json", "{\"ok\":true}".getBytes("UTF-8"), cookie);
@@ -367,6 +413,10 @@ final class PhoneServer {
 
         final String sid = r.cookie(COOKIE);
         if (!auth.check(sid)) { send(out, 401, "application/json", "{\"ok\":false}".getBytes("UTF-8"), null); return; }
+        // accepté sur la TV ? sinon le téléphone attend (seule la question « est-ce accepté ? » passe)
+        if (!approved.contains(sid)) { json(out, 403, "{\"ok\":false,\"pending\":true}"); return; }
+        // « télécommande seulement » : tout le reste est refusé
+        if (host.prefs().phoneRemoteOnly() && !REMOTE_ONLY.contains(p)) { json(out, 403, "{\"ok\":false,\"limited\":true}"); return; }
         setShown(true); // le téléphone revient (page rouverte, téléphone déverrouillé)
 
         // images : nombreuses mais inoffensives ; tout le reste passe par la limite de débit

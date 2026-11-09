@@ -926,6 +926,42 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     /** Depuis le téléphone : retour sur Lumen puis fermeture de l'appli ouverte. */
     @Override public void phoneRestart() { restartLumenNicely(); }
 
+    /**
+     * Un téléphone vient de scanner le QR code : rien ne se passe tant que quelqu'un devant la TV
+     * ne l'a pas accepté (une photo du QR code ne suffit donc pas). Sans réponse en 60 s : refusé.
+     */
+    @Override public void askPhoneApproval(String name, final PhoneServer.Approval cb) {
+        final boolean[] done = {false};
+        final Runnable timeout = new Runnable() {
+            @Override public void run() { if (!done[0]) { done[0] = true; closeOverlay(true); cb.answer(false, false); showNotice("Téléphone refusé (pas de réponse)"); } }
+        };
+        FrameLayout o = openOverlay(new Runnable() {
+            @Override public void run() { h.removeCallbacks(timeout); if (!done[0]) { done[0] = true; cb.answer(false, false); } }
+        });
+        LinearLayout card = glassCard(44);
+        card.setPadding(u(24), u(40), u(24), u(24));
+        card.addView(menuHeader(null, false, "Nouveau téléphone", name));
+        TextView why = text(22, "sans-serif", 0x99FFFFFF);
+        why.setText("Il pourra piloter la TV, ouvrir des applis et écrire du texte. Accepte seulement si c'est le tien.");
+        why.setGravity(Gravity.CENTER);
+        why.setPadding(u(24), 0, u(24), u(24));
+        card.addView(why);
+        LinearLayout allow = iconRow(Glyph.UNLOCK, "Autoriser", null, new View.OnClickListener() {
+            @Override public void onClick(View v) { done[0] = true; h.removeCallbacks(timeout); closeOverlay(true); cb.answer(true, false); }
+        }, false);
+        card.addView(allow, rowLp());
+        card.addView(iconRow(Glyph.STAR, "Autoriser et se souvenir de ce téléphone", null, new View.OnClickListener() {
+            @Override public void onClick(View v) { done[0] = true; h.removeCallbacks(timeout); closeOverlay(true); cb.answer(true, true); }
+        }, false), rowLp());
+        card.addView(menuDivider());
+        card.addView(iconRow(Glyph.CLOSE, "Refuser", null, new View.OnClickListener() {
+            @Override public void onClick(View v) { done[0] = true; h.removeCallbacks(timeout); closeOverlay(true); cb.answer(false, false); showNotice("Téléphone refusé"); }
+        }, true), rowLp());
+        o.addView(card, new FrameLayout.LayoutParams(u(760), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        allow.requestFocus();
+        h.postDelayed(timeout, 60_000);
+    }
+
     @Override public String phoneCloseApp() {
         final AppRepo.App app = lastLaunched;
         if (app == null) return "{\"ok\":false,\"none\":true}";
