@@ -26,9 +26,10 @@ Police : Inter (licence OFL, `assets/fonts/LICENCE-Inter.txt`).
 
 ## Publier une mise à jour
 
-Les TV équipées de Lumen vérifient chaque jour la dernière release de ce dépôt.
+Les TV équipées de Lumen lisent chaque jour `dist/latest.json` sur la branche `main`, puis téléchargent `dist/Lumen.apk` si la version est plus récente.
 
-1. Augmenter `versionCode` et `versionName` dans `AndroidManifest.xml`, puis `./build.sh`.
-2. Créer une release dont l'étiquette est la version (ex. `v4.2.0`) avec le fichier `build/Lumen.apk` nommé exactement `Lumen.apk`.
+1. Augmenter `versionCode` et `versionName` dans `AndroidManifest.xml`.
+2. `tools/publish.sh` (compile, lance les tests, remplit `dist/`).
+3. Pousser sur `main`.
 
-L'APK doit être signé avec la même clé (`lumen.keystore`) que la version installée : sinon Lumen le refuse.
+L'APK doit être signé avec la même clé (`lumen.keystore`, jamais publiée) que la version installée : sinon Lumen le refuse, et Android aussi.

@@ -1,20 +1,23 @@
 package com.lumen.launcher;
 
+import java.util.Locale;
+
 /**
- * Règles pures (testées) de la mise à jour automatique : comparaison des versions et adresses
- * acceptées. La garantie principale reste la signature : un APK n'est proposé que s'il est signé
- * avec la même clé que Lumen installé (vérifié par Lumen, puis par Android).
+ * Règles pures (testées) de la mise à jour automatique. Lumen lit dist/latest.json dans la branche
+ * main du dépôt du projet, puis dist/Lumen.apk. Contrôles : empreinte SHA-256 annoncée, taille, et
+ * surtout la signature : un APK n'est proposé que s'il est signé avec la même clé que Lumen installé
+ * (vérifié par Lumen, puis par Android).
  */
 final class UpdatePolicy {
     private UpdatePolicy() { }
 
     static final String REPO = "jemguib-spec/lumen";
-    static final String LATEST = "https://api.github.com/repos/" + REPO + "/releases/latest";
-    static final String ASSET_PREFIX = "https://github.com/" + REPO + "/releases/download/";
-    static final String ASSET_NAME = "Lumen.apk";
+    static final String BASE = "https://raw.githubusercontent.com/" + REPO + "/main/dist/";
+    static final String LATEST = BASE + "latest.json";
+    static final String APK = BASE + "Lumen.apk";
     static final long MAX_BYTES = 40L << 20;
 
-    /** « v4.1.0 » → « 4.1.0 » (null si ce n'est pas un numéro de version). */
+    /** « v4.1.0 » ou « 4.1.0 » → « 4.1.0 » (null si ce n'est pas un numéro de version). */
     static String version(String tag) {
         if (tag == null) return null;
         String t = tag.trim();
@@ -32,11 +35,13 @@ final class UpdatePolicy {
         return 0;
     }
 
-    /** Seul le fichier Lumen.apk d'une release de ce dépôt peut être téléchargé. */
-    static boolean assetUrlOk(String url) {
-        if (url == null || !url.startsWith(ASSET_PREFIX) || !url.endsWith("/" + ASSET_NAME)) return false;
-        String tag = url.substring(ASSET_PREFIX.length(), url.length() - ASSET_NAME.length() - 1);
-        return !tag.isEmpty() && !tag.contains("/") && !tag.contains("..") && !tag.contains("%") && !tag.contains("?");
+    /** Empreinte SHA-256 en hexadécimal (64 caractères). */
+    static boolean sha256Ok(String h) { return h != null && h.toLowerCase(Locale.ROOT).matches("[0-9a-f]{64}"); }
+
+    static String hex(byte[] d) {
+        StringBuilder b = new StringBuilder();
+        for (byte x : d) b.append(String.format(Locale.ROOT, "%02x", x));
+        return b.toString();
     }
 
     /** Signature de fichier ZIP/APK (« PK\3\4 »). */

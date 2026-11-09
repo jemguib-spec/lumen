@@ -5,7 +5,7 @@
 - Aucune requête réseau sortante en dehors de la liste ci-dessous, et uniquement des lectures (GET).
 - Rien ne tourne quand Lumen n'est pas à l'écran : téléchargements mis en pause, serveur téléphone arrêté, animations, vidéos et ambiances stoppées.
 - « Reprendre » : Lumen lit, sur l'appareil et en lecture seule, les films et épisodes en cours que les applis publient (autorisation Android READ_TV_LISTINGS, demandée une fois). L'intention de lecture est refusée si elle vise une autre appli que celle qui l'a publiée, et les droits d'accès aux fichiers en sont retirés. Les affiches sont la seule exception à la liste blanche : adresse HTTPS publiée par l'appli elle-même, port standard, ni adresse IP ni nom local (le réseau de la maison reste hors d'atteinte), sans redirection, 3 Mo au plus, type d'image vérifié, image réduite en mémoire et jamais enregistrée. Désactivable (Réglages › Affichage › Affiches des épisodes).
-- Mise à jour : seul le fichier `Lumen.apk` d'une release du dépôt `jemguib-spec/lumen` peut être téléchargé (40 Mo au plus). Avant toute proposition d'installation, Lumen vérifie que c'est bien une appli, que c'est Lumen, que la version est plus récente et qu'elle est signée avec exactement la même clé que Lumen installé ; Android refait ce contrôle et demande confirmation. Quelqu'un qui prendrait le contrôle du dépôt ne pourrait donc pas installer une appli piégée sans la clé de signature, qui n'est jamais publiée.
+- Mise à jour : Lumen ne lit que `dist/latest.json` et `dist/Lumen.apk` de la branche `main` du dépôt `jemguib-spec/lumen` (40 Mo au plus). Avant toute proposition d'installation, Lumen vérifie la taille et l'empreinte SHA-256 annoncées, que c'est bien une appli, que c'est Lumen, que la version est plus récente et qu'elle est signée avec exactement la même clé que Lumen installé ; Android refait ce contrôle et demande confirmation. Quelqu'un qui prendrait le contrôle du dépôt ne pourrait donc pas installer une appli piégée sans la clé de signature, qui n'est jamais publiée.
 - Aucune vidéo n'est téléchargée sans avoir été cochée sur son aperçu ; décocher l'efface. Les aperçus sont de petites images vérifiées et réécrites comme les photos.
 - Les fonds vidéo ne viennent que d'une liste fermée de fichiers Wikimedia Commons (`VideoCatalog`) : pas de recherche automatique, donc ni conférences ni simulations ; les anciennes vidéos hors liste sont effacées.
 - Les vidéos d'ambiance ne viennent que d'une liste fermée de fichiers Wikimedia Commons (`CosyCatalog`) ; tout fichier hors liste est effacé. Elles suivent le même contrôle que les autres vidéos (licence libre revérifiée, signature du fichier, 500 Mo maximum par fichier, 4 Go en tout) ; une vidéo que la TV n'arrive pas à lire est écartée.
@@ -15,7 +15,7 @@
 
 ## Réseau sortant (`NetPolicy`, `Net`)
 - HTTPS obligatoire, port 443 uniquement, pas d'identifiants dans les adresses.
-- Liste blanche stricte : `api.github.com`, `github.com`, `objects.githubusercontent.com`, `release-assets.githubusercontent.com` (mise à jour, une fois par jour au plus, désactivable), `commons.wikimedia.org`, `upload.wikimedia.org`, `api.open-meteo.com`, `geocoding-api.open-meteo.com` (météo seulement si une ville est réglée). `api.pexels.com`, `videos.pexels.com`, `images.pexels.com` ne sont joignables que si l'utilisateur a réglé sa propre clé Pexels ; la clé n'est envoyée qu'à `api.pexels.com`, jamais après une redirection, et n'est jamais renvoyée au téléphone.
+- Liste blanche stricte : `raw.githubusercontent.com` (mise à jour : deux fichiers du dépôt, une fois par jour au plus, désactivable), `commons.wikimedia.org`, `upload.wikimedia.org`, `api.open-meteo.com`, `geocoding-api.open-meteo.com` (météo seulement si une ville est réglée). `api.pexels.com`, `videos.pexels.com`, `images.pexels.com` ne sont joignables que si l'utilisateur a réglé sa propre clé Pexels ; la clé n'est envoyée qu'à `api.pexels.com`, jamais après une redirection, et n'est jamais renvoyée au téléphone.
 - Les redirections sont suivies à la main et chaque destination est revérifiée.
 - Certificats validés par le magasin système d'Android ; les certificats ajoutés par l'utilisateur ne sont pas acceptés (cible Android 29). Le trafic en clair est interdit (`usesCleartextTraffic=false`).
 - Réponses et fichiers plafonnés en taille.
@@ -59,7 +59,7 @@
 | `PhoneServer`, `PhoneAuth`, `HttpRequest`, `QrCode` | Réglages depuis le téléphone |
 | `Sky` | Lever / coucher du soleil, phase de lune, saisons (calcul local, sans réseau) |
 | `TopShelf`, `WatchNext`, `WatchNextFormat` | « Reprendre » au-dessus des applis : lecture des « en cours » publiés par les applis, affiches contrôlées |
-| `Updater`, `UpdatePolicy` | Mise à jour automatique depuis les releases GitHub, vérification de la signature |
+| `Updater`, `UpdatePolicy` | Mise à jour automatique depuis le dépôt GitHub, vérification de l'empreinte et de la signature |
 | `LivingScene` | Animation des paysages Lumen (dessinée sur l'appareil) |
 | `AppCategory` | Rangées de la page Applications et recherche |
 | `Fonts` | Police Inter embarquée (assets/fonts, licence OFL) |

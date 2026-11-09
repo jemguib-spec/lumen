@@ -11,7 +11,6 @@ import android.content.pm.Signature;
 import android.os.Handler;
 import android.os.Looper;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -21,10 +20,10 @@ import java.io.OutputStream;
 import java.util.Arrays;
 
 /**
- * Mise à jour automatique depuis les « Releases » du dépôt GitHub de Lumen.
- * Une fois par jour (quand Lumen est à l'écran) : lecture de la dernière release, téléchargement de
- * Lumen.apk si la version est plus récente, puis contrôles : fichier APK, même nom d'appli, version
- * plus récente et MÊME CLÉ DE SIGNATURE que Lumen installé. Android demande ensuite une confirmation
+ * Mise à jour automatique depuis le dépôt GitHub de Lumen (dist/latest.json et dist/Lumen.apk).
+ * Une fois par jour (quand Lumen est à l'écran) : lecture de latest.json, téléchargement de Lumen.apk
+ * si la version est plus récente, puis contrôles : taille et empreinte SHA-256 annoncées, fichier APK,
+ * même nom d'appli, version plus récente et MÊME CLÉ DE SIGNATURE que Lumen installé. Android demande ensuite une confirmation
  * (une appli ne peut pas s'installer seule sans l'accord de l'utilisateur).
  */
 final class Updater {
@@ -91,21 +90,16 @@ final class Updater {
 
     private String run1() throws Exception {
         String mine = currentVersion();
-        JSONObject r = Net.getJson(NetPolicy.https(UpdatePolicy.LATEST));
-        if (r.optBoolean("draft") || r.optBoolean("prerelease")) return "Lumen est à jour (" + mine + ")";
-        String v = UpdatePolicy.version(r.optString("tag_name"));
+        JSONObject r = Net.getJson(UpdatePolicy.LATEST);
+        String v = UpdatePolicy.version(r.optString("version"));
         if (v == null || UpdatePolicy.compare(v, mine) <= 0) return "Lumen est à jour (" + mine + ")";
         if (ready() != null && v.equals(prefs.updateReadyVersion())) return "";
-        JSONArray assets = r.optJSONArray("assets");
-        String url = null;
-        long size = 0;
-        if (assets != null) for (int i = 0; i < assets.length(); i++) {
-            JSONObject a = assets.getJSONObject(i);
-            if (UpdatePolicy.ASSET_NAME.equals(a.optString("name"))) { url = a.optString("browser_download_url"); size = a.optLong("size"); }
-        }
-        if (!UpdatePolicy.assetUrlOk(url) || size <= 0 || size > UpdatePolicy.MAX_BYTES) return "Mise à jour " + v + " sans fichier valable";
+        String sha = r.optString("sha256").toLowerCase(java.util.Locale.ROOT);
+        long size = r.optLong("size");
+        if (!UpdatePolicy.sha256Ok(sha) || size <= 0 || size > UpdatePolicy.MAX_BYTES) return "Mise à jour " + v + " mal décrite";
         File tmp = new File(dir(), "download.apk");
-        Net.download(url, tmp, UpdatePolicy.MAX_BYTES, null);
+        Net.download(UpdatePolicy.APK, tmp, UpdatePolicy.MAX_BYTES, null);
+        if (tmp.length() != size || !sha.equals(sha256(tmp))) { tmp.delete(); return "Téléchargement incomplet · nouvel essai demain"; }
         String why = verify(tmp, v);
         if (why != null) { tmp.delete(); return why; }
         File out = new File(dir(), "Lumen.apk");
@@ -113,6 +107,16 @@ final class Updater {
         if (!tmp.renameTo(out)) { tmp.delete(); return "Écriture impossible"; }
         prefs.setUpdateReadyVersion(v);
         return "";
+    }
+
+    private static String sha256(File f) throws Exception {
+        java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+        try (InputStream in = new FileInputStream(f)) {
+            byte[] buf = new byte[64 * 1024];
+            int n;
+            while ((n = in.read(buf)) > 0) md.update(buf, 0, n);
+        }
+        return UpdatePolicy.hex(md.digest());
     }
 
     /** null si l'APK est sûr à proposer, sinon la raison du refus. */

@@ -99,7 +99,7 @@ Appuyer ensuite sur Accueil : Lumen s'affiche. Si un choix est proposé, sélect
     adb shell settings put secure screensaver_enabled 1
 
 ## Mises à jour
-- Une fois par jour, quand Lumen est à l'écran, il regarde s'il existe une nouvelle version dans les « Releases » du dépôt GitHub du projet. Si oui, il la télécharge, vérifie qu'elle est signée avec la même clé que Lumen installé, puis Android demande « Mettre à jour ? » : un clic suffit.
+- Une fois par jour, quand Lumen est à l'écran, il regarde s'il existe une nouvelle version dans le dépôt GitHub du projet. Si oui, il la télécharge, vérifie qu'elle est signée avec la même clé que Lumen installé, puis Android demande « Mettre à jour ? » : un clic suffit.
 - La toute première fois, Android demande d'autoriser Lumen à installer des applis : accepte (Paramètres › Applis › Lumen › Installer des applis inconnues).
 - Réglages › Système › Mise à jour de Lumen : vérifier maintenant ou installer ; « Mises à jour automatiques » pour couper.
 

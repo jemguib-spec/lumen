@@ -57,17 +57,14 @@ public class LumenTests {
         check("version : 4.10 plus récente que 4.9", UpdatePolicy.compare("4.10", "4.9") > 0);
         check("version : 4.0.1 plus récente que 4.0", UpdatePolicy.compare("4.0.1", "4.0") > 0);
         check("version : identiques", UpdatePolicy.compare("4.1.0", "4.1") == 0);
-        check("fichier : Lumen.apk du dépôt accepté",
-                UpdatePolicy.assetUrlOk("https://github.com/jemguib-spec/lumen/releases/download/v4.1.0/Lumen.apk"));
-        check("fichier : autre dépôt refusé",
-                !UpdatePolicy.assetUrlOk("https://github.com/autre/lumen/releases/download/v4.1.0/Lumen.apk"));
-        check("fichier : chemin détourné refusé",
-                !UpdatePolicy.assetUrlOk("https://github.com/jemguib-spec/lumen/releases/download/../../x/Lumen.apk"));
-        check("fichier : autre nom refusé",
-                !UpdatePolicy.assetUrlOk("https://github.com/jemguib-spec/lumen/releases/download/v4.1.0/Lumen.apk.exe"));
+        check("empreinte SHA-256 valide", UpdatePolicy.sha256Ok("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"));
+        check("empreinte SHA-256 trop courte refusée", !UpdatePolicy.sha256Ok("9f86d0"));
+        check("empreinte : hexadécimal", "00ff10".equals(UpdatePolicy.hex(new byte[]{0, (byte) 255, 16})));
+        check("mise à jour : uniquement depuis le dépôt du projet", UpdatePolicy.APK.startsWith("https://raw.githubusercontent.com/jemguib-spec/lumen/main/"));
         check("fichier : signature ZIP reconnue", UpdatePolicy.looksLikeApk(new byte[]{'P', 'K', 3, 4}));
         check("fichier : autre format refusé", !UpdatePolicy.looksLikeApk(new byte[]{'<', 'h', 't', 'm'}));
-        check("GitHub autorisé pour la mise à jour", NetPolicy.allowed(UpdatePolicy.LATEST));
+        check("GitHub (fichiers du dépôt) autorisé pour la mise à jour", NetPolicy.allowed(UpdatePolicy.LATEST));
+        check("API GitHub non nécessaire, refusée", !NetPolicy.allowed("https://api.github.com/repos/x/y"));
 
         // ---- page Applications : rangées et recherche
         check("rangée : Netflix en vidéo", AppCategory.of("com.netflix.ninja", "Netflix", -1) == AppCategory.VIDEO);
