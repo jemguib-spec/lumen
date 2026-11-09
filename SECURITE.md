@@ -92,6 +92,7 @@
 | `PhoneBridge` | Ce que la TV fait à la demande du téléphone (touches, applis, texte, ambiances, réglages, acceptation, pastille « connecté ») |
 | `Veille`, `UpdateFlow`, `DownloadPill` | Mode veille en cascade ; mises à jour et redémarrage ; indicateur de téléchargement |
 | `GlassUi` | Briques des panneaux en verre (carte, lignes, en-têtes) |
+| `HomeBuilder`, `AppLauncher` | Construction de l'écran d'accueil ; ouverture et fermeture des applis, redémarrage |
 | `SettingsPanel`, `GalleryPanel`, `ResumePanel`, `PhonePanel`, `InputsPanel`, `CityPanel` | Un panneau par fonction |
 | `Tile`, `Glass`, `Glyph`, `Glow`, `AnimatedScene`, `WeatherFx`, `AmbientView` | Composants visuels |
 | `Wall`, `Library`, `WallItem` | Moteur de fonds (images, scènes animées, vidéos) |

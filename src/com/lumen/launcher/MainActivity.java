@@ -59,8 +59,8 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     LinearLayout captionBox, clockBox, dots;
     TextView captionTitle, captionCredit, focusLabel, notice;
     LinearLayout rowsBox, topButtons;
-    private FrameLayout wallLayer;
-    private View appsTint;
+    FrameLayout wallLayer;
+    View appsTint;
     Cinema cinema;
     private LinearLayout sceneBar;
     Tile houseButton, profileButton;
@@ -78,7 +78,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     TextView greet;
     final List<LinearLayout> rows = new ArrayList<>();
     private final List<HorizontalScrollView> rowScrolls = new ArrayList<>();
-    private ImageView appsBg;
+    ImageView appsBg;
     FrameLayout overlay;
     private Runnable onOverlayClosed;
     View focusBeforeOverlay;
@@ -87,13 +87,15 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     boolean appsOpen, idle, dirtyRow, dirtyApps, ambientOn;
     AmbientView ambient;
     Weather weather;
-    private View scrim;
+    View scrim;
     WeatherFx fx;
     Glow glow;
-    private FrameLayout zoomView;
+    FrameLayout zoomView;
     PhoneServer phone;
     /** Ce que la TV fait à la demande du téléphone. */
     final PhoneBridge phoneHost = new PhoneBridge(this);
+    final AppLauncher launcher = new AppLauncher(this);
+    final HomeBuilder builder = new HomeBuilder(this);
     final DownloadPill downloads = new DownloadPill(this);
     final GlassUi ui = new GlassUi(this);
     final UpdateFlow updates = new UpdateFlow(this);
@@ -137,7 +139,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         Sounds.get(this).setEnabled(prefs.sounds());
         ensureDefaultFavorites();
         addInputsOnce();
-        buildUi();
+        builder.buildUi();
         buildRow(null);
         // icônes et couleurs : en arrière-plan, une fois l'accueil affiché
         h.postDelayed(new Runnable() { @Override public void run() { repo.warmUp(); } }, 400);
@@ -366,7 +368,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         });
     }
 
-    // ------------------------------------------------------------------ construction
+    // ------------------------------------------------------------------ construction (voir HomeBuilder)
 
     int u(float px) { return Math.round(px * unit); }
 
@@ -391,258 +393,6 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
 
     static FrameLayout.LayoutParams wrap(int gravity) {
         return new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, gravity);
-    }
-
-    private void buildUi() {
-        root = new FrameLayout(this);
-        root.setBackgroundColor(Color.BLACK);
-        root.setClipChildren(false);
-
-        wallLayer = new FrameLayout(this);
-        wallLayer.setScaleX(1.04f); // marge pour l'effet de profondeur (le fond glisse sans montrer ses bords)
-        wallLayer.setScaleY(1.04f);
-        root.addView(wallLayer, match());
-        wall = new Wall(this, prefs, online, wallLayer);
-        wall.setListener(this);
-        fx = new WeatherFx(this, unit);
-        fx.setAlpha(0f);
-        root.addView(fx, match());
-        glow = new Glow(this);
-        root.addView(glow, match());
-
-        // ---- accueil
-        homeLayer = new FrameLayout(this);
-        homeLayer.setClipChildren(false);
-        root.addView(homeLayer, match());
-
-        scrim = new View(this);
-        scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP,
-                new int[]{0xB804040A, 0x4004040A, 0x0004040A}));
-        homeLayer.addView(scrim, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, u(520), Gravity.BOTTOM));
-
-        // lignes de favoris, ancrées en bas et centrées
-        rowsBox = new LinearLayout(this);
-        rowsBox.setOrientation(LinearLayout.VERTICAL);
-        rowsBox.setClipChildren(false);
-        rowsBox.setClipToPadding(false);
-        FrameLayout.LayoutParams rl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
-        rl.bottomMargin = u(82);
-        homeLayer.addView(rowsBox, rl);
-        shelf = new TopShelf(this);
-
-        focusLabel = text(28, "sans-serif-medium", 0xF2FFFFFF);
-        focusLabel.setShadowLayer(u(10), 0, 0, 0x66000000);
-        focusLabel.setGravity(Gravity.CENTER_HORIZONTAL);
-
-        // bandeau d'accueil (une ligne) au-dessus des favoris
-        greet = text(24, "sans-serif", 0xD9FFFFFF);
-        greet.setShadowLayer(u(10), 0, 0, 0x66000000);
-        greet.setGravity(Gravity.CENTER_HORIZONTAL);
-        greet.setSingleLine(true);
-        greet.setEllipsize(TextUtils.TruncateAt.END);
-        greet.setPadding(u(112), 0, u(112), 0);
-
-        // boutons ronds en haut à droite, à gauche de l'horloge
-        topButtons = new LinearLayout(this);
-        topButtons.setOrientation(LinearLayout.HORIZONTAL);
-        topButtons.setClipChildren(false);
-        topButtons.setClipToPadding(false);
-        topButtons.setPadding(u(12), u(12), u(12), u(12));
-        int bs = u(84);
-        Tile amb = Tile.button(this, Glyph.SPARK, "Ambiances", bs); // la lune reste celle du mode veille
-        amb.setFocusListener(homeFocus);
-        amb.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { openAmbiance(); } });
-        Tile inputs = Tile.button(this, Glyph.INPUT, "Entrées", bs);
-        inputs.setFocusListener(homeFocus);
-        inputs.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { InputsPanel.openInputs(MainActivity.this); } });
-        Tile find = Tile.button(this, Glyph.SEARCH, "Rechercher", bs);
-        find.setFocusListener(homeFocus);
-        find.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { openSearch(); } });
-        Tile house = houseButton = Tile.button(this, Glyph.HOME, "Maison", bs);
-        house.setFocusListener(homeFocus);
-        house.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { HomePanel.open(MainActivity.this); } });
-        Tile who = profileButton = Tile.button(this, Glyph.PERSON, "Profils", bs);
-        who.setFocusListener(homeFocus);
-        who.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { ProfilePanel.open(MainActivity.this); } });
-        Tile all = Tile.button(this, Glyph.GRID, "Toutes les applications", bs);
-        all.setFocusListener(homeFocus);
-        all.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { openApps(); } });
-        Tile set = Tile.button(this, Glyph.SLIDERS, "Réglages", bs);
-        set.setFocusListener(homeFocus);
-        set.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { SettingsPanel.openSettings(MainActivity.this); } });
-        for (Tile b : new Tile[]{find, amb, inputs, house, who, all, set}) {
-            LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            bl.leftMargin = u(18);
-            topButtons.addView(b, bl);
-        }
-        house.setVisibility(prefs.haButton() ? View.VISIBLE : View.GONE);
-        updateProfileButton();
-        FrameLayout.LayoutParams tbl = wrap(Gravity.TOP | Gravity.END);
-        tbl.topMargin = u(56);
-        tbl.rightMargin = u(420);
-        homeLayer.addView(topButtons, tbl);
-
-        // ---- légende du fond, en haut à gauche
-        captionBox = new LinearLayout(this);
-        captionBox.setOrientation(LinearLayout.VERTICAL);
-        captionTitle = text(22, "sans-serif-medium", 0xC8FFFFFF);
-        captionTitle.setShadowLayer(u(8), 0, 0, 0x55000000);
-        captionTitle.setMaxLines(1);
-        captionTitle.setEllipsize(TextUtils.TruncateAt.END);
-        captionBox.addView(captionTitle, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        captionCredit = text(18, "sans-serif", 0x8CFFFFFF);
-        captionCredit.setShadowLayer(u(8), 0, 0, 0x55000000);
-        captionCredit.setMaxLines(1);
-        captionCredit.setEllipsize(TextUtils.TruncateAt.END);
-        LinearLayout.LayoutParams cl2 = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        cl2.topMargin = u(8);
-        captionBox.addView(captionCredit, cl2);
-        dots = new LinearLayout(this);
-        dots.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams dl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        dl.topMargin = u(14);
-        captionBox.addView(dots, dl);
-        FrameLayout.LayoutParams capl = new FrameLayout.LayoutParams(u(880), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
-        capl.leftMargin = u(112);
-        capl.topMargin = u(72);
-        root.addView(captionBox, capl);
-
-        // ---- horloge, en haut à droite
-        clockBox = new LinearLayout(this);
-        clockBox.setOrientation(LinearLayout.VERTICAL);
-        clockBox.setGravity(Gravity.END);
-        TextClock time = new TextClock(this);
-        time.setFormat24Hour("H:mm");
-        time.setFormat12Hour("h:mm");
-        time.setTextSize(TypedValue.COMPLEX_UNIT_PX, 56 * unit);
-        time.setTypeface(Fonts.get("sans-serif-light", Typeface.NORMAL));
-        time.setTextColor(0xF5FFFFFF);
-        time.setIncludeFontPadding(false);
-        time.setShadowLayer(u(12), 0, 0, 0x55000000);
-        TextClock date = new TextClock(this);
-        date.setFormat24Hour("EEEE d MMMM");
-        date.setFormat12Hour("EEEE d MMMM");
-        date.setTextSize(TypedValue.COMPLEX_UNIT_PX, 22 * unit);
-        date.setTypeface(Fonts.get("sans-serif", Typeface.NORMAL));
-        date.setTextColor(0xB3FFFFFF);
-        date.setShadowLayer(u(8), 0, 0, 0x55000000);
-        clockBox.addView(time);
-        LinearLayout.LayoutParams dtl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        dtl.topMargin = u(8);
-        clockBox.addView(date, dtl);
-        FrameLayout.LayoutParams ckl = wrap(Gravity.TOP | Gravity.END);
-        ckl.topMargin = u(64);
-        ckl.rightMargin = u(112);
-        root.addView(clockBox, ckl);
-        clockBox.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-            @Override public void onLayoutChange(View v, int l, int t, int r, int b, int ol, int ot, int or, int ob) {
-                FrameLayout.LayoutParams p = (FrameLayout.LayoutParams) topButtons.getLayoutParams();
-                int want = clockBox.getVisibility() == View.VISIBLE ? u(112) + (r - l) + u(36) : u(100);
-                if (p.rightMargin != want) { p.rightMargin = want; topButtons.setLayoutParams(p); }
-            }
-        });
-
-        // ---- page « Toutes les applications »
-        appsLayer = new FrameLayout(this);
-        appsLayer.setVisibility(View.GONE);
-        appsBg = new ImageView(this);
-        appsBg.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        appsLayer.addView(appsBg, match());
-        appsTint = new View(this);
-        appsTint.setBackgroundColor(0x9905060A);
-        appsLayer.addView(appsTint, match());
-        root.addView(appsLayer, root.indexOfChild(captionBox), match());
-
-        // ---- mode veille
-        ambient = new AmbientView(this, unit, weather);
-        ambient.setVisibility(View.GONE);
-        root.addView(ambient, match());
-        veilleWall = new Wall(this, prefs, online, ambient.wallLayer());
-        veilleWall.setVeilleMode(true);
-        veilleWall.setListener(new Wall.Listener() {
-            @Override public void onWallShown(WallItem item, Bitmap backdrop) { if (ambientOn) ambient.setCaption(item); }
-        });
-
-        // ---- notification flottante
-        notice = text(24, "sans-serif-medium", 0xFF111216);
-        GradientDrawable nb = new GradientDrawable();
-        nb.setColor(0xF5F5F5F7);
-        nb.setCornerRadius(u(40));
-        notice.setBackground(nb);
-        notice.setPadding(u(36), u(18), u(36), u(18));
-        notice.setAlpha(0f);
-        notice.setElevation(u(40));
-        FrameLayout.LayoutParams nl = wrap(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-        nl.bottomMargin = u(40);
-        root.addView(notice, nl);
-
-        perf = new Perf.Overlay(this);
-        perf.setVisibility(View.GONE);
-        FrameLayout.LayoutParams pl = wrap(Gravity.TOP | Gravity.START);
-        pl.leftMargin = u(24);
-        pl.topMargin = u(24);
-        root.addView(perf, pl);
-
-        setContentView(root);
-        intro();
-        // première image affichée : on mesure le démarrage, puis on lance le reste
-        root.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
-            @Override public boolean onPreDraw() {
-                root.getViewTreeObserver().removeOnPreDrawListener(this);
-                root.post(new Runnable() { @Override public void run() { Perf.onFirstFrame(); } });
-                return true;
-            }
-        });
-        root.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-            @Override public void onLayoutChange(View v, int l, int t, int r, int b, int ol, int ot, int or, int ob) {
-                int[] loc = new int[2];
-                v.getLocationOnScreen(loc);
-                Glass.setScreen(loc[0] + v.getWidth(), loc[1] + v.getHeight());
-                if (r - l != or - ol || b - t != ob - ot) refreshGlass(root);
-            }
-        });
-        showSplash();
-    }
-
-    /** Écran de démarrage : le mot « lumen » apparaît puis s'efface pendant que le fond arrive. */
-    private void showSplash() {
-        final FrameLayout splash = new FrameLayout(this);
-        splash.setBackgroundColor(Color.BLACK);
-        final TextView word = text(84, "sans-serif-thin", 0xFFFFFFFF);
-        word.setText("lumen");
-        word.setLetterSpacing(0.35f);
-        word.setAlpha(0f);
-        // après « Redémarrer Lumen » : la même ligne qu'avant l'arrêt, pour enchaîner sans coupure
-        final boolean restarted = prefs.restarting();
-        if (restarted) {
-            prefs.setRestarting(false);
-            LinearLayout col = new LinearLayout(this);
-            col.setOrientation(LinearLayout.VERTICAL);
-            col.setGravity(Gravity.CENTER_HORIZONTAL);
-            col.addView(word, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            word.setAlpha(1f); // il était déjà à l'écran juste avant l'arrêt
-            TextView sub = text(24, "sans-serif-light", 0x99FFFFFF);
-            sub.setText("REDÉMARRAGE");
-            sub.setLetterSpacing(0.3f);
-            LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            sl.topMargin = u(18);
-            col.addView(sub, sl);
-            sub.animate().alpha(0f).setStartDelay(700).setDuration(500).start();
-            splash.addView(col, wrap(Gravity.CENTER));
-            h.postDelayed(new Runnable() { @Override public void run() { showNotice("Lumen a redémarré"); } }, 2200);
-        } else splash.addView(word, wrap(Gravity.CENTER));
-        root.addView(splash, match());
-        word.setScaleX(0.96f);
-        word.setScaleY(0.96f);
-        word.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(900).setInterpolator(new DecelerateInterpolator()).withEndAction(new Runnable() {
-            @Override public void run() {
-                word.animate().alpha(0f).setStartDelay(500).setDuration(600).start();
-                splash.animate().alpha(0f).setStartDelay(800).setDuration(900).withEndAction(new Runnable() {
-                    @Override public void run() { root.removeView(splash); }
-                }).start();
-            }
-        }).start();
     }
 
     // ------------------------------------------------------------------ favoris (accueil)
@@ -782,7 +532,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
 
     private void refreshRowsGlass() { for (LinearLayout r : rows) refreshGlass(r); }
 
-    private final Tile.FocusListener homeFocus = new Tile.FocusListener() {
+    final Tile.FocusListener homeFocus = new Tile.FocusListener() {
         @Override public void onTileFocus(final Tile t, boolean focused) {
             if (focused) glowOn(t);
             if (focused) parallax(t);
@@ -836,125 +586,15 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         return null;
     }
 
-    /** La vignette s'agrandit jusqu'à remplir l'écran, puis l'appli s'ouvre. */
-    void launchAnimated(final AppRepo.App app, final Tile from) {
-        whenUnlocked(app, new Runnable() { @Override public void run() { launchUnlocked(app, from); } });
-    }
-
-    /** Lance « r » tout de suite, ou après le code si l'appli est verrouillée. */
-    void whenUnlocked(AppRepo.App app, Runnable r) {
-        if (prefs.isLocked(app.key)) PinDialog.ask(this, "Code pour " + app.label, r);
-        else r.run();
-    }
-
-    /**
-     * Ouverture d'une appli : le même écran que le démarrage de Lumen — fond noir, « lumen » en
-     * lettres fines — avec le nom de l'appli écrit dessous ; puis l'appli s'ouvre en fondu.
-     */
-    private void launchUnlocked(final AppRepo.App app, Tile from) {
-        Sounds.get(this).open();
-        if (zoomView != null) { root.removeView(zoomView); zoomView = null; }
-        if (root.getWidth() == 0) { launch(app); return; }
-        // avec « Lumen télécommande » : l'écran lumen s'affiche par-dessus l'appli, qui se charge
-        // derrière tout de suite (un seul chargement visible)
-        if (RemoteService.showSplash(app.label, 1500)) {
-            launch(app);
-            overridePendingTransition(0, 0);
-            return;
-        }
-        FrameLayout z = new FrameLayout(this);
-        z.setBackgroundColor(Color.BLACK);
-        LinearLayout col = new LinearLayout(this);
-        col.setOrientation(LinearLayout.VERTICAL);
-        col.setGravity(Gravity.CENTER_HORIZONTAL);
-        final TextView word = text(84, "sans-serif-thin", 0xFFFFFFFF);
-        word.setText("lumen");
-        word.setLetterSpacing(0.35f);
-        col.addView(word, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        final TextView name = text(24, "sans-serif-light", 0x99FFFFFF);
-        name.setText(app.label.toUpperCase(java.util.Locale.FRANCE));
-        name.setLetterSpacing(0.3f);
-        name.setSingleLine(true);
-        LinearLayout.LayoutParams nl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        nl.topMargin = u(18);
-        col.addView(name, nl);
-        z.addView(col, wrap(Gravity.CENTER));
-        z.setAlpha(0f);
-        z.setElevation(u(60));
-        root.addView(z, match());
-        DecelerateInterpolator di = new DecelerateInterpolator(1.6f);
-        z.animate().alpha(1f).setDuration(280).setInterpolator(di).start();
-        word.setAlpha(0f);
-        word.setScaleX(0.96f);
-        word.setScaleY(0.96f);
-        word.animate().alpha(1f).scaleX(1f).scaleY(1f).setStartDelay(120).setDuration(600).setInterpolator(di).start();
-        name.setAlpha(0f);
-        name.setTranslationY(u(8));
-        name.animate().alpha(1f).translationY(0).setStartDelay(320).setDuration(500).setInterpolator(di).start();
-        if (from != null) from.animate().scaleX(1.12f).scaleY(1.12f).alpha(0f).setDuration(280).setInterpolator(di).start();
-        final Tile src = from;
-        zoomView = z;
-        h.postDelayed(new Runnable() {
-            @Override public void run() {
-                launch(app);
-                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-                if (src != null) src.restoreAfterLaunch(); // la vignette reprend sa place pour le retour
-            }
-        }, 900);
-        // filet de sécurité si l'appli ne s'ouvre pas
-        h.postDelayed(new Runnable() {
-            @Override public void run() {
-                if (zoomView != null && hasWindowFocus()) { root.removeView(zoomView); zoomView = null; }
-            }
-        }, 4000);
-    }
+    // ouverture et fermeture des applis : voir AppLauncher
+    void launchAnimated(final AppRepo.App app, final Tile from) { launcher.launchAnimated(app, from); }
+    void whenUnlocked(AppRepo.App app, Runnable r) { launcher.whenUnlocked(app, r); }
+    boolean closeApp(AppRepo.App app) { return launcher.closeApp(app); }
+    void restartLumen() { launcher.restartLumen(); }
+    void launch(AppRepo.App app) { launcher.launch(app); }
 
     /** Dernière appli ouverte depuis Lumen (pour « Fermer l'appli » depuis le téléphone). */
     AppRepo.App lastLaunched;
-
-    /**
-     * Ferme une appli qui ne répond plus : Android arrête ses processus une fois qu'elle n'est plus
-     * à l'écran (Lumen y est revenu). Elle redémarrera proprement à la prochaine ouverture.
-     */
-    boolean closeApp(AppRepo.App app) {
-        if (app == null || app.isInput() || app.pkg.equals(getPackageName())) return false;
-        try {
-            ((android.app.ActivityManager) getSystemService(ACTIVITY_SERVICE)).killBackgroundProcesses(app.pkg);
-            return true;
-        } catch (Exception e) { return false; }
-    }
-
-    /** Redémarre Lumen (en cas de souci) : Android relance l'écran d'accueil aussitôt. */
-    void restartLumen() {
-        try {
-            Intent i = new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            android.app.PendingIntent pi = android.app.PendingIntent.getActivity(this, 7, i,
-                    android.app.PendingIntent.FLAG_CANCEL_CURRENT | 0x04000000 /* FLAG_IMMUTABLE */);
-            ((android.app.AlarmManager) getSystemService(ALARM_SERVICE)).set(android.app.AlarmManager.RTC, System.currentTimeMillis() + 250, pi);
-        } catch (Exception ignored) { }
-        finishAffinity();
-        android.os.Process.killProcess(android.os.Process.myPid());
-    }
-
-    void launch(AppRepo.App app) {
-        lastLaunched = app;
-        if (cinema != null) cinema.onLaunch(app.pkg);
-        prefs.addRecent(app.key);
-        prefs.recordHabit(app.key);
-        try {
-            startActivity(app.launchIntent());
-        } catch (ActivityNotFoundException | SecurityException e) {
-            Intent i = getPackageManager().getLeanbackLaunchIntentForPackage(app.pkg);
-            if (i == null) i = getPackageManager().getLaunchIntentForPackage(app.pkg);
-            try {
-                if (i == null) throw new ActivityNotFoundException();
-                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(i);
-            } catch (Exception e2) {
-                showNotice("Impossible d'ouvrir " + app.label);
-            }
-        }
-    }
 
     /** Travaux lancés juste après l'affichage : autorisations, mise à jour, « Reprendre », téléchargements. */
     private final Runnable afterShown = new Runnable() {
@@ -1296,7 +936,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     }
 
     /** Démarrage en cascade, en moins d'une seconde : l'heure, puis le fond, puis la légende et les applis. */
-    private void intro() {
+    void intro() {
         final android.view.animation.DecelerateInterpolator di = new android.view.animation.DecelerateInterpolator(1.6f);
         clockBox.setAlpha(0f);
         wallLayer.setAlpha(0f);
