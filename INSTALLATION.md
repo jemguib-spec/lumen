@@ -156,6 +156,14 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 ## Sources HDMI
 Les entrées HDMI de la TV apparaissent sur l'accueil (ajoutées une seule fois) et dans la rangée « Sources (HDMI) » de la page Applications. On les déplace, retire ou masque comme une appli (appui long). OK ouvre directement la source.
 
+## Profils
+Chaque personne peut avoir son profil : ses favoris, ses applis masquées, son fond d'écran, son affichage (vignettes, taille du texte, contraste), son mode veille, ses sons, ses recherches et ses habitudes. Les clés API (TMDB, Pexels), Home Assistant, le code PIN, les applis verrouillées et les vidéos téléchargées restent communs à toute la maison.
+
+- Ajouter, renommer ou supprimer : Réglages › Profils, ou téléphone › Plus › Profil (code PIN demandé s'il existe).
+- Changer de profil : bouton « Profils » en haut de l'accueil (il apparaît dès qu'il y a deux profils), sans code, ou depuis le téléphone.
+- Le profil principal garde les réglages d'avant les profils ; il ne peut pas être supprimé.
+- Les applis verrouillées le restent dans tous les profils : changer de profil ne lève jamais un verrou.
+
 ## Code PIN
 Réglages › Système › Code PIN. Une fois activé, le code est demandé pour ouvrir les réglages, masquer ou désinstaller une appli, et pour les applis verrouillées (appui long › Verrouiller par code). Code oublié : Paramètres de la TV › Applis › Lumen › Effacer les données.
 

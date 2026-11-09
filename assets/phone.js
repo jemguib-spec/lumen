@@ -171,7 +171,7 @@ async function act(path, body, okMsg) {
     const j = await r.json().catch(() => ({ok: r.ok}));
     if (j.pin) { if (await askPin()) return act(path, body, okMsg); return false; }
     if (j.busy) { toast('La TV affiche une autre appli · reviens sur l’accueil Lumen'); return false; }
-    if (!j.ok) { toast('Impossible'); return false; }
+    if (!j.ok) { toast(j.error || 'Impossible'); return false; }
     if (okMsg) toast(okMsg);
     setTimeout(load, 500);
     return j;
@@ -231,6 +231,8 @@ function render() {
   else if (tv.ambiance >= 0) { d.className = 'on'; sub.textContent = 'Ambiance · ' + S.ambiances[tv.ambiance] + (tv.timer ? ' · ' + tv.timer + ' min' : ''); }
   else if (tv.home) { d.className = 'on'; sub.textContent = 'Connecté · accueil Lumen'; }
   else { d.className = 'busy'; sub.textContent = 'Connecté · une appli est ouverte'; }
+  const prof = (tv.profiles || []).find(p => p.id === tv.profile);
+  if (prof && tv.profiles.length > 1) sub.textContent += ' · ' + prof.name;
   renderRemote(); renderShortcuts(); renderLaunch(); renderAmb(); renderScreen(); renderFav(); renderMine(); renderOpt();
 }
 
@@ -858,8 +860,43 @@ $('nameForm').addEventListener('submit', async e => {
   if (await act('/api/name', n, 'Nom enregistré')) $('nameIn').blur();
 });
 
+// ---- Profils (favoris et réglages de chacun ; clés, Maison et code PIN communs)
+function renderProfiles() {
+  const tv = S.tv || {}, l = $('profList'); clear(l);
+  (tv.profiles || []).forEach(p => {
+    const on = p.id === tv.profile;
+    const r = el('div', 'row ha' + (on ? ' on' : ''));
+    r.appendChild(el('span', 'ck'));
+    r.appendChild(el('div', 'name', p.name));
+    const ren = el('button', 'hm', 'Renommer');
+    ren.addEventListener('click', async ev => {
+      ev.stopPropagation();
+      const n = (prompt('Nouveau prénom', p.name) || '').trim();
+      if (n && n !== p.name) await act('/api/profile/rename?id=' + p.id, n, 'Profil renommé');
+    });
+    r.appendChild(ren);
+    if (p.id !== 0) {
+      const del = el('button', 'hm', 'Supprimer');
+      del.addEventListener('click', async ev => {
+        ev.stopPropagation();
+        if (confirm('Supprimer le profil « ' + p.name + ' » et ses réglages ?')) await act('/api/profile/delete?id=' + p.id, null, 'Profil supprimé');
+      });
+      r.appendChild(del);
+    }
+    r.addEventListener('click', async () => { if (!on) await act('/api/profile?id=' + p.id, null, 'Profil : ' + p.name); });
+    l.appendChild(r);
+  });
+}
+$('profForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const n = $('profIn').value.trim();
+  if (!n) return;
+  if (await act('/api/profile/add', n, 'Profil « ' + n + ' » ajouté')) { $('profIn').value = ''; $('profIn').blur(); }
+});
+
 // ---- Plus
 function renderOpt() {
+  renderProfiles();
   renderHa();
   renderStorage();
   if (tab === 'opt' && S.ha && !haEntities) loadHa();

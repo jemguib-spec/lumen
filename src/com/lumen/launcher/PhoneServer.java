@@ -92,6 +92,8 @@ final class PhoneServer {
         void askPhoneApproval(String name, Approval cb);
         /** Un réglage a changé depuis le téléphone ; wall = le fond doit être rechargé. */
         void onSettingsChangedFromPhone(boolean wall);
+        /** Profils : change de profil, en ajoute, renomme ou supprime ; renvoie la réponse JSON. */
+        String phoneProfile(String action, int id, String name);
     }
 
     interface Approval { void answer(boolean allowed, boolean remember); }
@@ -589,6 +591,11 @@ final class PhoneServer {
                 ok(out, true);
                 return;
             }
+            case "/api/profile": {
+                final int id = intParam(r, "id", -1);
+                json(out, 200, onMain(new Callable<String>() { @Override public String call() { return host.phoneProfile("use", id, null); } }));
+                return;
+            }
             case "/api/next": json(out, 200, onTv(new Runnable() { @Override public void run() { host.phoneNextWall(); } })); return;
             default: break;
         }
@@ -596,6 +603,13 @@ final class PhoneServer {
         no = PhoneGate.pin(r, pinNeeded);
         if (no != null) { HttpRequest.readBody(in, bodyLen, 256 * 1024); json(out, no.code, no.body); return; }
         if (p.equals("/api/ha")) { json(out, 200, setHa(HttpRequest.readBody(in, bodyLen, 2048))); return; }
+        if (p.startsWith("/api/profile/")) {
+            final String action = p.substring("/api/profile/".length());
+            final String name = new String(HttpRequest.readBody(in, bodyLen, 4 * Profiles.MAX_NAME), "UTF-8");
+            final int id = intParam(r, "id", -1);
+            json(out, 200, onMain(new Callable<String>() { @Override public String call() { return host.phoneProfile(action, id, name); } }));
+            return;
+        }
         if (p.equals("/api/tmdb")) {
             final String k = new String(HttpRequest.readBody(in, bodyLen, 1024), "UTF-8").trim();
             if (!k.isEmpty() && !TmdbPolicy.validKey(k)) { json(out, 200, "{\"ok\":false,\"error\":\"Clé non reconnue : la clé API (32 caractères) ou le jeton de lecture\"}"); return; }
@@ -649,6 +663,10 @@ final class PhoneServer {
                 tv.put("pin", pr.hasPin());
                 tv.put("unlocked", pr.hasPin() && auth.isElevated(sid));
                 tv.put("device", deviceName);
+                JSONArray profiles = new JSONArray();
+                for (Profiles.Profile p : pr.profiles()) profiles.put(new JSONObject().put("id", p.id).put("name", p.name));
+                tv.put("profiles", profiles);
+                tv.put("profile", pr.activeProfile());
                 tv.put("remote", RemoteService.connected());
                 tv.put("dpadOutside", RemoteService.connected() && RemoteService.dpadSupported());
                 o.put("tv", tv);

@@ -176,10 +176,20 @@ final class SettingsPanel {
                         int m = a.prefs.ambientMinutes(); return m <= 0 ? "Jamais" : m + " min"; } }, VEILLE),
                     rubric(a, card, Glyph.SPARK, "Ambiances", null, AMBIANCES),
                     null,
+                    null,
                     rubric(a, card, Glyph.GEAR, "Système", new MainActivity.Value() { @Override public String get() {
                         return a.updater.ready() != null ? "Mise à jour prête" : "Lumen " + a.updater.currentVersion(); } }, SYSTEME)};
-                int[] targets = {FOND, ACCUEIL, VEILLE, AMBIANCES, -2, SYSTEME};
+                int[] targets = {FOND, ACCUEIL, VEILLE, AMBIANCES, -3, -2, SYSTEME};
                 for (int i = 0; i < rows.length; i++) {
+                    if (rows[i] == null && targets[i] == -3) {
+                        col.addView(a.listRow("Profils", new MainActivity.Value() {
+                            @Override public String get() { return a.prefs.hasProfiles() ? a.prefs.activeProfileName() : "Un seul"; }
+                        }, new View.OnClickListener() {
+                            @Override public void onClick(View v) { a.closeOverlay(false); ProfilePanel.manage(a); }
+                        }), a.rowLp());
+                        withIcon(a, (LinearLayout) col.getChildAt(col.getChildCount() - 1), Glyph.PERSON);
+                        continue;
+                    }
                     if (rows[i] == null) {
                         col.addView(a.listRow("Réglages depuis le téléphone", new MainActivity.Value() {
                             @Override public String get() { return a.phone.connected() ? "Connecté" : "QR code"; }

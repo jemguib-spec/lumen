@@ -23,9 +23,51 @@ final class Prefs {
 
     static final int TILE_MONO = 0, TILE_BANNER = 1, TILE_WORD = 2;
 
-    private final SharedPreferences sp;
+    /** Réglages vus par le profil actif (voir Profiles). */
+    private final ProfilePrefs sp;
 
-    Prefs(Context c) { sp = c.getSharedPreferences("lumen", Context.MODE_PRIVATE); }
+    Prefs(Context c) { sp = new ProfilePrefs(c.getSharedPreferences("lumen", Context.MODE_PRIVATE)); }
+
+    // ------------------------------------------------------------------ profils
+
+    List<Profiles.Profile> profiles() { return Profiles.parse(sp.raw().getString(Profiles.LIST_KEY, null)); }
+    int activeProfile() { return sp.active(); }
+    String activeProfileName() { Profiles.Profile p = Profiles.find(profiles(), activeProfile()); return p == null ? "" : p.name; }
+    boolean hasProfiles() { return profiles().size() > 1; }
+
+    /** Change de profil (l'interface doit ensuite être reconstruite). */
+    boolean switchProfile(int id) {
+        if (Profiles.find(profiles(), id) == null) return false;
+        sp.raw().edit().putInt(Profiles.ACTIVE_KEY, id).commit();
+        return true;
+    }
+
+    /** Nouveau profil (réglages personnels par défaut) ; son numéro, ou -1 si refusé. */
+    int addProfile(String name) {
+        List<Profiles.Profile> l = Profiles.add(profiles(), name);
+        if (l == null) return -1;
+        sp.raw().edit().putString(Profiles.LIST_KEY, Profiles.serialize(l)).commit();
+        return l.get(l.size() - 1).id;
+    }
+
+    boolean renameProfile(int id, String name) {
+        List<Profiles.Profile> l = Profiles.rename(profiles(), id, name);
+        if (l == null) return false;
+        sp.raw().edit().putString(Profiles.LIST_KEY, Profiles.serialize(l)).commit();
+        return true;
+    }
+
+    /** Supprime un profil et ses réglages (jamais le principal) ; on revient au principal si c'était lui. */
+    boolean removeProfile(int id) {
+        List<Profiles.Profile> l = Profiles.remove(profiles(), id);
+        if (l == null) return false;
+        SharedPreferences.Editor ed = sp.raw().edit();
+        for (String k : sp.raw().getAll().keySet()) if (Profiles.ownerOf(k) == id) ed.remove(k);
+        ed.putString(Profiles.LIST_KEY, Profiles.serialize(l));
+        if (sp.active() == id) ed.putInt(Profiles.ACTIVE_KEY, Profiles.MAIN);
+        ed.commit();
+        return true;
+    }
 
     boolean hasFavorites() { return sp.contains("favorites"); }
 

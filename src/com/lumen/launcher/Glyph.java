@@ -13,7 +13,7 @@ import android.graphics.drawable.Drawable;
 /** Pictogrammes dessinés en vectoriel : boutons de l'accueil et rubriques des réglages. */
 final class Glyph extends Drawable {
     static final int GRID = 0, SLIDERS = 1, INPUT = 2, MOON = 3, IMAGE = 4, HOME = 5, PHONE = 6, GEAR = 7, INFO = 8, DOC = 9, SPARK = 10,
-            MOVE = 11, STAR = 12, STAR_OFF = 13, HIDE = 14, LOCK = 15, TRASH = 16, UNLOCK = 17, CLOSE = 18, RESTART = 19, SEARCH = 20;
+            MOVE = 11, STAR = 12, STAR_OFF = 13, HIDE = 14, LOCK = 15, TRASH = 16, UNLOCK = 17, CLOSE = 18, RESTART = 19, SEARCH = 20, PERSON = 21;
     private final int type;
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -166,6 +166,11 @@ final class Glyph extends Drawable {
                 q.quadTo(cx + s * .16f, cy - s * .36f - lift, cx + s * .16f, cy - s * .16f - lift);
                 if (t == LOCK) q.lineTo(cx + s * .16f, cy - s * .04f);
                 c.drawPath(q, p);
+                break;
+            }
+            case PERSON: { // tête et épaules : profils
+                c.drawCircle(cx, cy - s * .14f, s * .15f, p);
+                c.drawArc(new RectF(cx - s * .30f, cy + s * .08f, cx + s * .30f, cy + s * .62f), 200, 140, false, p);
                 break;
             }
             case SEARCH: { // loupe : rechercher

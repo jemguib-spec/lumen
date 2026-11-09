@@ -63,8 +63,15 @@
 - `WRITE_SECURE_SETTINGS` (facultative, à accorder par ADB) : sert uniquement à choisir Lumen comme économiseur d'écran (`ScreenSaver`) ; aucun autre réglage de la TV n'est touché.
 - `READ_TV_LISTINGS` : lire les épisodes en cours (« Reprendre ») et la liste des entrées HDMI, sur l'appareil.
 
+## Profils (`Profiles`, `ProfilePrefs`, `ProfilePanel`)
+- Chaque profil a ses réglages personnels (liste fermée `Profiles.PERSONAL` : favoris, applis masquées, fonds, affichage, veille, sons, recherches, habitudes…). Tout le reste est commun : clés API, Home Assistant, code PIN et ses tentatives, **applis verrouillées** (changer de profil ne lève jamais un verrou), téléphones mémorisés, mises à jour.
+- Changer de profil ne demande pas de code ; ajouter, renommer ou supprimer un profil passe par le code PIN s'il existe (sur la TV comme depuis le téléphone).
+- Une sauvegarde exporte et restaure les réglages du profil actif ; elle ne contient toujours ni code PIN ni clés.
+- Le profil principal garde les réglages d'avant les profils : rien n'est migré, rien ne peut être perdu à la mise à jour.
+
 ## Code PIN (`Pin`, `PinDialog`)
 - Facultatif. Protège l'ouverture des réglages (donc aussi le QR code du téléphone), le masquage et la désinstallation des applis, et les applis que tu verrouilles (y compris depuis « Reprendre »).
+- Protège aussi la gestion des profils (ajout, renommage, suppression).
 - Jamais enregistré en clair : sel aléatoire de 16 octets + PBKDF2 (20 000 tours), comparaison à temps constant.
 - Après 5 erreurs, attente de 30 s, doublée à chaque nouvelle erreur (1 h au plus) ; le compteur survit au redémarrage de Lumen.
 - Code oublié : Paramètres de la TV › Applis › Lumen › Effacer les données (tous les réglages de Lumen repartent à zéro).
@@ -93,6 +100,8 @@
 | `MediaSniff`, `MediaGuard` | Contrôle des fichiers |
 | `PhoneServer`, `PhoneAuth`, `HttpRequest`, `QrCode`, `PhonePanel` | Réglages depuis le téléphone : serveur local, appairage, QR code |
 | `PhoneGate` | Contrôles d'accès de la page du téléphone (Host, X-Lumen, session, acceptation, « télécommande seulement », signature, débit, code PIN, connexion permanente) |
+| `Seal` | Chiffrement des secrets envoyés par le téléphone (clé tirée de celle du QR code) |
+| `Profiles`, `ProfilePrefs`, `ProfilePanel` | Profils par personne : réglages personnels ou communs, choix et gestion des profils |
 | `Signer`, `WsFrames`, `RateLimit` | Signature HMAC des échanges, connexion permanente (WebSocket), limite de débit |
 | `PhoneRemote`, `RemoteService` | Touches de la télécommande du téléphone, dans Lumen puis dans les autres applis (service d'accessibilité facultatif) |
 | `DeviceName` | Nom du téléphone affiché sur la TV |

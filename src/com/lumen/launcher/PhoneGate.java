@@ -51,7 +51,8 @@ final class PhoneGate {
 
     /** Écritures qui exigent le code PIN de la TV (s'il existe) déjà saisi sur ce téléphone. */
     static final Set<String> PIN_PATHS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            "/api/ha", "/api/tmdb", "/api/pexels", "/api/restore", "/api/lock")));
+            "/api/ha", "/api/tmdb", "/api/pexels", "/api/restore", "/api/lock",
+            "/api/profile/add", "/api/profile/rename", "/api/profile/delete")));
 
     /** Écritures dont le contenu est un secret : chiffré par la page (Seal), jamais accepté en clair. */
     static final Set<String> SEALED = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(

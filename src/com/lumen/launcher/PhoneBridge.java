@@ -246,4 +246,16 @@ final class PhoneBridge implements PhoneServer.Host {
         }
         if (received > 0) a.showNotice("Reçu depuis le téléphone");
     }
+
+    @Override public String phoneProfile(String action, int id, String name) {
+        boolean ok;
+        switch (action) {
+            case "use": ok = ProfilePanel.switchTo(a, id); break;
+            case "add": ok = a.prefs.addProfile(name) >= 0; if (ok) a.updateProfileButton(); break;
+            case "rename": ok = a.prefs.renameProfile(id, name); break;
+            case "delete": ok = ProfilePanel.remove(a, id); break;
+            default: return "{\"ok\":false}";
+        }
+        return ok ? "{\"ok\":true}" : "{\"ok\":false,\"error\":\"Prénom vide ou déjà pris\"}";
+    }
 }

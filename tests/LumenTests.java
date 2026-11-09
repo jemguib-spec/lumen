@@ -97,6 +97,36 @@ public class LumenTests {
         check("WebSocket : sans clé, tout est refusé", PhoneGate.wsCommand("S 6 " + k1 + " k up", null, null) == null);
     }
 
+    /** Profils : liste, prénoms, réglages personnels ou partagés. */
+    static void profilesTests() {
+        java.util.List<Profiles.Profile> l = Profiles.parse(null);
+        check("profils : le principal existe toujours", l.size() == 1 && l.get(0).id == Profiles.MAIN);
+        l = Profiles.add(l, "  Léa  ");
+        check("profils : ajout", l != null && l.size() == 2 && l.get(1).id == 1 && "Léa".equals(l.get(1).name));
+        check("profils : prénom déjà pris refusé (casse ignorée)", Profiles.add(l, "léa") == null);
+        check("profils : prénom vide refusé", Profiles.add(l, "  ") == null && Profiles.add(l, "<>{}") == null);
+        check("profils : prénom nettoyé et borné", "Jean-Pierre O'Neil".equals(Profiles.cleanName("Jean-Pierre <O'Neil>"))
+                && Profiles.cleanName("abcdefghijklmnopqrstuvwxyz").length() == Profiles.MAX_NAME);
+        l = Profiles.add(l, "Tom");
+        check("profils : numéros jamais réutilisés", l.get(2).id == 2);
+        String stored = Profiles.serialize(l);
+        check("profils : enregistrement relu à l'identique", stored.equals(Profiles.serialize(Profiles.parse(stored))));
+        check("profils : liste abîmée tolérée", Profiles.parse("x|1:|2:Ana|2:Bis|abc:Def|-3:Neg").size() == 2);
+        check("profils : renommer", "Théo".equals(Profiles.find(Profiles.rename(l, 2, "Théo"), 2).name));
+        check("profils : renommer vers un prénom pris refusé", Profiles.rename(l, 2, "Léa") == null);
+        check("profils : le principal ne se supprime pas", Profiles.remove(l, Profiles.MAIN) == null);
+        check("profils : supprimer", Profiles.remove(l, 1).size() == 2 && Profiles.find(Profiles.remove(l, 1), 1) == null);
+        java.util.List<Profiles.Profile> full = Profiles.parse(null);
+        for (int i = 0; i < 20; i++) { java.util.List<Profiles.Profile> n = Profiles.add(full, "P" + i); if (n != null) full = n; }
+        check("profils : 8 au plus", full.size() == Profiles.MAX);
+        // réglages personnels / communs
+        check("profils : favoris personnels", Profiles.key("favorites", 3).equals("p3.favorites") && Profiles.key("favorites", 0).equals("favorites"));
+        for (String shared : new String[]{"tmdb_key", "pexels_key", "ha_url", "ha_token", "pin", "pin_fails", "locked_apps", "trusted_phones", "update_from", Profiles.LIST_KEY, Profiles.ACTIVE_KEY})
+            check("profils : « " + shared + " » partagé", Profiles.key(shared, 3).equals(shared));
+        check("profils : propriétaire d'un réglage", Profiles.ownerOf("p3.favorites") == 3 && Profiles.ownerOf("favorites") == -1
+                && Profiles.ownerOf("p3.tmdb_key") == -1 && Profiles.ownerOf("p0.favorites") == -1 && Profiles.ownerOf("pin") == -1);
+    }
+
     static void check(String name, boolean cond) {
         if (cond) ok++; else { ko++; System.out.println("ÉCHEC : " + name); }
     }
@@ -557,6 +587,8 @@ public class LumenTests {
             check("WebSocket : texte en clair refusé", PhoneGate.wsCommand("S 10 " + sig2 + " " + clear, ws, sk) == null);
         } catch (Exception sealErr) { check("chiffrement : " + sealErr, false); }
         try { phoneGate(); } catch (Exception gateErr) { check("contrôles de la page du téléphone : " + gateErr, false); }
+
+        profilesTests();
 
         // ---- ciel (références : éphémérides publiées, tolérance 4 min)
         java.util.TimeZone paris = java.util.TimeZone.getTimeZone("Europe/Paris");

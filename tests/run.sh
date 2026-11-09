@@ -4,7 +4,7 @@ set -e
 cd "$(dirname "$0")/.."
 OUT=$(mktemp -d)
 S=src/com/lumen/launcher
-javac -encoding UTF-8 -d "$OUT" $S/NetPolicy.java $S/MediaSniff.java $S/HttpRequest.java $S/PhoneAuth.java $S/QrCode.java $S/Sky.java $S/CosyCatalog.java $S/VideoCatalog.java $S/Pexels.java $S/WatchNextFormat.java $S/CommonsThumb.java $S/AppCategory.java $S/UpdatePolicy.java $S/Pin.java $S/Habits.java $S/Backup.java $S/RateLimit.java $S/Greeting.java $S/Messages.java $S/DeviceName.java $S/HomeAssistant.java $S/SettingsIndex.java $S/SmartSearch.java $S/TmdbPolicy.java $S/WsFrames.java $S/Signer.java $S/PhoneGate.java $S/SafeFile.java $S/Seal.java tests/LumenTests.java
+javac -encoding UTF-8 -d "$OUT" $S/NetPolicy.java $S/MediaSniff.java $S/HttpRequest.java $S/PhoneAuth.java $S/QrCode.java $S/Sky.java $S/CosyCatalog.java $S/VideoCatalog.java $S/Pexels.java $S/WatchNextFormat.java $S/CommonsThumb.java $S/AppCategory.java $S/UpdatePolicy.java $S/Pin.java $S/Habits.java $S/Backup.java $S/RateLimit.java $S/Greeting.java $S/Messages.java $S/DeviceName.java $S/HomeAssistant.java $S/SettingsIndex.java $S/SmartSearch.java $S/TmdbPolicy.java $S/WsFrames.java $S/Signer.java $S/PhoneGate.java $S/SafeFile.java $S/Seal.java $S/Profiles.java tests/LumenTests.java
 RES=$(java -cp "$OUT" com.lumen.launcher.LumenTests)
 echo "$RES" | grep -v '^QR_FILE'
 QR=$(echo "$RES" | sed -n 's/^QR_FILE=\([^ ]*\) QR_EXPECT=\(.*\)$/\1/p')
@@ -13,6 +13,13 @@ if command -v zbarimg >/dev/null && command -v convert >/dev/null; then
   convert "$QR" "$OUT/qr.png"
   GOT=$(zbarimg -q "$OUT/qr.png" 2>/dev/null | sed 's/^QR-Code://')
   if [ "$GOT" = "$EXP" ]; then echo "QR code relu correctement par zbarimg"; else echo "ÉCHEC : QR code illisible ($GOT)"; exit 1; fi
+fi
+# profils de bout en bout (interface SharedPreferences d'Android) : si android.jar est installé
+AJ=$(ls /usr/lib/android-sdk/platforms/*/android.jar 2>/dev/null | head -1)
+if [ -n "$AJ" ]; then
+  mkdir -p "$OUT/p"
+  javac -encoding UTF-8 -cp "$AJ" -d "$OUT/p" $S/Profiles.java $S/ProfilePrefs.java tests/ProfilePrefsTest.java
+  java -cp "$OUT/p:$AJ" com.lumen.launcher.ProfilePrefsTest
 fi
 if command -v node >/dev/null; then
   GOT=$(node tests/phone_crypto.js "cle-du-qr" "jeton secret é")

@@ -63,9 +63,14 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     private View appsTint;
     Cinema cinema;
     private LinearLayout sceneBar;
-    Tile houseButton;
+    Tile houseButton, profileButton;
 
     /** Affiche ou masque le bouton « Maison » (Réglages › Accueil et applis). */
+    /** Bouton « profil » de l'accueil : seulement quand il y a plusieurs profils. */
+    void updateProfileButton() {
+        if (profileButton != null) profileButton.setVisibility(prefs.hasProfiles() ? View.VISIBLE : View.GONE);
+    }
+
     void setHouseButton(boolean on) {
         prefs.setHaButton(on);
         if (houseButton != null) houseButton.setVisibility(on ? View.VISIBLE : View.GONE);
@@ -457,18 +462,22 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         Tile house = houseButton = Tile.button(this, Glyph.HOME, "Maison", bs);
         house.setFocusListener(homeFocus);
         house.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { HomePanel.open(MainActivity.this); } });
+        Tile who = profileButton = Tile.button(this, Glyph.PERSON, "Profils", bs);
+        who.setFocusListener(homeFocus);
+        who.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { ProfilePanel.open(MainActivity.this); } });
         Tile all = Tile.button(this, Glyph.GRID, "Toutes les applications", bs);
         all.setFocusListener(homeFocus);
         all.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { openApps(); } });
         Tile set = Tile.button(this, Glyph.SLIDERS, "Réglages", bs);
         set.setFocusListener(homeFocus);
         set.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { SettingsPanel.openSettings(MainActivity.this); } });
-        for (Tile b : new Tile[]{find, amb, inputs, house, all, set}) {
+        for (Tile b : new Tile[]{find, amb, inputs, house, who, all, set}) {
             LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             bl.leftMargin = u(18);
             topButtons.addView(b, bl);
         }
         house.setVisibility(prefs.haButton() ? View.VISIBLE : View.GONE);
+        updateProfileButton();
         FrameLayout.LayoutParams tbl = wrap(Gravity.TOP | Gravity.END);
         tbl.topMargin = u(56);
         tbl.rightMargin = u(420);
@@ -638,7 +647,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
 
     // ------------------------------------------------------------------ favoris (accueil)
 
-    private void ensureDefaultFavorites() {
+    void ensureDefaultFavorites() {
         if (prefs.hasFavorites()) return;
         List<String> keys = new ArrayList<>();
         for (String p : DEFAULT_FAVORITES) {
@@ -653,7 +662,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     }
 
     /** Une seule fois : les entrées HDMI de la TV rejoignent l'accueil (on peut les retirer ensuite). */
-    private void addInputsOnce() {
+    void addInputsOnce() {
         if (prefs.flag("inputs_home_v1")) return;
         prefs.setFlag("inputs_home_v1");
         List<String> f = prefs.favorites();
