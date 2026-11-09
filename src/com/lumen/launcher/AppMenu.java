@@ -99,12 +99,7 @@ final class AppMenu {
                     a.closeOverlay(false);
                     PinDialog.ask(a, "Code pour désinstaller " + app.label, new Runnable() {
                         @Override public void run() {
-                            try {
-                                Intent i = new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + app.pkg));
-                                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                a.showSystemVeil(app); // la fenêtre d'Android, transparente, s'affiche sur un fond calme
-                                a.startActivity(i);
-                            } catch (Exception e) { a.hideSystemVeil(false); a.showNotice("Cette appli ne peut pas être désinstallée"); }
+                            a.uninstall(app);
                         }
                     });
                 }

@@ -1074,6 +1074,42 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         });
     }
 
+    // ------------------------------------------------------------------ désinstallation
+
+    private static final int REQ_UNINSTALL = 41;
+    private AppRepo.App uninstalling;
+
+    /**
+     * Android impose sa confirmation (« Voulez-vous désinstaller cette application ? ») : aucune appli
+     * ordinaire ne peut s'en passer. En demandant le résultat, la suite se fait en arrière-plan :
+     * plus de fenêtre « Désinstallation… » ni de message système, Lumen affiche le sien.
+     */
+    void uninstall(AppRepo.App app) {
+        try {
+            Intent i = new Intent(Intent.ACTION_UNINSTALL_PACKAGE, Uri.parse("package:" + app.pkg));
+            i.putExtra(Intent.EXTRA_RETURN_RESULT, true);
+            uninstalling = app;
+            showSystemVeil(app);
+            startActivityForResult(i, REQ_UNINSTALL);
+        } catch (Exception e) {
+            uninstalling = null;
+            hideSystemVeil(false);
+            showNotice("Cette appli ne peut pas être désinstallée");
+        }
+    }
+
+    @Override protected void onActivityResult(int req, int result, Intent data) {
+        super.onActivityResult(req, result, data);
+        if (req != REQ_UNINSTALL) return;
+        AppRepo.App app = uninstalling;
+        uninstalling = null;
+        veilApp = null; // le message vient d'ici, pas du voile
+        hideSystemVeil(true);
+        if (app == null) return;
+        if (result == RESULT_OK) showNotice(app.label + " désinstallée");
+        else if (result != RESULT_CANCELED) showNotice(app.label + " n'a pas pu être désinstallée");
+    }
+
     // ------------------------------------------------------------------ fenêtres du système par-dessus Lumen
 
     private View systemVeil;
