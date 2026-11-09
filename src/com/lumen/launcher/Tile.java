@@ -225,6 +225,16 @@ final class Tile extends FrameLayout {
         }).start();
     }
 
+    /** Après l'ouverture d'une appli : la vignette reprend sa taille, prête pour le retour. */
+    void restoreAfterLaunch() {
+        animate().cancel();
+        animate().setStartDelay(0);
+        float s = isFocused() ? focusScale : 1f;
+        setScaleX(s);
+        setScaleY(s);
+        setAlpha(isFocused() ? 1f : restAlpha);
+    }
+
     void setMoving(boolean moving) {
         if (moving) {
             GradientDrawable b = new GradientDrawable();

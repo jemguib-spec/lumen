@@ -206,8 +206,8 @@ final class Prefs {
         put("cities", s);
     }
 
-    static final int[] DISK_GB = {3, 6, 10, 20};
-    int videoDiskGb() { return sp.getInt("video_disk_gb", 6); }
+    static final int[] DISK_GB = {1, 2, 3, 6, 10};
+    int videoDiskGb() { return sp.getInt("video_disk_gb", 2); }
     void setVideoDiskGb(int g) { sp.edit().putInt("video_disk_gb", g).apply(); }
 
     /** Applis lancées récemment : « clé|horodatage », la plus récente en premier. */

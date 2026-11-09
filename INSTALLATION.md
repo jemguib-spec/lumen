@@ -105,6 +105,10 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - **Bandeau d'accueil** : une ligne au-dessus des favoris — salutation selon l'heure, météo (si une ville est réglée) et dernier épisode en cours. Réglages › Accueil et applis › Bandeau d'accueil pour le masquer.
 - L'appli que tu ouvres d'habitude à cette heure est sélectionnée au démarrage et entourée d'un liseré qui respire doucement.
 
+## Stockage
+- Réglages › Système › Stockage (ou sur le téléphone : Plus › Stockage de la TV) : place prise par les photos, les vidéos de fond et celles des ambiances, avec de quoi vider chaque catégorie. Tes photos et vidéos envoyées du téléphone ne sont jamais effacées là.
+- Lumen garde toujours au moins 2 Go libres sur la TV : s'il manque de place, il réduit ses vidéos et n'en télécharge plus. Les téléchargements interrompus sont effacés au démarrage.
+
 ## Maison (Home Assistant)
 - Bouton **Maison** en haut de l'accueil, à côté de « Toutes les applications » (masqué par défaut : Réglages › Accueil et applis › Bouton Maison ; il apparaît aussi tout seul dès que Home Assistant est relié) : tes lumières, prises, scènes, volets et lecteurs Home Assistant. OK pour allumer, éteindre ou lancer une scène ; l'état se met à jour tout seul.
 - Pour relier Lumen : dans Home Assistant, Profil › Sécurité › Jetons d'accès longue durée › Créer un jeton. Puis sur le téléphone connecté à la TV : Plus › Home Assistant, colle l'adresse (ex. `192.168.1.20:8123` ou `homeassistant.local:8123`, ou ton adresse `https://…` à distance) et le jeton.

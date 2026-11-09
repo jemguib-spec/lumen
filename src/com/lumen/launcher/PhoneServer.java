@@ -315,6 +315,14 @@ final class PhoneServer {
         switch (p) {
             case "/api/pin": json(out, 200, pin(HttpRequest.readBody(in, r.contentLength, 16), sid)); return;
             case "/api/ping": json(out, 200, "{\"ok\":true}"); return;
+            case "/api/storage/clear": {
+                final int what = intParam(r, "what", -1);
+                if (what < Online.CLEAR_PHOTOS || what > Online.CLEAR_ALL) { ok(out, false); return; }
+                host.online().clear(what);
+                main.post(new Runnable() { @Override public void run() { host.onMineChanged(0); } });
+                ok(out, true);
+                return;
+            }
             case "/api/ha/pin": {
                 final String id = r.query.get("id");
                 if (!HomeAssistant.validEntityId(id)) { ok(out, false); return; }
@@ -440,6 +448,10 @@ final class PhoneServer {
         o.put("ambiances", amb);
         o.put("pexels", !host.prefs().pexelsKey().isEmpty());
         o.put("ha", host.prefs().haConfigured() ? host.prefs().haUrl() : "");
+        long[] st = host.online().storage();
+        o.put("storage", new JSONObject().put("photos", Online.human(st[0])).put("videos", Online.human(st[1]))
+                .put("cosy", Online.human(st[2])).put("mine", Online.human(st[3]))
+                .put("free", Online.human(ctx.getFilesDir().getUsableSpace())));
         return o;
     }
 

@@ -498,6 +498,23 @@ function renderHa() {
   });
 }
 
+// ---- Stockage de la TV
+document.querySelectorAll('[data-clear]').forEach(b => b.addEventListener('click', () => {
+  if (!b.classList.contains('arm')) {
+    document.querySelectorAll('[data-clear].arm').forEach(x => x.classList.remove('arm'));
+    b.classList.add('arm'); toast('Touche encore pour confirmer');
+    clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('arm'), 3000);
+    return;
+  }
+  b.classList.remove('arm');
+  act('/api/storage/clear?what=' + b.dataset.clear, null, 'Place libérée');
+}));
+function renderStorage() {
+  const s = S.storage; if (!s) return;
+  $('stFree').textContent = 'Libre sur la TV : ' + s.free + '. Lumen garde toujours 2 Go libres et réduit ses vidéos si la place manque.';
+  $('stPhotos').textContent = s.photos; $('stVideos').textContent = s.videos; $('stCosy').textContent = s.cosy; $('stMine').textContent = s.mine;
+}
+
 // ---- Nom de ce téléphone (affiché sur la TV : « Contrôlée par … »), gardé sur ce téléphone seulement
 function savedName() { try { return localStorage.getItem('lumen-name') || ''; } catch (e) { return ''; } }
 $('nameForm').addEventListener('submit', async e => {
@@ -511,6 +528,7 @@ $('nameForm').addEventListener('submit', async e => {
 // ---- Plus
 function renderOpt() {
   renderHa();
+  renderStorage();
   if (tab === 'opt' && S.ha && !haEntities) loadHa();
   if (document.activeElement !== $('nameIn')) $('nameIn').value = savedName() || (S.tv || {}).device || '';
   const tv = S.tv || {};

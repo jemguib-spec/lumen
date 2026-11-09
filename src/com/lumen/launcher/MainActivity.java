@@ -803,43 +803,57 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         else r.run();
     }
 
+    /**
+     * Ouverture d'une appli : la vignette grossit doucement pendant que l'écran passe à un noir
+     * profond teinté de la couleur de l'appli, avec son logo au centre ; puis l'appli s'ouvre en fondu.
+     */
     private void launchUnlocked(final AppRepo.App app, Tile from) {
         Sounds.get(this).open();
         if (zoomView != null) { root.removeView(zoomView); zoomView = null; }
-        int sw = root.getWidth(), sh = root.getHeight();
-        if (from == null || sw == 0) { launch(app); return; }
-        int[] loc = new int[2];
-        from.card.getLocationOnScreen(loc);
-        float fw = from.card.getWidth() * from.getScaleX(), fh = from.card.getHeight() * from.getScaleY();
+        if (from == null || root.getWidth() == 0) { launch(app); return; }
         FrameLayout z = new FrameLayout(this);
-        GradientDrawable bg = new GradientDrawable();
         int color = app.color(getPackageManager());
-        bg.setColor(color);
+        int tint = (0x40 << 24) | (color & 0xFFFFFF);
+        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xFF07080C, 0xFF07080C});
         z.setBackground(bg);
-        ImageView icon = new ImageView(this);
-        icon.setImageDrawable(app.icon(getPackageManager()));
-        icon.setAlpha(0f);
-        z.addView(icon, new FrameLayout.LayoutParams(u(150), u(150), Gravity.CENTER));
-        root.addView(z, match());
-        z.setPivotX(0);
-        z.setPivotY(0);
-        z.setScaleX(fw / sw);
-        z.setScaleY(fh / sh);
-        z.setTranslationX(loc[0]);
-        z.setTranslationY(loc[1]);
+        View glowV = new View(this);
+        GradientDrawable g = new GradientDrawable();
+        g.setGradientType(GradientDrawable.RADIAL_GRADIENT);
+        g.setGradientRadius(u(760));
+        g.setColors(new int[]{tint, 0x0007080C});
+        glowV.setBackground(g);
+        z.addView(glowV, match());
+        ImageView logo = new ImageView(this);
+        android.graphics.drawable.Drawable banner = app.banner(getPackageManager());
+        boolean wide = banner != null;
+        logo.setImageDrawable(wide ? banner : app.icon(getPackageManager()));
+        logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        logo.setOutlineProvider(new android.view.ViewOutlineProvider() {
+            @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), u(18)); }
+        });
+        logo.setClipToOutline(true);
+        logo.setAlpha(0f);
+        logo.setScaleX(0.92f);
+        logo.setScaleY(0.92f);
+        z.addView(logo, new FrameLayout.LayoutParams(wide ? u(400) : u(180), wide ? u(225) : u(180), Gravity.CENTER));
+        z.setAlpha(0f);
         z.setElevation(u(60));
-        z.animate().scaleX(1f).scaleY(1f).translationX(0).translationY(0).setDuration(380)
-                .setInterpolator(new DecelerateInterpolator(2.2f)).start();
-        icon.setScaleX(0.6f);
-        icon.setScaleY(0.6f);
-        icon.animate().alpha(1f).scaleX(1f).scaleY(1f).setStartDelay(120).setDuration(300).start();
+        root.addView(z, match());
+        z.animate().alpha(1f).setStartDelay(60).setDuration(260).setInterpolator(new DecelerateInterpolator(1.6f)).start();
+        logo.animate().alpha(1f).scaleX(1f).scaleY(1f).setStartDelay(160).setDuration(320)
+                .setInterpolator(new DecelerateInterpolator(2f)).start();
+        from.animate().scaleX(1.18f).scaleY(1.18f).alpha(0f).setDuration(300)
+                .setInterpolator(new DecelerateInterpolator(1.6f)).start();
+        final Tile src = from;
         zoomView = z;
         h.postDelayed(new Runnable() {
             @Override public void run() {
                 launch(app);
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                // la vignette reprend sa place pour le retour sur l'accueil
+                src.restoreAfterLaunch();
             }
-        }, 420);
+        }, 480);
         // filet de sécurité si l'appli ne s'ouvre pas
         h.postDelayed(new Runnable() {
             @Override public void run() {
@@ -1072,10 +1086,15 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         captionBox.setAlpha(0f);
         homeLayer.setAlpha(0f);
         homeLayer.setTranslationY(u(28));
-        clockBox.animate().alpha(1f).setStartDelay(60).setDuration(320).setInterpolator(di).start();
-        wallLayer.animate().alpha(1f).setStartDelay(180).setDuration(520).setInterpolator(di).start();
-        captionBox.animate().alpha(1f).setStartDelay(380).setDuration(420).setInterpolator(di).start();
-        homeLayer.animate().alpha(1f).translationY(0).setStartDelay(420).setDuration(480).setInterpolator(di).start();
+        clockBox.animate().alpha(1f).setStartDelay(60).setDuration(320).setInterpolator(di).withEndAction(noDelay(clockBox)).start();
+        wallLayer.animate().alpha(1f).setStartDelay(180).setDuration(520).setInterpolator(di).withEndAction(noDelay(wallLayer)).start();
+        captionBox.animate().alpha(1f).setStartDelay(380).setDuration(420).setInterpolator(di).withEndAction(noDelay(captionBox)).start();
+        homeLayer.animate().alpha(1f).translationY(0).setStartDelay(420).setDuration(480).setInterpolator(di).withEndAction(noDelay(homeLayer)).start();
+    }
+
+    /** Le délai d'une animation reste attaché à la vue : on le remet à zéro (sinon tout s'ouvrirait en retard). */
+    private static Runnable noDelay(final View v) {
+        return new Runnable() { @Override public void run() { v.animate().setStartDelay(0); } };
     }
 
     private void wake() {
@@ -1446,7 +1465,18 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
                     : "left".equals(k) ? KeyEvent.KEYCODE_DPAD_LEFT : "right".equals(k) ? KeyEvent.KEYCODE_DPAD_RIGHT
                     : "ok".equals(k) ? KeyEvent.KEYCODE_DPAD_CENTER : KeyEvent.KEYCODE_BACK;
             long t = android.os.SystemClock.uptimeMillis();
-            dispatchKeyEvent(new KeyEvent(t, t, KeyEvent.ACTION_DOWN, code, 0));
+            boolean handled = dispatchKeyEvent(new KeyEvent(t, t, KeyEvent.ACTION_DOWN, code, 0));
+            // Une flèche injectée ici ne passe pas par Android, qui déplace normalement la sélection
+            // lui-même : sans cela, « haut » ne menait jamais aux boutons du haut (Réglages…).
+            if (!handled) {
+                int dir = code == KeyEvent.KEYCODE_DPAD_UP ? View.FOCUS_UP : code == KeyEvent.KEYCODE_DPAD_DOWN ? View.FOCUS_DOWN
+                        : code == KeyEvent.KEYCODE_DPAD_LEFT ? View.FOCUS_LEFT : code == KeyEvent.KEYCODE_DPAD_RIGHT ? View.FOCUS_RIGHT : 0;
+                View f = getCurrentFocus();
+                if (dir != 0 && f != null) {
+                    View n = f.focusSearch(dir);
+                    if (n != null) n.requestFocus(dir);
+                }
+            }
             dispatchKeyEvent(new KeyEvent(t, t + 40, KeyEvent.ACTION_UP, code, 0));
             return "{\"ok\":true}";
         }

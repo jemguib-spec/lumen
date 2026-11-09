@@ -537,6 +537,11 @@ final class SettingsPanel {
                 break;
             }
             case SYSTEME: {
+        col.addView(a.listRow("Stockage", new MainActivity.Value() {
+            @Override public String get() { long[] s = a.online.storage(); return Online.human(s[0] + s[1] + s[2] + s[3]) + " utilisés"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { StoragePanel.open(a); }
+        }), a.rowLp());
         col.addView(a.listRow("Mise à jour de Lumen", new MainActivity.Value() {
             @Override public String get() { return a.updater.state(); }
         }, new View.OnClickListener() {

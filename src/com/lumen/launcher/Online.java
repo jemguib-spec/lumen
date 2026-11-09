@@ -45,6 +45,8 @@ final class Online {
     private static final long DAY = 24L * 3600 * 1000;
     private static final int IMG_TARGET = 18, IMG_MAX = 45, VID_TARGET = 6, VID_MAX = 30;
     private long diskCap() { return ((long) prefs.videoDiskGb()) << 30; }
+    /** Espace toujours laissé libre sur la TV (le système, les mises à jour, les autres applis). */
+    static final long RESERVE = 2L << 30;
 
 
     private static final String[] NATURE_CATS = {"Featured_pictures_of_landscapes",
@@ -97,6 +99,82 @@ final class Online {
             prefs.setLastRefresh(VIDEO, 0);
             sp.edit().putBoolean("video_v6", true).apply();
         }
+        sweepLater();
+    }
+
+    /** Au démarrage : efface les téléchargements interrompus et les fichiers que plus rien n'utilise. */
+    void sweepLater() {
+        exec.execute(new Runnable() { @Override public void run() { try { sweep(); } catch (Throwable ignored) { } } });
+    }
+
+    private synchronized void sweep() {
+        for (String theme : new String[]{SPACE, NATURE, ANIMALS, VIDEO, POTD, COSY}) { // jamais « Mes photos »
+            if (isBusy(theme) || (COSY.equals(theme) && cosyRunning)) continue;
+            File d = new File(ctx.getFilesDir(), "online/" + theme);
+            File[] fs = d.listFiles();
+            if (fs == null) continue;
+            Set<String> used = new HashSet<>();
+            JSONArray idx = readIndex(theme);
+            for (int i = 0; i < idx.length(); i++) { JSONObject o = idx.optJSONObject(i); if (o != null) used.add(o.optString("file")); }
+            for (File f : fs) {
+                if (f.isDirectory() || f.getName().endsWith(".json")) continue;
+                if (!used.contains(f.getName())) f.delete();
+            }
+        }
+    }
+
+    /** Place occupée par Lumen, par catégorie : {photos, vidéos de fond, ambiances, mes envois} en octets. */
+    long[] storage() {
+        return new long[]{size(SPACE) + size(NATURE) + size(ANIMALS) + size(POTD) + size(new File(catalogDir(), "thumbs")),
+                size(VIDEO), size(COSY), size(MINE)};
+    }
+
+    private long size(String theme) { return size(new File(ctx.getFilesDir(), "online/" + theme)); }
+
+    private static long size(File d) {
+        long t = 0;
+        File[] fs = d.listFiles();
+        if (fs != null) for (File f : fs) t += f.isDirectory() ? size(f) : f.length();
+        return t;
+    }
+
+    static final int CLEAR_PHOTOS = 0, CLEAR_VIDEOS = 1, CLEAR_COSY = 2, CLEAR_ALL = 3;
+
+    /**
+     * Vide les téléchargements (jamais « Mes photos et vidéos » envoyées du téléphone).
+     * Les vidéos choisies restent cochées : elles reviendront seulement si la place le permet.
+     */
+    synchronized void clear(int what) {
+        List<String> themes = new ArrayList<>();
+        if (what == CLEAR_PHOTOS || what == CLEAR_ALL) { themes.add(SPACE); themes.add(NATURE); themes.add(ANIMALS); themes.add(POTD); }
+        if (what == CLEAR_VIDEOS || what == CLEAR_ALL) themes.add(VIDEO);
+        if (what == CLEAR_COSY || what == CLEAR_ALL) themes.add(COSY);
+        for (String t : themes) {
+            JSONArray keep = new JSONArray();
+            if (COSY.equals(t)) { // les vidéos d'ambiance envoyées du téléphone sont gardées
+                JSONArray idx = readIndex(t);
+                for (int i = 0; i < idx.length(); i++) { JSONObject o = idx.optJSONObject(i); if (o != null && o.optString("page").startsWith("mine:")) keep.put(o); }
+            }
+            Set<String> kept = new HashSet<>();
+            for (int i = 0; i < keep.length(); i++) kept.add(keep.optJSONObject(i).optString("file"));
+            File[] fs = dir(t).listFiles();
+            if (fs != null) for (File f : fs) if (!f.getName().endsWith(".json") && !kept.contains(f.getName())) f.delete();
+            writeIndex(t, keep);
+            prefs.setLastRefresh(t, System.currentTimeMillis()); // pas de nouveau téléchargement aussitôt
+            notifyUpdated(t);
+        }
+        if (what == CLEAR_PHOTOS || what == CLEAR_ALL) {
+            File[] th = new File(catalogDir(), "thumbs").listFiles();
+            if (th != null) for (File f : th) f.delete();
+        }
+        File[] cache = ctx.getCacheDir().listFiles();
+        if (cache != null) for (File f : cache) if (!f.getName().endsWith(".wav")) f.delete();
+    }
+
+    /** « 1,2 Go », « 340 Mo ». */
+    static String human(long bytes) {
+        if (bytes >= (1L << 30)) return String.format(java.util.Locale.FRANCE, "%.1f Go", bytes / (double) (1L << 30));
+        return Math.max(0, bytes >> 20) + " Mo";
     }
 
     void setListener(Listener l) { listener = l; }
@@ -309,6 +387,8 @@ final class Online {
             long cap = COSY.equals(theme) ? COSY_DISK : diskCap();
             long total = 0;
             for (int i = 0; i < index.length(); i++) total += new File(dir(theme), index.optJSONObject(i).optString("file")).length();
+            // jamais au point de remplir la TV : on garde toujours RESERVE d'espace libre pour le système
+            cap = Math.min(cap, Math.max(0, total + dir(theme).getUsableSpace() - RESERVE));
             int k = 0;
             while (total > cap && k < order.size() - 1) {
                 total -= new File(dir(theme), index.optJSONObject(order.get(k)).optString("file")).length();
@@ -540,7 +620,7 @@ final class Online {
 
     static final String[] COSY_NAMES = CosyCatalog.NAMES;
     private static final int COSY_PER_KIND = 8, COSY_MAX = 6 * COSY_PER_KIND + 30;
-    private static final long COSY_DISK = 4L << 30;
+    private static final long COSY_DISK = 2L << 30;
     private final ExecutorService cosyExec = Executors.newSingleThreadExecutor();
     private volatile boolean cosyRunning;
 
@@ -1001,6 +1081,10 @@ final class Online {
     private String fetchMedia(final Candidate c, String url, final String theme, final String prefix) {
         if (url == null) return null;
         File raw = new File(dir(theme), safe(c.id) + ".raw");
+        if (dir(theme).getUsableSpace() < RESERVE + Math.max(c.maxBytes, 50L << 20)) {
+            lastError = "Plus assez d'espace sur la TV";
+            return null;
+        }
         try {
             Net.download(NetPolicy.https(url), raw, c.maxBytes, new Net.Progress() {
                 @Override public void onProgress(long done, long total) throws java.io.IOException {

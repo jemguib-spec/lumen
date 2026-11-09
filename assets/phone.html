@@ -113,6 +113,15 @@
   <p class="note">Avec ta clé gratuite (pexels.com/api), Lumen propose aussi des vidéos Pexels. Sans clé, Lumen ne contacte jamais Pexels.</p>
   <div class="field"><input type="password" id="pxKey" placeholder="Clé Pexels" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="go" id="pxSave" aria-label="Enregistrer">✓</button></div>
   <div class="list"><button class="row link" id="pxDel"><span class="name" id="pxState">…</span><span class="chev">Retirer</span></button></div>
+  <h2>Stockage de la TV</h2>
+  <p class="note" id="stFree">…</p>
+  <div class="list">
+    <button class="row link" data-clear="0"><span class="name">Vider les photos téléchargées</span><span class="chev" id="stPhotos"></span></button>
+    <button class="row link" data-clear="1"><span class="name">Vider les vidéos de fond</span><span class="chev" id="stVideos"></span></button>
+    <button class="row link" data-clear="2"><span class="name">Vider les vidéos des ambiances</span><span class="chev" id="stCosy"></span></button>
+    <button class="row link" data-clear="3"><span class="name">Tout vider (sauf mes envois)</span><span class="chev">›</span></button>
+  </div>
+  <p class="note small">Tes photos et vidéos envoyées (<span id="stMine">…</span>) ne sont jamais effacées ici : onglet Envois.</p>
   <h2>Sauvegarde</h2>
   <div class="list">
     <button class="row link" id="bkSave"><span class="name">Télécharger les réglages</span><span class="chev">›</span></button>
