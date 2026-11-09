@@ -224,6 +224,10 @@ public class LumenTests {
         check("empreinte SHA-256 trop courte refusée", !UpdatePolicy.sha256Ok("9f86d0"));
         check("empreinte : hexadécimal", "00ff10".equals(UpdatePolicy.hex(new byte[]{0, (byte) 255, 16})));
         check("mise à jour : uniquement depuis le dépôt du projet", UpdatePolicy.APK.startsWith("https://raw.githubusercontent.com/jemguib-spec/lumen/main/"));
+        check("mise à jour : fichier propre à la version", UpdatePolicy.apkUrl("Lumen-4.18.2.apk", "4.18.2").equals(UpdatePolicy.BASE + "Lumen-4.18.2.apk"));
+        check("mise à jour : sans nom de fichier, Lumen.apk", UpdatePolicy.apkUrl(null, "4.18.2").equals(UpdatePolicy.APK));
+        check("mise à jour : nom de fichier étranger ignoré", UpdatePolicy.apkUrl("../../evil.apk", "4.18.2").equals(UpdatePolicy.APK)
+                && UpdatePolicy.apkUrl("Lumen-4.18.1.apk", "4.18.2").equals(UpdatePolicy.APK) && UpdatePolicy.apkUrl("Lumen-x.apk", "x").equals(UpdatePolicy.APK));
         check("fichier : signature ZIP reconnue", UpdatePolicy.looksLikeApk(new byte[]{'P', 'K', 3, 4}));
         check("fichier : autre format refusé", !UpdatePolicy.looksLikeApk(new byte[]{'<', 'h', 't', 'm'}));
         check("GitHub (fichiers du dépôt) autorisé pour la mise à jour", NetPolicy.allowed(UpdatePolicy.LATEST));

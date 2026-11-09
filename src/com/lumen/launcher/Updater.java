@@ -35,6 +35,9 @@ final class Updater {
     private static final long EVERY = 6L * 3600 * 1000;
     /** Écart minimal quand on ouvre Réglages › Système. */
     private static final long SOON = 5L * 60 * 1000;
+    /** Nouvel essai après un fichier pas encore à jour chez GitHub. */
+    private static final long RETRY = 10L * 60 * 1000;
+    private volatile boolean retrySoon;
     private final Context ctx;
     private final Prefs prefs;
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -87,11 +90,13 @@ final class Updater {
         notifyState();
         new Thread(new Runnable() {
             @Override public void run() {
+                retrySoon = false;
                 try { state = run1(); }
                 catch (Exception e) { state = "Vérification impossible · réessaie plus tard"; }
                 finally {
                     busy = false;
-                    prefs.setLastUpdateCheck(System.currentTimeMillis());
+                    // nouvel essai dans 10 min plutôt que dans 6 h si le fichier n'était pas encore à jour
+                    prefs.setLastUpdateCheck(System.currentTimeMillis() - (retrySoon ? EVERY - RETRY : 0));
                     notifyState();
                 }
             }
@@ -109,8 +114,13 @@ final class Updater {
         long size = r.optLong("size");
         if (!UpdatePolicy.sha256Ok(sha) || size <= 0 || size > UpdatePolicy.MAX_BYTES) return "Mise à jour " + v + " mal décrite";
         File tmp = new File(dir(), "download.apk");
-        Net.download(UpdatePolicy.APK + "?v=" + v, tmp, UpdatePolicy.MAX_BYTES, null);
-        if (tmp.length() != size || !sha.equals(sha256(tmp))) { tmp.delete(); return "Téléchargement incomplet · nouvel essai demain"; }
+        Net.download(UpdatePolicy.apkUrl(r.optString("file", null), v) + "?v=" + v, tmp, UpdatePolicy.MAX_BYTES, null);
+        if (tmp.length() != size || !sha.equals(sha256(tmp))) {
+            // juste après une publication, GitHub sert parfois encore l'ancien fichier quelques minutes
+            tmp.delete();
+            retrySoon = true;
+            return "Mise à jour " + v + " en cours de publication · nouvel essai dans 10 min";
+        }
         String why = verify(tmp, v);
         if (why != null) { tmp.delete(); return why; }
         File out = new File(dir(), "Lumen.apk");

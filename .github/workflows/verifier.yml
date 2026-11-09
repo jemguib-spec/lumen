@@ -28,4 +28,8 @@ jobs:
             want=$(python3 -c "import json;print(json.load(open('dist/latest.json'))['sha256'])")
             got=$(sha256sum dist/Lumen.apk | cut -d' ' -f1)
             test "$want" = "$got" || { echo "dist/latest.json ne correspond pas à dist/Lumen.apk"; exit 1; }
+            file=$(python3 -c "import json;print(json.load(open('dist/latest.json')).get('file',''))")
+            if [ -n "$file" ]; then
+              test "$(sha256sum "dist/$file" | cut -d' ' -f1)" = "$want" || { echo "dist/$file ne correspond pas à dist/latest.json"; exit 1; }
+            fi
           fi

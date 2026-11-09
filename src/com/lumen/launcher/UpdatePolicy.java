@@ -19,6 +19,16 @@ final class UpdatePolicy {
     static final String APK = BASE + "Lumen.apk";
     static final long MAX_BYTES = 40L << 20;
 
+    /**
+     * Adresse de l'APK annoncé par latest.json. Un nom propre à la version (« Lumen-4.18.2.apk »)
+     * n'a jamais été mis en cache par GitHub : pas de risque de recevoir l'ancien fichier juste
+     * après une publication. Sinon (ancienne description), Lumen.apk. Toujours dans dist/ du dépôt.
+     */
+    static String apkUrl(String file, String version) {
+        if (file != null && version != null && file.equals("Lumen-" + version + ".apk") && version(version) != null) return BASE + file;
+        return APK;
+    }
+
     /** « v4.1.0 » ou « 4.1.0 » → « 4.1.0 » (null si ce n'est pas un numéro de version). */
     static String version(String tag) {
         if (tag == null) return null;
