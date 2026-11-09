@@ -186,9 +186,10 @@ final class VideoPicker {
         final ImageView ph = new ImageView(a);
         ph.setImageDrawable(new Glyph(Glyph.IMAGE, 0x59FFFFFF));
         card.addView(ph, new FrameLayout.LayoutParams(a.u(64), a.u(64), Gravity.CENTER));
-        final View dim = new View(a);
-        dim.setBackgroundColor(0x8C000000);
-        card.addView(dim, MainActivity.match());
+        // dégradé léger en bas pour lire la durée, sans assombrir l'aperçu
+        View shade = new View(a);
+        shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, new int[]{0x99000000, 0x00000000}));
+        card.addView(shade, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, th / 2, Gravity.BOTTOM));
         // durée · définition · source, en bas de l'aperçu
         TextView info = a.text(18, "sans-serif-medium", 0xF2FFFFFF);
         info.setText(describe(p));
@@ -198,11 +199,9 @@ final class VideoPicker {
         il.bottomMargin = a.u(10);
         card.addView(info, il);
         final TextView check = a.text(30, "sans-serif-medium", 0xFF111216);
-        check.setText("✓");
         check.setGravity(Gravity.CENTER);
-        GradientDrawable cb = new GradientDrawable();
+        final GradientDrawable cb = new GradientDrawable();
         cb.setShape(GradientDrawable.OVAL);
-        cb.setColor(0xFFF5F5F7);
         check.setBackground(cb);
         FrameLayout.LayoutParams ckl = new FrameLayout.LayoutParams(a.u(48), a.u(48), Gravity.TOP | Gravity.END);
         ckl.topMargin = ckl.rightMargin = a.u(14);
@@ -219,9 +218,11 @@ final class VideoPicker {
 
         final Runnable paint = new Runnable() {
             @Override public void run() {
+                // cochée : pastille blanche avec ✓ ; pas cochée : simple cercle, l'aperçu reste bien visible
                 boolean on = a.prefs.videoOk(p.key);
-                dim.setVisibility(on ? View.GONE : View.VISIBLE);
-                check.setVisibility(on ? View.VISIBLE : View.GONE);
+                check.setText(on ? "✓" : "");
+                cb.setColor(on ? 0xFFF5F5F7 : 0x33000000);
+                cb.setStroke(Math.max(1, a.u(3)), on ? 0xFFF5F5F7 : 0xE6FFFFFF);
             }
         };
         paint.run();
@@ -250,10 +251,37 @@ final class VideoPicker {
                 BitmapFactory.Options o = new BitmapFactory.Options();
                 o.inSampleSize = 1;
                 final Bitmap b = BitmapFactory.decodeFile(f.getAbsolutePath(), o);
-                if (b != null) a.h.post(new Runnable() { @Override public void run() { img.setImageBitmap(b); ph.setVisibility(View.GONE); } });
+                if (b == null) return;
+                final float lum = luminance(b);
+                a.h.post(new Runnable() {
+                    @Override public void run() {
+                        img.setImageBitmap(b);
+                        // image de nuit ou fondu au noir : on l'éclaircit pour qu'on voie de quoi il s'agit
+                        if (lum < 0.14f) {
+                            float k = Math.min(3.5f, 0.22f / Math.max(0.02f, lum));
+                            android.graphics.ColorMatrix m = new android.graphics.ColorMatrix(new float[]{
+                                    k, 0, 0, 0, 8, 0, k, 0, 0, 8, 0, 0, k, 0, 8, 0, 0, 0, 1, 0});
+                            img.setColorFilter(new android.graphics.ColorMatrixColorFilter(m));
+                        }
+                        ph.setVisibility(lum < 0.01f ? View.VISIBLE : View.GONE); // image vraiment noire : on garde le pictogramme
+                    }
+                });
             }
         });
         return cell;
+    }
+
+    /** Luminosité moyenne d'une image (0 = noir, 1 = blanc), sur un échantillon de points. */
+    static float luminance(Bitmap b) {
+        long sum = 0;
+        int n = 0, w = b.getWidth(), h = b.getHeight();
+        for (int y = h / 16; y < h; y += Math.max(1, h / 16))
+            for (int x = w / 16; x < w; x += Math.max(1, w / 16)) {
+                int c = b.getPixel(x, y);
+                sum += (((c >> 16) & 255) * 3 + ((c >> 8) & 255) * 6 + (c & 255)) / 10;
+                n++;
+            }
+        return n == 0 ? 0 : sum / (n * 255f);
     }
 
     /** « 4 min 24 · 4K · Pexels » */
