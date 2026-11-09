@@ -154,7 +154,10 @@ final class PhoneServer {
             return null;
         }
         hostHeader = ip.getHostAddress() + ":" + server.getLocalPort();
-        pool = new ThreadPoolExecutor(1, 4, 30, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(4));
+        // 4 requêtes traitées en même temps : une connexion ouverte d'avance par le navigateur (et
+        // restée muette) ne bloque plus les touches de la télécommande qui suivent
+        pool = new ThreadPoolExecutor(4, 4, 30, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(16));
+        pool.allowCoreThreadTimeOut(true);
         final ServerSocket s = server;
         final ThreadPoolExecutor p = pool;
         Thread t = new Thread(new Runnable() {
@@ -253,12 +256,14 @@ final class PhoneServer {
 
     private void handle(Socket sock) {
         try {
-            sock.setSoTimeout(20_000);
+            sock.setTcpNoDelay(true);   // réponse envoyée aussitôt (sinon jusqu'à 200 ms d'attente réseau)
+            sock.setSoTimeout(5_000);   // une connexion muette libère vite sa place
             InputStream in = new BufferedInputStream(sock.getInputStream());
             OutputStream out = sock.getOutputStream();
             HttpRequest r;
             try { r = HttpRequest.read(in); }
             catch (Exception bad) { send(out, 400, "text/plain", new byte[0], null); sock.close(); return; }
+            sock.setSoTimeout(20_000);  // la requête est là : le corps a plus de temps
 
             // anti « DNS rebinding » : la page doit être demandée par l'adresse de la TV
             if (!hostHeader.equals(r.header("host"))) { send(out, 421, "text/plain", new byte[0], null); sock.close(); return; }
@@ -943,7 +948,12 @@ final class PhoneServer {
         h.append("Permissions-Policy: camera=(), microphone=(), geolocation=()\r\n");
         if (setCookie != null) h.append("Set-Cookie: ").append(setCookie).append("\r\n");
         h.append("Connection: close\r\n\r\n");
-        out.write(h.toString().getBytes("UTF-8"));
-        out.write(body);
+        // en-tête et contenu en un seul envoi (un seul paquet pour les petites réponses)
+        byte[] head = h.toString().getBytes("UTF-8");
+        byte[] all = new byte[head.length + body.length];
+        System.arraycopy(head, 0, all, 0, head.length);
+        System.arraycopy(body, 0, all, head.length, body.length);
+        out.write(all);
+        out.flush();
     }
 }

@@ -141,19 +141,34 @@ function renderAmb() {
 }
 
 // ---- Télécommande : liste fermée de touches, la TV décide de ce qu'elle en fait
+// touches mises en file : aucun appui n'est perdu, et elles partent l'une après l'autre sans attendre
+const keyQueue = [];
 let keyBusy = false;
 const NEED_SERVICE = 'Active « Lumen télécommande » sur la TV : Paramètres › Accessibilité';
-async function press(k, quiet) {
+function press(k, quiet) {
   if (navigator.vibrate) navigator.vibrate(quiet ? 4 : 8);
+  // en défilement continu on ne garde que quelques appuis d'avance (sinon ça continuerait après)
+  if (quiet && keyQueue.length >= 2) return;
+  if (keyQueue.length >= 8) return;
+  keyQueue.push(k);
+  pumpKeys();
+}
+async function pumpKeys() {
   if (keyBusy) return;
   keyBusy = true;
-  try {
-    const r = await api('/api/key?k=' + k, {method: 'POST'});
-    const j = await r.json().catch(() => ({ok: r.ok}));
-    if (!j.ok) toast(j.sleep === false && j.service ? 'Veille : Android 9 minimum sur la TV'
-      : j.service && !j.dpad ? 'Flèches hors de Lumen : Android 13 minimum sur la TV' : NEED_SERVICE);
-  } catch (e) { /* toast déjà affiché */ }
-  finally { keyBusy = false; }
+  while (keyQueue.length) {
+    const k = keyQueue.shift();
+    try {
+      const r = await api('/api/key?k=' + k, {method: 'POST', keepalive: true});
+      const j = await r.json().catch(() => ({ok: r.ok}));
+      if (!j.ok) {
+        keyQueue.length = 0;
+        toast(j.sleep === false && j.service ? 'Veille : Android 9 minimum sur la TV'
+          : j.service && !j.dpad ? 'Flèches hors de Lumen : Android 13 minimum sur la TV' : NEED_SERVICE);
+      }
+    } catch (e) { keyQueue.length = 0; }
+  }
+  keyBusy = false;
 }
 // boutons hors du pavé ; ceux du pavé seulement au clavier (detail 0), le doigt passe par les gestes
 document.querySelectorAll('#remote [data-k]').forEach(b => b.addEventListener('click', e => {
@@ -260,6 +275,16 @@ $('nextBtn').addEventListener('click', () => act('/api/next', null, 'Fond suivan
 $('srcSel').addEventListener('change', e => act('/api/source?n=' + e.target.value, null, 'Fond : ' + e.target.selectedOptions[0].textContent));
 // ---- Texte : écrit en direct dans la recherche à l'écran (Lumen ou autre appli), Entrée valide
 let typeTimer = null, typeSent = '';
+// texte en direct : une seule requête à la fois ; pendant qu'elle part, on garde seulement la dernière
+// version tapée (jamais d'ancienne frappe qui arriverait après la nouvelle)
+let textBusy = false, textNext = null;
+async function sendLive(t) {
+  if (textBusy) { textNext = t; return; }
+  textBusy = true;
+  await sendText(t, false);
+  textBusy = false;
+  if (textNext !== null) { const n = textNext; textNext = null; sendLive(n); }
+}
 async function sendText(t, enter) {
   try {
     const r = await api('/api/text?live=1' + (enter ? '&enter=1' : ''), {method: 'POST', body: t, headers: {'Content-Type': 'text/plain'}});
@@ -273,8 +298,8 @@ $('typeText').addEventListener('input', () => {
   typeTimer = setTimeout(() => {
     const t = $('typeText').value.trim();
     if (t === typeSent) return;
-    typeSent = t; sendText(t, false);
-  }, 350);
+    typeSent = t; sendLive(t);
+  }, 160);
 });
 $('typeForm').addEventListener('submit', async e => {
   e.preventDefault();
