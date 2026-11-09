@@ -68,6 +68,7 @@ async function start() {
     if (!r.ok) { lost(); return; }
   }
   await load();
+  openWs();
   poll = setInterval(() => { if (!document.hidden && (tab === 'tv' || tab === 'opt')) load(); }, 5000);
   // signe de vie : sans lui pendant 45 s, la TV éteint sa pastille « téléphone connecté »
   setInterval(() => { if (alive && !document.hidden) api('/api/ping', {method: 'POST'}).catch(() => {}); }, 15000);
@@ -145,8 +146,33 @@ function renderAmb() {
 const keyQueue = [];
 let keyBusy = false;
 const NEED_SERVICE = 'Active « Lumen télécommande » sur la TV : Paramètres › Accessibilité';
+// ---- Connexion permanente avec la TV (WebSocket) : les appuis partent instantanément, sans
+// attendre la réponse du précédent. Si elle n'est pas disponible, on repasse par des requêtes.
+let ws = null, wsTry = 0;
+function openWs() {
+  if (!alive || ws) return;
+  try { ws = new WebSocket('ws://' + location.host + '/ws'); } catch (e) { ws = null; return; }
+  ws.onopen = () => { wsTry = 0; };
+  ws.onmessage = e => {
+    if (e.data === 'p') return;
+    let j; try { j = JSON.parse(e.data); } catch (x) { return; }
+    if (j.for === 'k') keyError(j);
+    else if (j.for === 't' && !j.ok) toast(j.nofield ? 'Ouvre d’abord la recherche de l’appli sur la TV' : j.service === false ? NEED_SERVICE : 'Impossible');
+  };
+  ws.onclose = () => { ws = null; if (alive) setTimeout(openWs, Math.min(5000, 400 * (++wsTry))); };
+  ws.onerror = () => { try { ws.close(); } catch (x) { } };
+}
+setInterval(() => { if (ws && ws.readyState === 1 && !document.hidden) ws.send('p'); }, 20000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) openWs(); });
+const wsReady = () => ws && ws.readyState === 1;
+function keyError(j) {
+  toast(j.sleep === false && j.service ? 'Veille : Android 9 minimum sur la TV'
+    : j.service && !j.dpad ? 'Flèches hors de Lumen : Android 13 minimum sur la TV' : NEED_SERVICE);
+}
+
 function press(k, quiet) {
   if (navigator.vibrate) navigator.vibrate(quiet ? 4 : 8);
+  if (wsReady()) { ws.send('k ' + k); return; } // instantané
   // en défilement continu on ne garde que quelques appuis d'avance (sinon ça continuerait après)
   if (quiet && keyQueue.length >= 2) return;
   if (keyQueue.length >= 8) return;
@@ -161,11 +187,7 @@ async function pumpKeys() {
     try {
       const r = await api('/api/key?k=' + k, {method: 'POST', keepalive: true});
       const j = await r.json().catch(() => ({ok: r.ok}));
-      if (!j.ok) {
-        keyQueue.length = 0;
-        toast(j.sleep === false && j.service ? 'Veille : Android 9 minimum sur la TV'
-          : j.service && !j.dpad ? 'Flèches hors de Lumen : Android 13 minimum sur la TV' : NEED_SERVICE);
-      }
+      if (!j.ok) { keyQueue.length = 0; keyError(j); }
     } catch (e) { keyQueue.length = 0; }
   }
   keyBusy = false;
@@ -279,6 +301,7 @@ let typeTimer = null, typeSent = '';
 // version tapée (jamais d'ancienne frappe qui arriverait après la nouvelle)
 let textBusy = false, textNext = null;
 async function sendLive(t) {
+  if (wsReady()) { ws.send('t0 ' + t); return; } // instantané, toujours dans l'ordre
   if (textBusy) { textNext = t; return; }
   textBusy = true;
   await sendText(t, false);
@@ -299,7 +322,7 @@ $('typeText').addEventListener('input', () => {
     const t = $('typeText').value.trim();
     if (t === typeSent) return;
     typeSent = t; sendLive(t);
-  }, 160);
+  }, wsReady() ? 60 : 160);
 });
 $('typeForm').addEventListener('submit', async e => {
   e.preventDefault();

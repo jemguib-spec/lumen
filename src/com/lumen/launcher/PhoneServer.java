@@ -154,9 +154,10 @@ final class PhoneServer {
             return null;
         }
         hostHeader = ip.getHostAddress() + ":" + server.getLocalPort();
+        wsSrc = " ws://" + hostHeader; // la page peut ouvrir sa connexion permanente vers la TV, et nulle part ailleurs
         // 4 requêtes traitées en même temps : une connexion ouverte d'avance par le navigateur (et
         // restée muette) ne bloque plus les touches de la télécommande qui suivent
-        pool = new ThreadPoolExecutor(4, 4, 30, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(16));
+        pool = new ThreadPoolExecutor(6, 6, 30, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(16));
         pool.allowCoreThreadTimeOut(true);
         final ServerSocket s = server;
         final ThreadPoolExecutor p = pool;
@@ -184,6 +185,7 @@ final class PhoneServer {
         main.removeCallbacks(silentCheck);
         setShown(false); // même si les sessions viennent d'être révoquées (bouton « Déconnecter »)
         try { if (server != null) server.close(); } catch (Exception ignored) { }
+        synchronized (wsOpen) { for (Socket s : wsOpen) try { s.close(); } catch (Exception ignored) { } wsOpen.clear(); }
         server = null;
         if (pool != null) pool.shutdownNow();
         pool = null;
@@ -211,6 +213,67 @@ final class PhoneServer {
     private static String decode(String s) {
         if (s == null) return null;
         try { return java.net.URLDecoder.decode(s, "UTF-8"); } catch (Exception e) { return null; }
+    }
+
+    // ------------------------------------------------------------------ WebSocket (télécommande rapide)
+
+    private final java.util.Set<Socket> wsOpen = new java.util.HashSet<>();
+    private static volatile String wsSrc = "";
+
+    /**
+     * Connexion permanente : même session (cookie) que le reste, page de la TV uniquement (Origin),
+     * 2 connexions au plus. Messages : « k up » (touche), « t0 texte » / « t1 texte » (texte en
+     * direct / avec Entrée), « p » (signe de vie). Réponse seulement en cas de problème.
+     */
+    private void webSocket(HttpRequest r, InputStream in, OutputStream out, Socket sock) throws Exception {
+        String sid = r.cookie(COOKIE);
+        String key = r.header("sec-websocket-key");
+        boolean upgrade = r.header("upgrade") != null && r.header("upgrade").equalsIgnoreCase("websocket");
+        boolean sameOrigin = ("http://" + hostHeader).equals(r.header("origin"));
+        if (!upgrade || !sameOrigin || !WsFrames.validKey(key) || !auth.check(sid)) { send(out, 403, "text/plain", new byte[0], null); return; }
+        synchronized (wsOpen) {
+            if (wsOpen.size() >= 2) { send(out, 429, "text/plain", new byte[0], null); return; }
+            wsOpen.add(sock);
+        }
+        try {
+            String h = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: "
+                    + WsFrames.accept(key) + "\r\n\r\n";
+            out.write(h.getBytes("UTF-8"));
+            out.flush();
+            sock.setSoTimeout(60_000); // le téléphone donne signe de vie toutes les 20 s
+            setShown(true);
+            while (true) {
+                Object[] f = WsFrames.read(in);
+                int op = (Integer) f[0];
+                byte[] data = (byte[]) f[1];
+                if (op == WsFrames.CLOSE) { try { WsFrames.send(out, WsFrames.CLOSE, new byte[0]); } catch (Exception ignored) { } break; }
+                if (op == WsFrames.PING) { WsFrames.send(out, WsFrames.PONG, data); continue; }
+                if (op != WsFrames.TEXT) continue;
+                if (!auth.check(sid)) break; // session terminée (déconnexion) : on coupe
+                touch();
+                setShown(true);
+                String m = new String(data, "UTF-8");
+                if (m.equals("p")) { WsFrames.sendText(out, "p"); continue; }
+                if (!keyLimiter.allow(System.currentTimeMillis())) continue;
+                String reply = null;
+                if (m.startsWith("k ")) {
+                    final String k = m.substring(2).trim();
+                    if (!KEYS.contains(k)) continue;
+                    reply = onMain(new Callable<String>() { @Override public String call() { return host.phoneKey(k); } });
+                    if (reply != null && !reply.contains("\"ok\":false")) reply = null;
+                    else if (reply != null) reply = reply.replaceFirst("\\{", "{\"for\":\"k\",");
+                } else if (m.startsWith("t0 ") || m.startsWith("t1 ") || m.equals("t0") || m.equals("t1")) {
+                    String body = m.length() > 3 ? m.substring(3) : "";
+                    reply = text(body.getBytes("UTF-8"), true, m.charAt(1) == '1');
+                    if (reply != null && !reply.contains("\"ok\":false")) reply = null;
+                    else if (reply != null) reply = reply.replaceFirst("\\{", "{\"for\":\"t\",");
+                }
+                if (reply != null) WsFrames.sendText(out, reply);
+            }
+        } catch (Exception ignored) {
+        } finally {
+            synchronized (wsOpen) { wsOpen.remove(sock); }
+        }
     }
 
     private void touch() {
@@ -287,6 +350,9 @@ final class PhoneServer {
         if (!post && p.equals("/app.css")) { send(out, 200, "text/css; charset=utf-8", asset("phone.css"), null); return; }
 
         // toute requête d'API exige l'en-tête X-Lumen (une page d'un autre site ne peut pas l'ajouter sans autorisation)
+        // connexion permanente de la télécommande (WebSocket) : chaque appui part aussitôt
+        if (!post && p.equals("/ws")) { webSocket(r, in, out, sock); return; }
+
         if (!"1".equals(r.header("x-lumen"))) { send(out, 403, "text/plain", new byte[0], null); return; }
 
         if (post && p.equals("/api/session")) {
@@ -944,7 +1010,7 @@ final class PhoneServer {
         h.append("Cross-Origin-Opener-Policy: same-origin\r\n");
         h.append("Cross-Origin-Resource-Policy: same-origin\r\n");
         h.append("Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; "
-                + "connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'\r\n");
+                + "connect-src 'self'" + wsSrc + "; base-uri 'none'; form-action 'none'; frame-ancestors 'none'\r\n");
         h.append("Permissions-Policy: camera=(), microphone=(), geolocation=()\r\n");
         if (setCookie != null) h.append("Set-Cookie: ").append(setCookie).append("\r\n");
         h.append("Connection: close\r\n\r\n");

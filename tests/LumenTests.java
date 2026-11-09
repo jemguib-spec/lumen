@@ -224,6 +224,23 @@ public class LumenTests {
             catch (java.io.IOException e) { refused = true; }
             check("HA : redirection jamais suivie", refused);
         } catch (Exception e) { check("HA : réponses HTTP lues", false); }
+        try {
+            check("WebSocket : clé d'acceptation (exemple de la RFC 6455)", "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=".equals(WsFrames.accept("dGhlIHNhbXBsZSBub25jZQ==")));
+            check("WebSocket : clé du navigateur vérifiée", WsFrames.validKey("dGhlIHNhbXBsZSBub25jZQ==") && !WsFrames.validKey("x\r\nEvil: 1") && !WsFrames.validKey(null));
+            // trame masquée « k up » (comme l'envoie le navigateur)
+            byte[] msg = "k up".getBytes("UTF-8"), mask = {1, 2, 3, 4};
+            byte[] fr = new byte[2 + 4 + msg.length];
+            fr[0] = (byte) 0x81; fr[1] = (byte) (0x80 | msg.length);
+            System.arraycopy(mask, 0, fr, 2, 4);
+            for (int i = 0; i < msg.length; i++) fr[6 + i] = (byte) (msg[i] ^ mask[i & 3]);
+            Object[] got = WsFrames.read(new java.io.ByteArrayInputStream(fr));
+            check("WebSocket : trame masquée lue", (Integer) got[0] == WsFrames.TEXT && "k up".equals(new String((byte[]) got[1], "UTF-8")));
+            boolean refused = false;
+            try { WsFrames.read(new java.io.ByteArrayInputStream(new byte[]{(byte) 0x81, 4, 'k', ' ', 'u', 'p'})); } catch (java.io.IOException e) { refused = true; }
+            check("WebSocket : trame non masquée refusée", refused);
+            byte[] out = WsFrames.frame(WsFrames.TEXT, "ok".getBytes("UTF-8"));
+            check("WebSocket : trame de la TV", out.length == 4 && (out[0] & 255) == 0x81 && out[1] == 2);
+        } catch (Exception e) { check("WebSocket", false); }
         check("TMDB : clés acceptées", TmdbPolicy.validKey("0123456789abcdef0123456789abcdef")
                 && TmdbPolicy.validKey("eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIxMjM0NTY3ODkwYWJjZGVmIn0.abcdefghijklmnopqrstu-_")
                 && !TmdbPolicy.validKey("abc") && !TmdbPolicy.validKey("0123456789abcdef0123456789abcdeG")
