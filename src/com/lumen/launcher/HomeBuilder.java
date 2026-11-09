@@ -238,6 +238,7 @@ final class HomeBuilder {
 
     /** Écran de démarrage : le mot « lumen » apparaît puis s'efface pendant que le fond arrive. */
     void showSplash() {
+        a.splashing = true;
         final FrameLayout splash = new FrameLayout(a);
         splash.setBackgroundColor(Color.BLACK);
         final TextView word = a.text(84, "sans-serif-thin", 0xFFFFFFFF);
@@ -270,7 +271,11 @@ final class HomeBuilder {
             @Override public void run() {
                 word.animate().alpha(0f).setStartDelay(500).setDuration(600).start();
                 splash.animate().alpha(0f).setStartDelay(800).setDuration(900).withEndAction(new Runnable() {
-                    @Override public void run() { a.root.removeView(splash); }
+                    @Override public void run() {
+                        a.root.removeView(splash);
+                        a.splashing = false;
+                        WhoPage.tryShow(a); // « Qui regarde ? » juste après l'écran « lumen »
+                    }
                 }).start();
             }
         }).start();

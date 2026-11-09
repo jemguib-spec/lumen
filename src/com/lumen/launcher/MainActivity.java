@@ -165,6 +165,8 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
 
     /** Lumen est à l'écran (au premier plan). */
     boolean resumedNow;
+    /** Écran « lumen » du démarrage en cours. */
+    boolean splashing;
 
     @Override protected void onResume() {
         super.onResume();
@@ -178,7 +180,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         // tout ce qui n'est pas visible tout de suite attend la première image (démarrage plus rapide)
         h.removeCallbacks(afterShown);
         h.postDelayed(afterShown, firstResume ? 900 : 150);
-        WhoPage.maybeShow(this, firstResume ? 2600 : 350); // après l'écran « lumen » du démarrage
+        h.postDelayed(new Runnable() { @Override public void run() { WhoPage.tryShow(MainActivity.this); } }, 400);
         firstResume = false;
         perf.setOn(prefs.showPerf());
         fx.setRunning(true);
@@ -241,6 +243,8 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         stopMoving();
+        // « Qui regarde ? » reste affichée : au démarrage, Android rouvre souvent Lumen plusieurs fois
+        if (WhoPage.isShowing(this)) return;
         closeOverlay(false);
         if (appsOpen) closeApps(false);
         for (HorizontalScrollView hs : rowScrolls) hs.smoothScrollTo(0, 0);
@@ -1225,7 +1229,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     private final BroadcastReceiver screenOn = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) {
             WhoPage.tvWoke();
-            if (resumedNow) WhoPage.maybeShow(MainActivity.this, 350);
+            WhoPage.tryShow(MainActivity.this);
         }
     };
 

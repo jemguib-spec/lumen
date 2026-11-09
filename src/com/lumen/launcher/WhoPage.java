@@ -23,37 +23,59 @@ import java.util.Locale;
 final class WhoPage {
     private WhoPage() { }
 
-    /** Couleurs douces des pastilles, une par profil (selon son numéro). */
-    private static final int[] COLORS = {0xFF5E8BFF, 0xFFFF7A6B, 0xFF4CC9A6, 0xFFF5B04C, 0xFFB57BFF, 0xFFFF6FAE, 0xFF5BC0EB, 0xFFA3C46A};
-
-    /** Déjà proposée depuis le démarrage de Lumen (une reconstruction de l'écran ne la remontre pas). */
-    private static boolean shownSinceStart;
-    /** Heure du dernier réveil de la TV : la page est proposée si Lumen revient à l'écran dans les 10 min. */
-    private static long wokeAt;
+    /**
+     * À proposer dès que possible : vrai au lancement de Lumen (nouveau processus), et quand la TV
+     * se rallume. Reste en attente tant que la page n'a pas pu s'afficher : au démarrage, Android
+     * rouvre souvent Lumen plusieurs fois de suite, et Lumen n'est pas toujours à l'écran à l'instant voulu.
+     */
+    private static boolean pending = true;
+    /** Réveil de la TV (0 : lancement de Lumen) ; au-delà de 10 min sans retour sur Lumen, on oublie. */
+    private static long pendingSince;
     private static final long WAKE_WINDOW = 10 * 60_000L;
+    private static FrameLayout showing;
+    private static int tries;
 
     /** La TV vient de se rallumer. */
-    static void tvWoke() { wokeAt = android.os.SystemClock.elapsedRealtime(); }
-
-    /** Au démarrage ou au réveil de la TV : la page, s'il y a plusieurs profils. */
-    static void maybeShow(final MainActivity a, long delay) {
-        boolean start = !shownSinceStart;
-        boolean wake = wokeAt > 0 && android.os.SystemClock.elapsedRealtime() - wokeAt < WAKE_WINDOW;
-        shownSinceStart = true;
-        wokeAt = 0;
-        // réglage « Au démarrage » : demander (par défaut) ou reprendre le dernier profil
-        if (!(start || wake) || !a.prefs.hasProfiles() || !a.prefs.askProfileAtStart()) return;
-        a.h.postDelayed(new Runnable() {
-            @Override public void run() {
-                if (a.isFinishing() || !a.resumedNow || a.ambiance != null) return;
-                if (a.ambientOn) a.exitAmbient(false);
-                show(a, false);
-            }
-        }, delay);
+    static void tvWoke() {
+        pending = true;
+        pendingSince = android.os.SystemClock.elapsedRealtime();
     }
 
+    /** La page « Qui regarde ? » est-elle à l'écran ? (la touche Accueil ne la ferme pas) */
+    static boolean isShowing(MainActivity a) { return showing != null && a.overlay == showing; }
+
+    /** Affiche la page si elle est attendue et que Lumen est prêt ; sinon réessaie un peu plus tard. */
+    static void tryShow(final MainActivity a) {
+        if (!pending) return;
+        if (!a.prefs.hasProfiles() || !a.prefs.askProfileAtStart()
+                || (pendingSince > 0 && android.os.SystemClock.elapsedRealtime() - pendingSince > WAKE_WINDOW)) {
+            pending = false;
+            return;
+        }
+        if (a.isFinishing() || !a.resumedNow) return; // onResume la redemandera
+        if (a.splashing || a.overlay != null || a.ambiance != null) {
+            // écran « lumen », panneau ou ambiance en cours : on regarde de nouveau dans un instant
+            a.h.removeCallbacks(retry);
+            retryOn = a;
+            if (tries++ < 40) a.h.postDelayed(retry, 500);
+            return;
+        }
+        pending = false;
+        tries = 0;
+        if (a.ambientOn) a.exitAmbient(false);
+        show(a, false);
+    }
+
+    private static MainActivity retryOn;
+    private static final Runnable retry = new Runnable() {
+        @Override public void run() { if (retryOn != null) tryShow(retryOn); }
+    };
+
     static void show(final MainActivity a, boolean withManage) {
-        final FrameLayout o = a.openOverlay(null);
+        final FrameLayout o = a.openOverlay(new Runnable() {
+            @Override public void run() { showing = null; }
+        });
+        showing = o;
         // fond presque opaque : le fond d'écran transparaît à peine
         View veil = new View(a);
         veil.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xE6050608, 0xF20A0B12}));
@@ -144,17 +166,16 @@ final class WhoPage {
         box.setPadding(a.u(18), a.u(18), a.u(18), 0); // place pour l'agrandissement et l'anneau
 
         final int size = a.u(176);
-        final TextView disc = a.text(72, "sans-serif-light", 0xFFFFFFFF);
+        // monochrome comme le reste de Lumen : pastille de verre, initiale blanche ; sélectionnée,
+        // elle devient blanche avec l'initiale foncée (comme les boutons de l'accueil)
+        final TextView disc = a.text(68, "sans-serif-light", 0xF2FFFFFF);
         disc.setText(initial(p.name));
         disc.setGravity(Gravity.CENTER);
         final GradientDrawable bg = new GradientDrawable();
         bg.setShape(GradientDrawable.OVAL);
-        int c = COLORS[Math.abs(p.id) % COLORS.length];
-        bg.setColors(new int[]{c, darker(c)});
-        bg.setGradientType(GradientDrawable.LINEAR_GRADIENT);
-        bg.setOrientation(GradientDrawable.Orientation.TL_BR);
+        bg.setColor(0x1FFFFFFF);
+        bg.setStroke(Math.max(1, a.u(2)), 0x40FFFFFF);
         disc.setBackground(bg);
-        disc.setElevation(a.u(6));
         box.addView(disc, new LinearLayout.LayoutParams(size, size));
 
         final TextView name = a.text(28, "sans-serif", 0x99FFFFFF);
@@ -170,8 +191,10 @@ final class WhoPage {
                 if (f) Sounds.get(a).tick();
                 disc.animate().scaleX(f ? 1.12f : 1f).scaleY(f ? 1.12f : 1f).setDuration(240)
                         .setInterpolator(new DecelerateInterpolator(2f)).start();
-                bg.setStroke(f ? a.u(5) : 0, 0xFFF5F5F7);
-                disc.setElevation(f ? a.u(24) : a.u(6));
+                bg.setColor(f ? 0xFFF5F5F7 : 0x1FFFFFFF);
+                bg.setStroke(Math.max(1, a.u(2)), f ? 0xFFF5F5F7 : 0x40FFFFFF);
+                disc.setTextColor(f ? 0xFF111216 : 0xF2FFFFFF);
+                disc.setElevation(f ? a.u(20) : 0);
                 name.setTextColor(f ? 0xFFFFFFFF : 0x99FFFFFF);
             }
         });
@@ -214,10 +237,5 @@ final class WhoPage {
         if (name == null || name.isEmpty()) return "?";
         int cp = name.codePointAt(0);
         return new String(Character.toChars(cp)).toUpperCase(Locale.FRANCE);
-    }
-
-    private static int darker(int c) {
-        int r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
-        return 0xFF000000 | ((int) (r * 0.72f) << 16) | ((int) (g * 0.72f) << 8) | (int) (b * 0.72f);
     }
 }
