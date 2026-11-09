@@ -224,6 +224,20 @@ public class LumenTests {
             catch (java.io.IOException e) { refused = true; }
             check("HA : redirection jamais suivie", refused);
         } catch (Exception e) { check("HA : réponses HTTP lues", false); }
+        check("recherche : début de mot et initiales", SmartSearch.score("YouTube Music", "mus") > 0 && SmartSearch.score("YouTube Music", "ytm") > 0);
+        check("recherche : fautes de frappe tolérées", SmartSearch.score("Netflix", "netflx") > 0 && SmartSearch.score("Disney+", "disnay") > 0
+                && SmartSearch.score("Netflix", "zzz") == 0);
+        check("recherche : classement (exact > début > milieu > faute)", SmartSearch.score("Plex", "plex") > SmartSearch.score("Plexamp", "plex")
+                && SmartSearch.score("Prime Video", "prime") > SmartSearch.score("Amazon Prime Video", "prime")
+                && SmartSearch.score("Netflix", "net") > SmartSearch.score("Netflix", "netflx"));
+        check("recherche : + = plus", SmartSearch.score("CANAL+", "canal plus") >= 900 && SmartSearch.score("Disney+", "disney") > 0);
+        java.util.List<String> labels = java.util.Arrays.asList("Netflix", "Plex", "CANAL+", "Prime Video");
+        Object[] at = SmartSearch.appAndTitle("plex Dune", labels);
+        check("recherche : « plex Dune » → Dune dans Plex", at != null && (Integer) at[0] == 1 && "Dune".equals(at[1]));
+        Object[] at2 = SmartSearch.appAndTitle("canal+ Ligue 1", labels);
+        Object[] at3 = SmartSearch.appAndTitle("prime video The Boys", labels);
+        check("recherche : nom d'appli composé", at2 != null && "Ligue 1".equals(at2[1]) && at3 != null && "The Boys".equals(at3[1]));
+        check("recherche : pas d'appli devant le titre", SmartSearch.appAndTitle("dune", labels) == null && SmartSearch.appAndTitle("netflix", labels) == null);
         check("recherche : réglages trouvés sans accents", !SettingsIndex.search("veille", 6).isEmpty()
                 && SettingsIndex.search("stockage", 6).get(0).page == SettingsIndex.STORAGE
                 && !SettingsIndex.search("ecran de nuit", 6).isEmpty() && SettingsIndex.search("x", 6).isEmpty()

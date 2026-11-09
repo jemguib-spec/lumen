@@ -95,6 +95,7 @@ final class AppsPage {
         if (search == null) return;
         search.setShowSoftInputOnFocus(true);
         search.requestFocus();
+        if (search.length() == 0 && sections != null) fillApps("", null); // recherches récentes
         try {
             android.view.inputmethod.InputMethodManager im = (android.view.inputmethod.InputMethodManager) a.getSystemService(Context.INPUT_METHOD_SERVICE);
             if (im != null) im.showSoftInput(search, 0);
@@ -180,7 +181,7 @@ final class AppsPage {
     private android.widget.EditText searchField() {
         final android.widget.EditText e = new android.widget.EditText(a);
         e.setSingleLine(true);
-        e.setHint("Rechercher une appli");
+        e.setHint("Appli, film, réglage, lumière…");
         e.setHintTextColor(0x80FFFFFF);
         e.setTextColor(0xF5FFFFFF);
         e.setTextSize(TypedValue.COMPLEX_UNIT_PX, 26 * a.unit);
@@ -211,7 +212,10 @@ final class AppsPage {
         e.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override public boolean onEditorAction(TextView v, int action, KeyEvent ev) {
                 hideKeyboard(e);
-                a.focusFirstApp(); // OK sur le clavier : on va directement au premier résultat
+                // Entrée : lance directement le meilleur résultat, sinon va au premier
+                View b = bestView;
+                if (b != null && b.isAttachedToWindow()) { b.requestFocus(); b.performClick(); }
+                else { remember(q0()); a.focusFirstApp(); }
                 return true;
             }
         });
@@ -224,6 +228,87 @@ final class AppsPage {
             if (im != null) im.hideSoftInputFromWindow(v.getWindowToken(), 0);
         } catch (Exception ignored) { }
     }
+
+    /** Premier résultat (lancé par Entrée sur le clavier). */
+    private View bestView;
+
+    private String q0() { return search == null ? "" : search.getText().toString().trim(); }
+
+    /** Applis classées par pertinence, avec un petit bonus pour celles ouvertes récemment. */
+    private List<AppRepo.App> rankApps(List<AppRepo.App> apps, String q) {
+        final java.util.Map<String, Integer> score = new java.util.HashMap<>();
+        List<String[]> rec = a.prefs.recents();
+        List<AppRepo.App> out = new ArrayList<>();
+        for (AppRepo.App x : apps) {
+            int s = SmartSearch.score(x.label, q);
+            if (s <= 0) continue;
+            for (int i = 0; i < rec.size() && i < 8; i++) if (rec.get(i)[0].equals(x.key)) { s += 40 - i * 4; break; }
+            score.put(x.key, s);
+            out.add(x);
+        }
+        java.util.Collections.sort(out, new java.util.Comparator<AppRepo.App>() {
+            @Override public int compare(AppRepo.App x, AppRepo.App y) { return score.get(y.key) - score.get(x.key); }
+        });
+        return out;
+    }
+
+    /** Ambiances par nom ou par idée (« feu », « mer », « poissons », « étoiles »…). */
+    private static final String[] MOOD_WORDS = {"feu cheminee bois flamme hiver", "pluie orage averse", "aquarium poisson eau",
+            "nuit etoile ciel cosmos", "vague mer ocean plage", "neige flocon hiver"};
+
+    private List<Integer> ambianceMatches(String q) {
+        List<Integer> out = new ArrayList<>();
+        String f = SmartSearch.norm(q);
+        if (f.length() < 3) return out;
+        for (int k = 0; k < Online.COSY_NAMES.length; k++) {
+            boolean hit = SmartSearch.score(Online.COSY_NAMES[k], q) > 0;
+            if (!hit && k < MOOD_WORDS.length) for (String w : MOOD_WORDS[k].split(" ")) if (w.startsWith(f) || (f.length() >= 4 && SmartSearch.score(w, f) >= 400)) { hit = true; break; }
+            if (hit) out.add(k);
+        }
+        return out;
+    }
+
+    /** Appareils Home Assistant qui correspondent (états gardés 60 s, relus en arrière-plan). */
+    private List<HomeAssistant.Entity> houseMatches(final String q) {
+        List<HomeAssistant.Entity> out = new ArrayList<>();
+        if (!a.prefs.haConfigured() || SmartSearch.norm(q).length() < 3) return out;
+        List<HomeAssistant.Entity> all = HaStates.cached();
+        if (all == null || HaStates.stale()) {
+            HaStates.refresh(a.prefs.haUrl(), a.prefs.haToken(), new Runnable() {
+                @Override public void run() {
+                    a.h.post(new Runnable() {
+                        @Override public void run() { if (sections != null && q.equals(q0())) fillApps(q, null); }
+                    });
+                }
+            });
+        }
+        if (all == null) return out;
+        final java.util.Map<String, Integer> sc = new java.util.HashMap<>();
+        for (HomeAssistant.Entity e : all) {
+            int s = SmartSearch.score(e.name, q);
+            if (s <= 0) s = SmartSearch.score(HomeAssistant.domainName(e.domain), q) / 2;
+            if (s > 0) { sc.put(e.id, s); out.add(e); }
+        }
+        java.util.Collections.sort(out, new java.util.Comparator<HomeAssistant.Entity>() {
+            @Override public int compare(HomeAssistant.Entity x, HomeAssistant.Entity y) { return sc.get(y.id) - sc.get(x.id); }
+        });
+        return out.size() > 5 ? out.subList(0, 5) : out;
+    }
+
+    private void toggleHouse(final HomeAssistant.Entity e) {
+        final String url = a.prefs.haUrl(), token = a.prefs.haToken();
+        new Thread(new Runnable() {
+            @Override public void run() {
+                String err = null;
+                try { HomeAssistant.call(url, token, e); } catch (Exception ex) { err = HomeAssistant.human(ex); }
+                final String m = err == null ? e.name : err;
+                a.h.post(new Runnable() { @Override public void run() { a.showNotice(m); HaStates.invalidate(); } });
+            }
+        }, "lumen-ha").start();
+    }
+
+    /** Recherches récentes (proposées quand le champ est vide). */
+    private void remember(String q) { if (q != null && q.trim().length() >= 2) a.prefs.addSearch(q.trim()); }
 
     /** Une appli (ou la recherche Google TV) capable de chercher un titre. */
     static final class SearchTarget {
@@ -311,18 +396,59 @@ final class AppsPage {
 
         String q = query == null ? "" : query.trim();
         if (!q.isEmpty()) {
-            List<AppRepo.App> found = new ArrayList<>();
-            for (AppRepo.App x : apps) if (AppCategory.matches(x.label, q)) found.add(x);
-            // recherche universelle : applis, puis épisodes en cours, puis réglages
+            bestView = null;
+            final List<AppRepo.App> found = rankApps(apps, q);
+            // « plex dune » : chercher directement le titre dans l'appli nommée
+            List<String> labels = new ArrayList<>();
+            for (AppRepo.App x : apps) labels.add(x.label);
+            Object[] at = SmartSearch.appAndTitle(q, labels);
+            List<SearchTarget> targets = searchTargets(hidden);
+            if (at != null) {
+                final AppRepo.App app = apps.get((Integer) at[0]);
+                final String title = (String) at[1];
+                SearchTarget t0 = null;
+                for (SearchTarget t : targets) if (app.pkg.equals(t.pkg)) t0 = t;
+                final SearchTarget direct = t0;
+                sections.addView(sectionLabel("Meilleur résultat"));
+                LinearLayout best = a.iconRow(Glyph.SEARCH, "Chercher « " + title + " » dans " + app.label,
+                        new MainActivity.Value() { @Override public String get() { return direct != null ? "Entrée" : "Ouvrir l'appli"; } },
+                        new View.OnClickListener() {
+                            @Override public void onClick(View v) {
+                                remember(q0());
+                                if (direct != null) searchIn(direct, title); else a.launchAnimated(app, null);
+                            }
+                        }, false);
+                resultRow(best);
+                bestView = best;
+            }
+            // recherche universelle : applis, épisodes en cours, maison, ambiances, puis réglages
             List<WatchNext.Entry> shows = a.shelf == null ? new ArrayList<WatchNext.Entry>() : a.shelf.search(q, 6);
             List<SettingsIndex.Entry> sets = SettingsIndex.search(q, 6);
-            boolean none = found.isEmpty() && shows.isEmpty() && sets.isEmpty();
+            List<HomeAssistant.Entity> house = houseMatches(q);
+            List<Integer> moods = ambianceMatches(q);
+            boolean none = at == null && found.isEmpty() && shows.isEmpty() && sets.isEmpty() && house.isEmpty() && moods.isEmpty();
             if (!found.isEmpty() || none)
-                sections.addView(sectionLabel(none ? "Rien ne correspond" : found.size() + (found.size() > 1 ? " applis" : " appli")));
+                sections.addView(sectionLabel(none ? "Rien ne correspond · essaie « Chercher dans… » ci-dessous" : found.size() + (found.size() > 1 ? " applis" : " appli")));
             LinearLayout line = null;
             for (int i = 0; i < found.size(); i++) {
                 if (i % cols == 0) { line = appsLine(); sections.addView(line); }
                 addAppCell(line, found.get(i), tw, th, bn, favs, i % cols != cols - 1 && i < found.size() - 1 ? gap : 0, focusKey, focus, first);
+                if (bestView == null && line != null && line.getChildCount() > 0 && SmartSearch.score(found.get(i).label, q) >= 700)
+                    bestView = line.getChildAt(line.getChildCount() - 1);
+            }
+            if (!house.isEmpty()) {
+                sections.addView(sectionLabel("Maison"));
+                for (final HomeAssistant.Entity e : house) {
+                    resultRow(a.iconRow(Glyph.HOME, e.name, new MainActivity.Value() { @Override public String get() { return HomeAssistant.label(e); } },
+                            new View.OnClickListener() { @Override public void onClick(View v) { remember(q0()); toggleHouse(e); } }, false));
+                }
+            }
+            if (!moods.isEmpty()) {
+                sections.addView(sectionLabel("Ambiances"));
+                for (final int k : moods) {
+                    resultRow(a.iconRow(Glyph.SPARK, Online.COSY_NAMES[k], new MainActivity.Value() { @Override public String get() { return "Lancer l'ambiance"; } },
+                            new View.OnClickListener() { @Override public void onClick(View v) { remember(q0()); a.phoneAmbiance(k); } }, false));
+                }
             }
             if (!shows.isEmpty()) {
                 sections.addView(sectionLabel("En cours"));
@@ -341,13 +467,12 @@ final class AppsPage {
                 }
             }
             // chercher le film ou la série directement dans les applis (Canal+, Plex, Netflix…)
-            List<SearchTarget> targets = searchTargets(hidden);
             if (!targets.isEmpty() && q.length() >= 2) {
                 sections.addView(sectionLabel("Chercher « " + q + " » dans…"));
                 for (final SearchTarget t : targets) {
                     final String qq = q;
                     resultRow(a.iconRow(Glyph.SEARCH, t.label, new MainActivity.Value() { @Override public String get() { return t.hint; } },
-                            new View.OnClickListener() { @Override public void onClick(View v) { searchIn(t, qq); } }, false));
+                            new View.OnClickListener() { @Override public void onClick(View v) { remember(qq); searchIn(t, qq); } }, false));
                 }
             }
             if (!sets.isEmpty()) {
@@ -361,6 +486,18 @@ final class AppsPage {
             return focus[0];
         }
 
+        // champ de recherche sélectionné et vide : les recherches récentes, prêtes à relancer
+        if (search != null && search.hasFocus() && !a.prefs.searches().isEmpty()) {
+            sections.addView(sectionLabel("Recherches récentes"));
+            for (final String r : a.prefs.searches()) {
+                resultRow(a.iconRow(Glyph.SEARCH, r, null, new View.OnClickListener() {
+                    @Override public void onClick(View v) { search.setText(r); search.setSelection(search.length()); }
+                }, false));
+            }
+            resultRow(a.iconRow(Glyph.TRASH, "Effacer l'historique", null, new View.OnClickListener() {
+                @Override public void onClick(View v) { a.prefs.clearSearches(); fillApps("", null); }
+            }, false));
+        }
         // Habitudes : ce que tu ouvres le plus à ce moment de la journée (calculé sur la TV)
         if (a.prefs.habitsOn()) {
             int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);

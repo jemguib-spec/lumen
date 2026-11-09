@@ -113,6 +113,10 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 
 ## Recherche
 - Bouton **loupe** en haut de l'accueil (ou la recherche de « Toutes les applications ») : applis, épisodes en cours, réglages, et **Chercher « … » dans…** : la recherche de la TV (Google TV, toutes les applis d'un coup) et chaque appli qui accepte une recherche directe (Netflix, Plex, YouTube…). Une appli qui refuse la recherche directe s'ouvre simplement.
+- Recherche tolérante : sans accents ni majuscules, début d'un mot (« mus » → YouTube Music), initiales (« ytm »), fautes de frappe (« netflx »). Les applis que tu ouvres souvent passent devant.
+- « plex Dune », « netflix stranger things », « canal+ ligue 1 » : le nom d'une appli suivi d'un titre propose directement de chercher ce titre dans cette appli (Meilleur résultat).
+- Trouve aussi les appareils Home Assistant (« salon » → allumer/éteindre) et les ambiances (« feu », « mer », « pluie »).
+- Entrée sur le clavier lance le meilleur résultat. Champ vide : tes recherches récentes (effaçables).
 
 ## Stockage
 - Réglages › Système › Stockage (ou sur le téléphone : Plus › Stockage de la TV) : place prise par les photos, les vidéos de fond et celles des ambiances, avec de quoi vider chaque catégorie. Tes photos et vidéos envoyées du téléphone ne sont jamais effacées là.

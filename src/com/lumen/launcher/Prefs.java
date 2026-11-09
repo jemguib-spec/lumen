@@ -235,6 +235,21 @@ final class Prefs {
     int videoDiskGb() { return sp.getInt("video_disk_gb", 2); }
     void setVideoDiskGb(int g) { sp.edit().putInt("video_disk_gb", g).apply(); }
 
+    /** Recherches récentes (6 au plus, la plus récente d'abord) ; restent sur la TV. */
+    List<String> searches() {
+        List<String> out = new ArrayList<>();
+        for (String s : sp.getString("searches", "").split("\n")) if (!s.trim().isEmpty()) out.add(s);
+        return out;
+    }
+    void addSearch(String q) {
+        List<String> l = searches();
+        for (int i = l.size() - 1; i >= 0; i--) if (l.get(i).equalsIgnoreCase(q)) l.remove(i);
+        l.add(0, q.replace('\n', ' '));
+        while (l.size() > 6) l.remove(l.size() - 1);
+        sp.edit().putString("searches", TextUtils.join("\n", l)).apply();
+    }
+    void clearSearches() { sp.edit().remove("searches").apply(); }
+
     /** Applis lancées récemment : « clé|horodatage », la plus récente en premier. */
     List<String[]> recents() {
         List<String[]> out = new ArrayList<>();

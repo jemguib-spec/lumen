@@ -15,7 +15,32 @@ final class HaStates {
     private HaStates() { }
 
     static List<HomeAssistant.Entity> load(String base, String token) throws Exception {
-        return parseStates(HomeAssistant.request(base, token, "GET", "/api/states", null));
+        List<HomeAssistant.Entity> l = parseStates(HomeAssistant.request(base, token, "GET", "/api/states", null));
+        cache = l;
+        cacheTime = System.currentTimeMillis();
+        return l;
+    }
+
+    // dernier état connu (recherche : pas d'attente réseau à chaque lettre)
+    private static volatile List<HomeAssistant.Entity> cache;
+    private static volatile long cacheTime;
+    private static volatile boolean loading;
+
+    static List<HomeAssistant.Entity> cached() { return cache; }
+    static boolean stale() { return System.currentTimeMillis() - cacheTime > 60_000; }
+    static void invalidate() { cacheTime = 0; }
+
+    /** Relit les états en arrière-plan (une seule lecture à la fois), puis prévient. */
+    static void refresh(final String base, final String token, final Runnable done) {
+        if (loading) return;
+        loading = true;
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try { load(base, token); if (done != null) done.run(); }
+                catch (Exception ignored) { }
+                finally { loading = false; }
+            }
+        }, "lumen-ha-search").start();
     }
 
     /** Réponse de /api/states → appareils pilotables, triés par type puis par nom. */
