@@ -45,7 +45,8 @@ final class SettingsPanel {
         FrameLayout.LayoutParams cl = new FrameLayout.LayoutParams(a.u(760), ViewGroup.LayoutParams.MATCH_PARENT, Gravity.END);
         cl.topMargin = cl.bottomMargin = cl.rightMargin = a.u(48);
         o.addView(card, cl);
-        fillSettings(a, card);
+        page = ROOT;
+        page(a, card, ROOT);
     }
 
     /** Applique tout de suite un changement de fond (source, heure, rythme). */
@@ -57,7 +58,34 @@ final class SettingsPanel {
             a.showNotice("Téléchargement des photos en cours");
     }
 
-    static void fillSettings(final MainActivity a, final LinearLayout card) {
+    // ------------------------------------------------------------------ pages
+
+    static final int ROOT = 0, FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5,
+            ABOUT = 6, LICENCES = 7, CREDITS = 8, LICENCE_INTER = 9, CITIES = 10, HIDDEN = 11;
+    private static final String[] TITLES = {"Réglages", "Fond d'écran", "Accueil et applis", "Mode veille", "Ambiances",
+            "Système", "À propos", "Licences", "Crédits des fonds", "Police Inter", "Villes", "Applis masquées"};
+    private static final int[] PARENT = {ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, SYSTEME, SYSTEME, LICENCES, LICENCES, FOND, ACCUEIL};
+    private static boolean[] citiesChanged;
+    private static int page = ROOT, lastRubric = -1;
+    private static LinearLayout openCard;
+
+    static void fillSettings(final MainActivity a, final LinearLayout card) { page(a, card, ROOT); }
+
+    /** Retour (ou ◀) dans une sous-page : on remonte d'un niveau. false si on est déjà à l'accueil. */
+    static boolean back(MainActivity a) {
+        if (openCard == null || !openCard.isAttachedToWindow() || page == ROOT) return false;
+        if (page == CITIES && citiesChanged != null && citiesChanged[0]) a.online.refreshIfNeeded(Online.VIDEO, true);
+        page(a, openCard, PARENT[page]);
+        return true;
+    }
+
+    static boolean inSubPage() { return openCard != null && openCard.isAttachedToWindow() && page != ROOT; }
+
+    /** Cadre commun : titre (avec « ‹ » dans les sous-pages), liste qui défile, arrivée en glissant. */
+    private static LinearLayout frame(final MainActivity a, final LinearLayout card, int which) {
+        int from = page;
+        page = which;
+        openCard = card;
         card.removeAllViews();
         a.rowRefreshers.clear();
         ScrollView sv = new ScrollView(a);
@@ -68,28 +96,76 @@ final class SettingsPanel {
         LinearLayout col = new LinearLayout(a);
         col.setOrientation(LinearLayout.VERTICAL);
         col.setClipChildren(false);
-        col.setPadding(a.u(24), a.u(48), a.u(24), a.u(48));
+        col.setPadding(a.u(24), a.u(44), a.u(24), a.u(48));
         sv.addView(col);
         card.addView(sv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        TextView title = a.text(48, "sans-serif-light", 0xF5FFFFFF);
-        title.setText("Réglages");
-        title.setPadding(a.u(32), 0, 0, 0);
+        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
+        title.setText(which == ROOT ? TITLES[ROOT] : "‹  " + TITLES[which]);
+        title.setPadding(a.u(32), 0, 0, a.u(18));
         col.addView(title);
+        // glisse depuis la droite en entrant dans une sous-page, depuis la gauche en revenant
+        boolean deeper = which != ROOT && (from == ROOT || PARENT[which] == from);
+        col.setTranslationX(a.u(deeper ? 48 : -48));
+        col.setAlpha(0f);
+        col.animate().translationX(0).alpha(1f).setDuration(200).setInterpolator(new DecelerateInterpolator(2f)).start();
+        return col;
+    }
 
-        col.addView(a.listRow("Réglages depuis le téléphone", new MainActivity.Value() {
-            @Override public String get() { return a.phone.running() ? "Actif" : "QR code"; }
+    private static void focusFirst(LinearLayout col, View preferred) {
+        if (preferred != null) { preferred.requestFocus(); return; }
+        for (int i = 0; i < col.getChildCount(); i++) if (col.getChildAt(i).isFocusable()) { col.getChildAt(i).requestFocus(); return; }
+    }
+
+    /** Ligne de rubrique : nom, état actuel, et « › ». */
+    private static LinearLayout rubric(final MainActivity a, final LinearLayout card, String label, MainActivity.Value value, final int target) {
+        final MainActivity.Value v = value;
+        return a.listRow(label, new MainActivity.Value() {
+            @Override public String get() { return (v == null ? "" : v.get() + "   ") + "›"; }
         }, new View.OnClickListener() {
-            @Override public void onClick(View v) { PhonePanel.openPhonePanel(a); }
-        }), a.rowLp());
+            @Override public void onClick(View view) { lastRubric = target; page(a, card, target); }
+        });
+    }
 
-        col.addView(a.section("Fond d'écran"));
-        LinearLayout first = a.listRow("Source", new MainActivity.Value() {
+    static void page(final MainActivity a, final LinearLayout card, final int which) {
+        final LinearLayout col = frame(a, card, which);
+        View focus = null;
+        switch (which) {
+            case ROOT: {
+                LinearLayout[] rows = {
+                    rubric(a, card, "Fond d'écran", new MainActivity.Value() { @Override public String get() { return Prefs.SRC_NAMES[a.prefs.source()]; } }, FOND),
+                    rubric(a, card, "Accueil et applis", new MainActivity.Value() { @Override public String get() {
+                        int st = a.prefs.tileStyle(); return st == Prefs.TILE_WORD ? "Nom de l'appli" : st == Prefs.TILE_BANNER ? "Bannières" : "Icône et nom"; } }, ACCUEIL),
+                    rubric(a, card, "Mode veille", new MainActivity.Value() { @Override public String get() {
+                        int m = a.prefs.ambientMinutes(); return m <= 0 ? "Jamais" : m + " min"; } }, VEILLE),
+                    rubric(a, card, "Ambiances", null, AMBIANCES),
+                    null,
+                    rubric(a, card, "Système", new MainActivity.Value() { @Override public String get() {
+                        return a.updater.ready() != null ? "Mise à jour prête" : "Lumen " + a.updater.currentVersion(); } }, SYSTEME)};
+                int[] targets = {FOND, ACCUEIL, VEILLE, AMBIANCES, -2, SYSTEME};
+                for (int i = 0; i < rows.length; i++) {
+                    if (rows[i] == null) {
+                        col.addView(a.listRow("Réglages depuis le téléphone", new MainActivity.Value() {
+                            @Override public String get() { return a.phone.running() ? "Actif" : "QR code"; }
+                        }, new View.OnClickListener() {
+                            @Override public void onClick(View v) { PhonePanel.openPhonePanel(a); }
+                        }), a.rowLp());
+                        continue;
+                    }
+                    col.addView(rows[i], a.rowLp());
+                    if (targets[i] == lastRubric) focus = rows[i];
+                }
+                TextView foot = a.text(19, "sans-serif", 0x66FFFFFF);
+                foot.setText("Lumen " + a.updater.currentVersion() + " · aucune publicité, aucune télémétrie");
+                foot.setPadding(a.u(32), a.u(36), a.u(32), 0);
+                col.addView(foot);
+                break;
+            }
+            case FOND: {
+        col.addView(a.listRow("Source", new MainActivity.Value() {
             @Override public String get() { return Prefs.SRC_NAMES[a.prefs.source()]; }
         }, new View.OnClickListener() {
             @Override public void onClick(View v) { a.prefs.setSource((a.prefs.source() + 1) % Prefs.SRC_NAMES.length); applyWallChange(a); }
-        });
-        col.addView(first, a.rowLp());
+        }), a.rowLp());
         col.addView(a.listRow("Suivre l'heure de la journée", new MainActivity.Value() {
             @Override public String get() { return a.prefs.followTime() ? "Oui" : "Non"; }
         }, new View.OnClickListener() {
@@ -109,6 +185,25 @@ final class SettingsPanel {
                 applyWallChange(a);
             }
         }), a.rowLp());
+        col.addView(a.listRow("Paysages Lumen animés", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.livingScenes() ? "Oui" : "Non"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.setLivingScenes(!a.prefs.livingScenes()); a.wall.restart(); }
+        }), a.rowLp());
+        col.addView(a.listRow("Météo dans le paysage", new MainActivity.Value() {
+            @Override public String get() {
+                if (!a.weather.hasCity()) return "Choisir une ville d'abord";
+                return a.prefs.weatherFx() ? "Oui" : "Non";
+            }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { if (a.weather.hasCity()) a.prefs.setWeatherFx(!a.prefs.weatherFx()); else CityPanel.openCityInput(a); }
+        }), a.rowLp());
+        col.addView(a.listRow("Décors de saison", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.seasonal() ? "Oui" : "Non"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.setSeasonal(!a.prefs.seasonal()); }
+        }), a.rowLp());
+        col.addView(a.section("Choisir"));
         col.addView(a.listRow("Choisir les fonds", new MainActivity.Value() {
             @Override public String get() { return "Galerie"; }
         }, new View.OnClickListener() {
@@ -123,21 +218,20 @@ final class SettingsPanel {
         }, new View.OnClickListener() {
             @Override public void onClick(View v) { VideoPicker.open(a, Online.SCOPE_FONDS, null); }
         }), a.rowLp());
-        col.addView(a.listRow("Vidéos des ambiances", new MainActivity.Value() {
-            @Override public String get() { return "Aperçus"; }
+        col.addView(a.listRow("Villes", new MainActivity.Value() {
+            @Override public String get() {
+                int n = a.prefs.cities().size();
+                return n == Online.CITIES.length ? "Toutes" : n + " sur " + Online.CITIES.length;
+            }
         }, new View.OnClickListener() {
-            @Override public void onClick(View v) { VideoPicker.open(a, Online.SCOPE_COSY, null); }
+            @Override public void onClick(View v) { fillCities(a, card); }
         }), a.rowLp());
-        col.addView(a.listRow("Pexels", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.pexelsKey().isEmpty() ? "Désactivé" : "Activé · OK pour retirer la clé"; }
+        col.addView(a.listRow("Thème des vidéos", new MainActivity.Value() {
+            @Override public String get() { return Prefs.VT_NAMES[a.prefs.videoTheme()]; }
         }, new View.OnClickListener() {
             @Override public void onClick(View v) {
-                if (a.prefs.pexelsKey().isEmpty()) {
-                    a.showNotice("Ajoute ta clé Pexels depuis le téléphone (Réglages depuis le téléphone)");
-                } else {
-                    a.prefs.setPexelsKey("");
-                    a.showNotice("Clé Pexels retirée : Lumen ne contacte plus Pexels");
-                }
+                a.prefs.setVideoTheme((a.prefs.videoTheme() + 1) % Prefs.VT_NAMES.length);
+                a.online.refreshIfNeeded(Online.VIDEO, true);
             }
         }), a.rowLp());
         col.addView(a.listRow("Fond suivant", null, new View.OnClickListener() {
@@ -164,21 +258,11 @@ final class SettingsPanel {
                 a.showNotice("Tous les fonds sont de nouveau affichés");
             }
         }), a.rowLp());
-        col.addView(a.listRow("Thème des vidéos", new MainActivity.Value() {
-            @Override public String get() { return Prefs.VT_NAMES[a.prefs.videoTheme()]; }
+        col.addView(a.section("Avancé"));
+        col.addView(a.listRow("Qualité des vidéos", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.video4k() ? "4K" : "HD"; }
         }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                a.prefs.setVideoTheme((a.prefs.videoTheme() + 1) % Prefs.VT_NAMES.length);
-                a.online.refreshIfNeeded(Online.VIDEO, true);
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Villes", new MainActivity.Value() {
-            @Override public String get() {
-                int n = a.prefs.cities().size();
-                return n == Online.CITIES.length ? "Toutes" : n + " sur " + Online.CITIES.length;
-            }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { fillCities(a, card); }
+            @Override public void onClick(View v) { a.prefs.setVideo4k(!a.prefs.video4k()); }
         }), a.rowLp());
         col.addView(a.listRow("Espace pour les vidéos", new MainActivity.Value() {
             @Override public String get() { return a.prefs.videoDiskGb() + " Go"; }
@@ -188,11 +272,6 @@ final class SettingsPanel {
                 for (int i = 0; i < Prefs.DISK_GB.length; i++) if (Prefs.DISK_GB[i] == cur) idx = i;
                 a.prefs.setVideoDiskGb(Prefs.DISK_GB[(idx + 1) % Prefs.DISK_GB.length]);
             }
-        }), a.rowLp());
-        col.addView(a.listRow("Qualité des vidéos", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.video4k() ? "4K" : "HD"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setVideo4k(!a.prefs.video4k()); }
         }), a.rowLp());
         col.addView(a.listRow("Télécharger de nouveaux fonds", new MainActivity.Value() {
             @Override public String get() {
@@ -209,52 +288,32 @@ final class SettingsPanel {
                 a.showNotice("Téléchargement lancé");
             }
         }), a.rowLp());
-
-        col.addView(a.section("Mode veille"));
-        col.addView(a.listRow("Activer après", new MainActivity.Value() {
-            @Override public String get() { int m = a.prefs.ambientMinutes(); return m <= 0 ? "Jamais" : m + " min sans activité"; }
+        col.addView(a.listRow("Pexels", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.pexelsKey().isEmpty() ? "Désactivé" : "Activé · OK pour retirer la clé"; }
         }, new View.OnClickListener() {
             @Override public void onClick(View v) {
-                int cur = a.prefs.ambientMinutes(), idx = 0;
-                for (int i = 0; i < Prefs.AMBIENT_MIN.length; i++) if (Prefs.AMBIENT_MIN[i] == cur) idx = i;
-                a.prefs.setAmbientMinutes(Prefs.AMBIENT_MIN[(idx + 1) % Prefs.AMBIENT_MIN.length]);
+                if (a.prefs.pexelsKey().isEmpty()) {
+                    a.showNotice("Ajoute ta clé Pexels depuis le téléphone (Réglages depuis le téléphone)");
+                } else {
+                    a.prefs.setPexelsKey("");
+                    a.showNotice("Clé Pexels retirée : Lumen ne contacte plus Pexels");
+                }
             }
         }), a.rowLp());
-        col.addView(a.listRow("Lancer le mode veille", null, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.closeOverlay(false); a.enterAmbient(); }
-        }), a.rowLp());
-        col.addView(a.listRow("Météo", new MainActivity.Value() {
-            @Override public String get() { return a.weather.hasCity() ? a.weather.city() : "Choisir une ville"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { CityPanel.openCityInput(a); }
-        }), a.rowLp());
-        col.addView(a.listRow("Paysages Lumen animés", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.livingScenes() ? "Oui" : "Non"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setLivingScenes(!a.prefs.livingScenes()); a.wall.restart(); }
-        }), a.rowLp());
-        col.addView(a.listRow("Météo dans le paysage", new MainActivity.Value() {
+                break;
+            }
+            case ACCUEIL: {
+        col.addView(a.listRow("Vignettes", new MainActivity.Value() {
             @Override public String get() {
-                if (!a.weather.hasCity()) return "Choisir une ville d'abord";
-                return a.prefs.weatherFx() ? "Oui" : "Non";
+                int st = a.prefs.tileStyle();
+                return st == Prefs.TILE_WORD ? "Nom de l'appli" : st == Prefs.TILE_BANNER ? "Bannières officielles" : "Icône et nom";
             }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { if (a.weather.hasCity()) a.prefs.setWeatherFx(!a.prefs.weatherFx()); else CityPanel.openCityInput(a); }
-        }), a.rowLp());
-        col.addView(a.listRow("Décors de saison", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.seasonal() ? "Oui" : "Non"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setSeasonal(!a.prefs.seasonal()); }
-        }), a.rowLp());
-        col.addView(a.listRow("Économiseur d'écran de la TV", new MainActivity.Value() {
-            @Override public String get() { return "Comment l'activer"; }
         }, new View.OnClickListener() {
             @Override public void onClick(View v) {
-                a.showNotice("Paramètres TV › Système › Économiseur d'écran › Lumen");
+                int st = a.prefs.tileStyle();
+                a.prefs.setTileStyle(st == Prefs.TILE_WORD ? Prefs.TILE_MONO : st == Prefs.TILE_MONO ? Prefs.TILE_BANNER : Prefs.TILE_WORD);
             }
         }), a.rowLp());
-
-        col.addView(a.section("Applications"));
         col.addView(a.listRow("Applis par ligne", new MainActivity.Value() {
             @Override public String get() { return String.valueOf(a.prefs.homeCols()); }
         }, new View.OnClickListener() {
@@ -273,17 +332,6 @@ final class SettingsPanel {
                 a.dirtyRow = true;
             }
         }), a.rowLp());
-        col.addView(a.listRow("Vignettes", new MainActivity.Value() {
-            @Override public String get() {
-                int st = a.prefs.tileStyle();
-                return st == Prefs.TILE_WORD ? "Nom de l'appli" : st == Prefs.TILE_BANNER ? "Bannières officielles" : "Icône et nom";
-            }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                int st = a.prefs.tileStyle();
-                a.prefs.setTileStyle(st == Prefs.TILE_WORD ? Prefs.TILE_MONO : st == Prefs.TILE_MONO ? Prefs.TILE_BANNER : Prefs.TILE_WORD);
-            }
-        }), a.rowLp());
         col.addView(a.listRow("Icônes des applis", new MainActivity.Value() {
             @Override public String get() { return a.prefs.showIcons() ? "Affichées" : "Masquées"; }
         }, new View.OnClickListener() {
@@ -294,13 +342,22 @@ final class SettingsPanel {
         }, new View.OnClickListener() {
             @Override public void onClick(View v) { a.prefs.setTintTiles(!a.prefs.tintTiles()); }
         }), a.rowLp());
-        col.addView(a.listRow("Applis masquées", new MainActivity.Value() {
-            @Override public String get() { int n = a.prefs.hiddenApps().size(); return n == 0 ? "Aucune" : String.valueOf(n); }
+        col.addView(a.listRow("Lueur de l'appli sélectionnée", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.appGlow() ? "Oui" : "Non"; }
         }, new View.OnClickListener() {
-            @Override public void onClick(View v) { if (!a.prefs.hiddenApps().isEmpty()) fillHiddenApps(a, card); }
+            @Override public void onClick(View v) { a.prefs.setAppGlow(!a.prefs.appGlow()); }
         }), a.rowLp());
-
-        col.addView(a.section("Affichage"));
+        col.addView(a.listRow("Horloge", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.showClock() ? "Affichée" : "Masquée"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.setShowClock(!a.prefs.showClock()); }
+        }), a.rowLp());
+        col.addView(a.listRow("Estomper l'interface au repos", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.idleFade() ? "Oui" : "Non"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.setIdleFade(!a.prefs.idleFade()); }
+        }), a.rowLp());
+        col.addView(a.section("Reprendre"));
         col.addView(a.listRow("Reprendre au-dessus des applis", new MainActivity.Value() {
             @Override public String get() {
                 if (!a.prefs.topShelf()) return "Non";
@@ -318,10 +375,81 @@ final class SettingsPanel {
         }, new View.OnClickListener() {
             @Override public void onClick(View v) { a.prefs.setShelfPosters(!a.prefs.shelfPosters()); a.shelf.reload(); }
         }), a.rowLp());
-        col.addView(a.listRow("Lueur de l'appli sélectionnée", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.appGlow() ? "Oui" : "Non"; }
+        col.addView(a.listRow("Historique complet pour Reprendre", new MainActivity.Value() {
+            @Override public String get() { return ResumePanel.usageAllowed(a) ? "Autorisé" : "Non autorisé"; }
         }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setAppGlow(!a.prefs.appGlow()); }
+            @Override public void onClick(View v) {
+                if (ResumePanel.usageAllowed(a)) return;
+                try {
+                    Intent i = new Intent("android.settings.USAGE_ACCESS_SETTINGS");
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    a.startActivity(i);
+                } catch (Exception e) { a.showNotice("À autoriser par ADB, voir le guide"); }
+            }
+        }), a.rowLp());
+        col.addView(a.section("Masquées"));
+        col.addView(a.listRow("Applis masquées", new MainActivity.Value() {
+            @Override public String get() { int n = a.prefs.hiddenApps().size(); return n == 0 ? "Aucune" : String.valueOf(n); }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { if (!a.prefs.hiddenApps().isEmpty()) fillHiddenApps(a, card); }
+        }), a.rowLp());
+                break;
+            }
+            case VEILLE: {
+        col.addView(a.listRow("Activer après", new MainActivity.Value() {
+            @Override public String get() { int m = a.prefs.ambientMinutes(); return m <= 0 ? "Jamais" : m + " min sans activité"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                int cur = a.prefs.ambientMinutes(), idx = 0;
+                for (int i = 0; i < Prefs.AMBIENT_MIN.length; i++) if (Prefs.AMBIENT_MIN[i] == cur) idx = i;
+                a.prefs.setAmbientMinutes(Prefs.AMBIENT_MIN[(idx + 1) % Prefs.AMBIENT_MIN.length]);
+            }
+        }), a.rowLp());
+        col.addView(a.listRow("Lancer le mode veille", null, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.closeOverlay(false); a.enterAmbient(); }
+        }), a.rowLp());
+        col.addView(a.listRow("Météo", new MainActivity.Value() {
+            @Override public String get() { return a.weather.hasCity() ? a.weather.city() : "Choisir une ville"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { CityPanel.openCityInput(a); }
+        }), a.rowLp());
+        col.addView(a.listRow("Économiseur d'écran de la TV", new MainActivity.Value() {
+            @Override public String get() { return "Comment l'activer"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                a.showNotice("Paramètres TV › Système › Économiseur d'écran › Lumen");
+            }
+        }), a.rowLp());
+                break;
+            }
+            case AMBIANCES: {
+                col.addView(a.listRow("Ouvrir les ambiances", null, new View.OnClickListener() {
+                    @Override public void onClick(View v) { a.closeOverlay(false); a.openAmbiance(); }
+                }), a.rowLp());
+        col.addView(a.listRow("Vidéos des ambiances", new MainActivity.Value() {
+            @Override public String get() { return "Aperçus"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { VideoPicker.open(a, Online.SCOPE_COSY, null); }
+        }), a.rowLp());
+                col.addView(a.listRow("Son de la vidéo", new MainActivity.Value() {
+                    @Override public String get() { return a.prefs.ambianceSound() ? "Activé" : "Coupé"; }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) { a.prefs.setAmbianceSound(!a.prefs.ambianceSound()); }
+                }), a.rowLp());
+                break;
+            }
+            case SYSTEME: {
+        col.addView(a.listRow("Mise à jour de Lumen", new MainActivity.Value() {
+            @Override public String get() { return a.updater.state(); }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                if (a.updater.ready() != null) a.updater.install(); else a.updater.check(true);
+            }
+        }), a.rowLp());
+        col.addView(a.listRow("Mises à jour automatiques", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.autoUpdate() ? "Oui" : "Non"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.setAutoUpdate(!a.prefs.autoUpdate()); }
         }), a.rowLp());
         col.addView(a.listRow("Sons de l'interface", new MainActivity.Value() {
             @Override public String get() { return a.prefs.sounds() ? "Oui" : "Non"; }
@@ -331,18 +459,16 @@ final class SettingsPanel {
                 Sounds.get(a).setEnabled(a.prefs.sounds());
             }
         }), a.rowLp());
-        col.addView(a.listRow("Horloge", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.showClock() ? "Affichée" : "Masquée"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setShowClock(!a.prefs.showClock()); }
+        col.addView(a.listRow("Paramètres de la TV", null, new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                try {
+                    Intent i = new Intent(Settings.ACTION_SETTINGS);
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    a.startActivity(i);
+                } catch (Exception e) { a.showNotice("Paramètres indisponibles"); }
+            }
         }), a.rowLp());
-        col.addView(a.listRow("Estomper l'interface au repos", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.idleFade() ? "Oui" : "Non"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setIdleFade(!a.prefs.idleFade()); }
-        }), a.rowLp());
-
-        col.addView(a.section("Système"));
+        col.addView(a.section("Diagnostic"));
         col.addView(a.listRow("Mesures", new MainActivity.Value() {
             @Override public String get() { return a.prefs.showPerf() ? "Affichées" : "Masquées"; }
         }, new View.OnClickListener() {
@@ -356,45 +482,17 @@ final class SettingsPanel {
         }, new View.OnClickListener() {
             @Override public void onClick(View v) { CrashLog.clear(a); a.showNotice("Journal effacé"); }
         }), a.rowLp());
-        col.addView(a.listRow("Mise à jour de Lumen", new MainActivity.Value() {
-            @Override public String get() { return a.updater.state(); }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                if (a.updater.ready() != null) a.updater.install(); else a.updater.check(true);
+                col.addView(a.section("Informations"));
+                col.addView(rubric(a, card, "À propos", null, ABOUT), a.rowLp());
+                col.addView(rubric(a, card, "Licences", null, LICENCES), a.rowLp());
+                break;
             }
-        }), a.rowLp());
-        col.addView(a.listRow("Mises à jour automatiques", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.autoUpdate() ? "Oui" : "Non"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setAutoUpdate(!a.prefs.autoUpdate()); }
-        }), a.rowLp());
-        col.addView(a.listRow("Historique complet pour Reprendre", new MainActivity.Value() {
-            @Override public String get() { return ResumePanel.usageAllowed(a) ? "Autorisé" : "Non autorisé"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                if (ResumePanel.usageAllowed(a)) return;
-                try {
-                    Intent i = new Intent("android.settings.USAGE_ACCESS_SETTINGS");
-                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    a.startActivity(i);
-                } catch (Exception e) { a.showNotice("À autoriser par ADB, voir le guide"); }
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Paramètres de la TV", null, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                try {
-                    Intent i = new Intent(Settings.ACTION_SETTINGS);
-                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    a.startActivity(i);
-                } catch (Exception e) { a.showNotice("Paramètres indisponibles"); }
-            }
-        }), a.rowLp());
-
-        TextView about = a.text(19, "sans-serif", 0x66FFFFFF);
-        about.setText("Lumen 4.2 · aucune publicité, aucun pistage · Internet utilisé uniquement pour les photos et vidéos NASA et Wikimedia Commons et la météo Open-Meteo");
-        about.setPadding(a.u(32), a.u(36), a.u(32), 0);
-        col.addView(about);
-        first.requestFocus();
+            case ABOUT: About.fillAbout(a, col); break;
+            case LICENCES: About.fillLicences(a, card, col); break;
+            case CREDITS: About.fillCredits(a, col); break;
+            case LICENCE_INTER: About.fillText(a, col, "fonts/LICENCE-Inter.txt"); break;
+        }
+        focusFirst(col, focus);
     }
 
     /** Choix des villes pour les vidéos aériennes. */
@@ -413,11 +511,11 @@ final class SettingsPanel {
         sv.addView(col);
         card.addView(sv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         final boolean[] changed = {false};
-        LinearLayout back = a.listRow("‹  Réglages", null, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                if (changed[0]) a.online.refreshIfNeeded(Online.VIDEO, true);
-        fillSettings(a, card);
-            }
+        page = CITIES;
+        openCard = card;
+        citiesChanged = changed;
+        LinearLayout back = a.listRow("‹  Fond d'écran", null, new View.OnClickListener() {
+            @Override public void onClick(View v) { back(a); }
         });
         col.addView(back, a.rowLp());
         TextView title = a.text(40, "sans-serif-light", 0xF5FFFFFF);
@@ -450,8 +548,10 @@ final class SettingsPanel {
         sv.addView(col);
         card.addView(sv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        LinearLayout back = a.listRow("‹  Réglages", null, new View.OnClickListener() {
-            @Override public void onClick(View v) { fillSettings(a, card); }
+        page = HIDDEN;
+        openCard = card;
+        LinearLayout back = a.listRow("‹  Accueil et applis", null, new View.OnClickListener() {
+            @Override public void onClick(View v) { back(a); }
         });
         col.addView(back, a.rowLp());
         TextView title = a.text(40, "sans-serif-light", 0xF5FFFFFF);

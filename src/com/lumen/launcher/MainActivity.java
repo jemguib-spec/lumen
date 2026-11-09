@@ -198,6 +198,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     @Override public void onBackPressed() {
         if (movingTile != null) { stopMoving(); return; }
+        if (overlay != null && SettingsPanel.back(this)) return; // sous-page des réglages : on remonte d'un niveau
         if (overlay != null) { closeOverlay(true); return; }
         if (appsOpen && appsPage.clearSearch()) return; // Retour efface d'abord la recherche
         if (appsOpen) { closeApps(true); return; }
@@ -894,6 +895,9 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
             }
         }
         if (resumeOpen && down && code == KeyEvent.KEYCODE_DPAD_RIGHT) { closeOverlay(true); return true; }
+        // ◀ dans une sous-page des réglages : retour à la page précédente
+        if (down && code == KeyEvent.KEYCODE_DPAD_LEFT && overlay != null && e.getRepeatCount() == 0
+                && SettingsPanel.inSubPage() && !(getCurrentFocus() instanceof android.widget.EditText)) { SettingsPanel.back(this); return true; }
         if (!down && code == KeyEvent.KEYCODE_MENU && overlay == null) { SettingsPanel.openSettings(MainActivity.this); return true; }
         return super.dispatchKeyEvent(e);
     }

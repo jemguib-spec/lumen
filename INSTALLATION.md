@@ -28,6 +28,9 @@ Appuyer ensuite sur Accueil : Lumen s'affiche. Si un choix est proposé, sélect
     adb shell pm enable com.google.android.apps.tv.launcherx
     adb shell pm enable com.google.android.tungsten.setupwraith
 
+## Réglages
+Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et applis, Mode veille, Ambiances, Réglages depuis le téléphone, Système. Chaque rubrique s'ouvre dans le même panneau ; ◀ ou Retour revient en arrière. Système › Informations : À propos (version, téléviseur, espace utilisé, serveurs contactés) et Licences (police, photos et vidéos avec leurs auteurs, météo, Pexels).
+
 ## Utilisation
 - **Accueil** : tes favoris en vignettes de verre, centrés. Les boutons Entrées, Toutes les applications et Réglages sont en haut à droite, à côté de l'horloge.
 - **Disposition** (Réglages › Applications) : nombre d'applis par ligne (3 à 7) et nombre de lignes (1 à 3).
@@ -39,7 +42,7 @@ Appuyer ensuite sur Accueil : Lumen s'affiche. Si un choix est proposé, sélect
 - Après 45 s sans toucher la télécommande, l'interface s'efface pour ne laisser que le fond.
 
 ## Fonds d'écran (Réglages › Fond d'écran)
-- **Paysages Lumen** : crêtes, horizon, lac — l'ambiance suit le vrai lever et coucher du soleil de ta ville (aube, jour, soir, nuit), calculés sur la TV sans Internet. Ils sont animés : nuages qui dérivent, halo du soleil, scintillement sur l'eau, brume, étoiles et étoiles filantes la nuit (Réglages › Paysages Lumen animés).
+- **Paysages Lumen** : crêtes, horizon, lac — l'ambiance suit le vrai lever et coucher du soleil de ta ville (aube, jour, soir, nuit), calculés sur la TV sans Internet. Ils sont animés : nuages qui dérivent, halo du soleil, scintillement sur l'eau, brume, étoiles et étoiles filantes la nuit (Réglages › Fond d'écran › Paysages Lumen animés).
 - **Paysages animés** : crêtes qui défilent lentement, brume qui glisse, étoiles qui scintillent la nuit.
 - **Espace**, **Nature** et **Animaux** (photos primées — « Featured pictures » — de Wikimedia Commons, jusqu'à 4K ; vues d'artiste et schémas écartés), **Vidéos 4K** (à choisir sur aperçus : Réglages › Fond d'écran › Fonds vidéo ; rien n'est téléchargé sans être coché, décocher efface la vidéo ; une liste fermée de vraies prises de vue choisies une par une sur Wikimedia Commons : vues de drone de Paris, New York, Hong Kong, Chicago, San Francisco et Stockholm, paysages filmés, la Terre filmée depuis la Station spatiale ; ni conférences, ni simulations ; thème au choix (Tout, Villes, Nature, Espace et Terre) ; Réglages › Villes pour choisir les villes ; Espace pour les vidéos : 3, 6, 10 ou 20 Go ; qualité 4K ou HD au choix), **Mélange de photos**, **Photo du jour** (la photo choisie chaque jour par Wikimedia Commons, avec sa légende en français ; les 10 derniers jours, la plus récente en premier).
 - Les photos se téléchargent en arrière-plan la première fois (quelques minutes) ; en attendant, les paysages Lumen s'affichent. Le cache se renouvelle chaque jour.
@@ -48,10 +51,10 @@ Appuyer ensuite sur Accueil : Lumen s'affiche. Si un choix est proposé, sélect
 - Le titre du fond (et l'auteur / la licence pour les photos) s'affiche discrètement en haut à gauche.
 
 ## Effets
-- **Météo dans le paysage** : avec une ville réglée, les paysages Lumen montrent le temps réel — pluie, bruine, neige, brume, ciel couvert, orage avec éclairs (Réglages › Mode veille › Météo dans le paysage).
-- **Lueur de l'appli** : une lueur de la couleur de l'appli monte sous la vignette sélectionnée et la suit (Réglages › Affichage).
+- **Météo dans le paysage** : avec une ville réglée, les paysages Lumen montrent le temps réel — pluie, bruine, neige, brume, ciel couvert, orage avec éclairs (Réglages › Fond d'écran › Météo dans le paysage).
+- **Lueur de l'appli** : une lueur de la couleur de l'appli monte sous la vignette sélectionnée et la suit (Réglages › Accueil et applis).
 - **Ouverture animée** : la vignette s'agrandit jusqu'à remplir l'écran avant d'ouvrir l'appli.
-- **Sons de l'interface** : clics très discrets, désactivables (Réglages › Affichage).
+- **Sons de l'interface** : clics très discrets, désactivables (Réglages › Accueil et applis).
 - **Entrées** : le bouton rond « Entrées » de l'accueil liste les prises HDMI et les chaînes TV et bascule directement dessus.
 
 ## Police
@@ -61,28 +64,28 @@ Appuyer ensuite sur Accueil : Lumen s'affiche. Si un choix est proposé, sélect
 - ▼ depuis l'accueil. Une recherche en haut (sans accents ni majuscules ; Retour efface la recherche), puis des rangées : Favoris, Vidéo et TV, Musique et radio, Jeux, Outils et autres. Les applis se rangent seules (catégorie déclarée par l'appli, sinon reconnue d'après son nom) ; chaque rangée défile horizontalement.
 
 ## Vignettes
-- Réglages › Affichage › Vignettes : « Nom de l'appli » (par défaut : le nom en grand ; sélectionnée, la vignette devient blanche et le nom prend la couleur de l'appli), « Icône et nom », ou « Bannières officielles » (liseré blanc autour de la vignette sélectionnée).
+- Réglages › Accueil et applis › Vignettes : « Nom de l'appli » (par défaut : le nom en grand ; sélectionnée, la vignette devient blanche et le nom prend la couleur de l'appli), « Icône et nom », ou « Bannières officielles » (liseré blanc autour de la vignette sélectionnée).
 
 ## Reprendre au-dessus des applis
 - Sélectionne une appli de l'accueil (Netflix, Prime Video, Plex…) : ses films et épisodes en cours apparaissent juste au-dessus, avec l'affiche, l'épisode et la barre de progression. ▲ pour y aller, OK pour reprendre la lecture.
-- Au premier lancement, Android demande l'autorisation d'accéder aux « programmes TV » : accepte-la. Sinon : Réglages › Affichage › Reprendre au-dessus des applis.
-- Chaque appli décide de publier ou non ses « en cours » sur Android TV : selon les applis et la version de Google TV, certaines n'apparaîtront pas. Réglages › Affichage › Affiches des épisodes : Non pour n'afficher que la couleur de l'appli.
+- Au premier lancement, Android demande l'autorisation d'accéder aux « programmes TV » : accepte-la. Sinon : Réglages › Accueil et applis › Reprendre au-dessus des applis.
+- Chaque appli décide de publier ou non ses « en cours » sur Android TV : selon les applis et la version de Google TV, certaines n'apparaîtront pas. Réglages › Accueil et applis › Affiches des épisodes : Non pour n'afficher que la couleur de l'appli.
 
 ## Ambiances et minuterie de sommeil
 - Bouton rond **Ambiances** (lune) en haut de l'accueil : de vraies vidéos filmées en plein écran, avec leur propre son : **Cheminée**, **Pluie**, **Aquarium**, **Nuit étoilée**, **Vagues**, **Neige**.
-- **Choisir les vidéos** : chaque vidéo proposée s'affiche avec un aperçu, sa durée et sa définition ; OK coche ou décoche. Seules les vidéos cochées sont téléchargées (4 Go au maximum). Accès : menu des ambiances (OK) › Choisir les vidéos, ou Réglages › Fond d'écran › Vidéos des ambiances.
+- **Choisir les vidéos** : chaque vidéo proposée s'affiche avec un aperçu, sa durée et sa définition ; OK coche ou décoche. Seules les vidéos cochées sont téléchargées (4 Go au maximum). Accès : menu des ambiances (OK) › Choisir les vidéos, ou Réglages › Ambiances › Vidéos des ambiances.
 - Les propositions viennent d'une liste fermée de fichiers Wikimedia Commons choisis un par un (licence libre revérifiée), plus Pexels si tu as réglé ta clé. L'auteur et la licence s'affichent discrètement en bas à gauche.
 - **Tes propres vidéos** : depuis le téléphone (Envois), choisis « Ambiance · Cheminée » (ou une autre) puis envoie la vidéo. Elle passe avant les autres dans cette ambiance.
 - ◀ ▶ changent d'ambiance ; OK ouvre le menu (ambiance, ne plus montrer cette vidéo — elle est décochée et effacée —, choisir les vidéos, son de la vidéo, minuterie, quitter) ; Retour quitte.
 - **Minuterie de sommeil** : 15, 30, 60 ou 90 min. À la fin, le son baisse doucement, l'écran passe au noir en 20 secondes et l'appli laisse la TV se mettre en veille selon son propre réglage (Paramètres de la TV › Énergie). Lumen ne peut pas éteindre la TV elle-même.
 
 ## Ciel et saisons
-- **Décors de saison** (Réglages › Affichage) : neige légère sur les paysages du 1er décembre au 6 janvier.
+- **Décors de saison** (Réglages › Accueil et applis) : neige légère sur les paysages du 1er décembre au 6 janvier.
 
 ## Pexels (facultatif)
 - Pexels propose des vidéos libres de droits de grande qualité (villes en 4K, cheminées longues…). Crée une clé gratuite sur pexels.com/api, puis colle-la depuis le téléphone (onglet Pexels).
 - Les vidéos Pexels apparaissent alors dans les écrans de choix, à côté du catalogue Wikimedia ; rien n'est téléchargé sans être coché.
-- Sans clé, Lumen ne contacte jamais Pexels. Réglages › Fond d'écran › Pexels pour retirer la clé.
+- Sans clé, Lumen ne contacte jamais Pexels. Réglages › Fond d'écran › Avancé › Pexels pour retirer la clé.
 
 ## Téléphone et Reprendre
 - **Réglages depuis le téléphone** (Réglages, première ligne) : un QR code s'affiche ; scanne-le avec le téléphone connecté au même Wi-Fi. La page permet de réorganiser, ajouter ou retirer les favoris, et d'envoyer tes propres photos et vidéos (source « Mes photos et vidéos », choisie automatiquement au premier envoi). Tout reste sur ton réseau local ; l'accès est protégé par un code unique contenu dans le QR code, et le serveur s'arrête seul après 15 minutes sans activité.
