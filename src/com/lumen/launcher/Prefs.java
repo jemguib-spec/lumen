@@ -76,6 +76,25 @@ final class Prefs {
     boolean tintTiles() { return sp.getBoolean("tint_tiles", false); }
     void setTintTiles(boolean b) { sp.edit().putBoolean("tint_tiles", b).apply(); }
 
+    /**
+     * Images du mode veille : le fond d'écran sans vidéo (défaut), une source choisie (SRC_*),
+     * ou l'ancien comportement « comme l'accueil » (vidéos comprises).
+     */
+    static final int VEILLE_HOME = -1, VEILLE_LIVE = -2;
+    static final int[] VEILLE_CHOICES = {VEILLE_HOME, SRC_LUMEN, SRC_ANIM, SRC_SPACE, SRC_NATURE, SRC_ANIMALS, SRC_MIX,
+            SRC_MINE, SRC_POTD, VEILLE_LIVE};
+    static String veilleName(int v) {
+        if (v == VEILLE_HOME) return "Fond d'écran (sans vidéo)";
+        if (v == VEILLE_LIVE) return "Comme l'accueil (vidéos comprises)";
+        return v >= 0 && v < SRC_NAMES.length ? SRC_NAMES[v] : "Fond d'écran (sans vidéo)";
+    }
+    int veilleSource() {
+        int v = sp.getInt("veille_src", VEILLE_HOME);
+        for (int c : VEILLE_CHOICES) if (c == v) return v;
+        return VEILLE_HOME;
+    }
+    void setVeilleSource(int v) { sp.edit().putInt("veille_src", v).apply(); }
+
     static final int[] AMBIENT_MIN = {1, 3, 5, 10, 0}; // 0 = jamais
     int ambientMinutes() { return sp.getInt("ambient_min", 3); }
     void setAmbientMinutes(int m) { sp.edit().putInt("ambient_min", m).apply(); }

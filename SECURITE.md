@@ -15,7 +15,7 @@
 
 ## Réseau sortant (`NetPolicy`, `Net`)
 - HTTPS obligatoire, port 443 uniquement, pas d'identifiants dans les adresses.
-- Liste blanche stricte : `raw.githubusercontent.com` (mise à jour : deux fichiers du dépôt, une fois par jour au plus, désactivable), `commons.wikimedia.org`, `upload.wikimedia.org`, `api.open-meteo.com`, `geocoding-api.open-meteo.com` (météo seulement si une ville est réglée). `api.pexels.com`, `videos.pexels.com`, `images.pexels.com` ne sont joignables que si l'utilisateur a réglé sa propre clé Pexels ; la clé n'est envoyée qu'à `api.pexels.com`, jamais après une redirection, et n'est jamais renvoyée au téléphone.
+- Liste blanche stricte : `raw.githubusercontent.com` (mise à jour : deux fichiers du dépôt, une fois par jour au plus, désactivable), `commons.wikimedia.org`, `upload.wikimedia.org`, `thumb.wikimedia.org` (aperçus), `api.open-meteo.com`, `geocoding-api.open-meteo.com` (météo seulement si une ville est réglée). `api.pexels.com`, `videos.pexels.com`, `images.pexels.com` ne sont joignables que si l'utilisateur a réglé sa propre clé Pexels ; la clé n'est envoyée qu'à `api.pexels.com`, jamais après une redirection, et n'est jamais renvoyée au téléphone.
 - Les redirections sont suivies à la main et chaque destination est revérifiée.
 - Certificats validés par le magasin système d'Android ; les certificats ajoutés par l'utilisateur ne sont pas acceptés (cible Android 29). Le trafic en clair est interdit (`usesCleartextTraffic=false`).
 - Réponses et fichiers plafonnés en taille.

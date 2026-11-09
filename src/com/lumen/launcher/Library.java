@@ -32,8 +32,25 @@ final class Library {
 
     /** Liste des fonds, déjà filtrée des fonds masqués. Peut être vide (photos pas encore téléchargées). */
     static List<WallItem> build(Context c, Prefs prefs, Online online) {
+        return build(c, prefs, online, prefs.source());
+    }
+
+    /** Source des images du mode veille : jamais de vidéo (la source « Vidéos » devient les paysages Lumen). */
+    static int veilleSource(Prefs prefs) {
+        int v = prefs.veilleSource();
+        int src = v >= 0 ? v : prefs.source();
+        return src == Prefs.SRC_VIDEO ? Prefs.SRC_LUMEN : src;
+    }
+
+    /** Fonds du mode veille : images (et paysages animés), sans aucune vidéo. */
+    static List<WallItem> buildVeille(Context c, Prefs prefs, Online online) {
         List<WallItem> out = new ArrayList<>();
-        int src = prefs.source();
+        for (WallItem w : build(c, prefs, online, veilleSource(prefs))) if (w.kind != WallItem.VIDEO_FILE) out.add(w);
+        return out;
+    }
+
+    static List<WallItem> build(Context c, Prefs prefs, Online online, int src) {
+        List<WallItem> out = new ArrayList<>();
         String now = period();
         boolean follow = prefs.followTime();
         if (src == Prefs.SRC_LUMEN) {

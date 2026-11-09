@@ -509,6 +509,11 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         ambient = new AmbientView(this, unit, weather);
         ambient.setVisibility(View.GONE);
         root.addView(ambient, match());
+        veilleWall = new Wall(this, prefs, online, ambient.wallLayer());
+        veilleWall.setVeilleMode(true);
+        veilleWall.setListener(new Wall.Listener() {
+            @Override public void onWallShown(WallItem item, Bitmap backdrop) { if (ambientOn) ambient.setCaption(item); }
+        });
 
         // ---- notification flottante
         notice = text(24, "sans-serif-medium", 0xFF111216);
@@ -818,6 +823,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
             updater.check(false);                // une fois par jour au plus
             shelf.reload();                      // on revient peut-être d'un épisode
             for (String t : Library.themesFor(prefs.source())) online.refreshIfNeeded(t, false);
+            if (prefs.veilleSource() >= 0) for (String t : Library.themesFor(Library.veilleSource(prefs))) online.refreshIfNeeded(t, false);
             if (CrashLog.safeModeJustStarted) {
                 CrashLog.safeModeJustStarted = false;
                 showNotice("Lumen a redémarré en mode sans échec après des erreurs");
@@ -1040,10 +1046,20 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         }
     };
 
+    /** Fond propre au mode veille (images, sans vidéo) ; sinon le fond de l'accueil continue derrière. */
+    private Wall veilleWall;
+    private boolean veilleOwn;
+
     void enterAmbient() {
         ambientOn = true;
         h.removeCallbacks(idleRun);
-        ambient.setCaption(wall.current());
+        WallItem cur = wall.current();
+        ambient.setCaption(cur);
+        veilleOwn = prefs.veilleSource() != Prefs.VEILLE_LIVE;
+        if (veilleOwn) {
+            wall.stop();               // plus de vidéo derrière la veille
+            veilleWall.startWith(cur); // même image que l'accueil si c'en est une
+        }
         ambient.start();
         ambient.setVisibility(View.VISIBLE);
         ambient.setAlpha(0f);
@@ -1056,9 +1072,18 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         ambientOn = false;
         idle = false;
         ambient.stop();
+        if (veilleOwn) {
+            veilleOwn = false;
+            veilleWall.stop();
+            if (resumedNow) wall.start();
+        }
         long d = animate ? 400 : 0;
         ambient.animate().alpha(0f).setDuration(d).withEndAction(new Runnable() {
-            @Override public void run() { if (!ambientOn) ambient.setVisibility(View.GONE); }
+            @Override public void run() {
+                if (ambientOn) return;
+                ambient.setVisibility(View.GONE);
+                veilleWall.release();
+            }
         }).start();
         clockBox.animate().alpha(appsOpen ? 0f : 1f).setDuration(d).start();
         if (appsOpen) appsLayer.animate().alpha(1f).setDuration(d).start();
@@ -1349,7 +1374,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         SettingsPanel.applyWallChange(this);
     }
 
-    @Override public void phoneNextWall() { wall.next(); }
+    @Override public void phoneNextWall() { if (ambientOn && veilleOwn) veilleWall.next(); else wall.next(); }
 
     /** Plusieurs vidéos cochées d'affilée sur le téléphone : un seul rafraîchissement, 3 s après la dernière. */
     private String picksScope;
@@ -1366,28 +1391,31 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         h.postDelayed(picksRefresh, 3000);
     }
 
-    private TextView phonePill;
+    private View phonePill;
 
-    /** Petite pastille discrète en haut à gauche tant qu'un téléphone est connecté. */
+    /**
+     * Simple pastille verte tout en haut à gauche tant qu'un téléphone est connecté,
+     * au-dessus du nom du fond (sans texte, pour ne rien chevaucher).
+     */
     @Override public void onPhoneConnected(boolean connected) {
         if (connected && phonePill == null) {
-            phonePill = text(20, "sans-serif-medium", 0xE6FFFFFF);
-            phonePill.setText("Téléphone connecté");
+            phonePill = new View(this);
             GradientDrawable bg = new GradientDrawable();
-            bg.setCornerRadius(u(30));
-            bg.setColor(0x66101218);
-            bg.setStroke(Math.max(1, u(1.5f)), 0x33FFFFFF);
+            bg.setShape(GradientDrawable.OVAL);
+            bg.setColor(0xFF34C759);
+            bg.setStroke(Math.max(1, u(2)), 0x66FFFFFF);
             phonePill.setBackground(bg);
-            phonePill.setPadding(u(24), u(12), u(24), u(12));
-            FrameLayout.LayoutParams pl = wrap(Gravity.TOP | Gravity.START);
+            phonePill.setElevation(u(4));
+            phonePill.setContentDescription("Téléphone connecté");
+            FrameLayout.LayoutParams pl = new FrameLayout.LayoutParams(u(16), u(16), Gravity.TOP | Gravity.START);
             pl.leftMargin = u(112);
-            pl.topMargin = u(48);
+            pl.topMargin = u(36);
             root.addView(phonePill, root.indexOfChild(notice), pl);
             phonePill.setAlpha(0f);
             phonePill.animate().alpha(1f).setDuration(300).start();
             showNotice("Téléphone connecté");
         } else if (!connected && phonePill != null) {
-            final TextView pp = phonePill;
+            final View pp = phonePill;
             phonePill = null;
             pp.animate().alpha(0f).setDuration(300).withEndAction(new Runnable() {
                 @Override public void run() { root.removeView(pp); }

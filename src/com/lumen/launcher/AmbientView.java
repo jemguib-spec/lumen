@@ -34,12 +34,17 @@ final class AmbientView extends FrameLayout {
     private final Weather weatherSrc;
     private final TextClock clock;
     private boolean active;
+    /** Images propres au mode veille (réglage « Images du mode veille »), sous le voile et la ligne. */
+    private final FrameLayout wallLayer;
 
     AmbientView(Context c, float unit, Weather w) {
         super(c);
         this.unit = unit;
         this.weatherSrc = w;
         setClipChildren(false);
+
+        wallLayer = new FrameLayout(c);
+        addView(wallLayer, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         // voile très léger, juste sous la ligne
         View scrim = new View(c);
@@ -89,6 +94,8 @@ final class AmbientView extends FrameLayout {
         bl.bottomMargin = u(56);
         addView(bar, bl);
     }
+
+    FrameLayout wallLayer() { return wallLayer; }
 
     private int u(float px) { return Math.round(px * unit); }
 

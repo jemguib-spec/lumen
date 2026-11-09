@@ -42,6 +42,7 @@ public class LumenDream extends DreamService implements Wall.Listener {
 
         Prefs prefs = new Prefs(this);
         wall = new Wall(this, prefs, new Online(this, prefs), wallLayer);
+        wall.setVeilleMode(prefs.veilleSource() != Prefs.VEILLE_LIVE); // images seulement, comme le mode veille
         wall.setListener(this);
     }
 

@@ -463,6 +463,17 @@ final class SettingsPanel {
                 a.prefs.setAmbientMinutes(Prefs.AMBIENT_MIN[(idx + 1) % Prefs.AMBIENT_MIN.length]);
             }
         }), a.rowLp());
+        col.addView(a.listRow("Images du mode veille", new MainActivity.Value() {
+            @Override public String get() { return Prefs.veilleName(a.prefs.veilleSource()); }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                int cur = a.prefs.veilleSource(), idx = 0;
+                for (int i = 0; i < Prefs.VEILLE_CHOICES.length; i++) if (Prefs.VEILLE_CHOICES[i] == cur) idx = i;
+                int next = Prefs.VEILLE_CHOICES[(idx + 1) % Prefs.VEILLE_CHOICES.length];
+                a.prefs.setVeilleSource(next);
+                if (next >= 0) for (String t : Library.themesFor(Library.veilleSource(a.prefs))) a.online.refreshIfNeeded(t, false);
+            }
+        }), a.rowLp());
         col.addView(a.listRow("Lancer le mode veille", null, new View.OnClickListener() {
             @Override public void onClick(View v) { a.closeOverlay(false); a.enterAmbient(); }
         }), a.rowLp());

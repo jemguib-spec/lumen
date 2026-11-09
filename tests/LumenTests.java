@@ -89,6 +89,7 @@ public class LumenTests {
         check("sauvegarde : les mises à jour sont exclues", Backup.typeOf("update_ready") == Backup.NONE);
         check("sauvegarde : favoris et villes repris", Backup.typeOf("favorites") == Backup.STRING && Backup.typeOf("cities") == Backup.SET);
         check("sauvegarde : entiers hors bornes refusés", !Backup.intOk("home_cols", 99) && Backup.intOk("home_cols", 6) && !Backup.intOk("inconnu", 1));
+        check("sauvegarde : images du mode veille", Backup.intOk("veille_src", -1) && Backup.intOk("veille_src", -2) && !Backup.intOk("veille_src", -3));
         check("sauvegarde : texte avec caractères de contrôle refusé", !Backup.textOk("a\u0000b", 10) && Backup.textOk("Paris", 10) && !Backup.textOk("long", 3));
 
         // ---- sources HDMI
@@ -193,6 +194,7 @@ public class LumenTests {
         check("NASA retiré (photos Espace issues des sélections Commons)", !NetPolicy.allowed("https://images-api.nasa.gov/search?q=x"));
         check("https Commons autorisé", NetPolicy.allowed("https://commons.wikimedia.org/w/api.php"));
         check("https Wikimedia autorisé", NetPolicy.allowed("https://upload.wikimedia.org/a.jpg"));
+        check("aperçus Wikimedia (thumb.wikimedia.org) autorisés", NetPolicy.allowed("https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a9/Example.jpg/500px-Example.jpg"));
         check("http refusé", !NetPolicy.allowed("http://images-api.nasa.gov/search"));
         check("hôte inconnu refusé", !NetPolicy.allowed("https://evil.example.com/x"));
         check("sous-domaine piégé refusé", !NetPolicy.allowed("https://images-api.nasa.gov.evil.com/x"));

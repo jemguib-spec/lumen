@@ -55,6 +55,8 @@ final class Wall {
     private int generation;
     private String lastPeriod = Library.period();
     private boolean usingFallback;
+    /** Fond du mode veille : images seulement, source réglée à part. */
+    private boolean veille;
 
     Wall(Context ctx, Prefs prefs, Online online, FrameLayout host) {
         this.ctx = ctx;
@@ -64,6 +66,8 @@ final class Wall {
     }
 
     void setListener(Listener l) { listener = l; }
+    void setVeilleMode(boolean on) { veille = on; }
+    private int source() { return veille ? Library.veilleSource(prefs) : prefs.source(); }
     WallItem current() { return current; }
     int position() { return index; }
     int count() { return items.size(); }
@@ -101,6 +105,31 @@ final class Wall {
         for (int i = 0; i < f.getChildCount(); i++) if (f.getChildAt(i) instanceof LivingScene) ((LivingScene) f.getChildAt(i)).resume();
     }
 
+    /** Démarre sur une liste neuve, en commençant si possible par ce fond (mode veille : pas de saut d'image). */
+    void startWith(WallItem first) {
+        rebuild();
+        if (first != null && first.kind != WallItem.VIDEO_FILE)
+            for (int i = 0; i < items.size(); i++)
+                if (items.get(i).id.equals(first.id)) { items.add(0, items.remove(i)); break; }
+        current = null;
+        start();
+    }
+
+    /** Arrête et libère tout ce qui est affiché (images, scène, vidéo), sans toucher aux autres fonds. */
+    void release() {
+        running = false;
+        generation++;
+        h.removeCallbacksAndMessages(null);
+        host.removeAllViews();
+        if (currentScene != null) { currentScene.setRunning(false); currentScene.data().recycle(); }
+        if (player != null) release(player);
+        current = null;
+        currentView = null;
+        currentScene = null;
+        currentBitmap = null;
+        player = null;
+    }
+
     private void resumeCurrent() {
         if (currentScene != null) currentScene.setRunning(true);
         if (player != null) try { player.start(); } catch (Exception ignored) { }
@@ -120,7 +149,7 @@ final class Wall {
     }
 
     private void rebuild() {
-        items = Library.build(ctx, prefs, online);
+        items = veille ? Library.buildVeille(ctx, prefs, online) : Library.build(ctx, prefs, online);
         usingFallback = items.isEmpty();
         if (usingFallback) items = Library.fallback(ctx);
         index = -1;
@@ -129,7 +158,7 @@ final class Wall {
     private final Runnable clock = new Runnable() {
         @Override public void run() {
             String p = Library.period();
-            int src = prefs.source();
+            int src = source();
             if (!p.equals(lastPeriod)) {
                 lastPeriod = p;
                 if (prefs.followTime() && (src == Prefs.SRC_LUMEN || src == Prefs.SRC_ANIM || usingFallback)) restart();

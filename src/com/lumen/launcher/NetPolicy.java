@@ -22,6 +22,7 @@ final class NetPolicy {
             "raw.githubusercontent.com",     // mise à jour : dist/latest.json et dist/Lumen.apk du dépôt
             "commons.wikimedia.org",         // API Wikimedia Commons (licences libres)
             "upload.wikimedia.org",          // fichiers Wikimedia
+            "thumb.wikimedia.org",           // aperçus Wikimedia (redirection depuis upload.wikimedia.org)
             "api.open-meteo.com",            // météo (seulement si une ville est réglée)
             "geocoding-api.open-meteo.com"   // recherche de la ville
     )));
