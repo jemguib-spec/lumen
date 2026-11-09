@@ -61,6 +61,13 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     private TextView captionTitle, captionCredit, focusLabel, notice;
     private LinearLayout rowsBox, topButtons;
     private FrameLayout wallLayer;
+    private Tile houseButton;
+
+    /** Affiche ou masque le bouton « Maison » (Réglages › Accueil et applis). */
+    void setHouseButton(boolean on) {
+        prefs.setHaButton(on);
+        if (houseButton != null) houseButton.setVisibility(on ? View.VISIBLE : View.GONE);
+    }
     private TextView greet;
     private final List<LinearLayout> rows = new ArrayList<>();
     private final List<HorizontalScrollView> rowScrolls = new ArrayList<>();
@@ -431,7 +438,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         Tile inputs = Tile.button(this, Glyph.INPUT, "Entrées", bs);
         inputs.setFocusListener(homeFocus);
         inputs.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { InputsPanel.openInputs(MainActivity.this); } });
-        Tile house = Tile.button(this, Glyph.HOME, "Maison", bs);
+        Tile house = houseButton = Tile.button(this, Glyph.HOME, "Maison", bs);
         house.setFocusListener(homeFocus);
         house.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { HomePanel.open(MainActivity.this); } });
         Tile all = Tile.button(this, Glyph.GRID, "Toutes les applications", bs);
@@ -445,6 +452,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
             bl.leftMargin = u(18);
             topButtons.addView(b, bl);
         }
+        house.setVisibility(prefs.haButton() ? View.VISIBLE : View.GONE);
         FrameLayout.LayoutParams tbl = wrap(Gravity.TOP | Gravity.END);
         tbl.topMargin = u(56);
         tbl.rightMargin = u(420);
@@ -1560,6 +1568,10 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
                 @Override public void run() { root.removeView(pp); }
             }).start();
         }
+    }
+
+    @Override public void onHaLinked() {
+        if (!prefs.haButton()) { setHouseButton(true); showNotice("Bouton Maison ajouté à l'accueil"); }
     }
 
     @Override public void onPhoneName(String name) { if (phonePill != null) showNotice("Contrôlée par " + name); }

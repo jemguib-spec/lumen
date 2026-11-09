@@ -345,6 +345,15 @@ final class SettingsPanel {
                 break;
             }
             case ACCUEIL: {
+        col.addView(a.listRow("Bouton Maison (Home Assistant)", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.haButton() ? "Affiché" : "Masqué"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                boolean on = !a.prefs.haButton();
+                a.setHouseButton(on);
+                if (on && !a.prefs.haConfigured()) a.showNotice("À relier depuis le téléphone : Plus › Home Assistant");
+            }
+        }), a.rowLp());
         col.addView(a.listRow("Bandeau d'accueil", new MainActivity.Value() {
             @Override public String get() { return a.prefs.greeting() ? "Oui" : "Non"; }
         }, new View.OnClickListener() {

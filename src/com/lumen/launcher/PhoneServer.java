@@ -82,6 +82,8 @@ final class PhoneServer {
         String phoneKey(String key);
         /** Le téléphone a changé de nom (page « Plus »). */
         void onPhoneName(String name);
+        /** Home Assistant vient d'être relié : le bouton « Maison » apparaît. */
+        void onHaLinked();
     }
 
     /** Touches acceptées depuis le téléphone (liste fermée). */
@@ -553,6 +555,7 @@ final class PhoneServer {
         try { HomeAssistant.ping(url, token); }
         catch (Exception e) { CrashLog.note(ctx, "Home Assistant : " + e); return err(HomeAssistant.human(e)); }
         host.prefs().setHa(url, token);
+        main.post(new Runnable() { @Override public void run() { host.onHaLinked(); } });
         return "{\"ok\":true}";
     }
 
