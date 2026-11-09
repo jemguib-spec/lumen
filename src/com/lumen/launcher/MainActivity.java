@@ -445,6 +445,9 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         Tile inputs = Tile.button(this, Glyph.INPUT, "Entrées", bs);
         inputs.setFocusListener(homeFocus);
         inputs.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { InputsPanel.openInputs(MainActivity.this); } });
+        Tile find = Tile.button(this, Glyph.SEARCH, "Rechercher", bs);
+        find.setFocusListener(homeFocus);
+        find.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { openSearch(); } });
         Tile house = houseButton = Tile.button(this, Glyph.HOME, "Maison", bs);
         house.setFocusListener(homeFocus);
         house.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { HomePanel.open(MainActivity.this); } });
@@ -454,7 +457,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         Tile set = Tile.button(this, Glyph.SLIDERS, "Réglages", bs);
         set.setFocusListener(homeFocus);
         set.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { SettingsPanel.openSettings(MainActivity.this); } });
-        for (Tile b : new Tile[]{amb, inputs, house, all, set}) {
+        for (Tile b : new Tile[]{find, amb, inputs, house, all, set}) {
             LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             bl.leftMargin = u(18);
             topButtons.addView(b, bl);
@@ -1462,6 +1465,12 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
             }, 400);
         }
     };
+
+    /** Bouton loupe de l'accueil : la page des applis s'ouvre, recherche prête à taper. */
+    void openSearch() {
+        openApps();
+        h.postDelayed(new Runnable() { @Override public void run() { if (appsOpen) appsPage.focusSearch(); } }, 350);
+    }
 
     private void openApps() {
         if (appsOpen) return;

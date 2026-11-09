@@ -90,6 +90,17 @@ final class AppsPage {
      * Texte qui arrive du téléphone : le champ de recherche prend le focus pour que son curseur
      * clignote à l'écran (sans ouvrir le clavier de la TV), et suit la frappe en direct.
      */
+    /** Recherche prête : le champ prend la main et le clavier de la TV s'ouvre. */
+    void focusSearch() {
+        if (search == null) return;
+        search.setShowSoftInputOnFocus(true);
+        search.requestFocus();
+        try {
+            android.view.inputmethod.InputMethodManager im = (android.view.inputmethod.InputMethodManager) a.getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (im != null) im.showSoftInput(search, 0);
+        } catch (Exception ignored) { }
+    }
+
     void typeFromPhone(String q) {
         if (search == null) return;
         search.setShowSoftInputOnFocus(false);
@@ -214,6 +225,61 @@ final class AppsPage {
         } catch (Exception ignored) { }
     }
 
+    /** Une appli (ou la recherche Google TV) capable de chercher un titre. */
+    static final class SearchTarget {
+        final String label, hint, pkg, action, extra;
+        SearchTarget(String label, String hint, String pkg, String action, String extra) {
+            this.label = label; this.hint = hint; this.pkg = pkg; this.action = action; this.extra = extra;
+        }
+    }
+
+    private static final String GLOBAL = "android.search.action.GLOBAL_SEARCH", GMS = "com.google.android.gms.actions.SEARCH_ACTION";
+    private List<SearchTarget> targetsCache;
+
+    /**
+     * Recherche de la TV (Google TV : toutes les applis d'un coup, Canal+ et Plex compris), puis
+     * les applis installées qui acceptent une recherche directe.
+     */
+    private List<SearchTarget> searchTargets(Set<String> hidden) {
+        if (targetsCache != null && !a.dirtyApps) return targetsCache;
+        List<SearchTarget> out = new ArrayList<>();
+        android.content.pm.PackageManager pm = a.getPackageManager();
+        try {
+            if (pm.resolveActivity(new android.content.Intent(GLOBAL), 0) != null)
+                out.add(new SearchTarget("Recherche de la TV", "Films et séries de toutes les applis", null, GLOBAL, android.app.SearchManager.QUERY));
+        } catch (Exception ignored) { }
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (String action : new String[]{android.content.Intent.ACTION_SEARCH, GMS}) {
+            List<android.content.pm.ResolveInfo> l;
+            try { l = pm.queryIntentActivities(new android.content.Intent(action), 0); } catch (Exception e) { continue; }
+            for (android.content.pm.ResolveInfo ri : l) {
+                String pkg = ri.activityInfo.packageName;
+                if (pkg.equals(a.getPackageName()) || !seen.add(pkg)) continue;
+                AppRepo.App app = a.repo.findByPackage(pkg);
+                if (app == null || hidden.contains(app.key)) continue; // seulement les applis visibles de l'accueil
+                out.add(new SearchTarget(app.label, "Chercher dans l'appli", pkg, action,
+                        GMS.equals(action) ? "query" : android.app.SearchManager.QUERY));
+                if (out.size() >= 10) break;
+            }
+        }
+        targetsCache = out;
+        return out;
+    }
+
+    private void searchIn(SearchTarget t, String q) {
+        android.content.Intent i = new android.content.Intent(t.action);
+        if (t.pkg != null) i.setPackage(t.pkg);
+        i.putExtra(t.extra, q);
+        i.putExtra(android.app.SearchManager.QUERY, q);
+        i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+        try { a.startActivity(i); }
+        catch (Exception e) {
+            // l'appli n'accepte pas la recherche directe : on l'ouvre simplement
+            AppRepo.App app = t.pkg == null ? null : a.repo.findByPackage(t.pkg);
+            if (app != null) a.launchAnimated(app, null); else a.showNotice("Recherche indisponible");
+        }
+    }
+
     /** Ligne de résultat (épisode, réglage) alignée sur les vignettes, de largeur raisonnable. */
     private void resultRow(LinearLayout r) {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(a.u(1100), a.u(84 * a.textScale));
@@ -272,6 +338,16 @@ final class AppsPage {
                                     catch (Exception ex) { a.showNotice("Impossible de reprendre ce programme"); }
                                 }
                             }, false));
+                }
+            }
+            // chercher le film ou la série directement dans les applis (Canal+, Plex, Netflix…)
+            List<SearchTarget> targets = searchTargets(hidden);
+            if (!targets.isEmpty() && q.length() >= 2) {
+                sections.addView(sectionLabel("Chercher « " + q + " » dans…"));
+                for (final SearchTarget t : targets) {
+                    final String qq = q;
+                    resultRow(a.iconRow(Glyph.SEARCH, t.label, new MainActivity.Value() { @Override public String get() { return t.hint; } },
+                            new View.OnClickListener() { @Override public void onClick(View v) { searchIn(t, qq); } }, false));
                 }
             }
             if (!sets.isEmpty()) {

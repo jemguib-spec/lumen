@@ -112,7 +112,7 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - Pendant un téléchargement de photos ou de vidéos, un petit indicateur en bas à droite de l'accueil dit ce qui se passe (« Ambiances · Vidéo 2 sur 4 · 37 % »).
 
 ## Recherche
-- La recherche de « Toutes les applications » trouve aussi les épisodes en cours (Reprendre) et les réglages (« veille », « stockage », « pin »…).
+- Bouton **loupe** en haut de l'accueil (ou la recherche de « Toutes les applications ») : applis, épisodes en cours, réglages, et **Chercher « … » dans…** : la recherche de la TV (Google TV, toutes les applis d'un coup) et chaque appli qui accepte une recherche directe (Netflix, Plex, YouTube…). Une appli qui refuse la recherche directe s'ouvre simplement.
 
 ## Stockage
 - Réglages › Système › Stockage (ou sur le téléphone : Plus › Stockage de la TV) : place prise par les photos, les vidéos de fond et celles des ambiances, avec de quoi vider chaque catégorie. Tes photos et vidéos envoyées du téléphone ne sont jamais effacées là.
