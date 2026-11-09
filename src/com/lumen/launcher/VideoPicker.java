@@ -182,6 +182,10 @@ final class VideoPicker {
         final ImageView img = new ImageView(a);
         img.setScaleType(ImageView.ScaleType.CENTER_CROP);
         card.addView(img, MainActivity.match());
+        // en attendant l'aperçu (ou s'il est indisponible) : un pictogramme plutôt qu'une case vide
+        final ImageView ph = new ImageView(a);
+        ph.setImageDrawable(new Glyph(Glyph.IMAGE, 0x59FFFFFF));
+        card.addView(ph, new FrameLayout.LayoutParams(a.u(64), a.u(64), Gravity.CENTER));
         final View dim = new View(a);
         dim.setBackgroundColor(0x8C000000);
         card.addView(dim, MainActivity.match());
@@ -246,7 +250,7 @@ final class VideoPicker {
                 BitmapFactory.Options o = new BitmapFactory.Options();
                 o.inSampleSize = 1;
                 final Bitmap b = BitmapFactory.decodeFile(f.getAbsolutePath(), o);
-                if (b != null) a.h.post(new Runnable() { @Override public void run() { img.setImageBitmap(b); } });
+                if (b != null) a.h.post(new Runnable() { @Override public void run() { img.setImageBitmap(b); ph.setVisibility(View.GONE); } });
             }
         });
         return cell;

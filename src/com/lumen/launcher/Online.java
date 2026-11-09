@@ -475,7 +475,7 @@ final class Online {
     private List<Candidate> commonsVideoQuery(String generator, int minH) throws Exception {
         List<Candidate> out = new ArrayList<>();
         String url = "https://commons.wikimedia.org/w/api.php?action=query&format=json" + generator
-                + "&prop=videoinfo&viprop=url|size|mime|derivatives|extmetadata&viurlwidth=480"
+                + "&prop=videoinfo&viprop=url|size|mime|derivatives|extmetadata&viurlwidth=500" // tailles standard Wikimedia seulement (sinon refus 429)
                 + "&viextmetadatafilter=Artist|LicenseShortName|ObjectName";
         JSONObject q = getJson(url).optJSONObject("query");
         if (q == null) return out;
@@ -724,7 +724,7 @@ final class Online {
      */
     synchronized List<Candidate> catalog(String scope, boolean force) throws Exception {
         File f = new File(catalogDir(), scope + ".json");
-        String sig = (prefs.pexelsKey().isEmpty() ? "0" : "1") + (want4k() ? "4k" : "hd");
+        String sig = "v2" + (prefs.pexelsKey().isEmpty() ? "0" : "1") + (want4k() ? "4k" : "hd"); // v2 : aperçus en 500 px
         if (!force && f.exists() && System.currentTimeMillis() - f.lastModified() < DAY) {
             try {
                 JSONObject o = new JSONObject(new String(readAll(f), "UTF-8"));

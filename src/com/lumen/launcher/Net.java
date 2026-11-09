@@ -23,7 +23,8 @@ import javax.net.ssl.HttpsURLConnection;
 final class Net {
     private Net() { }
 
-    static final String USER_AGENT = "Lumen-TV-Launcher";
+    /** Identifiant demandé par la politique de Wikimedia : nom de l'appli et adresse du projet. */
+    static final String USER_AGENT = "LumenTV/4 (https://github.com/jemguib-spec/lumen)";
     private static final int MAX_REDIRECTS = 4;
 
     /** Peut lever une IOException pour interrompre le téléchargement (mise en pause). */
