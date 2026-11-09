@@ -42,7 +42,16 @@ final class Online {
     private static final int IMG_TARGET = 18, IMG_MAX = 45, VID_TARGET = 6, VID_MAX = 30;
     private long diskCap() { return ((long) prefs.videoDiskGb()) << 30; }
     /** Espace toujours laissé libre sur la TV (le système, les mises à jour, les autres applis). */
+    /** Espace toujours laissé libre sur la TV avant de télécharger une vidéo (fichiers de plusieurs centaines de Mo). */
     static final long RESERVE = 2L << 30;
+    /** Pour une photo (quelques Mo), une marge plus petite suffit. */
+    static final long PHOTO_RESERVE = 500L << 20;
+
+    /** Marge gardée libre selon ce qui se télécharge. */
+    static long reserveFor(String theme) { return VIDEO.equals(theme) || COSY.equals(theme) ? RESERVE : PHOTO_RESERVE; }
+
+    /** Plus assez de place sur la TV pour télécharger ce thème ? (rien ne se télécharge alors) */
+    boolean lowSpace(String theme) { return dir(theme).getUsableSpace() < reserveFor(theme) + (50L << 20); }
 
 
     private static final String[] NATURE_CATS = {"Featured_pictures_of_landscapes",
@@ -1091,7 +1100,7 @@ final class Online {
     private String fetchMedia(final Candidate c, String url, final String theme, final String prefix) {
         if (url == null) return null;
         File raw = new File(dir(theme), safe(c.id) + ".raw");
-        if (dir(theme).getUsableSpace() < RESERVE + Math.max(c.maxBytes, 50L << 20)) {
+        if (dir(theme).getUsableSpace() < reserveFor(theme) + Math.max(c.maxBytes, 50L << 20)) {
             lastError = "Plus assez d'espace sur la TV";
             return null;
         }

@@ -596,6 +596,8 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     /** Dernière appli ouverte depuis Lumen (pour « Fermer l'appli » depuis le téléphone). */
     AppRepo.App lastLaunched;
 
+    private boolean lowSpaceSaid;
+
     /** Travaux lancés juste après l'affichage : autorisations, mise à jour, « Reprendre », téléchargements. */
     private final Runnable afterShown = new Runnable() {
         @Override public void run() {
@@ -604,6 +606,11 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
             updater.check(false);                // toutes les 6 heures au plus
             shelf.reload();                      // on revient peut-être d'un épisode
             for (String t : Library.themesFor(prefs.source())) online.refreshIfNeeded(t, false);
+            // fond qui ne peut pas se télécharger faute de place : on le dit (une fois par démarrage)
+            if (!lowSpaceSaid && wall.usingFallback()) {
+                String low = SettingsPanel.lowSpaceNotice(MainActivity.this);
+                if (low != null) { lowSpaceSaid = true; showNotice(low); }
+            }
             refreshGreeting();
             if (prefs.veilleSource() >= 0) for (String t : Library.themesFor(Library.veilleSource(prefs))) online.refreshIfNeeded(t, false);
             if (CrashLog.safeModeJustStarted) {

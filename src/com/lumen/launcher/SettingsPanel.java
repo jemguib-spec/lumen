@@ -61,8 +61,18 @@ final class SettingsPanel {
         for (String t : Library.themesFor(a.prefs.source())) a.online.refreshIfNeeded(t, false);
         a.wall.restart();
         a.updateWeatherFx();
-        if (a.wall.usingFallback() && Library.themesFor(a.prefs.source()).length > 0)
-            a.showNotice("Téléchargement des photos en cours");
+        if (a.wall.usingFallback() && Library.themesFor(a.prefs.source()).length > 0) {
+            String low = lowSpaceNotice(a);
+            a.showNotice(low != null ? low : "Téléchargement des photos en cours");
+        }
+    }
+
+    /** Message si la source choisie ne peut pas se télécharger faute de place sur la TV, sinon null. */
+    static String lowSpaceNotice(MainActivity a) {
+        for (String t : Library.themesFor(a.prefs.source()))
+            if (a.online.lowSpace(t))
+                return "Plus assez de place sur la TV (" + Online.human(a.getFilesDir().getUsableSpace()) + " libres) · Réglages › Système › Stockage";
+        return null;
     }
 
     // ------------------------------------------------------------------ pages

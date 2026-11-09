@@ -30,8 +30,14 @@ final class StoragePanel {
         final Runnable refreshFree = new Runnable() {
             @Override public void run() {
                 long left = a.getFilesDir().getUsableSpace();
-                free.setText("Libre sur la TV : " + Online.human(left) + "   ·   Lumen garde toujours "
-                        + Online.human(Online.RESERVE) + " libres");
+                String s = "Libre sur la TV : " + Online.human(left);
+                // Lumen ne remplit jamais la TV : il garde de la place libre avant de télécharger
+                if (left < Online.PHOTO_RESERVE + (50L << 20))
+                    s += "\nTéléchargements en pause : libère de la place dans les Paramètres de la TV";
+                else if (left < Online.RESERVE + (50L << 20))
+                    s += "\nPhotos : oui   ·   vidéos en pause (Lumen garde " + Online.human(Online.RESERVE) + " libres pour elles)";
+                else s += "   ·   Lumen garde toujours " + Online.human(Online.RESERVE) + " libres";
+                free.setText(s);
             }
         };
         refreshFree.run();

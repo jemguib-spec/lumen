@@ -134,7 +134,7 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 
 ## Stockage
 - Réglages › Système › Stockage (ou sur le téléphone : Plus › Stockage de la TV) : place prise par les photos, les vidéos de fond et celles des ambiances, avec de quoi vider chaque catégorie. Tes photos et vidéos envoyées du téléphone ne sont jamais effacées là.
-- Lumen garde toujours au moins 2 Go libres sur la TV : s'il manque de place, il réduit ses vidéos et n'en télécharge plus. Les téléchargements interrompus sont effacés au démarrage.
+- Lumen ne remplit jamais la TV : il garde au moins 2 Go libres avant de télécharger une vidéo, et 500 Mo avant une photo. S'il manque de place, il réduit ses vidéos, met les téléchargements en pause et le dit à l'écran (détail dans Réglages › Système › Stockage). Les téléchargements interrompus sont effacés au démarrage.
 
 ## Maison (Home Assistant)
 - Bouton **Maison** en haut de l'accueil, à côté de « Toutes les applications » (masqué par défaut : Réglages › Accueil et applis › Bouton Maison ; il apparaît aussi tout seul dès que Home Assistant est relié) : tes lumières, prises, scènes, volets et lecteurs Home Assistant. OK pour allumer, éteindre ou lancer une scène ; l'état se met à jour tout seul.
