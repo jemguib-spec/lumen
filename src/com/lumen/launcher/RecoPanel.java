@@ -42,10 +42,23 @@ final class RecoPanel {
         hero = new Hero(a, o);
         final LinearLayout card = a.glassCard(48);
         card.setPadding(a.u(24), a.u(48), a.u(24), a.u(28));
+        // en-tête : le titre, et à droite le choix Tout · Films · Séries
+        LinearLayout head = new LinearLayout(a);
+        head.setOrientation(LinearLayout.HORIZONTAL);
+        head.setGravity(Gravity.CENTER_VERTICAL);
         TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
         title.setText("À l'affiche");
         title.setPadding(a.u(28), 0, 0, a.u(6));
-        card.addView(title);
+        head.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        final LinearLayout seg = new LinearLayout(a);
+        GradientDrawable segBg = new GradientDrawable();
+        segBg.setCornerRadius(a.u(30));
+        segBg.setColor(0x14FFFFFF);
+        segBg.setStroke(Math.max(1, a.u(1.5f)), 0x1FFFFFFF);
+        seg.setBackground(segBg);
+        seg.setPadding(a.u(4), a.u(4), a.u(4), a.u(4));
+        head.addView(seg, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        card.addView(head);
         final TextView sub = a.text(18, "sans-serif-medium", 0x80FFFFFF);
         sub.setLetterSpacing(0.12f);
         sub.setPadding(a.u(28), 0, 0, a.u(20));
@@ -59,6 +72,7 @@ final class RecoPanel {
 
         final String key = a.prefs.tmdbKey();
         if (key.isEmpty()) {
+            seg.setVisibility(View.GONE);
             sub.setText("FILMS ET SÉRIES DU MOMENT");
             TextView how = a.text(24, "sans-serif", 0xB3FFFFFF);
             how.setText("Pour voir les films et séries les plus regardés en ce moment, sur toutes les plateformes ou seulement sur tes applis :\n\n"
@@ -139,7 +153,50 @@ final class RecoPanel {
             });
             styleChip(a, c, f[0].equals(f0), false);
         }
+        // Tout · Films · Séries
+        type = a.prefs.recoType();
+        final String[][] types = {{"", "Tout"}, {"movie", "Films"}, {"tv", "Séries"}};
+        final List<TextView> segViews = new ArrayList<>();
+        for (final String[] ty : types) {
+            final TextView s = a.text(18, "sans-serif-medium", 0xB3FFFFFF);
+            s.setText(ty[1]);
+            s.setSingleLine(true);
+            s.setFocusable(true);
+            s.setClickable(true);
+            s.setSoundEffectsEnabled(false);
+            s.setPadding(a.u(20), a.u(8), a.u(20), a.u(8));
+            GradientDrawable sb = new GradientDrawable();
+            sb.setCornerRadius(a.u(26));
+            s.setBackground(sb);
+            s.setTag(ty[0]);
+            seg.addView(s);
+            segViews.add(s);
+            s.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override public void onFocusChange(View v, boolean has) {
+                    if (has) Sounds.get(a).tick();
+                    styleSeg(s, ty[0].equals(type), has);
+                }
+            });
+            s.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    Sounds.get(a).tock();
+                    type = ty[0];
+                    a.prefs.setRecoType(type);
+                    for (TextView x : segViews) styleSeg(x, x.getTag().equals(type), x.isFocused());
+                    if (lastFilter != null) load(a, card, list, sub, key, lastFilter, mine, false);
+                }
+            });
+            styleSeg(s, ty[0].equals(type), false);
+        }
         for (String[] f : filters) if (f[0].equals(f0)) load(a, card, list, sub, key, f, mine, true);
+    }
+
+    private static String type = "";
+    private static String[] lastFilter;
+
+    private static void styleSeg(TextView s, boolean selected, boolean focused) {
+        ((GradientDrawable) s.getBackground()).setColor(focused ? 0xFFF5F5F7 : selected ? 0x40FFFFFF : 0x00FFFFFF);
+        s.setTextColor(focused ? 0xFF111216 : selected ? 0xFFFFFFFF : 0x99FFFFFF);
     }
 
     private static void styleChip(MainActivity a, TextView c, boolean selected, boolean focused) {
@@ -158,8 +215,11 @@ final class RecoPanel {
     private static void load(final MainActivity a, final LinearLayout card, final LinearLayout list, final TextView sub,
                              final String key, final String[] filter, final List<String[]> mine, final boolean focusFirst) {
         list.removeAllViews();
-        sub.setText(filter[0].isEmpty() ? "LES PLUS REGARDÉS CETTE SEMAINE · PARTOUT"
-                : filter[0].equals("mine") ? "LES PLUS POPULAIRES SUR TES APPLIS" : "LES PLUS POPULAIRES SUR " + filter[1].toUpperCase(Locale.FRANCE));
+        lastFilter = filter;
+        final String ty = type;
+        String what = ty.isEmpty() ? "" : ty.equals("movie") ? "FILMS " : "SÉRIES ";
+        sub.setText(filter[0].isEmpty() ? (what.isEmpty() ? "" : what + "· ") + "LES PLUS REGARDÉS CETTE SEMAINE"
+                : (what.isEmpty() ? "" : what + "· ") + (filter[0].equals("mine") ? "LES PLUS POPULAIRES SUR TES APPLIS" : "LES PLUS POPULAIRES SUR " + filter[1].toUpperCase(Locale.FRANCE)));
         final TextView wait = a.text(24, "sans-serif", 0x99FFFFFF);
         wait.setText("Chargement…");
         wait.setPadding(a.u(28), a.u(16), 0, 0);
@@ -169,9 +229,9 @@ final class RecoPanel {
                 List<Tmdb.Title> got = null;
                 String err = null;
                 try {
-                    if (filter[0].isEmpty()) got = Tmdb.trending(key);
-                    else if (filter[0].equals("mine")) got = Tmdb.mine(key, mine);
-                    else for (String[] p : mine) if (p[0].equals(filter[0])) got = Tmdb.onProvider(key, p, 10);
+                    if (filter[0].isEmpty()) got = Tmdb.trending(key, ty);
+                    else if (filter[0].equals("mine")) got = Tmdb.mine(key, mine, ty);
+                    else for (String[] p : mine) if (p[0].equals(filter[0])) got = Tmdb.onProvider(key, p, 10, ty);
                 } catch (Net.HttpError e) {
                     err = e.code == 401 ? "Clé TMDB refusée · vérifie-la sur le téléphone (Plus › Films du moment)" : "Service indisponible pour l'instant";
                 } catch (Exception e) {
@@ -182,7 +242,7 @@ final class RecoPanel {
                 final String error = err;
                 a.h.post(new Runnable() {
                     @Override public void run() {
-                        if (!card.isAttachedToWindow()) return;
+                        if (!card.isAttachedToWindow() || lastFilter != filter || !ty.equals(type)) return; // filtre changé entre-temps
                         list.removeAllViews();
                         if (titles == null || titles.isEmpty()) {
                             wait.setText(error != null ? error : "Rien pour l'instant");
@@ -192,7 +252,7 @@ final class RecoPanel {
                         View first = null;
                         int n = 0;
                         for (Tmdb.Title t : titles) {
-                            View r = row(a, t, key);
+                            View r = row(a, t, key, n + 1);
                             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, a.u(124));
                             lp.bottomMargin = a.u(6);
                             list.addView(r, lp);
@@ -210,7 +270,7 @@ final class RecoPanel {
         });
     }
 
-    private static View row(final MainActivity a, final Tmdb.Title t, final String key) {
+    private static View row(final MainActivity a, final Tmdb.Title t, final String key, int rank) {
         final LinearLayout r = new LinearLayout(a);
         r.setOrientation(LinearLayout.HORIZONTAL);
         r.setGravity(Gravity.CENTER_VERTICAL);
@@ -222,6 +282,13 @@ final class RecoPanel {
         bg.setCornerRadius(a.u(24));
         bg.setColor(0x00FFFFFF);
         r.setBackground(bg);
+
+        // classement (1 à 10) en chiffres fins, à la manière d'un « top 10 »
+        final TextView num = a.text(40, "sans-serif-thin", 0x80FFFFFF);
+        num.setText(rank <= 10 ? String.valueOf(rank) : "");
+        num.setGravity(Gravity.CENTER);
+        num.setIncludeFontPadding(false);
+        r.addView(num, new LinearLayout.LayoutParams(a.u(52), ViewGroup.LayoutParams.WRAP_CONTENT));
 
         final ImageView poster = new ImageView(a);
         poster.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -245,12 +312,28 @@ final class RecoPanel {
         name.setMaxLines(1);
         name.setEllipsize(TextUtils.TruncateAt.END);
         txt.addView(name);
-        final String meta = meta(t);
+        final String meta = metaShort(t);
         final TextView m = a.text(18, "sans-serif", 0x99FFFFFF);
         m.setText(meta);
         LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         ml.topMargin = a.u(6);
-        txt.addView(m, ml);
+        // l'icône de l'appli qui propose le titre (quand on la connaît), comme une signature
+        LinearLayout metaRow = new LinearLayout(a);
+        metaRow.setGravity(Gravity.CENTER_VERTICAL);
+        AppRepo.App owner = t.provider == null ? null : a.repo.findByPackage(t.provider[0]);
+        if (owner != null) {
+            ImageView ic = new ImageView(a);
+            ic.setImageDrawable(owner.icon(a.getPackageManager()));
+            ic.setOutlineProvider(new android.view.ViewOutlineProvider() {
+                @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), a.u(6)); }
+            });
+            ic.setClipToOutline(true);
+            LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(a.u(26), a.u(26));
+            il.rightMargin = a.u(10);
+            metaRow.addView(ic, il);
+        }
+        metaRow.addView(m);
+        txt.addView(metaRow, ml);
         LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         tl.leftMargin = a.u(24);
         r.addView(txt, tl);
@@ -261,6 +344,7 @@ final class RecoPanel {
                 bg.setColor(f ? 0xFFF5F5F7 : 0x00FFFFFF);
                 name.setTextColor(f ? 0xFF111216 : 0xF2FFFFFF);
                 m.setTextColor(f ? 0x99111216 : 0x99FFFFFF);
+                num.setTextColor(f ? 0xFFFFFFFF : 0x80FFFFFF);
                 r.animate().scaleX(f ? 1.02f : 1f).scaleY(f ? 1.02f : 1f).setStartDelay(0).setDuration(180).start();
                 if (f && hero != null) hero.show(t);
             }
@@ -271,10 +355,19 @@ final class RecoPanel {
         return r;
     }
 
+    /** Ligne courte des listes : type, année, note (l'appli est montrée par son icône). */
+    static String metaShort(Tmdb.Title t) {
+        StringBuilder b = new StringBuilder("movie".equals(t.type) ? "Film" : "Série");
+        if (!t.year.isEmpty()) b.append("  ·  ").append(t.year);
+        if (t.rating > 0) b.append("  ·  ★ ").append(String.format(Locale.FRANCE, "%.1f", t.rating));
+        return b.toString();
+    }
+
     static String meta(Tmdb.Title t) {
         StringBuilder b = new StringBuilder("movie".equals(t.type) ? "Film" : "Série");
         if (!t.year.isEmpty()) b.append("  ·  ").append(t.year);
         if (t.rating > 0) b.append("  ·  ★ ").append(String.format(Locale.FRANCE, "%.1f", t.rating));
+        if (!t.genres.isEmpty()) b.append("  ·  ").append(t.genres);
         if (t.provider != null) b.append("  ·  ").append(t.provider[2]);
         return b.toString();
     }
@@ -292,6 +385,7 @@ final class RecoPanel {
         final ImageView[] pics = new ImageView[2];
         int front = 0;
         final TextView title, meta, overview;
+        final ImageView logo;
         final LinearLayout text;
         Tmdb.Title shown;
         private final Runnable pending = new Runnable() { @Override public void run() { load(); } };
@@ -321,6 +415,14 @@ final class RecoPanel {
             title.setEllipsize(TextUtils.TruncateAt.END);
             title.setShadowLayer(a.u(12), 0, 0, 0x66000000);
             text.addView(title);
+            // logo officiel du titre (s'il existe) à la place du texte, comme sur les grandes plateformes
+            logo = new ImageView(a);
+            logo.setScaleType(ImageView.ScaleType.FIT_START);
+            logo.setAdjustViewBounds(true);
+            logo.setMaxHeight(a.u(170));
+            logo.setMaxWidth(a.u(720));
+            logo.setVisibility(View.GONE);
+            text.addView(logo, 0, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             meta = a.text(20, "sans-serif-medium", 0xB3FFFFFF);
             meta.setLetterSpacing(0.06f);
             LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -357,6 +459,8 @@ final class RecoPanel {
                 @Override public void run() {
                     if (shown != t) return;
                     title.setText(t.name);
+                    title.setVisibility(View.VISIBLE);
+                    logo.setVisibility(View.GONE);
                     meta.setText(meta(t).toUpperCase(Locale.FRANCE));
                     overview.setText(t.overview);
                     overview.setVisibility(t.overview == null || t.overview.isEmpty() ? View.GONE : View.VISIBLE);
@@ -366,7 +470,18 @@ final class RecoPanel {
             }).start();
             RecoPanel.img.execute(new Runnable() {
                 @Override public void run() {
-                    final Bitmap b = Tmdb.poster(t.backdrop.isEmpty() ? t.poster : t.backdrop, t.backdrop.isEmpty() ? 500 : 780);
+                    final Bitmap b = Tmdb.poster(t.backdrop.isEmpty() ? t.poster : t.backdrop, t.backdrop.isEmpty() ? 500 : 1280);
+                    final Bitmap lg = Tmdb.logo(a.prefs.tmdbKey(), t);
+                    if (lg != null) a.h.post(new Runnable() {
+                        @Override public void run() {
+                            if (shown != t) return;
+                            logo.setImageBitmap(lg);
+                            logo.setAlpha(0f);
+                            logo.setVisibility(View.VISIBLE);
+                            title.setVisibility(View.GONE);
+                            logo.animate().alpha(1f).setDuration(500).start();
+                        }
+                    });
                     a.h.post(new Runnable() {
                         @Override public void run() {
                             if (shown != t || b == null || !layer.isAttachedToWindow()) return;
@@ -377,7 +492,15 @@ final class RecoPanel {
                             in.setScaleY(1.06f);
                             // fondu croisé entre les deux images (voiles et texte restent toujours devant)
                             in.setAlpha(0f);
-                            in.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(900).setInterpolator(new DecelerateInterpolator(1.6f)).start();
+                            in.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(900).setInterpolator(new DecelerateInterpolator(1.6f))
+                                    .withEndAction(new Runnable() {
+                                        @Override public void run() {
+                                            // lent mouvement de caméra tant que le titre reste sélectionné
+                                            if (shown == t) in.animate().scaleX(1.07f).scaleY(1.07f).translationX(-a.u(24))
+                                                    .setDuration(22_000).setInterpolator(new android.view.animation.LinearInterpolator()).start();
+                                        }
+                                    }).start();
+                            in.setTranslationX(0);
                             out.animate().alpha(0f).setDuration(900).start();
                         }
                     });

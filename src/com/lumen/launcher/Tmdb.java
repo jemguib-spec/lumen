@@ -24,7 +24,7 @@ final class Tmdb {
     private Tmdb() { }
 
     static final class Title {
-        String id, type, name, year, overview, poster, backdrop;
+        String id, type, name, year, overview, poster, backdrop, genres = "";
         double rating;
         String[] provider; // service connu (filtre par appli), sinon null
     }
@@ -65,6 +65,15 @@ final class Tmdb {
             t.poster = r.isNull("poster_path") ? "" : r.optString("poster_path");
             t.backdrop = r.isNull("backdrop_path") ? "" : r.optString("backdrop_path");
             t.rating = r.optDouble("vote_average", 0);
+            JSONArray g = r.optJSONArray("genre_ids");
+            if (g != null) {
+                StringBuilder gb = new StringBuilder();
+                for (int k = 0, n = 0; k < g.length() && n < 2; k++) {
+                    String gn = GENRES.get(g.optInt(k));
+                    if (gn != null) { gb.append(n++ > 0 ? " · " : "").append(gn); }
+                }
+                t.genres = gb.toString();
+            }
             t.provider = provider;
             if (t.name.isEmpty() || t.poster.isEmpty()) continue;
             out.add(t);
@@ -72,14 +81,29 @@ final class Tmdb {
         return out;
     }
 
-    /** Le plus regardé cette semaine, partout. */
-    static List<Title> trending(String key) throws Exception {
-        return parse(get("/trending/all/week", key), null, null);
+    /** Genres TMDB (films et séries) en français. */
+    static final Map<Integer, String> GENRES = new HashMap<>();
+    static {
+        Object[] g = {28, "Action", 12, "Aventure", 16, "Animation", 35, "Comédie", 80, "Policier", 99, "Documentaire",
+                18, "Drame", 10751, "Famille", 14, "Fantastique", 36, "Histoire", 27, "Horreur", 10402, "Musique",
+                9648, "Mystère", 10749, "Romance", 878, "Science-fiction", 53, "Thriller", 10752, "Guerre", 37, "Western",
+                10759, "Action", 10762, "Enfants", 10763, "Actualités", 10764, "Téléréalité", 10765, "Science-fiction",
+                10766, "Feuilleton", 10767, "Talk-show", 10768, "Guerre"};
+        for (int i = 0; i < g.length; i += 2) GENRES.put((Integer) g[i], (String) g[i + 1]);
     }
 
-    /** Le plus populaire sur un service (films et séries mêlés). */
-    static List<Title> onProvider(String key, String[] provider, int perType) throws Exception {
+    /** Le plus regardé cette semaine, partout. type : "" (tout), "movie" ou "tv". */
+    static List<Title> trending(String key, String type) throws Exception {
+        return parse(get("/trending/" + (type.isEmpty() ? "all" : type) + "/week", key), type.isEmpty() ? null : type, null);
+    }
+
+    /** Le plus populaire sur un service (films et séries mêlés, ou un seul des deux). */
+    static List<Title> onProvider(String key, String[] provider, int perType, String type) throws Exception {
         String q = "?with_watch_providers=" + provider[1] + "&watch_region=FR&sort_by=popularity.desc&vote_count.gte=30";
+        if (!type.isEmpty()) {
+            List<Title> one = parse(get("/discover/" + type + q, key), type, provider);
+            return one.size() > perType * 2 ? new ArrayList<>(one.subList(0, perType * 2)) : one;
+        }
         List<Title> m = parse(get("/discover/movie" + q, key), "movie", provider);
         List<Title> s = parse(get("/discover/tv" + q, key), "tv", provider);
         List<Title> out = new ArrayList<>();
@@ -91,10 +115,10 @@ final class Tmdb {
     }
 
     /** Sur mes applis : les meilleurs de chaque service, mêlés, sans doublon. */
-    static List<Title> mine(String key, List<String[]> providers) throws Exception {
+    static List<Title> mine(String key, List<String[]> providers, String type) throws Exception {
         List<List<Title>> per = new ArrayList<>();
         for (String[] p : providers) {
-            try { per.add(onProvider(key, p, 5)); } catch (Exception ignored) { }
+            try { per.add(onProvider(key, p, 5, type)); } catch (Exception ignored) { }
         }
         List<Title> out = new ArrayList<>();
         Set<String> seen = new HashSet<>();
@@ -115,6 +139,26 @@ final class Tmdb {
             if (p != null) out.add(p);
         }
         return out;
+    }
+
+    /** Logo officiel du titre (PNG transparent), en français de préférence ; null s'il n'y en a pas. */
+    static Bitmap logo(String key, Title t) {
+        try {
+            JSONObject o = get("/" + t.type + "/" + t.id + "/images?include_image_language=fr,en,null", key);
+            JSONArray l = o.optJSONArray("logos");
+            if (l == null || l.length() == 0) return null;
+            String path = null;
+            for (String lang : new String[]{"fr", "en"}) {
+                for (int i = 0; i < l.length() && path == null; i++) {
+                    JSONObject x = l.optJSONObject(i);
+                    if (x != null && lang.equals(x.optString("iso_639_1")) && x.optString("file_path").endsWith(".png")) path = x.optString("file_path");
+                }
+                if (path != null) break;
+            }
+            return path == null ? null : poster(path, 500);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /** Affiche (petite taille), gardée en mémoire. */

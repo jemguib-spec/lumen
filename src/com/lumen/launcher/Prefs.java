@@ -224,6 +224,9 @@ final class Prefs {
     /** Filtre de « À l'affiche » : "" = partout, "mine" = mes applis, sinon un paquet. */
     String recoFilter() { return sp.getString("reco_filter", "mine"); }
     void setRecoFilter(String f) { sp.edit().putString("reco_filter", f).apply(); }
+    /** Type dans « À l'affiche » : "" = films et séries, "movie" ou "tv". */
+    String recoType() { return sp.getString("reco_type", ""); }
+    void setRecoType(String t) { sp.edit().putString("reco_type", t).apply(); }
 
     String pexelsKey() { return sp.getString("pexels_key", ""); }
     void setPexelsKey(String k) {
