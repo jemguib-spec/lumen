@@ -89,7 +89,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     private FrameLayout zoomView;
     PhoneServer phone;
     boolean resumeOpen, recoOpen;
-    private AmbiancePanel ambiance;
+    AmbiancePanel ambiance;
     TopShelf shelf;
     Perf.Overlay perf;
     private boolean firstResume = true;
@@ -1042,46 +1042,8 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         }, 2500);
     }
 
-    /** Écran noir « lumen » avec une ligne dessous et une fine barre animée (mise à jour, redémarrage). */
-    FrameLayout lumenScreen(String line) {
-        FrameLayout z = new FrameLayout(this);
-        z.setBackgroundColor(Color.BLACK);
-        z.setClickable(true);
-        z.setElevation(u(80));
-        LinearLayout col = new LinearLayout(this);
-        col.setOrientation(LinearLayout.VERTICAL);
-        col.setGravity(Gravity.CENTER_HORIZONTAL);
-        TextView word = text(84, "sans-serif-thin", 0xFFFFFFFF);
-        word.setText("lumen");
-        word.setLetterSpacing(0.35f);
-        col.addView(word, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        TextView sub = text(24, "sans-serif-light", 0x99FFFFFF);
-        sub.setText(line.toUpperCase(java.util.Locale.FRANCE));
-        sub.setLetterSpacing(0.3f);
-        LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        sl.topMargin = u(18);
-        col.addView(sub, sl);
-        // fine barre qui va et vient : quelque chose se passe
-        FrameLayout track = new FrameLayout(this);
-        track.setBackgroundColor(0x1FFFFFFF);
-        final View bar = new View(this);
-        bar.setBackgroundColor(0xB3FFFFFF);
-        track.addView(bar, new FrameLayout.LayoutParams(u(90), ViewGroup.LayoutParams.MATCH_PARENT));
-        LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(u(360), Math.max(2, u(3)));
-        tl.topMargin = u(46);
-        col.addView(track, tl);
-        android.animation.ObjectAnimator slide = android.animation.ObjectAnimator.ofFloat(bar, "translationX", 0, u(270));
-        slide.setDuration(1100);
-        slide.setRepeatCount(android.animation.ValueAnimator.INFINITE);
-        slide.setRepeatMode(android.animation.ValueAnimator.REVERSE);
-        slide.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
-        slide.start();
-        z.addView(col, wrap(Gravity.CENTER));
-        z.setAlpha(0f);
-        root.addView(z, match());
-        z.animate().alpha(1f).setStartDelay(0).setDuration(400).start();
-        return z;
-    }
+    /** Écran noir « lumen » (mise à jour, redémarrage) : voir LumenScreen. */
+    FrameLayout lumenScreen(String line) { return LumenScreen.show(this, line); }
 
     /**
      * Redémarrage propre : écran « lumen · redémarrage », puis Lumen s'arrête et repart aussitôt ;
@@ -1572,7 +1534,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         return out;
     }
 
-    private void exitAmbient(boolean animate) {
+    void exitAmbient(boolean animate) {
         ambientOn = false;
         if (animate) Sounds.get(this).wake(); // léger fondu sonore au réveil
         idle = false;
@@ -1990,71 +1952,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     @Override public boolean onTvHome() { return resumedNow; }
 
-    /**
-     * Télécommande du téléphone. Lumen à l'écran : la touche est rejouée dans Lumen (toutes versions).
-     * Autre appli : service d'accessibilité « Lumen télécommande » s'il est activé. Volume et lecture :
-     * toujours, par le système audio (aucune autorisation nécessaire).
-     */
-    @Override public String phoneKey(String k) {
-        android.media.AudioManager am = (android.media.AudioManager) getSystemService(AUDIO_SERVICE);
-        switch (k) {
-            case "sleep":
-                if (RemoteService.perform(RemoteService.LOCK_SCREEN)) return "{\"ok\":true}";
-                return "{\"ok\":false,\"service\":" + RemoteService.connected() + ",\"sleep\":false}";
-            case "volup": case "voldown": case "mute":
-                int dir = "volup".equals(k) ? android.media.AudioManager.ADJUST_RAISE
-                        : "voldown".equals(k) ? android.media.AudioManager.ADJUST_LOWER : android.media.AudioManager.ADJUST_TOGGLE_MUTE;
-                try { am.adjustStreamVolume(android.media.AudioManager.STREAM_MUSIC, dir, android.media.AudioManager.FLAG_SHOW_UI); }
-                catch (Exception e) { return "{\"ok\":false}"; }
-                return "{\"ok\":true}";
-            case "play": {
-                long t = android.os.SystemClock.uptimeMillis();
-                am.dispatchMediaKeyEvent(new KeyEvent(t, t, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, 0));
-                am.dispatchMediaKeyEvent(new KeyEvent(t, t, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, 0));
-                return "{\"ok\":true}";
-            }
-            default: break;
-        }
-        if (resumedNow) {
-            if ("home".equals(k)) {
-                if (ambiance != null) closeAmbiance();
-                if (ambientOn) exitAmbient(true);
-                onNewIntent(getIntent()); // comme la touche Accueil : tout se referme, premier favori
-                return "{\"ok\":true}";
-            }
-            int code = "up".equals(k) ? KeyEvent.KEYCODE_DPAD_UP : "down".equals(k) ? KeyEvent.KEYCODE_DPAD_DOWN
-                    : "left".equals(k) ? KeyEvent.KEYCODE_DPAD_LEFT : "right".equals(k) ? KeyEvent.KEYCODE_DPAD_RIGHT
-                    : "ok".equals(k) ? KeyEvent.KEYCODE_DPAD_CENTER : KeyEvent.KEYCODE_BACK;
-            long t = android.os.SystemClock.uptimeMillis();
-            boolean handled = dispatchKeyEvent(new KeyEvent(t, t, KeyEvent.ACTION_DOWN, code, 0));
-            // Une flèche injectée ici ne passe pas par Android, qui déplace normalement la sélection
-            // lui-même : sans cela, « haut » ne menait jamais aux boutons du haut (Réglages…).
-            if (!handled) {
-                int dir = code == KeyEvent.KEYCODE_DPAD_UP ? View.FOCUS_UP : code == KeyEvent.KEYCODE_DPAD_DOWN ? View.FOCUS_DOWN
-                        : code == KeyEvent.KEYCODE_DPAD_LEFT ? View.FOCUS_LEFT : code == KeyEvent.KEYCODE_DPAD_RIGHT ? View.FOCUS_RIGHT : 0;
-                View f = getCurrentFocus();
-                if (dir != 0 && f != null) {
-                    View n = f.focusSearch(dir);
-                    if (n != null) n.requestFocus(dir);
-                }
-            }
-            dispatchKeyEvent(new KeyEvent(t, t + 40, KeyEvent.ACTION_UP, code, 0));
-            return "{\"ok\":true}";
-        }
-        int action = "back".equals(k) ? RemoteService.BACK : "home".equals(k) ? RemoteService.HOME
-                : "up".equals(k) ? RemoteService.DPAD_UP : "down".equals(k) ? RemoteService.DPAD_DOWN
-                : "left".equals(k) ? RemoteService.DPAD_LEFT : "right".equals(k) ? RemoteService.DPAD_RIGHT : RemoteService.DPAD_CENTER;
-        if (RemoteService.perform(action)) return "{\"ok\":true}";
-        if ("home".equals(k)) {
-            try {
-                startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
-                        .setPackage(getPackageName()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                return "{\"ok\":true}";
-            } catch (Exception ignored) { }
-        }
-        boolean svc = RemoteService.connected();
-        return "{\"ok\":false,\"service\":" + svc + ",\"dpad\":" + RemoteService.dpadSupported() + "}";
-    }
+    @Override public String phoneKey(String k) { return PhoneRemote.press(this, k); }
 
     @Override public void phoneLaunch(AppRepo.App app) {
         if (ambiance != null) closeAmbiance();
