@@ -8,9 +8,9 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 
-/** Pictogrammes dessinés en vectoriel : grille (toutes les applis) et réglages. */
+/** Pictogrammes dessinés en vectoriel : boutons de l'accueil et rubriques des réglages. */
 final class Glyph extends Drawable {
-    static final int GRID = 0, SLIDERS = 1, INPUT = 2, MOON = 3;
+    static final int GRID = 0, SLIDERS = 1, INPUT = 2, MOON = 3, IMAGE = 4, HOME = 5, PHONE = 6, GEAR = 7, INFO = 8, DOC = 9, SPARK = 10;
     private final int type;
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -42,6 +42,8 @@ final class Glyph extends Drawable {
             cut.addCircle(cx + s * 0.14f, cy - s * 0.10f, s * 0.26f, android.graphics.Path.Direction.CW);
             moon.op(cut, android.graphics.Path.Op.DIFFERENCE);
             c.drawPath(moon, p);
+        } else if (type >= IMAGE) {
+            drawLine(c, type, s, cx, cy);
         } else if (type == INPUT) {
             // écran + flèche entrante : « Entrées »
             float stroke = s * 0.05f;
@@ -66,6 +68,74 @@ final class Glyph extends Drawable {
                 c.drawLine(cx - w / 2, y, cx + w / 2, y, p);
                 p.setStyle(Paint.Style.FILL);
                 c.drawCircle(cx - w / 2 + w * knob[i], y, s * 0.075f, p);
+            }
+        }
+    }
+
+    /** Pictogrammes au trait (rubriques des réglages). */
+    private void drawLine(Canvas c, int t, float s, float cx, float cy) {
+        p.setStyle(Paint.Style.STROKE);
+        p.setStrokeWidth(s * 0.075f);
+        p.setStrokeCap(Paint.Cap.ROUND);
+        p.setStrokeJoin(Paint.Join.ROUND);
+        android.graphics.Path q = new android.graphics.Path();
+        switch (t) {
+            case IMAGE: { // cadre avec montagnes et soleil : fond d'écran
+                c.drawRoundRect(new RectF(cx - s * .38f, cy - s * .30f, cx + s * .38f, cy + s * .30f), s * .08f, s * .08f, p);
+                q.moveTo(cx - s * .30f, cy + s * .20f); q.lineTo(cx - s * .08f, cy - s * .04f); q.lineTo(cx + s * .06f, cy + s * .10f);
+                q.lineTo(cx + s * .16f, cy + s * .02f); q.lineTo(cx + s * .30f, cy + s * .20f);
+                c.drawPath(q, p);
+                p.setStyle(Paint.Style.FILL);
+                c.drawCircle(cx + s * .17f, cy - s * .13f, s * .06f, p);
+                break;
+            }
+            case HOME: { // maison : accueil
+                q.moveTo(cx - s * .34f, cy - s * .02f); q.lineTo(cx, cy - s * .34f); q.lineTo(cx + s * .34f, cy - s * .02f);
+                c.drawPath(q, p);
+                c.drawRoundRect(new RectF(cx - s * .25f, cy - s * .10f, cx + s * .25f, cy + s * .32f), s * .05f, s * .05f, p);
+                c.drawLine(cx, cy + s * .14f, cx, cy + s * .32f, p);
+                break;
+            }
+            case PHONE: { // téléphone
+                c.drawRoundRect(new RectF(cx - s * .20f, cy - s * .36f, cx + s * .20f, cy + s * .36f), s * .08f, s * .08f, p);
+                c.drawLine(cx - s * .06f, cy + s * .25f, cx + s * .06f, cy + s * .25f, p);
+                break;
+            }
+            case GEAR: { // roue dentée : système
+                p.setStrokeWidth(s * .13f);
+                p.setStrokeCap(Paint.Cap.BUTT);
+                for (int i = 0; i < 8; i++) { // dents courtes et larges
+                    double ang = i * Math.PI / 4;
+                    c.drawLine(cx + (float) Math.cos(ang) * s * .25f, cy + (float) Math.sin(ang) * s * .25f,
+                            cx + (float) Math.cos(ang) * s * .37f, cy + (float) Math.sin(ang) * s * .37f, p);
+                }
+                p.setStrokeWidth(s * 0.075f);
+                p.setStrokeCap(Paint.Cap.ROUND);
+                c.drawCircle(cx, cy, s * .24f, p);
+                c.drawCircle(cx, cy, s * .08f, p);
+                break;
+            }
+            case INFO: { // « i » dans un cercle : à propos
+                c.drawCircle(cx, cy, s * .36f, p);
+                c.drawLine(cx, cy - s * .02f, cx, cy + s * .18f, p);
+                p.setStyle(Paint.Style.FILL);
+                c.drawCircle(cx, cy - s * .16f, s * .045f, p);
+                break;
+            }
+            case DOC: { // page avec lignes : licences
+                q.moveTo(cx - s * .26f, cy - s * .36f); q.lineTo(cx + s * .12f, cy - s * .36f); q.lineTo(cx + s * .26f, cy - s * .22f);
+                q.lineTo(cx + s * .26f, cy + s * .36f); q.lineTo(cx - s * .26f, cy + s * .36f); q.close();
+                c.drawPath(q, p);
+                for (int i = 0; i < 3; i++) c.drawLine(cx - s * .14f, cy - s * .08f + i * s * .14f, cx + s * .14f, cy - s * .08f + i * s * .14f, p);
+                break;
+            }
+            default: { // étincelle : ambiances
+                q.moveTo(cx, cy - s * .38f); q.quadTo(cx + s * .04f, cy - s * .04f, cx + s * .38f, cy);
+                q.quadTo(cx + s * .04f, cy + s * .04f, cx, cy + s * .38f);
+                q.quadTo(cx - s * .04f, cy + s * .04f, cx - s * .38f, cy);
+                q.quadTo(cx - s * .04f, cy - s * .04f, cx, cy - s * .38f);
+                p.setStyle(Paint.Style.FILL);
+                c.drawPath(q, p);
             }
         }
     }

@@ -116,14 +116,39 @@ final class SettingsPanel {
         for (int i = 0; i < col.getChildCount(); i++) if (col.getChildAt(i).isFocusable()) { col.getChildAt(i).requestFocus(); return; }
     }
 
+    /** Petit carré arrondi avec un pictogramme, devant le nom d'une rubrique ; il suit la sélection. */
+    static LinearLayout withIcon(final MainActivity a, final LinearLayout row, int glyphType) {
+        final FrameLayout chip = new FrameLayout(a);
+        final GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(a.u(12));
+        bg.setColor(0x24FFFFFF);
+        chip.setBackground(bg);
+        final Glyph g = new Glyph(glyphType, 0xE6FFFFFF);
+        ImageView iv = new ImageView(a);
+        iv.setImageDrawable(g);
+        chip.addView(iv, new FrameLayout.LayoutParams(a.u(26), a.u(26), Gravity.CENTER));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(a.u(46), a.u(46));
+        lp.rightMargin = a.u(22);
+        row.addView(chip, 0, lp);
+        final View.OnFocusChangeListener old = row.getOnFocusChangeListener();
+        row.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override public void onFocusChange(View v, boolean f) {
+                if (old != null) old.onFocusChange(v, f);
+                g.setColor(f ? 0xFF111216 : 0xE6FFFFFF);
+                bg.setColor(f ? 0x14000000 : 0x24FFFFFF);
+            }
+        });
+        return row;
+    }
+
     /** Ligne de rubrique : nom, état actuel, et « › ». */
-    private static LinearLayout rubric(final MainActivity a, final LinearLayout card, String label, MainActivity.Value value, final int target) {
+    private static LinearLayout rubric(final MainActivity a, final LinearLayout card, int glyph, String label, MainActivity.Value value, final int target) {
         final MainActivity.Value v = value;
-        return a.listRow(label, new MainActivity.Value() {
+        return withIcon(a, a.listRow(label, new MainActivity.Value() {
             @Override public String get() { return (v == null ? "" : v.get() + "   ") + "›"; }
         }, new View.OnClickListener() {
             @Override public void onClick(View view) { lastRubric = target; page(a, card, target); }
-        });
+        }), glyph);
     }
 
     static void page(final MainActivity a, final LinearLayout card, final int which) {
@@ -132,14 +157,14 @@ final class SettingsPanel {
         switch (which) {
             case ROOT: {
                 LinearLayout[] rows = {
-                    rubric(a, card, "Fond d'écran", new MainActivity.Value() { @Override public String get() { return Prefs.SRC_NAMES[a.prefs.source()]; } }, FOND),
-                    rubric(a, card, "Accueil et applis", new MainActivity.Value() { @Override public String get() {
+                    rubric(a, card, Glyph.IMAGE, "Fond d'écran", new MainActivity.Value() { @Override public String get() { return Prefs.SRC_NAMES[a.prefs.source()]; } }, FOND),
+                    rubric(a, card, Glyph.HOME, "Accueil et applis", new MainActivity.Value() { @Override public String get() {
                         int st = a.prefs.tileStyle(); return st == Prefs.TILE_WORD ? "Nom de l'appli" : st == Prefs.TILE_BANNER ? "Bannières" : "Icône et nom"; } }, ACCUEIL),
-                    rubric(a, card, "Mode veille", new MainActivity.Value() { @Override public String get() {
+                    rubric(a, card, Glyph.MOON, "Mode veille", new MainActivity.Value() { @Override public String get() {
                         int m = a.prefs.ambientMinutes(); return m <= 0 ? "Jamais" : m + " min"; } }, VEILLE),
-                    rubric(a, card, "Ambiances", null, AMBIANCES),
+                    rubric(a, card, Glyph.SPARK, "Ambiances", null, AMBIANCES),
                     null,
-                    rubric(a, card, "Système", new MainActivity.Value() { @Override public String get() {
+                    rubric(a, card, Glyph.GEAR, "Système", new MainActivity.Value() { @Override public String get() {
                         return a.updater.ready() != null ? "Mise à jour prête" : "Lumen " + a.updater.currentVersion(); } }, SYSTEME)};
                 int[] targets = {FOND, ACCUEIL, VEILLE, AMBIANCES, -2, SYSTEME};
                 for (int i = 0; i < rows.length; i++) {
@@ -149,6 +174,7 @@ final class SettingsPanel {
                         }, new View.OnClickListener() {
                             @Override public void onClick(View v) { PhonePanel.openPhonePanel(a); }
                         }), a.rowLp());
+                        withIcon(a, (LinearLayout) col.getChildAt(col.getChildCount() - 1), Glyph.PHONE);
                         continue;
                     }
                     col.addView(rows[i], a.rowLp());
@@ -483,8 +509,8 @@ final class SettingsPanel {
             @Override public void onClick(View v) { CrashLog.clear(a); a.showNotice("Journal effacé"); }
         }), a.rowLp());
                 col.addView(a.section("Informations"));
-                col.addView(rubric(a, card, "À propos", null, ABOUT), a.rowLp());
-                col.addView(rubric(a, card, "Licences", null, LICENCES), a.rowLp());
+                col.addView(rubric(a, card, Glyph.INFO, "À propos", null, ABOUT), a.rowLp());
+                col.addView(rubric(a, card, Glyph.DOC, "Licences", null, LICENCES), a.rowLp());
                 break;
             }
             case ABOUT: About.fillAbout(a, col); break;
