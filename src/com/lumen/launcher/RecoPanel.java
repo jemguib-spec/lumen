@@ -39,6 +39,7 @@ final class RecoPanel {
     static void open(final MainActivity a) {
         a.recoOpen = true;
         FrameLayout o = a.openOverlay(new Runnable() { @Override public void run() { a.recoOpen = false; } });
+        hero = new Hero(a, o);
         final LinearLayout card = a.glassCard(48);
         card.setPadding(a.u(24), a.u(48), a.u(24), a.u(28));
         TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
@@ -50,10 +51,10 @@ final class RecoPanel {
         sub.setPadding(a.u(28), 0, 0, a.u(20));
         card.addView(sub);
 
-        FrameLayout.LayoutParams cl = new FrameLayout.LayoutParams(a.u(880), ViewGroup.LayoutParams.MATCH_PARENT, Gravity.END);
+        FrameLayout.LayoutParams cl = new FrameLayout.LayoutParams(a.u(640), ViewGroup.LayoutParams.MATCH_PARENT, Gravity.END);
         cl.rightMargin = cl.topMargin = cl.bottomMargin = a.u(48);
         o.addView(card, cl);
-        card.setTranslationX(a.u(940));
+        card.setTranslationX(a.u(700));
         card.animate().translationX(0).setStartDelay(0).setDuration(380).setInterpolator(new DecelerateInterpolator(2.2f)).start();
 
         final String key = a.prefs.tmdbKey();
@@ -108,6 +109,7 @@ final class RecoPanel {
         for (final String[] f : filters) {
             final TextView c = a.text(22, "sans-serif-medium", 0xEBFFFFFF);
             c.setText(f[1]);
+            c.setSingleLine(true);
             c.setFocusable(true);
             c.setClickable(true);
             c.setSoundEffectsEnabled(false);
@@ -191,8 +193,8 @@ final class RecoPanel {
                         int n = 0;
                         for (Tmdb.Title t : titles) {
                             View r = row(a, t, key);
-                            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, a.u(176));
-                            lp.bottomMargin = a.u(8);
+                            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, a.u(124));
+                            lp.bottomMargin = a.u(6);
                             list.addView(r, lp);
                             // arrivée en cascade
                             r.setAlpha(0f);
@@ -215,7 +217,7 @@ final class RecoPanel {
         r.setFocusable(true);
         r.setClickable(true);
         r.setSoundEffectsEnabled(false);
-        r.setPadding(a.u(18), a.u(14), a.u(24), a.u(14));
+        r.setPadding(a.u(16), a.u(12), a.u(24), a.u(12));
         final GradientDrawable bg = new GradientDrawable();
         bg.setCornerRadius(a.u(24));
         bg.setColor(0x00FFFFFF);
@@ -228,7 +230,7 @@ final class RecoPanel {
             @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), a.u(12)); }
         });
         poster.setClipToOutline(true);
-        r.addView(poster, new LinearLayout.LayoutParams(a.u(98), a.u(147)));
+        r.addView(poster, new LinearLayout.LayoutParams(a.u(66), a.u(99)));
         img.execute(new Runnable() {
             @Override public void run() {
                 final Bitmap b = Tmdb.poster(t.poster, 185);
@@ -238,27 +240,17 @@ final class RecoPanel {
 
         LinearLayout txt = new LinearLayout(a);
         txt.setOrientation(LinearLayout.VERTICAL);
-        final TextView name = a.text(28, "sans-serif-medium", 0xF2FFFFFF);
+        final TextView name = a.text(24, "sans-serif-medium", 0xF2FFFFFF);
         name.setText(t.name);
         name.setMaxLines(1);
         name.setEllipsize(TextUtils.TruncateAt.END);
         txt.addView(name);
-        StringBuilder meta = new StringBuilder("movie".equals(t.type) ? "Film" : "Série");
-        if (!t.year.isEmpty()) meta.append("  ·  ").append(t.year);
-        if (t.rating > 0) meta.append("  ·  ★ ").append(String.format(Locale.FRANCE, "%.1f", t.rating));
-        if (t.provider != null) meta.append("  ·  ").append(t.provider[2]);
-        final TextView m = a.text(20, "sans-serif-medium", 0x99FFFFFF);
-        m.setText(meta.toString());
+        final String meta = meta(t);
+        final TextView m = a.text(18, "sans-serif", 0x99FFFFFF);
+        m.setText(meta);
         LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         ml.topMargin = a.u(6);
         txt.addView(m, ml);
-        final TextView ov = a.text(20, "sans-serif", 0x80FFFFFF);
-        ov.setText(t.overview);
-        ov.setMaxLines(2);
-        ov.setEllipsize(TextUtils.TruncateAt.END);
-        LinearLayout.LayoutParams ol = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        ol.topMargin = a.u(8);
-        txt.addView(ov, ol);
         LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         tl.leftMargin = a.u(24);
         r.addView(txt, tl);
@@ -269,14 +261,129 @@ final class RecoPanel {
                 bg.setColor(f ? 0xFFF5F5F7 : 0x00FFFFFF);
                 name.setTextColor(f ? 0xFF111216 : 0xF2FFFFFF);
                 m.setTextColor(f ? 0x99111216 : 0x99FFFFFF);
-                ov.setTextColor(f ? 0x80111216 : 0x80FFFFFF);
                 r.animate().scaleX(f ? 1.02f : 1f).scaleY(f ? 1.02f : 1f).setStartDelay(0).setDuration(180).start();
+                if (f && hero != null) hero.show(t);
             }
         });
         r.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { Sounds.get(a).tock(); watch(a, t, key); }
         });
         return r;
+    }
+
+    static String meta(Tmdb.Title t) {
+        StringBuilder b = new StringBuilder("movie".equals(t.type) ? "Film" : "Série");
+        if (!t.year.isEmpty()) b.append("  ·  ").append(t.year);
+        if (t.rating > 0) b.append("  ·  ★ ").append(String.format(Locale.FRANCE, "%.1f", t.rating));
+        if (t.provider != null) b.append("  ·  ").append(t.provider[2]);
+        return b.toString();
+    }
+
+    private static Hero hero;
+
+    /**
+     * Grande image du titre sélectionné, à gauche du panneau : elle arrive en fondu (avec un très
+     * léger zoom), assombrie vers le panneau et vers le bas ; dessus, le titre en lettres fines,
+     * une ligne d'infos et trois lignes de résumé. Même esprit que l'accueil : sobre et lumineux.
+     */
+    private static final class Hero {
+        final MainActivity a;
+        final FrameLayout layer;
+        final ImageView[] pics = new ImageView[2];
+        int front = 0;
+        final TextView title, meta, overview;
+        final LinearLayout text;
+        Tmdb.Title shown;
+        private final Runnable pending = new Runnable() { @Override public void run() { load(); } };
+        private Tmdb.Title want;
+
+        Hero(final MainActivity a, FrameLayout o) {
+            this.a = a;
+            layer = new FrameLayout(a);
+            for (int i = 0; i < 2; i++) {
+                pics[i] = new ImageView(a);
+                pics[i].setScaleType(ImageView.ScaleType.CENTER_CROP);
+                pics[i].setAlpha(0f);
+                layer.addView(pics[i], MainActivity.match());
+            }
+            // voiles : vers le panneau (droite) et vers le bas, pour que le texte reste lisible
+            View side = new View(a);
+            side.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{0x6605060A, 0x2205060A, 0xE605060A}));
+            layer.addView(side, MainActivity.match());
+            View bottom = new View(a);
+            bottom.setBackground(new GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, new int[]{0xD905060A, 0x0005060A}));
+            layer.addView(bottom, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, a.u(620), Gravity.BOTTOM));
+
+            text = new LinearLayout(a);
+            text.setOrientation(LinearLayout.VERTICAL);
+            title = a.text(56, "sans-serif-light", 0xF5FFFFFF);
+            title.setMaxLines(2);
+            title.setEllipsize(TextUtils.TruncateAt.END);
+            title.setShadowLayer(a.u(12), 0, 0, 0x66000000);
+            text.addView(title);
+            meta = a.text(20, "sans-serif-medium", 0xB3FFFFFF);
+            meta.setLetterSpacing(0.06f);
+            LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            ml.topMargin = a.u(14);
+            text.addView(meta, ml);
+            overview = a.text(22, "sans-serif", 0xB3FFFFFF);
+            overview.setMaxLines(3);
+            overview.setEllipsize(TextUtils.TruncateAt.END);
+            overview.setLineSpacing(a.u(4), 1f);
+            LinearLayout.LayoutParams ol = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            ol.topMargin = a.u(18);
+            text.addView(overview, ol);
+            FrameLayout.LayoutParams tl = new FrameLayout.LayoutParams(a.u(980), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
+            tl.leftMargin = a.u(112);
+            tl.bottomMargin = a.u(96);
+            layer.addView(text, tl);
+            text.setAlpha(0f);
+            o.addView(layer, MainActivity.match());
+        }
+
+        /** Titre sélectionné : on attend un instant (défilement rapide) avant de changer l'image. */
+        void show(Tmdb.Title t) {
+            want = t;
+            a.h.removeCallbacks(pending);
+            a.h.postDelayed(pending, shown == null ? 0 : 260);
+        }
+
+        private void load() {
+            final Tmdb.Title t = want;
+            if (t == null || t == shown) return;
+            shown = t;
+            // texte : léger fondu croisé
+            text.animate().alpha(0f).setStartDelay(0).setDuration(140).withEndAction(new Runnable() {
+                @Override public void run() {
+                    if (shown != t) return;
+                    title.setText(t.name);
+                    meta.setText(meta(t).toUpperCase(Locale.FRANCE));
+                    overview.setText(t.overview);
+                    overview.setVisibility(t.overview == null || t.overview.isEmpty() ? View.GONE : View.VISIBLE);
+                    text.setTranslationY(a.u(10));
+                    text.animate().alpha(1f).translationY(0).setDuration(420).setInterpolator(new DecelerateInterpolator(2f)).start();
+                }
+            }).start();
+            RecoPanel.img.execute(new Runnable() {
+                @Override public void run() {
+                    final Bitmap b = Tmdb.poster(t.backdrop.isEmpty() ? t.poster : t.backdrop, t.backdrop.isEmpty() ? 500 : 780);
+                    a.h.post(new Runnable() {
+                        @Override public void run() {
+                            if (shown != t || b == null || !layer.isAttachedToWindow()) return;
+                            final ImageView in = RecoPanel.Hero.this.pics[1 - front], out = RecoPanel.Hero.this.pics[front];
+                            front = 1 - front;
+                            in.setImageBitmap(b);
+                            in.setScaleX(1.06f);
+                            in.setScaleY(1.06f);
+                            // fondu croisé entre les deux images (voiles et texte restent toujours devant)
+                            in.setAlpha(0f);
+                            in.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(900).setInterpolator(new DecelerateInterpolator(1.6f)).start();
+                            out.animate().alpha(0f).setDuration(900).start();
+                        }
+                    });
+                }
+            });
+        }
     }
 
     /** Ouvre le titre dans l'appli qui le propose (sa recherche) ; sinon la recherche de la TV. */
