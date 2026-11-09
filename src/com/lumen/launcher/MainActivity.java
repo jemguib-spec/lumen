@@ -1074,6 +1074,60 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         });
     }
 
+    // ------------------------------------------------------------------ fenêtres du système par-dessus Lumen
+
+    private View systemVeil;
+    private AppRepo.App veilApp;
+
+    /**
+     * Les fenêtres d'Android (désinstallation…) sont transparentes : sans voile, elles se mêlent
+     * aux vignettes. On assombrit tout l'écran, avec la bannière de l'appli en filigrane, le temps
+     * qu'elles s'affichent ; le voile part quand Lumen reprend la main pour de bon.
+     */
+    void showSystemVeil(AppRepo.App app) {
+        hideSystemVeil(false);
+        veilApp = app;
+        FrameLayout v = new FrameLayout(this);
+        v.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xF505060A, 0xFA0A0B12}));
+        v.setClickable(true);
+        v.setElevation(u(70));
+        v.setAlpha(0f);
+        root.addView(v, match());
+        v.animate().alpha(1f).setStartDelay(0).setDuration(250).start();
+        systemVeil = v;
+        // filet de sécurité : si aucune fenêtre du système ne s'est ouverte, le voile repart
+        h.postDelayed(new Runnable() {
+            @Override public void run() { if (systemVeil == v && hasWindowFocus()) hideSystemVeil(true); }
+        }, 3000);
+    }
+
+    void hideSystemVeil(boolean animate) {
+        if (systemVeil == null) return;
+        final View v = systemVeil;
+        systemVeil = null;
+        final AppRepo.App app = veilApp;
+        veilApp = null;
+        if (app != null && !app.isInput()) {
+            boolean gone;
+            try { getPackageManager().getPackageInfo(app.pkg, 0); gone = false; } catch (Exception e) { gone = true; }
+            if (gone) showNotice(app.label + " désinstallée");
+        }
+        if (!animate) { root.removeView(v); return; }
+        v.animate().alpha(0f).setDuration(400).withEndAction(new Runnable() {
+            @Override public void run() { root.removeView(v); }
+        }).start();
+    }
+
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus && systemVeil != null) {
+            // Android enchaîne parfois deux fenêtres (confirmation, puis progression) : on attend un peu
+            h.postDelayed(new Runnable() {
+                @Override public void run() { if (hasWindowFocus()) hideSystemVeil(true); }
+            }, 700);
+        }
+    }
+
     /** Démarrage en cascade, en moins d'une seconde : l'heure, puis le fond, puis la légende et les applis. */
     private void intro() {
         final android.view.animation.DecelerateInterpolator di = new android.view.animation.DecelerateInterpolator(1.6f);
