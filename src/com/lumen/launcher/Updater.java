@@ -194,9 +194,18 @@ final class Updater {
 
     /** Relance l'accueil Lumen (après une mise à jour). */
     static void backHome(Context c) {
+        // 1. la touche Accueil, appuyée par le service « Lumen télécommande » : Android ramène alors
+        //    l'écran d'accueil par défaut, c'est-à-dire Lumen (aucune restriction d'Android ici)
+        if (RemoteService.perform(RemoteService.HOME)) return;
+        Intent home = new Intent(c, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        // 2. ouverture directe (souvent refusée en silence depuis Android 10, d'où la suite)
+        try { c.startActivity(home); } catch (Exception ignored) { }
+        // 3. réveil programmé : c'est le système qui ouvre Lumen un instant plus tard
         try {
-            Intent home = new Intent(c, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            c.startActivity(home);
+            android.app.PendingIntent pi = android.app.PendingIntent.getActivity(c, 9, home,
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT | 0x04000000 /* FLAG_IMMUTABLE */);
+            ((android.app.AlarmManager) c.getSystemService(Context.ALARM_SERVICE))
+                    .setExact(android.app.AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 400, pi);
         } catch (Exception ignored) { }
     }
 

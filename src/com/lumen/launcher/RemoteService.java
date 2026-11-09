@@ -139,7 +139,14 @@ public class RemoteService extends AccessibilityService {
     @Override protected void onServiceConnected() {
         instance = this;
         // juste après une mise à jour, Android relie de nouveau ce service : on ramène Lumen à l'écran
-        try { if (!new Prefs(this).updatePending().isEmpty()) Updater.backHome(this); } catch (Exception ignored) { }
+        try {
+            if (!new Prefs(this).updatePending().isEmpty()) {
+                // le service vient d'être relié : on laisse Android finir, puis Accueil → Lumen
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                    @Override public void run() { if (!new Prefs(RemoteService.this).updatePending().isEmpty()) Updater.backHome(RemoteService.this); }
+                }, 600);
+            }
+        } catch (Exception ignored) { }
     }
     @Override public boolean onUnbind(android.content.Intent i) { instance = null; return super.onUnbind(i); }
     @Override public void onDestroy() { instance = null; super.onDestroy(); }
