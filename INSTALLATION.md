@@ -160,7 +160,7 @@ Les entrées HDMI de la TV apparaissent sur l'accueil (ajoutées une seule fois)
 Chaque personne peut avoir son profil : ses favoris, ses applis masquées, son fond d'écran, son affichage (vignettes, taille du texte, contraste), son mode veille, ses sons, ses recherches et ses habitudes. Les clés API (TMDB, Pexels), Home Assistant, le code PIN, les applis verrouillées et les vidéos téléchargées restent communs à toute la maison.
 
 - Ajouter, renommer ou supprimer : Réglages › Profils, ou téléphone › Plus › Profil (code PIN demandé s'il existe).
-- « Qui regarde ? » : dès qu'il y a deux profils, une page plein écran propose de choisir la personne au démarrage et au rallumage de la TV, puis dit « Bonjour Léa » (ou Bonsoir…). Retour garde le profil actuel. Elle ne s'affiche pas après un redémarrage de Lumen ou une mise à jour.
+- « Qui regarde ? » : dès qu'il y a deux profils, une page plein écran propose de choisir la personne à chaque démarrage de Lumen et au rallumage de la TV, puis dit « Bonjour Léa » (ou Bonsoir…). Retour garde le profil actuel. Réglages › Profils › Au démarrage : « Reprendre le dernier profil » pour ne plus la voir (réglage commun à tous).
 - Changer de profil à tout moment : bouton « Profils » en haut de l'accueil (même page, avec « Gérer les profils »), sans code, ou depuis le téléphone.
 - Le profil principal garde les réglages d'avant les profils ; il ne peut pas être supprimé.
 - Les applis verrouillées le restent dans tous les profils : changer de profil ne lève jamais un verrou.

@@ -136,8 +136,6 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         Sounds.get(this).setEnabled(prefs.sounds());
         ensureDefaultFavorites();
         addInputsOnce();
-        // « Qui regarde ? » au démarrage de la TV, pas après un redémarrage de Lumen ou une mise à jour
-        if (prefs.restarting() || !prefs.updatePending().isEmpty()) WhoPage.skipNextStart();
         builder.buildUi();
         buildRow(null);
         // icônes et couleurs : en arrière-plan, une fois l'accueil affiché

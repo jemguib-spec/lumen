@@ -41,7 +41,8 @@ final class WhoPage {
         boolean wake = wokeAt > 0 && android.os.SystemClock.elapsedRealtime() - wokeAt < WAKE_WINDOW;
         shownSinceStart = true;
         wokeAt = 0;
-        if (!(start || wake) || !a.prefs.hasProfiles()) return;
+        // réglage « Au démarrage » : demander (par défaut) ou reprendre le dernier profil
+        if (!(start || wake) || !a.prefs.hasProfiles() || !a.prefs.askProfileAtStart()) return;
         a.h.postDelayed(new Runnable() {
             @Override public void run() {
                 if (a.isFinishing() || !a.resumedNow || a.ambiance != null) return;
@@ -50,9 +51,6 @@ final class WhoPage {
             }
         }, delay);
     }
-
-    /** Lumen redémarre (réglages restaurés, mise à jour…) : pas de page au retour. */
-    static void skipNextStart() { shownSinceStart = true; }
 
     static void show(final MainActivity a, boolean withManage) {
         final FrameLayout o = a.openOverlay(null);
@@ -88,7 +86,7 @@ final class WhoPage {
                 @Override public void run() { chosen(a, o, col, p); }
             });
             LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            if (i > 0) cl.leftMargin = a.u(44);
+            if (i > 0) cl.leftMargin = a.u(8);
             row.addView(card, cl);
             if (focus == null || p.id == a.prefs.activeProfile()) focus = card;
             // entrée en douceur, l'une après l'autre
@@ -131,13 +129,19 @@ final class WhoPage {
 
     /** Une personne : grande pastille ronde avec l'initiale, prénom dessous. */
     private static View person(final MainActivity a, Profiles.Profile p, final Runnable onPick) {
-        final LinearLayout box = new LinearLayout(a);
+        // sans calque intermédiaire pendant le fondu d'entrée : sinon la pastille agrandie (et son
+        // anneau, son ombre) était coupée aux bords du bloc le temps de l'animation
+        final LinearLayout box = new LinearLayout(a) {
+            @Override public boolean hasOverlappingRendering() { return false; }
+        };
         box.setOrientation(LinearLayout.VERTICAL);
         box.setGravity(Gravity.CENTER_HORIZONTAL);
         box.setFocusable(true);
         box.setClickable(true);
         box.setSoundEffectsEnabled(false);
         box.setClipChildren(false);
+        box.setClipToPadding(false);
+        box.setPadding(a.u(18), a.u(18), a.u(18), 0); // place pour l'agrandissement et l'anneau
 
         final int size = a.u(176);
         final TextView disc = a.text(72, "sans-serif-light", 0xFFFFFFFF);

@@ -43,6 +43,11 @@ final class ProfilePanel {
             card.addView(row, a.rowLp());
             if (first == null) first = row;
         }
+        card.addView(a.iconRow(Glyph.PERSON, "Au démarrage", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.askProfileAtStart() ? "Demander qui regarde" : "Reprendre le dernier profil"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.setAskProfileAtStart(!a.prefs.askProfileAtStart()); }
+        }, false), a.rowLp());
         if (a.prefs.profiles().size() < Profiles.MAX) {
             card.addView(a.menuDivider());
             card.addView(a.iconRow(Glyph.STAR, "Ajouter un profil", null, new View.OnClickListener() {

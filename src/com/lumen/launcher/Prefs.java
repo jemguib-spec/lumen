@@ -35,6 +35,10 @@ final class Prefs {
     String activeProfileName() { Profiles.Profile p = Profiles.find(profiles(), activeProfile()); return p == null ? "" : p.name; }
     boolean hasProfiles() { return profiles().size() > 1; }
 
+    /** Au démarrage de Lumen et au rallumage de la TV : demander qui regarde (défaut) ou reprendre le dernier profil. Commun à tous. */
+    boolean askProfileAtStart() { return sp.getBoolean("profile_ask", true); }
+    void setAskProfileAtStart(boolean b) { sp.edit().putBoolean("profile_ask", b).apply(); }
+
     /** Change de profil (l'interface doit ensuite être reconstruite). */
     boolean switchProfile(int id) {
         if (Profiles.find(profiles(), id) == null) return false;
