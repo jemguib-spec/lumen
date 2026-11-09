@@ -71,6 +71,70 @@ public class RemoteService extends AccessibilityService {
         return null;
     }
 
+    /**
+     * Écran « lumen + nom de l'appli » posé AU-DESSUS de l'appli qui démarre (fenêtre réservée aux
+     * services d'accessibilité) : l'appli se charge derrière, puis l'écran s'efface. Un seul
+     * chargement visible au lieu de deux. Ne capte ni les touches ni rien de l'écran.
+     */
+    static boolean showSplash(String appName, final long holdMs) {
+        final RemoteService s = instance;
+        if (s == null) return false;
+        try {
+            final android.view.WindowManager wm = (android.view.WindowManager) s.getSystemService(WINDOW_SERVICE);
+            android.util.DisplayMetrics dm = new android.util.DisplayMetrics();
+            wm.getDefaultDisplay().getRealMetrics(dm);
+            float unit = Math.max(dm.widthPixels, dm.heightPixels) / 1920f;
+            Fonts.init(s);
+            final android.widget.FrameLayout z = new android.widget.FrameLayout(s);
+            z.setBackgroundColor(0xFF000000);
+            android.widget.LinearLayout col = new android.widget.LinearLayout(s);
+            col.setOrientation(android.widget.LinearLayout.VERTICAL);
+            col.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+            android.widget.TextView word = new android.widget.TextView(s);
+            word.setText("lumen");
+            word.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, 84 * unit);
+            word.setTypeface(Fonts.get("sans-serif-thin", android.graphics.Typeface.NORMAL));
+            word.setTextColor(0xFFFFFFFF);
+            word.setLetterSpacing(0.35f);
+            word.setIncludeFontPadding(false);
+            col.addView(word);
+            android.widget.TextView name = new android.widget.TextView(s);
+            name.setText(appName == null ? "" : appName.toUpperCase(java.util.Locale.FRANCE));
+            name.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, 24 * unit);
+            name.setTypeface(Fonts.get("sans-serif-light", android.graphics.Typeface.NORMAL));
+            name.setTextColor(0x99FFFFFF);
+            name.setLetterSpacing(0.3f);
+            name.setSingleLine(true);
+            android.widget.LinearLayout.LayoutParams nl = new android.widget.LinearLayout.LayoutParams(-2, -2);
+            nl.topMargin = Math.round(18 * unit);
+            col.addView(name, nl);
+            z.addView(col, new android.widget.FrameLayout.LayoutParams(-2, -2, android.view.Gravity.CENTER));
+            android.view.WindowManager.LayoutParams lp = new android.view.WindowManager.LayoutParams(
+                    android.view.WindowManager.LayoutParams.MATCH_PARENT, android.view.WindowManager.LayoutParams.MATCH_PARENT,
+                    2032 /* TYPE_ACCESSIBILITY_OVERLAY */,
+                    android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                            | android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    android.graphics.PixelFormat.TRANSLUCENT);
+            wm.addView(z, lp);
+            android.view.animation.DecelerateInterpolator di = new android.view.animation.DecelerateInterpolator(1.6f);
+            word.setAlpha(0f); word.setScaleX(0.96f); word.setScaleY(0.96f);
+            word.animate().alpha(1f).scaleX(1f).scaleY(1f).setStartDelay(60).setDuration(600).setInterpolator(di).start();
+            name.setAlpha(0f); name.setTranslationY(8 * unit);
+            name.animate().alpha(1f).translationY(0).setStartDelay(260).setDuration(500).setInterpolator(di).start();
+            z.setAlpha(0f);
+            z.animate().alpha(1f).setDuration(220).withEndAction(new Runnable() {
+                @Override public void run() {
+                    z.animate().alpha(0f).setStartDelay(holdMs).setDuration(550).withEndAction(new Runnable() {
+                        @Override public void run() { try { wm.removeView(z); } catch (Exception ignored) { } }
+                    }).start();
+                }
+            }).start();
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     @Override protected void onServiceConnected() { instance = this; }
     @Override public boolean onUnbind(android.content.Intent i) { instance = null; return super.onUnbind(i); }
     @Override public void onDestroy() { instance = null; super.onDestroy(); }

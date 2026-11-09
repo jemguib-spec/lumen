@@ -817,6 +817,13 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         Sounds.get(this).open();
         if (zoomView != null) { root.removeView(zoomView); zoomView = null; }
         if (root.getWidth() == 0) { launch(app); return; }
+        // avec « Lumen télécommande » : l'écran lumen s'affiche par-dessus l'appli, qui se charge
+        // derrière tout de suite (un seul chargement visible)
+        if (RemoteService.showSplash(app.label, 1500)) {
+            launch(app);
+            overridePendingTransition(0, 0);
+            return;
+        }
         FrameLayout z = new FrameLayout(this);
         z.setBackgroundColor(Color.BLACK);
         LinearLayout col = new LinearLayout(this);
