@@ -80,6 +80,21 @@ final class CrashLog {
         } catch (Exception ignored) { }
     }
 
+    private static final java.util.Set<String> noted = java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
+
+    /** Note informative (pas un plantage), une seule fois par message et par démarrage. */
+    static void note(Context c, String msg) {
+        if (msg == null || !noted.add(msg) || noted.size() > 40) return;
+        Context app = c.getApplicationContext();
+        String line = new SimpleDateFormat("d MMM yyyy HH:mm:ss", Locale.FRANCE).format(new Date()) + " · info · " + msg + "\n";
+        synchronized (CrashLog.class) {
+            String all = line + SEP + read(app);
+            if (all.length() > MAX_BYTES) all = all.substring(0, MAX_BYTES);
+            try (FileOutputStream o = new FileOutputStream(new File(app.getFilesDir(), FILE))) { o.write(all.getBytes("UTF-8")); }
+            catch (Exception ignored) { }
+        }
+    }
+
     /** Contenu du journal (le plus récent en premier). */
     static String read(Context c) {
         File f = new File(c.getApplicationContext().getFilesDir(), FILE);

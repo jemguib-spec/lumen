@@ -76,6 +76,8 @@ final class VideoPicker {
         final TextView state = a.text(24, "sans-serif", 0x99FFFFFF);
         state.setPadding(0, a.u(12), 0, a.u(30));
         state.setText("Chargement des aperçus…");
+        stateView = state;
+        lastWhy = "";
         col.addView(state);
 
         final LinearLayout back = a.listRow("Terminé", null, new View.OnClickListener() {
@@ -129,8 +131,9 @@ final class VideoPicker {
             @Override public void run() {
                 int n = 0;
                 for (Online.Pick p : a.online.lastPicks()) if (a.prefs.videoOk(p.key)) n++;
-                state.setText(n == 0 ? "Coche les vidéos à garder : seules celles-ci seront téléchargées."
-                        : n + (n > 1 ? " vidéos cochées" : " vidéo cochée") + " · décocher efface la vidéo de la TV");
+                state.setText((n == 0 ? "Coche les vidéos à garder : seules celles-ci seront téléchargées."
+                        : n + (n > 1 ? " vidéos cochées" : " vidéo cochée") + " · décocher efface la vidéo de la TV")
+                        + (lastWhy.isEmpty() ? "" : "\nAperçus indisponibles : " + lastWhy));
             }
         };
         a.online.rememberPicks(picks);
@@ -247,7 +250,11 @@ final class VideoPicker {
         pool().execute(new Runnable() {
             @Override public void run() {
                 File f = a.online.thumbOf(p);
-                if (f == null) return;
+                if (f == null) {
+                    final String why = a.online.thumbError;
+                    a.h.post(new Runnable() { @Override public void run() { failed(a, why); } });
+                    return;
+                }
                 BitmapFactory.Options o = new BitmapFactory.Options();
                 o.inSampleSize = 1;
                 final Bitmap b = BitmapFactory.decodeFile(f.getAbsolutePath(), o);
@@ -269,6 +276,17 @@ final class VideoPicker {
             }
         });
         return cell;
+    }
+
+    private static TextView stateView;
+    private static String lastWhy = "";
+
+    /** Un aperçu n'a pas pu être chargé : la raison s'affiche sous le titre (une capture suffit pour comprendre). */
+    private static void failed(MainActivity a, String why) {
+        if (stateView == null || !stateView.isAttachedToWindow()) return;
+        String t = stateView.getText().toString();
+        lastWhy = why == null ? "" : why;
+        if (!t.contains("Aperçus indisponibles")) stateView.setText(t + "\nAperçus indisponibles : " + lastWhy);
     }
 
     /** Luminosité moyenne d'une image (0 = noir, 1 = blanc), sur un échantillon de points. */

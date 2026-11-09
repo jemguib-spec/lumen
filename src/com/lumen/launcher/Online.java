@@ -787,23 +787,34 @@ final class Online {
 
     /** Aperçu d'une vidéo proposée : petite image JPEG téléchargée, vérifiée et réécrite (cache local). */
     File thumbOf(Pick p) {
-        if (p.thumbUrl == null || p.thumbUrl.isEmpty()) return null;
         File d = new File(catalogDir(), "thumbs");
         if (!d.exists()) d.mkdirs();
-        String name = "t" + Integer.toHexString(p.key.hashCode()) + Integer.toHexString(p.thumbUrl.hashCode());
+        String name = "t" + Integer.toHexString(p.key.hashCode());
         File done = new File(d, name + ".jpg");
-        if (done.exists()) return done;
-        File raw = new File(d, name + ".raw");
-        try {
-            byte[] b = Net.getBytes(NetPolicy.https(p.thumbUrl), 3 << 20);
-            try (OutputStream o = new FileOutputStream(raw)) { o.write(b); }
-            File ok = MediaGuard.accept(raw, d, name, false, true);
-            return ok;
-        } catch (Exception e) {
-            raw.delete();
-            return null;
+        if (done.exists() && done.length() > 0) return done;
+        List<String> urls = p.pexels ? java.util.Collections.singletonList(p.thumbUrl) : CommonsThumb.candidates(p.thumbUrl, p.key);
+        String why = "aucune adresse";
+        for (String u : urls) {
+            if (u == null || u.isEmpty()) continue;
+            File raw = new File(d, name + ".raw");
+            try {
+                byte[] b = Net.getBytes(NetPolicy.https(u), 3 << 20);
+                try (OutputStream o = new FileOutputStream(raw)) { o.write(b); }
+                File ok = MediaGuard.accept(raw, d, name, false, true);
+                if (ok != null) return ok;
+                why = "image refusée (" + b.length + " octets)";
+            } catch (Exception e) {
+                raw.delete();
+                why = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+            }
         }
+        thumbError = why;
+        CrashLog.note(ctx, "Aperçu indisponible : " + p.key + " → " + why);
+        return null;
     }
+
+    /** Dernière raison d'échec d'un aperçu (affichée dans l'écran de choix). */
+    volatile String thumbError = "";
 
     // ------------------------------------------------------------------ Pexels (facultatif, clé personnelle)
 

@@ -51,6 +51,14 @@ public class LumenTests {
         check("ambiances : visualisation NASA refusée",
                 CosyCatalog.kindOf("File:Fermi's 14-Year Time-Lapse of the Gamma-Ray Sky (SVS14399 Fermi 14Year Fireplace 4k).webm") == -1);
 
+        // ---- aperçus des vidéos Commons
+        check("aperçu : dossier MD5 comme Commons", CommonsThumb.url("File:Example.jpg", 500).startsWith("https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Example.jpg/"));
+        check("aperçu : vidéo → image JPEG 500 px", CommonsThumb.url("File:Varna Aquarium video.webm", 500).endsWith("/500px--Varna_Aquarium_video.webm.jpg"));
+        check("aperçu : accents encodés", CommonsThumb.url("File:Café.webm", 330).contains("Caf%C3%A9.webm"));
+        check("aperçu : seulement des tailles standard", java.util.Arrays.equals(CommonsThumb.WIDTHS, new int[]{500, 330, 960}));
+        check("aperçu : adresse de l'API essayée d'abord", CommonsThumb.candidates("https://x/a.jpg", "File:A.webm").get(0).equals("https://x/a.jpg"));
+        check("aperçu : adresses construites autorisées", NetPolicy.allowed(CommonsThumb.url("File:A b.webm", 500)));
+
         // ---- mise à jour automatique
         check("version : v4.1.0 → 4.1.0", "4.1.0".equals(UpdatePolicy.version("v4.1.0")));
         check("version : étiquette fantaisiste refusée", UpdatePolicy.version("latest-build") == null);
