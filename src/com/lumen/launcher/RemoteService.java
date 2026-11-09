@@ -97,7 +97,8 @@ public class RemoteService extends AccessibilityService {
             word.setTextColor(0xFFFFFFFF);
             word.setLetterSpacing(0.35f);
             word.setIncludeFontPadding(false);
-            col.addView(word);
+            word.setSingleLine(true);
+            col.addView(word, new android.widget.LinearLayout.LayoutParams(-2, -2)); // largeur propre (sinon coupée à celle du nom)
             android.widget.TextView name = new android.widget.TextView(s);
             name.setText(appName == null ? "" : appName.toUpperCase(java.util.Locale.FRANCE));
             name.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, 24 * unit);

@@ -994,7 +994,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         TextView word = text(84, "sans-serif-thin", 0xFFFFFFFF);
         word.setText("lumen");
         word.setLetterSpacing(0.35f);
-        col.addView(word);
+        col.addView(word, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         TextView sub = text(24, "sans-serif-light", 0x99FFFFFF);
         sub.setText(("Mise à jour" + (v.isEmpty() ? "" : " · " + v)).toUpperCase(java.util.Locale.FRANCE));
         sub.setLetterSpacing(0.3f);
