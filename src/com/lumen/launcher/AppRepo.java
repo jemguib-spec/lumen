@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
 import android.content.ComponentName;
@@ -26,6 +28,9 @@ final class AppRepo {
         final String label;
         final ComponentName component;
         final boolean leanback;
+        /** Entrée de la TV (HDMI…) présentée comme une appli ; null pour une vraie appli. */
+        final String inputId;
+        private final android.media.tv.TvInputInfo input;
         private final ActivityInfo info;
         private Drawable banner;
         private Drawable icon;
@@ -39,13 +44,32 @@ final class AppRepo {
             CharSequence l = ri.loadLabel(pm);
             this.label = l == null ? pkg : l.toString().trim();
             this.leanback = leanback;
+            this.inputId = null;
+            this.input = null;
         }
+
+        /** Une entrée de la TV : clé « input:<id> », elle se range dans les favoris comme une appli. */
+        App(android.media.tv.TvInputInfo in, String label) {
+            this.info = null;
+            this.input = in;
+            this.inputId = in.getId();
+            this.key = INPUT_PREFIX + inputId;
+            String p = "";
+            try { p = in.getServiceInfo().packageName; } catch (Throwable ignored) { }
+            this.pkg = p;
+            this.component = null;
+            this.label = label;
+            this.leanback = true;
+        }
+
+        boolean isInput() { return inputId != null; }
 
         /** Rangée de la page Applications (catégorie déclarée par l'appli si Android 8+, sinon devinée). */
         private int section = -2;
 
         synchronized int section() {
             if (section != -2) return section;
+            if (isInput()) return section = AppCategory.SOURCES;
             int cat = -1;
             try { cat = info.applicationInfo.getClass().getField("category").getInt(info.applicationInfo); } catch (Throwable ignored) { }
             section = AppCategory.of(pkg, label, cat);
@@ -55,6 +79,11 @@ final class AppRepo {
         private synchronized void load(PackageManager pm) {
             if (loaded) return;
             loaded = true;
+            if (isInput()) { // icône de l'entrée (Android 7+), sinon pictogramme HDMI
+                try { icon = (Drawable) input.getClass().getMethod("loadIcon", Context.class).invoke(input, ctxRef); } catch (Throwable ignored) { }
+                if (icon == null) icon = new Glyph(Glyph.INPUT, 0xFFF5F5F7);
+                return;
+            }
             try { banner = info.loadBanner(pm); } catch (Throwable ignored) { }
             if (banner == null) {
                 try { banner = info.applicationInfo.loadBanner(pm); } catch (Throwable ignored) { }
@@ -72,6 +101,7 @@ final class AppRepo {
         synchronized int color(PackageManager pm) {
             if (colorDone) return color;
             colorDone = true;
+            if (isInput()) return color = 0xFF2E3B52;
             color = dominant(icon(pm));
             if (color == 0) color = dominant(banner(pm));
             if (color == 0) color = 0xFF3A3C44;
@@ -127,6 +157,14 @@ final class AppRepo {
         }
 
         Intent launchIntent() {
+            if (isInput()) { // l'appli TV du téléviseur s'ouvre directement sur cette entrée
+                android.net.Uri u = input.isPassthroughInput()
+                        ? android.media.tv.TvContract.buildChannelUriForPassthroughInput(inputId)
+                        : android.media.tv.TvContract.buildChannelsUriForInput(inputId);
+                Intent i = new Intent(Intent.ACTION_VIEW, u);
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                return i;
+            }
             Intent i = new Intent(Intent.ACTION_MAIN);
             i.addCategory(leanback ? Intent.CATEGORY_LEANBACK_LAUNCHER : Intent.CATEGORY_LAUNCHER);
             i.setComponent(component);
@@ -135,11 +173,15 @@ final class AppRepo {
         }
     }
 
+    static final String INPUT_PREFIX = "input:";
+    /** Contexte applicatif, pour l'icône des entrées (Android 7+). */
+    private static Context ctxRef;
+
     private final Context ctx;
     private final Map<String, App> byKey = new LinkedHashMap<>();
     private final List<App> sorted = new ArrayList<>();
 
-    AppRepo(Context ctx) { this.ctx = ctx.getApplicationContext(); }
+    AppRepo(Context ctx) { this.ctx = ctx.getApplicationContext(); ctxRef = this.ctx; }
 
     void reload() {
         PackageManager pm = ctx.getPackageManager();
@@ -149,6 +191,7 @@ final class AppRepo {
         // Applis TV en priorité (elles ont une vraie bannière)
         add(pm, Intent.CATEGORY_LEANBACK_LAUNCHER, true, old, seenPkg);
         add(pm, Intent.CATEGORY_LAUNCHER, false, old, seenPkg);
+        addInputs(old);
         sorted.clear();
         sorted.addAll(byKey.values());
         final Collator c = Collator.getInstance(Locale.getDefault());
@@ -175,6 +218,26 @@ final class AppRepo {
             if (!byKey.containsKey(a.key)) byKey.put(a.key, a);
             seenPkg.put(p, Boolean.TRUE);
         }
+    }
+
+    /** Entrées physiques de la TV (HDMI, AV, composante) : visibles et rangées comme des applis. */
+    private void addInputs(Map<String, App> old) {
+        try {
+            android.media.tv.TvInputManager tim = (android.media.tv.TvInputManager) ctx.getSystemService(Context.TV_INPUT_SERVICE);
+            if (tim == null) return;
+            for (android.media.tv.TvInputInfo in : tim.getTvInputList()) {
+                int type = in.getType();
+                if (type == android.media.tv.TvInputInfo.TYPE_TUNER || type == android.media.tv.TvInputInfo.TYPE_OTHER) continue;
+                try { if ((Boolean) in.getClass().getMethod("isHidden", Context.class).invoke(in, ctx)) continue; } catch (Throwable ignored) { }
+                String key = INPUT_PREFIX + in.getId();
+                App prev = old.get(key);
+                if (prev != null) { byKey.put(key, prev); continue; }
+                CharSequence lbl = null;
+                try { lbl = (CharSequence) in.getClass().getMethod("loadCustomLabel", Context.class).invoke(in, ctx); } catch (Throwable ignored) { }
+                if (lbl == null || lbl.length() == 0) lbl = in.loadLabel(ctx);
+                byKey.put(key, new App(in, lbl == null ? "HDMI" : lbl.toString().trim()));
+            }
+        } catch (Throwable ignored) { } // TV sans entrées ou sans service TV
     }
 
     List<App> all() { return sorted; }

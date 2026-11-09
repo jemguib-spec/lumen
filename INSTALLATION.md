@@ -96,10 +96,24 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 ## Mode veille et économiseur d'écran
 - **Mode veille** : après quelques minutes sans activité (réglable : 1, 3, 5, 10 min ou jamais), les applis disparaissent ; il reste le fond en plein écran et une seule ligne discrète en bas : heure, date, météo, lever et coucher du soleil, phase de la Lune, et à droite la légende de l'image. La ligne se déplace de quelques pixels chaque minute pour protéger l'écran. Un appui sur la télécommande revient à l'accueil. Réglages › Mode veille › Lancer le mode veille pour l'essayer tout de suite.
 - **Météo** : Réglages › Mode veille › Météo, puis tape le nom de ta ville. Seul ce nom est envoyé à Open-Meteo (gratuit, sans compte).
-- **Économiseur d'écran de la TV** (le mode veille par-dessus n'importe quelle appli) : Paramètres de la TV › Système › Économiseur d'écran › Lumen. Si Google TV ne propose pas ce choix :
+- **Économiseur d'écran de la TV** (le mode veille par-dessus n'importe quelle appli) : Réglages › Mode veille › Économiseur d'écran de la TV. Si Google TV cache ce choix, donne une seule fois l'autorisation depuis un ordinateur, puis appuie à nouveau sur cette ligne : Lumen se règle tout seul.
 
-    adb shell settings put secure screensaver_components com.lumen.launcher/.LumenDream
-    adb shell settings put secure screensaver_enabled 1
+    adb shell pm grant com.lumen.launcher android.permission.WRITE_SECURE_SETTINGS
+
+## Sources HDMI
+Les entrées HDMI de la TV apparaissent sur l'accueil (ajoutées une seule fois) et dans la rangée « Sources (HDMI) » de la page Applications. On les déplace, retire ou masque comme une appli (appui long). OK ouvre directement la source.
+
+## Code PIN
+Réglages › Système › Code PIN. Une fois activé, le code est demandé pour ouvrir les réglages, masquer ou désinstaller une appli, et pour les applis verrouillées (appui long › Verrouiller par code). Code oublié : Paramètres de la TV › Applis › Lumen › Effacer les données.
+
+## Applis selon l'heure
+Lumen retient, sur la TV seulement, ce que tu ouvres à chaque moment de la journée : en revenant à l'accueil, l'appli habituelle est déjà sélectionnée, et la page Applications commence par une rangée « Ce soir », « Ce matin »… Réglages › Accueil et applis › Applis selon l'heure pour désactiver (l'historique est alors effacé).
+
+## Lisibilité
+Réglages › Accueil et applis › Lisibilité : taille du texte (normale, grande, très grande) et contraste renforcé (panneaux plus opaques, textes plus blancs).
+
+## Sauvegarde des réglages
+Page du téléphone › Plus › Télécharger la sauvegarde (un petit fichier .json) ; Restaurer… pour le renvoyer sur la TV, par exemple après une remise à zéro. Le code PIN et la clé Pexels n'y sont jamais inclus.
 
 ## Mises à jour
 - Une fois par jour, quand Lumen est à l'écran, il regarde s'il existe une nouvelle version dans le dépôt GitHub du projet. Si oui, il la télécharge, vérifie qu'elle est signée avec la même clé que Lumen installé, puis Android demande « Mettre à jour ? » : un clic suffit.
@@ -117,3 +131,6 @@ Aucune publicité, aucun compte, aucune télémétrie. Internet sert uniquement 
 ## Recompiler
 Sous Ubuntu/Debian : `sudo apt install aapt apksigner zipalign dalvik-exchange android-sdk-platform-23 openjdk-17-jdk`, puis `./build.sh`. Tests : `tests/run.sh`.
 Fonds générés : `assets/scenes/` (moment_scène.jpg) et `assets/anim/<moment>/` (calques animés).
+
+## Licence
+Lumen est un logiciel libre : GNU GPL version 3 ou ultérieure (voir `LICENSE` ; Réglages › Système › Licences sur la TV).

@@ -1,0 +1,13 @@
+Google TV cache souvent le choix de l'économiseur d'écran. Il suffit de donner une seule fois une autorisation à Lumen depuis un ordinateur, puis de revenir ici et d'appuyer sur « Économiseur d'écran de la TV » : Lumen se règle tout seul.
+
+1. Sur la TV : Paramètres › Système › À propos › appuyer 7 fois sur « Build » pour activer les options pour les développeurs, puis activer « Débogage USB » (ou « Débogage réseau »).
+
+2. Sur l'ordinateur, avec ADB installé (Android Platform Tools), remplacer ADRESSE par l'adresse IP de la TV :
+adb connect ADRESSE
+adb shell pm grant com.lumen.launcher android.permission.WRITE_SECURE_SETTINGS
+
+3. Revenir dans Réglages › Mode veille › Économiseur d'écran de la TV et appuyer sur OK.
+
+Sans ordinateur : si votre TV propose Paramètres › Système › Ambient mode › Économiseur d'écran, choisissez Lumen dans la liste.
+
+Cette autorisation sert uniquement à choisir l'économiseur d'écran. Lumen ne modifie aucun autre réglage de la TV.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
 import java.text.Normalizer;
@@ -11,8 +13,10 @@ import java.util.Locale;
 final class AppCategory {
     private AppCategory() { }
 
-    static final int VIDEO = 0, MUSIC = 1, GAMES = 2, OTHER = 3;
-    static final String[] NAMES = {"Vidéo et TV", "Musique et radio", "Jeux", "Outils et autres"};
+    static final int VIDEO = 0, MUSIC = 1, GAMES = 2, OTHER = 3, SOURCES = 4;
+    static final String[] NAMES = {"Vidéo et TV", "Musique et radio", "Jeux", "Outils et autres", "Sources (HDMI)"};
+    /** Ordre des rangées dans la page Applications. */
+    static final int[] ORDER = {SOURCES, VIDEO, MUSIC, GAMES, OTHER};
 
     // valeurs de ApplicationInfo.category (Android 8+)
     private static final int A_GAME = 0, A_AUDIO = 1, A_VIDEO = 2, A_IMAGE = 3;

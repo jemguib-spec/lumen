@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
 import android.app.Activity;
@@ -100,6 +102,8 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         Glass.setScreen(sw, sh);
 
         prefs = new Prefs(this);
+        textScale = Prefs.TEXT_SCALES[prefs.textScale()];
+        highContrast = prefs.highContrast();
         repo = new AppRepo(this);
         repo.reload();
         online = new Online(this, prefs);
@@ -110,6 +114,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         if (c != null) Sky.setLocation(c[0], c[1]);
         Sounds.get(this).setEnabled(prefs.sounds());
         ensureDefaultFavorites();
+        addInputsOnce();
         buildUi();
         buildRow(null);
         // icônes et couleurs : en arrière-plan, une fois l'accueil affiché
@@ -126,6 +131,13 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         f.addAction(Intent.ACTION_PACKAGE_CHANGED);
         f.addDataScheme("package");
         registerReceiver(packageReceiver, f);
+        if (SettingsPanel.reopenPage >= 0) h.post(new Runnable() { @Override public void run() { SettingsPanel.reopen(MainActivity.this); } });
+    }
+
+    /** Taille du texte ou contraste changés : on reconstruit l'interface, puis on revient dans les réglages. */
+    void restyle() {
+        SettingsPanel.reopenPage = SettingsPanel.ACCUEIL;
+        recreate();
     }
 
     @Override protected void onResume() {
@@ -319,9 +331,15 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     int u(float px) { return Math.round(px * unit); }
 
+    /** Facteur de taille du texte choisi dans Réglages › Accueil › Lisibilité. */
+    float textScale = 1f;
+    boolean highContrast;
+
     TextView text(float px, String family, int color) {
         TextView t = new TextView(this);
-        t.setTextSize(TypedValue.COMPLEX_UNIT_PX, px * unit);
+        t.setTextSize(TypedValue.COMPLEX_UNIT_PX, px * unit * textScale);
+        // contraste renforcé : les textes secondaires (gris translucides) deviennent presque opaques
+        if (highContrast && (color >>> 24) < 0xE0 && (color & 0xFFFFFF) == 0xFFFFFF) color = 0xF2FFFFFF;
         t.setTypeface(Fonts.get(family, Typeface.NORMAL));
         t.setTextColor(color);
         t.setIncludeFontPadding(false);
@@ -554,9 +572,20 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         }
         for (AppRepo.App a : repo.all()) {
             if (keys.size() >= 5) break;
-            if (a.leanback && !keys.contains(a.key)) keys.add(a.key);
+            if (a.leanback && !a.isInput() && !keys.contains(a.key)) keys.add(a.key);
         }
         prefs.setFavorites(keys);
+    }
+
+    /** Une seule fois : les entrées HDMI de la TV rejoignent l'accueil (on peut les retirer ensuite). */
+    private void addInputsOnce() {
+        if (prefs.flag("inputs_home_v1")) return;
+        prefs.setFlag("inputs_home_v1");
+        List<String> f = prefs.favorites();
+        boolean changed = false;
+        for (AppRepo.App a : repo.all())
+            if (a.isInput() && !f.contains(a.key)) { f.add(a.key); changed = true; }
+        if (changed) prefs.setFavorites(f);
     }
 
     private List<String> visibleFavorites() {
@@ -639,8 +668,24 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     }
 
     private void focusFirst() {
+        Tile usual = usualNow();
+        if (usual != null) { usual.requestFocus(); return; }
         if (!rows.isEmpty() && rows.get(0).getChildCount() > 0) rows.get(0).getChildAt(0).requestFocus();
         else if (topButtons.getChildCount() > 0) topButtons.getChildAt(0).requestFocus();
+    }
+
+    /** Le favori le plus ouvert à cette heure-ci (habitudes locales), pour le sélectionner d'emblée. */
+    private Tile usualNow() {
+        if (!prefs.habitsOn()) return null;
+        int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
+        List<String> top = prefs.habits().top(hour, 1, 3);
+        if (top.isEmpty()) return null;
+        for (LinearLayout r : rows)
+            for (int i = 0; i < r.getChildCount(); i++) {
+                View v = r.getChildAt(i);
+                if (v instanceof Tile && ((Tile) v).tag instanceof AppRepo.App && top.get(0).equals(((AppRepo.App) ((Tile) v).tag).key)) return (Tile) v;
+            }
+        return null;
     }
 
     private void refreshRowsGlass() { for (LinearLayout r : rows) refreshGlass(r); }
@@ -681,7 +726,17 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     }
 
     /** La vignette s'agrandit jusqu'à remplir l'écran, puis l'appli s'ouvre. */
-    void launchAnimated(final AppRepo.App app, Tile from) {
+    void launchAnimated(final AppRepo.App app, final Tile from) {
+        whenUnlocked(app, new Runnable() { @Override public void run() { launchUnlocked(app, from); } });
+    }
+
+    /** Lance « r » tout de suite, ou après le code si l'appli est verrouillée. */
+    void whenUnlocked(AppRepo.App app, Runnable r) {
+        if (prefs.isLocked(app.key)) PinDialog.ask(this, "Code pour " + app.label, r);
+        else r.run();
+    }
+
+    private void launchUnlocked(final AppRepo.App app, Tile from) {
         Sounds.get(this).tock();
         if (zoomView != null) { root.removeView(zoomView); zoomView = null; }
         int sw = root.getWidth(), sh = root.getHeight();
@@ -728,6 +783,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     void launch(AppRepo.App app) {
         prefs.addRecent(app.key);
+        prefs.recordHabit(app.key);
         try {
             startActivity(app.launchIntent());
         } catch (ActivityNotFoundException | SecurityException e) {
@@ -1033,7 +1089,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         if (Glass.backdrop() != null) appsBg.setImageBitmap(Glass.backdrop());
         LivingScene.paused = true;  // le fond est caché par la page : on n'anime plus rien derrière
         fx.setRunning(false);
-        if (!appsPage.built() || dirtyApps) buildApps(null);  // sinon : déjà prête
+        if (!appsPage.built() || dirtyApps || appsPage.stale()) buildApps(null);  // sinon : déjà prête
         else appsPage.rewind();
         homeLayer.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
         homeLayer.animate().translationY(-u(60)).alpha(0f).setDuration(180).start();
@@ -1084,7 +1140,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         FrameLayout o = new FrameLayout(this);
         o.setClipChildren(false);
         View dim = new View(this);
-        dim.setBackgroundColor(0x6604040A);
+        dim.setBackgroundColor(highContrast ? 0xB304040A : 0x6604040A);
         o.addView(dim, match());
         o.setAlpha(0f);
         root.addView(o, root.indexOfChild(notice), match());
@@ -1128,7 +1184,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         final float radius = u(radiusPx);
-        card.setBackground(new Glass.Surface(card, radius, 0x2E14161E));
+        card.setBackground(new Glass.Surface(card, radius, highContrast ? 0xD90C0D12 : 0x2E14161E));
         card.setElevation(u(40));
         // le contenu (listes qui défilent) reste dans les bords arrondis
         card.setOutlineProvider(new android.view.ViewOutlineProvider() {
@@ -1199,7 +1255,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     }
 
     LinearLayout.LayoutParams rowLp() {
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, u(88));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, u(88 * textScale));
         lp.bottomMargin = u(6);
         return lp;
     }
@@ -1219,6 +1275,11 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         if (overlay == null && !appsOpen) buildRow(focusedKey()); else dirtyRow = true;
         markAppsDirty();
         showNotice("Favoris mis à jour");
+    }
+
+    @Override public void onSettingsRestored(int count) {
+        showNotice(count + " réglages restaurés");
+        h.postDelayed(new Runnable() { @Override public void run() { recreate(); } }, 1200); // tout est relu proprement
     }
 
     @Override public void onMineChanged(int received) {

@@ -148,6 +148,32 @@ async function setPexels(key) {
 $('pxSave').addEventListener('click', () => { const k = $('pxKey').value.trim(); if (k) setPexels(k); });
 $('pxDel').addEventListener('click', () => setPexels(''));
 
+$('bkSave').addEventListener('click', async () => {
+  try {
+    const r = await api('/api/backup');
+    const blob = new Blob([await r.text()], {type: 'application/json'});
+    const a = el('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'lumen-reglages-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast('Sauvegarde téléchargée');
+  } catch (e) { }
+});
+$('bkLoad').addEventListener('click', () => $('bkFile').click());
+$('bkFile').addEventListener('change', async () => {
+  const f = $('bkFile').files[0];
+  $('bkFile').value = '';
+  if (!f) return;
+  if (f.size > 256 * 1024) { toast('Fichier trop gros'); return; }
+  try {
+    const r = await api('/api/restore', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: await f.text()});
+    const j = await r.json();
+    toast(j.ok ? j.count + ' réglages restaurés sur la TV' : "Ce fichier n'est pas une sauvegarde Lumen");
+    if (j.ok) setTimeout(load, 2500);
+  } catch (e) { }
+});
+
 async function loadLog() {
   try { const r = await api('/api/log'); const t = await r.text(); $('log').textContent = t.trim() || 'Aucune erreur'; } catch (e) { }
 }

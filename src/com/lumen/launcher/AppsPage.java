@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
 import android.content.Context;
@@ -60,8 +62,14 @@ final class AppsPage {
      * Page Applications : recherche en haut, puis une rangée par catégorie (Favoris, Vidéo et TV,
      * Musique et radio, Jeux, Outils et autres). Pendant une recherche, une seule grille de résultats.
      */
+    /** Tranche horaire de la dernière construction (la rangée « Ce soir… » change avec l'heure). */
+    private int builtSlot = -1;
+
+    boolean stale() { return builtSlot != Habits.slot(java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)); }
+
     void build(String focusKey) {
         a.dirtyApps = false;
+        builtSlot = Habits.slot(java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY));
         if (scroll != null) a.appsLayer.removeView(scroll);
         scroll = new ScrollView(a) {
             @Override protected void onScrollChanged(int l, int t, int ol, int ot) {
@@ -184,6 +192,13 @@ final class AppsPage {
             return focus[0];
         }
 
+        // Habitudes : ce que tu ouvres le plus à ce moment de la journée (calculé sur la TV)
+        if (a.prefs.habitsOn()) {
+            int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
+            List<AppRepo.App> usual = new ArrayList<>();
+            for (String k : a.prefs.habits().top(hour, 6, 2)) { AppRepo.App x = a.repo.get(k); if (x != null && !hidden.contains(k)) usual.add(x); }
+            if (usual.size() >= 2) addAppRow(Habits.SLOT_NAMES[Habits.slot(hour)], usual, tw, th, bn, favs, gap, focusKey, focus, first);
+        }
         // Favoris d'abord, dans l'ordre de l'accueil
         List<AppRepo.App> favApps = new ArrayList<>();
         for (String k : favs) { AppRepo.App x = a.repo.get(k); if (x != null && !hidden.contains(k)) favApps.add(x); }
@@ -191,7 +206,7 @@ final class AppsPage {
         List<List<AppRepo.App>> groups = new ArrayList<>();
         for (int i = 0; i < AppCategory.NAMES.length; i++) groups.add(new ArrayList<AppRepo.App>());
         for (AppRepo.App x : apps) if (!favs.contains(x.key)) groups.get(x.section()).add(x); // pas de doublon avec les favoris
-        for (int i = 0; i < AppCategory.NAMES.length; i++)
+        for (int i : AppCategory.ORDER)
             addAppRow(AppCategory.NAMES[i], groups.get(i), tw, th, bn, favs, gap, focusKey, focus, first);
         return focus[0];
     }

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.lumen.launcher"
-    android:versionCode="32"
-    android:versionName="4.3.6">
+    android:versionCode="33"
+    android:versionName="4.4.0">
 
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="29" />
 
@@ -17,6 +17,8 @@
     <uses-permission android:name="android.permission.READ_TV_LISTINGS" />
     <!-- Mise à jour automatique depuis GitHub : Android demande toujours une confirmation. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- facultative, donnée par ADB uniquement : choisir Lumen comme économiseur d écran -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 

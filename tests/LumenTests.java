@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
 import java.io.ByteArrayInputStream;
@@ -50,6 +52,46 @@ public class LumenTests {
         check("ambiances : vidéo hors catalogue refusée", CosyCatalog.kindOf("File:Black Desert Mobile Campfire.webm") == -1);
         check("ambiances : visualisation NASA refusée",
                 CosyCatalog.kindOf("File:Fermi's 14-Year Time-Lapse of the Gamma-Ray Sky (SVS14399 Fermi 14Year Fireplace 4k).webm") == -1);
+
+        // ---- code PIN
+        String stored = Pin.store("4821");
+        check("pin : le bon code est accepté", Pin.check("4821", stored));
+        check("pin : un mauvais code est refusé", !Pin.check("4822", stored));
+        check("pin : jamais stocké en clair", !stored.contains("4821"));
+        check("pin : sel différent à chaque fois", !stored.equals(Pin.store("4821")));
+        check("pin : format 4 chiffres exigé", !Pin.wellFormed("12a4") && !Pin.wellFormed("123") && Pin.wellFormed("0000"));
+        check("pin : valeur enregistrée abîmée refusée", !Pin.check("4821", "zz:zz") && !Pin.check("4821", "") && !Pin.check("4821", null));
+        check("pin : 4 erreurs sans attente", Pin.lockMillis(4) == 0);
+        check("pin : 5 erreurs → 30 s", Pin.lockMillis(5) == 30_000);
+        check("pin : l'attente double", Pin.lockMillis(6) == 60_000);
+        check("pin : attente plafonnée à 1 h", Pin.lockMillis(50) == 3_600_000L);
+
+        // ---- habitudes selon l'heure
+        check("habitudes : 20 h = soirée", Habits.slot(20) == 4 && Habits.slot(23) == 5 && Habits.slot(3) == 0 && Habits.slot(8) == 1);
+        Habits hb = new Habits("");
+        for (int i = 0; i < 5; i++) hb.record("netflix/A", 20);
+        for (int i = 0; i < 3; i++) hb.record("plex/B", 19);
+        hb.record("canal/C", 9);
+        check("habitudes : la plus ouverte le soir d'abord", hb.top(20, 3, 1).equals(java.util.Arrays.asList("netflix/A", "plex/B")));
+        check("habitudes : le matin est séparé du soir", hb.top(9, 3, 1).equals(java.util.Collections.singletonList("canal/C")));
+        check("habitudes : seuil minimal respecté", hb.top(9, 3, 2).isEmpty());
+        check("habitudes : relues à l'identique", new Habits(hb.serialize()).serialize().equals(hb.serialize()));
+        check("habitudes : texte abîmé ignoré", new Habits("x;9:a:1;4:;4:b:-2;4:c:2").serialize().equals("4:c:2"));
+        Habits often = new Habits("");
+        for (int i = 0; i < 100; i++) often.record("app/X", 21);
+        check("habitudes : les vieilles habitudes s'estompent", often.top(21, 1, 1).size() == 1 && often.serialize().matches("5:app/X:\\d+") && Integer.parseInt(often.serialize().split(":")[2]) < 60);
+
+        // ---- sauvegarde des réglages
+        check("sauvegarde : le code PIN n'est jamais exporté", Backup.typeOf("pin") == Backup.NONE && Backup.typeOf("pin_fails") == Backup.NONE);
+        check("sauvegarde : la clé Pexels n'est jamais exportée", Backup.typeOf("pexels_key") == Backup.NONE);
+        check("sauvegarde : les mises à jour sont exclues", Backup.typeOf("update_ready") == Backup.NONE);
+        check("sauvegarde : favoris et villes repris", Backup.typeOf("favorites") == Backup.STRING && Backup.typeOf("cities") == Backup.SET);
+        check("sauvegarde : entiers hors bornes refusés", !Backup.intOk("home_cols", 99) && Backup.intOk("home_cols", 6) && !Backup.intOk("inconnu", 1));
+        check("sauvegarde : texte avec caractères de contrôle refusé", !Backup.textOk("a\u0000b", 10) && Backup.textOk("Paris", 10) && !Backup.textOk("long", 3));
+
+        // ---- sources HDMI
+        check("sources : rangée Sources en premier", AppCategory.ORDER[0] == AppCategory.SOURCES);
+        check("sources : chaque rangée a un nom", AppCategory.NAMES.length == AppCategory.ORDER.length);
 
         // ---- aperçus des vidéos Commons
         check("aperçu : dossier MD5 comme Commons", CommonsThumb.url("File:Example.jpg", 500).startsWith("https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Example.jpg/"));

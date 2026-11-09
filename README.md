@@ -6,7 +6,11 @@
 - « Reprendre » : épisodes en cours au-dessus de l'appli sélectionnée
 - Fonds : paysages générés selon l'heure et la météo, photos et vidéos libres de droits (liste fermée, à choisir sur aperçus)
 - Mode veille sur une ligne, ambiances vidéo avec minuterie de sommeil
-- Réglages et envois depuis le téléphone par QR code (réseau local uniquement)
+- Sources HDMI sur l'accueil, économiseur d'écran officiel de la TV
+- Code PIN facultatif (réglages, désinstallation, applis verrouillées)
+- Applis habituelles selon l'heure, calculées sur la TV uniquement
+- Taille du texte et contraste réglables
+- Réglages, envois et sauvegarde depuis le téléphone par QR code (réseau local uniquement)
 
 Installation et utilisation : [INSTALLATION.md](INSTALLATION.md) · Sécurité et organisation du code : [SECURITE.md](SECURITE.md)
 
@@ -33,3 +37,6 @@ Les TV équipées de Lumen lisent chaque jour `dist/latest.json` sur la branche 
 3. Pousser sur `main`.
 
 L'APK doit être signé avec la même clé (`lumen.keystore`, jamais publiée) que la version installée : sinon Lumen le refuse, et Android aussi.
+
+## Licence
+Copyright (C) 2026 jemguib-spec. Lumen est un logiciel libre : vous pouvez le redistribuer et le modifier selon les termes de la GNU General Public License, version 3 ou (à votre choix) toute version ultérieure. Il est distribué sans aucune garantie. Voir [LICENSE](LICENSE).

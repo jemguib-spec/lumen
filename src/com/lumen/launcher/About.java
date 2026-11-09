@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
 import android.graphics.drawable.GradientDrawable;
@@ -26,6 +28,7 @@ final class About {
     static void fillAbout(final MainActivity a, final LinearLayout col) {
         col.addView(info(a, "Lumen " + a.updater.currentVersion(), "Écran d'accueil pour Android TV · " + a.updater.state()));
         col.addView(info(a, "Code source", SOURCE));
+        col.addView(info(a, "Licence", "GNU GPL version 3 ou ultérieure : vous pouvez utiliser, étudier, modifier et redistribuer Lumen, à condition de garder la même licence."));
         DisplayMetrics dm = new DisplayMetrics();
         a.getWindowManager().getDefaultDisplay().getRealMetrics(dm);
         col.addView(info(a, "Téléviseur", cap(Build.MANUFACTURER) + " " + Build.MODEL + " · Android " + Build.VERSION.RELEASE
@@ -58,7 +61,7 @@ final class About {
     // ------------------------------------------------------------------ Licences
 
     static void fillLicences(final MainActivity a, final LinearLayout card, LinearLayout col) {
-        col.addView(info(a, "Lumen", "Code source public : " + SOURCE));
+        col.addView(link(a, card, "Lumen", "Logiciel libre · GNU GPL version 3 ou ultérieure · code source : " + SOURCE, SettingsPanel.LICENCE_GPL));
         col.addView(link(a, card, "Police Inter", "SIL Open Font License 1.1 · The Inter Project Authors", SettingsPanel.LICENCE_INTER));
         col.addView(link(a, card, "Photos et vidéos Wikimedia Commons",
                 "Licences libres (CC0, CC BY, CC BY-SA, domaine public) · auteur et licence de chaque fond", SettingsPanel.CREDITS));
@@ -112,6 +115,7 @@ final class About {
         for (String para : txt.split("\n\\s*\n")) {
             String p = para.trim();
             if (p.isEmpty()) continue;
+            if (asset.equals("LICENSE.txt")) p = p.replaceAll("\\s*\n\\s*", " "); // texte GPL : lignes recollées
             LinearLayout r = info(a, null, p.replaceAll("\n ", "\n").replaceAll("\n\\.\n", "\n\n"));
             col.addView(r);
         }

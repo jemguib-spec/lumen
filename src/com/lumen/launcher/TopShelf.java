@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
 import android.content.Intent;
@@ -188,14 +190,18 @@ final class TopShelf {
         cell.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
                 Sounds.get(a).tock();
-                a.prefs.addRecent(app.key);
-                Intent i = WatchNext.intentFor(e);
-                try {
-                    if (i == null) throw new IllegalStateException();
-                    a.startActivity(i);
-                } catch (Exception ex) {
-                    a.launch(app); // l'appli s'ouvre, à défaut de reprendre directement
-                }
+                a.whenUnlocked(app, new Runnable() {
+                    @Override public void run() {
+                        a.prefs.addRecent(app.key);
+                        Intent i = WatchNext.intentFor(e);
+                        try {
+                            if (i == null) throw new IllegalStateException();
+                            a.startActivity(i);
+                        } catch (Exception ex) {
+                            a.launch(app); // l'appli s'ouvre, à défaut de reprendre directement
+                        }
+                    }
+                });
             }
         });
         if (a.prefs.shelfPosters() || (e.poster != null && e.poster.startsWith("content://"))) {

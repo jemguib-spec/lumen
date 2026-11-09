@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
 import android.content.Context;
@@ -60,6 +62,7 @@ final class PhoneServer {
         Online online();
         void onFavoritesChanged();
         void onMineChanged(int received);
+        void onSettingsRestored(int count);
     }
 
     private static final long IDLE_STOP_MS = 15 * 60_000L;
@@ -229,6 +232,16 @@ final class PhoneServer {
             send(out, ok ? 200 : 400, "application/json", ("{\"ok\":" + ok + "}").getBytes("UTF-8"), null);
             return;
         }
+        if (!post && p.equals("/api/backup")) {
+            byte[] b = host.prefs().exportBackup().toString(1).getBytes("UTF-8");
+            send(out, 200, "application/json; charset=utf-8", b, null);
+            return;
+        }
+        if (post && p.equals("/api/restore")) {
+            int n = restore(HttpRequest.readBody(in, r.contentLength, 256 * 1024));
+            send(out, n >= 0 ? 200 : 400, "application/json", ("{\"ok\":" + (n >= 0) + ",\"count\":" + Math.max(0, n) + "}").getBytes("UTF-8"), null);
+            return;
+        }
         if (post && p.equals("/api/delete")) { boolean ok = deleteMine(r.query.get("id")); send(out, ok ? 200 : 400, "application/json", ("{\"ok\":" + ok + "}").getBytes("UTF-8"), null); return; }
         send(out, 404, "text/plain", new byte[0], null);
     }
@@ -292,6 +305,21 @@ final class PhoneServer {
                 host.prefs().setFavorites(keys);
                 host.onFavoritesChanged();
                 return true;
+            }
+        });
+    }
+
+    /** Restaure une sauvegarde de réglages (liste blanche de Backup). -1 si le fichier est refusé. */
+    private int restore(byte[] body) throws Exception {
+        final JSONObject o;
+        try { o = new JSONObject(new String(body, "UTF-8")); } catch (Exception e) { return -1; }
+        return onMain(new Callable<Integer>() {
+            @Override public Integer call() {
+                try {
+                    int n = host.prefs().importBackup(o);
+                    host.onSettingsRestored(n);
+                    return n;
+                } catch (Exception e) { return -1; }
             }
         });
     }

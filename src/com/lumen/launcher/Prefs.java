@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
 import android.content.Context;
@@ -214,4 +216,117 @@ final class Prefs {
 
     long lastRefresh(String theme) { return sp.getLong("refresh_" + theme, 0); }
     void setLastRefresh(String theme, long t) { sp.edit().putLong("refresh_" + theme, t).apply(); }
+
+    /** Drapeaux « fait une fois » (migrations, questions déjà posées). */
+    boolean flag(String name) { return sp.getBoolean(name, false); }
+    void setFlag(String name) { sp.edit().putBoolean(name, true).apply(); }
+
+    // ------------------------------------------------------------------ code PIN
+
+    String pinStored() { return sp.getString("pin", null); }
+    boolean hasPin() { return pinStored() != null; }
+    void setPin(String pin) {
+        if (pin == null) sp.edit().remove("pin").remove("pin_fails").remove("pin_last_fail").putStringSet("locked_apps", new HashSet<String>()).apply();
+        else sp.edit().putString("pin", Pin.store(pin)).putInt("pin_fails", 0).apply();
+    }
+    int pinFails() { return sp.getInt("pin_fails", 0); }
+    long pinLastFail() { return sp.getLong("pin_last_fail", 0); }
+    void pinFailed() { sp.edit().putInt("pin_fails", pinFails() + 1).putLong("pin_last_fail", System.currentTimeMillis()).commit(); }
+    void pinOk() { sp.edit().putInt("pin_fails", 0).apply(); }
+
+    Set<String> lockedApps() { return set("locked_apps"); }
+    boolean isLocked(String key) { return hasPin() && lockedApps().contains(key); }
+    void setLocked(String key, boolean on) { Set<String> s = lockedApps(); if (on) s.add(key); else s.remove(key); put("locked_apps", s); }
+
+    // ------------------------------------------------------------------ lisibilité
+
+    static final float[] TEXT_SCALES = {1f, 1.15f, 1.3f};
+    static final String[] TEXT_SCALE_NAMES = {"Normale", "Grande", "Très grande"};
+    int textScale() { return Math.max(0, Math.min(2, sp.getInt("text_scale", 0))); }
+    void setTextScale(int i) { sp.edit().putInt("text_scale", i).commit(); }
+    boolean highContrast() { return sp.getBoolean("high_contrast", false); }
+    void setHighContrast(boolean b) { sp.edit().putBoolean("high_contrast", b).commit(); }
+
+    // ------------------------------------------------------------------ habitudes selon l'heure (local)
+
+    boolean habitsOn() { return sp.getBoolean("habits_on", true); }
+    void setHabitsOn(boolean b) { sp.edit().putBoolean("habits_on", b).apply(); if (!b) sp.edit().remove("habits").apply(); }
+    Habits habits() { return new Habits(sp.getString("habits", "")); }
+    void recordHabit(String key) {
+        if (!habitsOn()) return;
+        Habits h = habits();
+        h.record(key, java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY));
+        sp.edit().putString("habits", h.serialize()).apply();
+    }
+
+    // ------------------------------------------------------------------ sauvegarde
+
+    /** Réglages exportables (liste blanche de Backup). */
+    org.json.JSONObject exportBackup() throws org.json.JSONException {
+        org.json.JSONObject o = new org.json.JSONObject();
+        o.put("format", Backup.FORMAT);
+        o.put("version", Backup.VERSION);
+        org.json.JSONObject v = new org.json.JSONObject();
+        java.util.Map<String, ?> all = sp.getAll();
+        for (java.util.Map.Entry<String, ?> e : all.entrySet()) {
+            String k = e.getKey();
+            Object x = e.getValue();
+            switch (Backup.typeOf(k)) {
+                case Backup.BOOL: if (x instanceof Boolean) v.put(k, x); break;
+                case Backup.INT: if (x instanceof Integer) v.put(k, x); break;
+                case Backup.STRING: if (x instanceof String) v.put(k, x); break;
+                case Backup.SET:
+                    if (x instanceof Set) { org.json.JSONArray a = new org.json.JSONArray(); for (Object i : (Set<?>) x) a.put(String.valueOf(i)); v.put(k, a); }
+                    break;
+                default: break;
+            }
+        }
+        o.put("settings", v);
+        return o;
+    }
+
+    /** Restaure une sauvegarde : seules les clés connues, du bon type et dans les bornes, sont reprises. Renvoie le nombre de réglages repris. */
+    int importBackup(org.json.JSONObject o) throws java.io.IOException {
+        if (o == null || !Backup.FORMAT.equals(o.optString("format")) || o.optInt("version", 0) != Backup.VERSION)
+            throw new java.io.IOException("Ce fichier n'est pas une sauvegarde Lumen");
+        org.json.JSONObject v = o.optJSONObject("settings");
+        if (v == null) throw new java.io.IOException("Sauvegarde vide");
+        SharedPreferences.Editor ed = sp.edit();
+        int n = 0;
+        java.util.Iterator<String> it = v.keys();
+        while (it.hasNext()) {
+            String k = it.next();
+            Object x = v.opt(k);
+            switch (Backup.typeOf(k)) {
+                case Backup.BOOL:
+                    if (x instanceof Boolean) { ed.putBoolean(k, (Boolean) x); n++; }
+                    break;
+                case Backup.INT:
+                    if (x instanceof Number && Backup.intOk(k, ((Number) x).longValue())) { ed.putInt(k, ((Number) x).intValue()); n++; }
+                    break;
+                case Backup.STRING:
+                    if (x instanceof String && Backup.textOk((String) x, Backup.MAX_STRING)) { ed.putString(k, (String) x); n++; }
+                    break;
+                case Backup.SET:
+                    if (x instanceof org.json.JSONArray && ((org.json.JSONArray) x).length() <= Backup.MAX_SET) {
+                        org.json.JSONArray a = (org.json.JSONArray) x;
+                        Set<String> s = new HashSet<>();
+                        for (int i = 0; i < a.length(); i++) {
+                            String item = a.optString(i, null);
+                            if (Backup.textOk(item, Backup.MAX_ITEM)) s.add(item);
+                        }
+                        if ("locked_apps".equals(k)) {
+                            if (!hasPin()) break;        // pas de verrou sans code
+                            s.addAll(lockedApps());      // une sauvegarde ajoute des verrous, n'en retire jamais
+                        }
+                        ed.putStringSet(k, s);
+                        n++;
+                    }
+                    break;
+                default: break; // clé inconnue ou protégée : ignorée
+            }
+        }
+        ed.commit();
+        return n;
+    }
 }

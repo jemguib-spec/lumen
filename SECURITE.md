@@ -44,6 +44,22 @@
 - `INTERNET` : photos, vidéos, météo.
 - `REQUEST_DELETE_PACKAGES` : proposer la désinstallation d'une appli, que tu confirmes à chaque fois.
 - `PACKAGE_USAGE_STATS` (facultative, à accorder par ADB) : historique pour « Reprendre ».
+- `WRITE_SECURE_SETTINGS` (facultative, à accorder par ADB) : sert uniquement à choisir Lumen comme économiseur d'écran (`ScreenSaver`) ; aucun autre réglage de la TV n'est touché.
+- `READ_TV_LISTINGS` : lire les épisodes en cours (« Reprendre ») et la liste des entrées HDMI, sur l'appareil.
+
+## Code PIN (`Pin`, `PinDialog`)
+- Facultatif. Protège l'ouverture des réglages (donc aussi le QR code du téléphone), le masquage et la désinstallation des applis, et les applis que tu verrouilles (y compris depuis « Reprendre »).
+- Jamais enregistré en clair : sel aléatoire de 16 octets + PBKDF2 (20 000 tours), comparaison à temps constant.
+- Après 5 erreurs, attente de 30 s, doublée à chaque nouvelle erreur (1 h au plus) ; le compteur survit au redémarrage de Lumen.
+- Code oublié : Paramètres de la TV › Applis › Lumen › Effacer les données (tous les réglages de Lumen repartent à zéro).
+
+## Sauvegarde des réglages (`Backup`)
+- Export et import depuis la page du téléphone (onglet Plus), donc derrière l'appairage par QR code.
+- Liste blanche stricte : chaque clé a un type et des bornes ; tout le reste est ignoré. Le code PIN, la clé Pexels, l'état des mises à jour et l'historique ne sont jamais exportés ni importés.
+- Une sauvegarde peut ajouter des verrous d'applis, jamais en retirer.
+
+## Habitudes selon l'heure (`Habits`)
+- Compte des ouvertures d'applis par moment de la journée, gardé uniquement sur la TV (désactivable, effacé à la désactivation).
 - Pas de micro, pas de caméra, pas de localisation, pas de contacts, pas de stockage partagé.
 
 ## Organisation du code (`src/com/lumen/launcher`)
@@ -72,4 +88,7 @@
 ## Tests
 Le dépôt GitHub compile et lance les tests à chaque envoi (`.github/workflows/verifier.yml`) et vérifie que `dist/latest.json` décrit bien `dist/Lumen.apk`.
 
-`tests/run.sh` lance 138 tests sur la politique réseau, les licences, les signatures de fichiers, le parseur HTTP, l'authentification, les catalogues de vidéos (fonds et ambiances), l'option Pexels et les calculs du ciel (comparés aux éphémérides de l'IMCCE, ±3 min). Il vérifie aussi que le QR code est lisible par un vrai décodeur (`zbarimg`).
+`tests/run.sh` lance 169 tests sur la politique réseau, le code PIN, la sauvegarde, les habitudes, les licences, les signatures de fichiers, le parseur HTTP, l'authentification, les catalogues de vidéos (fonds et ambiances), l'option Pexels et les calculs du ciel (comparés aux éphémérides de l'IMCCE, ±3 min). Il vérifie aussi que le QR code est lisible par un vrai décodeur (`zbarimg`).
+
+## Licence
+Lumen est un logiciel libre sous licence GNU GPL version 3 ou ultérieure (fichier `LICENSE`, en-tête `SPDX-License-Identifier: GPL-3.0-or-later` dans chaque fichier source). La police Inter reste sous SIL Open Font License 1.1.

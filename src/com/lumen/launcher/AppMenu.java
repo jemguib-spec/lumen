@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
 import android.content.Intent;
@@ -51,34 +53,58 @@ final class AppMenu {
         if (first == null) first = favRow;
         card.addView(a.listRow("Masquer l'appli", null, new View.OnClickListener() {
             @Override public void onClick(View v) {
-                a.prefs.setAppHidden(app.key, true);
-                a.dirtyRow = true;
-                a.markAppsDirty();
                 a.focusBeforeOverlay = null;
-                a.closeOverlay(true);
-                a.showNotice(app.label + " masquée");
-            }
-        }), a.rowLp());
-        card.addView(a.listRow("Infos sur l'appli", null, new View.OnClickListener() {
-            @Override public void onClick(View v) {
                 a.closeOverlay(false);
-                try {
-                    Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + app.pkg));
-                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    a.startActivity(i);
-                } catch (Exception e) { a.showNotice("Infos indisponibles"); }
+                PinDialog.ask(a, "Code pour masquer " + app.label, new Runnable() {
+                    @Override public void run() {
+                        a.prefs.setAppHidden(app.key, true);
+                        a.dirtyRow = true;
+                        a.markAppsDirty();
+                        a.showNotice(app.label + " masquée");
+                    }
+                });
             }
         }), a.rowLp());
-        card.addView(a.listRow("Désinstaller", null, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                a.closeOverlay(false);
-                try {
-                    Intent i = new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + app.pkg));
-                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    a.startActivity(i);
-                } catch (Exception e) { a.showNotice("Cette appli ne peut pas être désinstallée"); }
-            }
-        }), a.rowLp());
+        if (a.prefs.hasPin()) {
+            final boolean locked = a.prefs.isLocked(app.key);
+            card.addView(a.listRow(locked ? "Ne plus demander le code" : "Verrouiller par code", null, new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    a.closeOverlay(false);
+                    PinDialog.ask(a, "Code PIN", new Runnable() {
+                        @Override public void run() {
+                            a.prefs.setLocked(app.key, !locked);
+                            a.showNotice(app.label + (locked ? " déverrouillée" : " verrouillée par code"));
+                        }
+                    });
+                }
+            }), a.rowLp());
+        }
+        if (!app.isInput()) {
+            card.addView(a.listRow("Infos sur l'appli", null, new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    a.closeOverlay(false);
+                    try {
+                        Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + app.pkg));
+                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        a.startActivity(i);
+                    } catch (Exception e) { a.showNotice("Infos indisponibles"); }
+                }
+            }), a.rowLp());
+            card.addView(a.listRow("Désinstaller", null, new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    a.closeOverlay(false);
+                    PinDialog.ask(a, "Code pour désinstaller " + app.label, new Runnable() {
+                        @Override public void run() {
+                            try {
+                                Intent i = new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + app.pkg));
+                                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                a.startActivity(i);
+                            } catch (Exception e) { a.showNotice("Cette appli ne peut pas être désinstallée"); }
+                        }
+                    });
+                }
+            }), a.rowLp());
+        }
 
         o.addView(card, new FrameLayout.LayoutParams(a.u(680), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         first.requestFocus();

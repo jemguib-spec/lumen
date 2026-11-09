@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
 import android.content.Context;
@@ -28,7 +30,14 @@ final class SettingsPanel {
     private SettingsPanel() { }
 
 
+    /** Ouvre les réglages (code PIN demandé s'il y en a un). */
     static void openSettings(final MainActivity a) {
+        PinDialog.ask(a, "Code pour les réglages", new Runnable() {
+            @Override public void run() { openUnlocked(a); }
+        });
+    }
+
+    private static void openUnlocked(final MainActivity a) {
         final int[] before = {a.prefs.source(), a.prefs.followTime() ? 1 : 0, a.prefs.intervalSeconds(), a.prefs.tileStyle(),
                 a.prefs.showIcons() ? 1 : 0, a.prefs.tintTiles() ? 1 : 0};
         FrameLayout o = a.openOverlay(new Runnable() {
@@ -47,7 +56,14 @@ final class SettingsPanel {
         o.addView(card, cl);
         page = ROOT;
         page(a, card, ROOT);
+        if (reopenPage >= 0) { int p = reopenPage; reopenPage = -1; lastRubric = p; page(a, card, p); }
     }
+
+    /** Page à rouvrir après la reconstruction de l'interface (taille du texte, contraste). */
+    static int reopenPage = -1;
+
+    /** Rouvre les réglages sans redemander le code : on vient d'y être, l'interface a seulement été reconstruite. */
+    static void reopen(MainActivity a) { if (reopenPage >= 0) openUnlocked(a); }
 
     /** Applique tout de suite un changement de fond (source, heure, rythme). */
     static void applyWallChange(final MainActivity a) {
@@ -61,10 +77,10 @@ final class SettingsPanel {
     // ------------------------------------------------------------------ pages
 
     static final int ROOT = 0, FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5,
-            ABOUT = 6, LICENCES = 7, CREDITS = 8, LICENCE_INTER = 9, CITIES = 10, HIDDEN = 11;
+            ABOUT = 6, LICENCES = 7, CREDITS = 8, LICENCE_INTER = 9, CITIES = 10, HIDDEN = 11, SCREENSAVER = 12, LICENCE_GPL = 13;
     private static final String[] TITLES = {"Réglages", "Fond d'écran", "Accueil et applis", "Mode veille", "Ambiances",
-            "Système", "À propos", "Licences", "Crédits des fonds", "Police Inter", "Villes", "Applis masquées"};
-    private static final int[] PARENT = {ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, SYSTEME, SYSTEME, LICENCES, LICENCES, FOND, ACCUEIL};
+            "Système", "À propos", "Licences", "Crédits des fonds", "Police Inter", "Villes", "Applis masquées", "Économiseur d'écran", "Licence de Lumen"};
+    private static final int[] PARENT = {ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, SYSTEME, SYSTEME, LICENCES, LICENCES, FOND, ACCUEIL, VEILLE, LICENCES};
     private static boolean[] citiesChanged;
     private static int page = ROOT, lastRubric = -1;
     private static LinearLayout openCard;
@@ -413,6 +429,22 @@ final class SettingsPanel {
                 } catch (Exception e) { a.showNotice("À autoriser par ADB, voir le guide"); }
             }
         }), a.rowLp());
+        col.addView(a.listRow("Applis selon l'heure", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.habitsOn() ? "Oui · calculé sur la TV" : "Non"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.setHabitsOn(!a.prefs.habitsOn()); a.markAppsDirty(); }
+        }), a.rowLp());
+        col.addView(a.section("Lisibilité"));
+        col.addView(a.listRow("Taille du texte", new MainActivity.Value() {
+            @Override public String get() { return Prefs.TEXT_SCALE_NAMES[a.prefs.textScale()]; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.setTextScale((a.prefs.textScale() + 1) % Prefs.TEXT_SCALES.length); a.restyle(); }
+        }), a.rowLp());
+        col.addView(a.listRow("Contraste renforcé", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.highContrast() ? "Oui" : "Non"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.setHighContrast(!a.prefs.highContrast()); a.restyle(); }
+        }), a.rowLp());
         col.addView(a.section("Masquées"));
         col.addView(a.listRow("Applis masquées", new MainActivity.Value() {
             @Override public String get() { int n = a.prefs.hiddenApps().size(); return n == 0 ? "Aucune" : String.valueOf(n); }
@@ -440,10 +472,13 @@ final class SettingsPanel {
             @Override public void onClick(View v) { CityPanel.openCityInput(a); }
         }), a.rowLp());
         col.addView(a.listRow("Économiseur d'écran de la TV", new MainActivity.Value() {
-            @Override public String get() { return "Comment l'activer"; }
+            @Override public String get() { return ScreenSaver.state(a); }
         }, new View.OnClickListener() {
             @Override public void onClick(View v) {
-                a.showNotice("Paramètres TV › Système › Économiseur d'écran › Lumen");
+                if (ScreenSaver.isLumen(a)) { a.showNotice("Lumen est déjà l'économiseur d'écran"); return; }
+                if (ScreenSaver.setLumen(a)) { a.showNotice("Lumen est maintenant l'économiseur d'écran"); return; }
+                if (ScreenSaver.openSystemScreen(a)) { a.closeOverlay(false); a.showNotice("Choisissez « Lumen » dans la liste"); return; }
+                page(a, card, SCREENSAVER); // Google TV cache ce choix : marche à suivre
             }
         }), a.rowLp());
                 break;
@@ -494,6 +529,28 @@ final class SettingsPanel {
                 } catch (Exception e) { a.showNotice("Paramètres indisponibles"); }
             }
         }), a.rowLp());
+        col.addView(a.section("Sécurité"));
+        col.addView(a.listRow("Code PIN", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.hasPin() ? "Activé · OK pour le retirer" : "Désactivé"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                if (a.prefs.hasPin()) {
+                    // les réglages viennent d'être ouverts avec le code : on le redemande quand même pour le retirer
+                    PinDialog.ask(a, "Code actuel", new Runnable() {
+                        @Override public void run() { a.prefs.setPin(null); a.showNotice("Code PIN retiré"); }
+                    });
+                } else {
+                    PinDialog.create(a, new Runnable() {
+                        @Override public void run() { a.showNotice("Code PIN activé · réglages et désinstallation protégés"); }
+                    });
+                }
+            }
+        }), a.rowLp());
+        col.addView(a.listRow("Sauvegarde des réglages", new MainActivity.Value() {
+            @Override public String get() { return "Téléphone › Plus"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { PhonePanel.openPhonePanel(a); }
+        }), a.rowLp());
         col.addView(a.section("Diagnostic"));
         col.addView(a.listRow("Mesures", new MainActivity.Value() {
             @Override public String get() { return a.prefs.showPerf() ? "Affichées" : "Masquées"; }
@@ -517,6 +574,8 @@ final class SettingsPanel {
             case LICENCES: About.fillLicences(a, card, col); break;
             case CREDITS: About.fillCredits(a, col); break;
             case LICENCE_INTER: About.fillText(a, col, "fonts/LICENCE-Inter.txt"); break;
+            case LICENCE_GPL: About.fillText(a, col, "LICENSE.txt"); break;
+            case SCREENSAVER: About.fillText(a, col, "docs/economiseur.txt"); break;
         }
         focusFirst(col, focus);
     }

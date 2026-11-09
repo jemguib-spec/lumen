@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
 import android.content.Context;
@@ -175,7 +177,7 @@ final class ResumePanel {
             @Override public void onClick(View v) {
                 Sounds.get(a).tock();
                 a.closeOverlay(false);
-                a.launch(app);
+                a.whenUnlocked(app, new Runnable() { @Override public void run() { a.launch(app); } });
             }
         });
         return r;
