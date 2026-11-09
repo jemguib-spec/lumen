@@ -84,6 +84,20 @@ final class Prefs {
     boolean sounds() { return sp.getBoolean("sounds", true); }
     void setSounds(boolean b) { sp.edit().putBoolean("sounds", b).apply(); }
 
+    /** Mise à jour automatique depuis le dépôt GitHub de Lumen. */
+    boolean autoUpdate() { return sp.getBoolean("auto_update", true); }
+    void setAutoUpdate(boolean b) { sp.edit().putBoolean("auto_update", b).apply(); }
+    long lastUpdateCheck() { return sp.getLong("update_check", 0); }
+    void setLastUpdateCheck(long t) { sp.edit().putLong("update_check", t).apply(); }
+    String updateReadyVersion() { return sp.getString("update_ready", ""); }
+    void setUpdateReadyVersion(String v) { sp.edit().putString("update_ready", v).apply(); }
+    String updatePrompted() { return sp.getString("update_prompted", ""); }
+    void setUpdatePrompted(String v) { sp.edit().putString("update_prompted", v).apply(); }
+
+    /** Paysages Lumen animés (nuages, eau, étoiles). */
+    boolean livingScenes() { return sp.getBoolean("living_scenes", true); }
+    void setLivingScenes(boolean b) { sp.edit().putBoolean("living_scenes", b).apply(); }
+
     /** « Reprendre » au-dessus de l'appli sélectionnée. */
     boolean topShelf() { return sp.getBoolean("top_shelf", true); }
     void setTopShelf(boolean b) { sp.edit().putBoolean("top_shelf", b).apply(); }

@@ -76,6 +76,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     boolean resumeOpen;
     private AmbiancePanel ambiance;
     TopShelf shelf;
+    Updater updater;
 
     // ------------------------------------------------------------------ cycle de vie
 
@@ -106,6 +107,10 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         buildUi();
         buildRow(null);
         repo.warmUp();                       // icônes et couleurs préparées en arrière-plan
+        updater = new Updater(this, prefs);
+        updater.setListener(new Updater.Listener() {
+            @Override public void onUpdateState() { updateStateChanged(); }
+        });
         h.postDelayed(prebuildApps, 2500);   // page Applications construite d'avance, à l'abri des regards
 
         IntentFilter f = new IntentFilter();
@@ -119,6 +124,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     @Override protected void onResume() {
         super.onResume();
         askWatchNextOnce();
+        updater.check(false);                // une fois par jour au plus
         shelf.reload(); // on revient peut-être d'un épisode : les « en cours » ont changé
         for (String t : Library.themesFor(prefs.source())) online.refreshIfNeeded(t, false);
         wall.start();
@@ -712,6 +718,23 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
                 showNotice("Impossible d'ouvrir " + app.label);
             }
         }
+    }
+
+    // ------------------------------------------------------------------ mise à jour automatique
+
+    /** Une mise à jour vérifiée est prête : on le dit, puis Android demande confirmation (une fois par version). */
+    private void updateStateChanged() {
+        for (Runnable r : new ArrayList<>(rowRefreshers)) r.run();
+        final String v = updater.readyVersion();
+        if (v.isEmpty() || v.equals(prefs.updatePrompted())) return;
+        showNotice("Mise à jour " + v + " prête");
+        h.postDelayed(new Runnable() {
+            @Override public void run() {
+                if (overlay != null || ambientOn || ambiance != null || !hasWindowFocus()) return; // on redemandera au prochain retour
+                prefs.setUpdatePrompted(v);
+                updater.install();
+            }
+        }, 2500);
     }
 
     // ------------------------------------------------------------------ « Reprendre » : autorisation

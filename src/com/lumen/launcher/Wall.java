@@ -72,6 +72,11 @@ final class Wall {
     void start() {
         if (running) return;
         running = true;
+        LivingScene.paused = false;
+        if (currentView instanceof FrameLayout) {
+            FrameLayout f = (FrameLayout) currentView;
+            for (int i = 0; i < f.getChildCount(); i++) if (f.getChildAt(i) instanceof LivingScene) ((LivingScene) f.getChildAt(i)).resume();
+        }
         if (items.isEmpty()) rebuild();
         if (current == null) next();
         else { resumeCurrent(); schedule(); }
@@ -80,6 +85,7 @@ final class Wall {
 
     void stop() {
         running = false;
+        LivingScene.paused = true; // plus aucune image calculée quand le fond n'est pas visible
         generation++;
         h.removeCallbacksAndMessages(null);
         if (currentScene != null) currentScene.setRunning(false);
@@ -256,9 +262,17 @@ final class Wall {
     }
 
     private void showImage(WallItem item, Bitmap bmp) {
-        ImageView iv = new ImageView(ctx);
-        iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        iv.setImageBitmap(bmp);
+        ImageView img = new ImageView(ctx);
+        img.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        img.setImageBitmap(bmp);
+        View iv = img;
+        // paysages Lumen : une couche animée (nuages, eau, étoiles…) bouge avec l'image
+        if (item.kind == WallItem.IMAGE_ASSET && LivingScene.handles(item.path) && prefs.livingScenes()) {
+            FrameLayout f = new FrameLayout(ctx);
+            f.addView(img, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+            f.addView(new LivingScene(ctx, item.path), new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+            iv = f;
+        }
         boolean still = prefs.intervalSeconds() <= 0;
         long dur = (still ? 60 : prefs.intervalSeconds()) * 1000L + FADE_MS * 2;
         float drift = still ? 0 : (Math.random() < 0.5 ? 1 : -1) * Tile.dp(ctx, 14);

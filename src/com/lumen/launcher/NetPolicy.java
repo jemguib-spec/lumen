@@ -17,6 +17,10 @@ final class NetPolicy {
     private NetPolicy() { }
 
     static final Set<String> ALLOWED_HOSTS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            "api.github.com",                // mise à jour : dernière version de Lumen (dépôt du projet)
+            "github.com",                    // mise à jour : fichier Lumen.apk de la release
+            "objects.githubusercontent.com", // mise à jour : téléchargement (redirection de GitHub)
+            "release-assets.githubusercontent.com",
             "commons.wikimedia.org",         // API Wikimedia Commons (licences libres)
             "upload.wikimedia.org",          // fichiers Wikimedia
             "api.open-meteo.com",            // météo (seulement si une ville est réglée)

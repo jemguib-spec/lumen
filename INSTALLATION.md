@@ -39,7 +39,7 @@ Appuyer ensuite sur Accueil : Lumen s'affiche. Si un choix est proposé, sélect
 - Après 45 s sans toucher la télécommande, l'interface s'efface pour ne laisser que le fond.
 
 ## Fonds d'écran (Réglages › Fond d'écran)
-- **Paysages Lumen** : crêtes, horizon, lac — l'ambiance suit le vrai lever et coucher du soleil de ta ville (aube, jour, soir, nuit), calculés sur la TV sans Internet.
+- **Paysages Lumen** : crêtes, horizon, lac — l'ambiance suit le vrai lever et coucher du soleil de ta ville (aube, jour, soir, nuit), calculés sur la TV sans Internet. Ils sont animés : nuages qui dérivent, halo du soleil, scintillement sur l'eau, brume, étoiles et étoiles filantes la nuit (Réglages › Paysages Lumen animés).
 - **Paysages animés** : crêtes qui défilent lentement, brume qui glisse, étoiles qui scintillent la nuit.
 - **Espace**, **Nature** et **Animaux** (photos primées — « Featured pictures » — de Wikimedia Commons, jusqu'à 4K ; vues d'artiste et schémas écartés), **Vidéos 4K** (à choisir sur aperçus : Réglages › Fond d'écran › Fonds vidéo ; rien n'est téléchargé sans être coché, décocher efface la vidéo ; une liste fermée de vraies prises de vue choisies une par une sur Wikimedia Commons : vues de drone de Paris, New York, Hong Kong, Chicago, San Francisco et Stockholm, paysages filmés, la Terre filmée depuis la Station spatiale ; ni conférences, ni simulations ; thème au choix (Tout, Villes, Nature, Espace et Terre) ; Réglages › Villes pour choisir les villes ; Espace pour les vidéos : 3, 6, 10 ou 20 Go ; qualité 4K ou HD au choix), **Mélange de photos**, **Photo du jour** (la photo choisie chaque jour par Wikimedia Commons, avec sa légende en français ; les 10 derniers jours, la plus récente en premier).
 - Les photos se téléchargent en arrière-plan la première fois (quelques minutes) ; en attendant, les paysages Lumen s'affichent. Le cache se renouvelle chaque jour.
@@ -97,6 +97,11 @@ Appuyer ensuite sur Accueil : Lumen s'affiche. Si un choix est proposé, sélect
 
     adb shell settings put secure screensaver_components com.lumen.launcher/.LumenDream
     adb shell settings put secure screensaver_enabled 1
+
+## Mises à jour
+- Une fois par jour, quand Lumen est à l'écran, il regarde s'il existe une nouvelle version dans les « Releases » du dépôt GitHub du projet. Si oui, il la télécharge, vérifie qu'elle est signée avec la même clé que Lumen installé, puis Android demande « Mettre à jour ? » : un clic suffit.
+- La toute première fois, Android demande d'autoriser Lumen à installer des applis : accepte (Paramètres › Applis › Lumen › Installer des applis inconnues).
+- Réglages › Système › Mise à jour de Lumen : vérifier maintenant ou installer ; « Mises à jour automatiques » pour couper.
 
 ## Vie privée et sécurité
 Aucune publicité, aucun compte, aucune télémétrie. Internet sert uniquement à télécharger, en HTTPS et depuis une liste fermée de serveurs (NASA, Wikimedia Commons, Open-Meteo), des contenus sous licence libre. Les fichiers sont vérifiés et les photos réécrites avant affichage. Détails complets dans SECURITE.md.

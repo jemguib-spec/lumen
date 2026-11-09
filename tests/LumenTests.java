@@ -51,6 +51,24 @@ public class LumenTests {
         check("ambiances : visualisation NASA refusée",
                 CosyCatalog.kindOf("File:Fermi's 14-Year Time-Lapse of the Gamma-Ray Sky (SVS14399 Fermi 14Year Fireplace 4k).webm") == -1);
 
+        // ---- mise à jour automatique
+        check("version : v4.1.0 → 4.1.0", "4.1.0".equals(UpdatePolicy.version("v4.1.0")));
+        check("version : étiquette fantaisiste refusée", UpdatePolicy.version("latest-build") == null);
+        check("version : 4.10 plus récente que 4.9", UpdatePolicy.compare("4.10", "4.9") > 0);
+        check("version : 4.0.1 plus récente que 4.0", UpdatePolicy.compare("4.0.1", "4.0") > 0);
+        check("version : identiques", UpdatePolicy.compare("4.1.0", "4.1") == 0);
+        check("fichier : Lumen.apk du dépôt accepté",
+                UpdatePolicy.assetUrlOk("https://github.com/jemguib-spec/lumen/releases/download/v4.1.0/Lumen.apk"));
+        check("fichier : autre dépôt refusé",
+                !UpdatePolicy.assetUrlOk("https://github.com/autre/lumen/releases/download/v4.1.0/Lumen.apk"));
+        check("fichier : chemin détourné refusé",
+                !UpdatePolicy.assetUrlOk("https://github.com/jemguib-spec/lumen/releases/download/../../x/Lumen.apk"));
+        check("fichier : autre nom refusé",
+                !UpdatePolicy.assetUrlOk("https://github.com/jemguib-spec/lumen/releases/download/v4.1.0/Lumen.apk.exe"));
+        check("fichier : signature ZIP reconnue", UpdatePolicy.looksLikeApk(new byte[]{'P', 'K', 3, 4}));
+        check("fichier : autre format refusé", !UpdatePolicy.looksLikeApk(new byte[]{'<', 'h', 't', 'm'}));
+        check("GitHub autorisé pour la mise à jour", NetPolicy.allowed(UpdatePolicy.LATEST));
+
         // ---- page Applications : rangées et recherche
         check("rangée : Netflix en vidéo", AppCategory.of("com.netflix.ninja", "Netflix", -1) == AppCategory.VIDEO);
         check("rangée : Crunchyroll en vidéo", AppCategory.of("com.crunchyroll.crunchyroid", "Crunchyroll", -1) == AppCategory.VIDEO);

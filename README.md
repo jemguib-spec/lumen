@@ -23,3 +23,12 @@ Sous Ubuntu/Debian :
 `tools/scenes.py` régénère les paysages de `assets/scenes` et `assets/anim` (Python, numpy, Pillow).
 
 Police : Inter (licence OFL, `assets/fonts/LICENCE-Inter.txt`).
+
+## Publier une mise à jour
+
+Les TV équipées de Lumen vérifient chaque jour la dernière release de ce dépôt.
+
+1. Augmenter `versionCode` et `versionName` dans `AndroidManifest.xml`, puis `./build.sh`.
+2. Créer une release dont l'étiquette est la version (ex. `v4.2.0`) avec le fichier `build/Lumen.apk` nommé exactement `Lumen.apk`.
+
+L'APK doit être signé avec la même clé (`lumen.keystore`) que la version installée : sinon Lumen le refuse.

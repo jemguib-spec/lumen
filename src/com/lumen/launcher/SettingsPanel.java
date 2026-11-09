@@ -228,6 +228,11 @@ final class SettingsPanel {
         }, new View.OnClickListener() {
             @Override public void onClick(View v) { CityPanel.openCityInput(a); }
         }), a.rowLp());
+        col.addView(a.listRow("Paysages Lumen animés", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.livingScenes() ? "Oui" : "Non"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.setLivingScenes(!a.prefs.livingScenes()); a.wall.restart(); }
+        }), a.rowLp());
         col.addView(a.listRow("Météo dans le paysage", new MainActivity.Value() {
             @Override public String get() {
                 if (!a.weather.hasCity()) return "Choisir une ville d'abord";
@@ -338,6 +343,18 @@ final class SettingsPanel {
         }), a.rowLp());
 
         col.addView(a.section("Système"));
+        col.addView(a.listRow("Mise à jour de Lumen", new MainActivity.Value() {
+            @Override public String get() { return a.updater.state(); }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                if (a.updater.ready() != null) a.updater.install(); else a.updater.check(true);
+            }
+        }), a.rowLp());
+        col.addView(a.listRow("Mises à jour automatiques", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.autoUpdate() ? "Oui" : "Non"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.setAutoUpdate(!a.prefs.autoUpdate()); }
+        }), a.rowLp());
         col.addView(a.listRow("Historique complet pour Reprendre", new MainActivity.Value() {
             @Override public String get() { return ResumePanel.usageAllowed(a) ? "Autorisé" : "Non autorisé"; }
         }, new View.OnClickListener() {
@@ -361,7 +378,7 @@ final class SettingsPanel {
         }), a.rowLp());
 
         TextView about = a.text(19, "sans-serif", 0x66FFFFFF);
-        about.setText("Lumen 4.0.1 · aucune publicité, aucun pistage · Internet utilisé uniquement pour les photos et vidéos NASA et Wikimedia Commons et la météo Open-Meteo");
+        about.setText("Lumen 4.1 · aucune publicité, aucun pistage · Internet utilisé uniquement pour les photos et vidéos NASA et Wikimedia Commons et la météo Open-Meteo");
         about.setPadding(a.u(32), a.u(36), a.u(32), 0);
         col.addView(about);
         first.requestFocus();

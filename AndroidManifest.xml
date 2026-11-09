@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.lumen.launcher"
-    android:versionCode="23"
-    android:versionName="4.0.1">
+    android:versionCode="24"
+    android:versionName="4.1.0">
 
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="29" />
 
@@ -15,6 +15,8 @@
     <!-- Facultatif : lire les films et épisodes en cours publiés par les applis (« Reprendre » au-dessus des applis).
          Autorisation demandée une seule fois ; lecture seule, sur l'appareil. -->
     <uses-permission android:name="android.permission.READ_TV_LISTINGS" />
+    <!-- Mise à jour automatique depuis GitHub : Android demande toujours une confirmation. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
@@ -60,5 +62,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </service>
+        <!-- Résultat de l'installation d'une mise à jour (interne à Lumen) -->
+        <receiver android:name=".Updater$UpdateReceiver" android:exported="false" />
     </application>
 </manifest>
