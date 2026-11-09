@@ -103,6 +103,11 @@ Appuyer ensuite sur Accueil : Lumen s'affiche. Si un choix est proposé, sélect
 - La toute première fois, Android demande d'autoriser Lumen à installer des applis : accepte (Paramètres › Applis › Lumen › Installer des applis inconnues).
 - Réglages › Système › Mise à jour de Lumen : vérifier maintenant ou installer ; « Mises à jour automatiques » pour couper.
 
+## Mesures et journal d'erreurs
+- Réglages › Système › Mesures : affiche en haut à gauche le temps de démarrage, les images par seconde, la mémoire et le processeur utilisés par Lumen, et le type de fond. Utile pour repérer ce qui ralentit la TV.
+- Journal d'erreurs : si Lumen plante, l'erreur est notée sur la TV (jamais envoyée). Elle est visible depuis le téléphone (onglet Plus) et s'efface dans Réglages › Système. Après deux plantages de suite au démarrage, Lumen repart en mode sans échec (paysages fixes, sans vidéo).
+- Les vidéos sont en HD par défaut (plus légères pour la TV) ; la 4K reste disponible dans Réglages › Fond d'écran.
+
 ## Vie privée et sécurité
 Aucune publicité, aucun compte, aucune télémétrie. Internet sert uniquement à télécharger, en HTTPS et depuis une liste fermée de serveurs (NASA, Wikimedia Commons, Open-Meteo), des contenus sous licence libre. Les fichiers sont vérifiés et les photos réécrites avant affichage. Détails complets dans SECURITE.md.
 

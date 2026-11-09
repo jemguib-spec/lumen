@@ -113,7 +113,7 @@ final class WatchNext {
 
     // ------------------------------------------------------------------ affiches
 
-    private static final LruCache<String, Bitmap> CACHE = new LruCache<String, Bitmap>(24 << 20) {
+    private static final LruCache<String, Bitmap> CACHE = new LruCache<String, Bitmap>(8 << 20) {
         @Override protected int sizeOf(String k, Bitmap b) { return b.getByteCount(); }
     };
 

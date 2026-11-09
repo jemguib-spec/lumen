@@ -343,6 +343,19 @@ final class SettingsPanel {
         }), a.rowLp());
 
         col.addView(a.section("Système"));
+        col.addView(a.listRow("Mesures", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.showPerf() ? "Affichées" : "Masquées"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.setShowPerf(!a.prefs.showPerf()); a.perf.setOn(a.prefs.showPerf()); }
+        }), a.rowLp());
+        col.addView(a.listRow("Journal d'erreurs", new MainActivity.Value() {
+            @Override public String get() {
+                int n = CrashLog.count(a);
+                return n == 0 ? "Aucune erreur" : n + (n > 1 ? " erreurs" : " erreur") + " · OK pour effacer";
+            }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { CrashLog.clear(a); a.showNotice("Journal effacé"); }
+        }), a.rowLp());
         col.addView(a.listRow("Mise à jour de Lumen", new MainActivity.Value() {
             @Override public String get() { return a.updater.state(); }
         }, new View.OnClickListener() {
@@ -378,7 +391,7 @@ final class SettingsPanel {
         }), a.rowLp());
 
         TextView about = a.text(19, "sans-serif", 0x66FFFFFF);
-        about.setText("Lumen 4.1 · aucune publicité, aucun pistage · Internet utilisé uniquement pour les photos et vidéos NASA et Wikimedia Commons et la météo Open-Meteo");
+        about.setText("Lumen 4.2 · aucune publicité, aucun pistage · Internet utilisé uniquement pour les photos et vidéos NASA et Wikimedia Commons et la météo Open-Meteo");
         about.setPadding(a.u(32), a.u(36), a.u(32), 0);
         col.addView(about);
         first.requestFocus();

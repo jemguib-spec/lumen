@@ -70,4 +70,6 @@
 | `AppRepo`, `Prefs`, `Weather`, `Sounds`, `LumenDream` | Applis, réglages, météo, sons, économiseur d'écran |
 
 ## Tests
-`tests/run.sh` lance 137 tests sur la politique réseau, les licences, les signatures de fichiers, le parseur HTTP, l'authentification, les catalogues de vidéos (fonds et ambiances), l'option Pexels et les calculs du ciel (comparés aux éphémérides de l'IMCCE, ±3 min). Il vérifie aussi que le QR code est lisible par un vrai décodeur (`zbarimg`).
+Le dépôt GitHub compile et lance les tests à chaque envoi (`.github/workflows/verifier.yml`) et vérifie que `dist/latest.json` décrit bien `dist/Lumen.apk`.
+
+`tests/run.sh` lance 138 tests sur la politique réseau, les licences, les signatures de fichiers, le parseur HTTP, l'authentification, les catalogues de vidéos (fonds et ambiances), l'option Pexels et les calculs du ciel (comparés aux éphémérides de l'IMCCE, ±3 min). Il vérifie aussi que le QR code est lisible par un vrai décodeur (`zbarimg`).

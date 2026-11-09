@@ -92,6 +92,13 @@ final class Wall {
         if (player != null) try { player.pause(); } catch (Exception ignored) { }
     }
 
+    /** Relance l'animation du paysage Lumen affiché (après une pause). */
+    void resumeLiving() {
+        if (!running || !(currentView instanceof FrameLayout)) return;
+        FrameLayout f = (FrameLayout) currentView;
+        for (int i = 0; i < f.getChildCount(); i++) if (f.getChildAt(i) instanceof LivingScene) ((LivingScene) f.getChildAt(i)).resume();
+    }
+
     private void resumeCurrent() {
         if (currentScene != null) currentScene.setRunning(true);
         if (player != null) try { player.start(); } catch (Exception ignored) { }

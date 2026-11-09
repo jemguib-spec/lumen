@@ -222,6 +222,8 @@ final class PhoneServer {
             send(out, ok ? 200 : 400, "application/json", ("{\"ok\":" + ok + "}").getBytes("UTF-8"), null);
             return;
         }
+        if (!post && p.equals("/api/log")) { send(out, 200, "text/plain; charset=utf-8", CrashLog.read(ctx).getBytes("UTF-8"), null); return; }
+        if (post && p.equals("/api/log/clear")) { CrashLog.clear(ctx); send(out, 200, "application/json", "{\"ok\":true}".getBytes("UTF-8"), null); return; }
         if (post && p.equals("/api/pexels")) {
             boolean ok = setPexels(HttpRequest.readBody(in, r.contentLength, 256));
             send(out, ok ? 200 : 400, "application/json", ("{\"ok\":" + ok + "}").getBytes("UTF-8"), null);

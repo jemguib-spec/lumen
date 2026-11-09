@@ -15,14 +15,14 @@ import java.util.Random;
 /**
  * Couche animée posée sur les paysages Lumen : nuages qui dérivent, halo du soleil qui respire,
  * scintillement du soleil sur l'eau, vaguelettes, brume au pied des crêtes, étoiles qui clignotent
- * et étoiles filantes la nuit. Tout est dessiné à la volée (aucun fichier), 30 images/s au plus,
- * et s'arrête dès que le fond n'est plus visible.
+ * et étoiles filantes la nuit. Tout est dessiné à la volée (aucun fichier), 20 images/s,
+ * et s'arrête dès que le fond n'est plus visible (appli ouverte, page Applications…).
  */
 final class LivingScene extends View {
     /** Pause globale (Lumen en arrière-plan, appli ouverte…). */
     static volatile boolean paused;
 
-    private static final long FRAME_MS = 33;
+    private static final long FRAME_MS = 50; // 20 images/s : assez pour des mouvements lents, deux fois moins de calcul
     private final String period, scene;
     private final float sunX, sunY, waterY; // fractions de l'écran ; waterY < 0 : pas d'eau
     private final Random rnd;

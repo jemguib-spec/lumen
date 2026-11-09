@@ -63,7 +63,8 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     private ImageView appsBg;
     FrameLayout overlay;
     private Runnable onOverlayClosed;
-    private View focusBeforeOverlay, focusBeforeApps;
+    View focusBeforeOverlay;
+    private View focusBeforeApps;
     private Tile movingTile;
     boolean appsOpen, idle, dirtyRow, dirtyApps, ambientOn;
     private AmbientView ambient;
@@ -76,12 +77,17 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     boolean resumeOpen;
     private AmbiancePanel ambiance;
     TopShelf shelf;
+    Perf.Overlay perf;
+    private boolean firstResume = true;
+    final AppsPage appsPage = new AppsPage(this);
     Updater updater;
 
     // ------------------------------------------------------------------ cycle de vie
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
+        Perf.onCreate();
+        CrashLog.install(this);
         Fonts.init(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -106,7 +112,8 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         ensureDefaultFavorites();
         buildUi();
         buildRow(null);
-        repo.warmUp();                       // icônes et couleurs préparées en arrière-plan
+        // icônes et couleurs : en arrière-plan, une fois l'accueil affiché
+        h.postDelayed(new Runnable() { @Override public void run() { repo.warmUp(); } }, 400);
         updater = new Updater(this, prefs);
         updater.setListener(new Updater.Listener() {
             @Override public void onUpdateState() { updateStateChanged(); }
@@ -123,11 +130,13 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     @Override protected void onResume() {
         super.onResume();
-        askWatchNextOnce();
-        updater.check(false);                // une fois par jour au plus
-        shelf.reload(); // on revient peut-être d'un épisode : les « en cours » ont changé
-        for (String t : Library.themesFor(prefs.source())) online.refreshIfNeeded(t, false);
         wall.start();
+        if (appsOpen) LivingScene.paused = true;
+        // tout ce qui n'est pas visible tout de suite attend la première image (démarrage plus rapide)
+        h.removeCallbacks(afterShown);
+        h.postDelayed(afterShown, firstResume ? 900 : 150);
+        firstResume = false;
+        perf.setOn(prefs.showPerf());
         fx.setRunning(true);
         updateWeatherFx();
         h.postDelayed(weatherTick, 30 * 60_000L);
@@ -147,6 +156,8 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     @Override protected void onPause() {
         super.onPause();
+        h.removeCallbacks(afterShown);
+        perf.setOn(false);
         wall.stop();
         fx.setRunning(false);
         h.removeCallbacks(weatherTick);
@@ -188,11 +199,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     @Override public void onBackPressed() {
         if (movingTile != null) { stopMoving(); return; }
         if (overlay != null) { closeOverlay(true); return; }
-        if (appsOpen && appsSearch != null && appsSearch.length() > 0) { // Retour efface d'abord la recherche
-            appsSearch.setText("");
-            focusFirstApp();
-            return;
-        }
+        if (appsOpen && appsPage.clearSearch()) return; // Retour efface d'abord la recherche
         if (appsOpen) { closeApps(true); return; }
     }
 
@@ -486,7 +493,22 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         nl.bottomMargin = u(40);
         root.addView(notice, nl);
 
+        perf = new Perf.Overlay(this);
+        perf.setVisibility(View.GONE);
+        FrameLayout.LayoutParams pl = wrap(Gravity.TOP | Gravity.START);
+        pl.leftMargin = u(24);
+        pl.topMargin = u(24);
+        root.addView(perf, pl);
+
         setContentView(root);
+        // première image affichée : on mesure le démarrage, puis on lance le reste
+        root.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
+            @Override public boolean onPreDraw() {
+                root.getViewTreeObserver().removeOnPreDrawListener(this);
+                root.post(new Runnable() { @Override public void run() { Perf.onFirstFrame(); } });
+                return true;
+            }
+        });
         root.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override public void onLayoutChange(View v, int l, int t, int r, int b, int ol, int ot, int or, int ob) {
                 int[] loc = new int[2];
@@ -658,7 +680,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     }
 
     /** La vignette s'agrandit jusqu'à remplir l'écran, puis l'appli s'ouvre. */
-    private void launchAnimated(final AppRepo.App app, Tile from) {
+    void launchAnimated(final AppRepo.App app, Tile from) {
         Sounds.get(this).tock();
         if (zoomView != null) { root.removeView(zoomView); zoomView = null; }
         int sw = root.getWidth(), sh = root.getHeight();
@@ -720,6 +742,21 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         }
     }
 
+    /** Travaux lancés juste après l'affichage : autorisations, mise à jour, « Reprendre », téléchargements. */
+    private final Runnable afterShown = new Runnable() {
+        @Override public void run() {
+            if (isFinishing()) return;
+            askWatchNextOnce();
+            updater.check(false);                // une fois par jour au plus
+            shelf.reload();                      // on revient peut-être d'un épisode
+            for (String t : Library.themesFor(prefs.source())) online.refreshIfNeeded(t, false);
+            if (CrashLog.safeModeJustStarted) {
+                CrashLog.safeModeJustStarted = false;
+                showNotice("Lumen a redémarré en mode sans échec après des erreurs");
+            }
+        }
+    };
+
     // ------------------------------------------------------------------ mise à jour automatique
 
     /** Une mise à jour vérifiée est prête : on le dit, puis Android demande confirmation (une fois par version). */
@@ -779,7 +816,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     // ------------------------------------------------------------------ déplacement d'un favori
 
-    private void startMoving(Tile t) {
+    void startMoving(Tile t) {
         movingTile = t;
         t.setMoving(true);
         t.requestFocus();
@@ -963,7 +1000,6 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     // ------------------------------------------------------------------ page « Toutes les applications »
 
-    private ScrollView appsScroll;
 
     /** Signale que la page Applications doit être refaite ; elle l'est en arrière-plan, pas à l'ouverture. */
     void markAppsDirty() {
@@ -974,7 +1010,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     /** Construit la page Applications pendant qu'elle est cachée : l'ouverture est alors immédiate. */
     private final Runnable prebuildApps = new Runnable() {
         @Override public void run() {
-            if (appsOpen || (appsScroll != null && !dirtyApps)) return;
+            if (appsOpen || (appsPage.built() && !dirtyApps)) return;
             if (overlay != null || ambientOn) { h.postDelayed(this, 1500); return; }
             buildApps(null);
             appsLayer.setVisibility(View.INVISIBLE); // mesurée et dessinée une fois, sans être vue
@@ -991,8 +1027,10 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         focusBeforeApps = getCurrentFocus();
         h.removeCallbacks(prebuildApps);
         if (Glass.backdrop() != null) appsBg.setImageBitmap(Glass.backdrop());
-        if (appsScroll == null || dirtyApps) buildApps(null);  // sinon : déjà prête
-        else appsScroll.scrollTo(0, 0);
+        LivingScene.paused = true;  // le fond est caché par la page : on n'anime plus rien derrière
+        fx.setRunning(false);
+        if (!appsPage.built() || dirtyApps) buildApps(null);  // sinon : déjà prête
+        else appsPage.rewind();
         homeLayer.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
         homeLayer.animate().translationY(-u(60)).alpha(0f).setDuration(180).start();
         glow.fade();
@@ -1003,17 +1041,15 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         appsLayer.animate().alpha(1f).translationY(0).setDuration(220)
                 .setInterpolator(new DecelerateInterpolator(2f)).start();
         focusFirstApp();
-        // les rangées reviennent au début
-        if (appsSections != null) for (int i = 0; i < appsSections.getChildCount(); i++) {
-            View v = appsSections.getChildAt(i);
-            if (v instanceof HorizontalScrollView) v.scrollTo(0, 0);
-        }
     }
 
     private void closeApps(boolean animate) {
         if (!appsOpen) return;
         appsOpen = false;
-        if (appsSearch != null) { hideKeyboard(appsSearch); if (appsSearch.length() > 0) appsSearch.setText(""); }
+        appsPage.reset();
+        LivingScene.paused = false;
+        wall.resumeLiving();
+        fx.setRunning(true);
         homeLayer.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
         homeLayer.animate().translationY(0).alpha(1f).setDuration(animate ? 300 : 0).start();
         captionBox.animate().alpha(1f).setDuration(300).start();
@@ -1026,228 +1062,13 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         wake();
     }
 
-    private void focusFirstApp() {
+    void focusFirstApp() {
         View v = appsLayer.findViewWithTag("first");
         if (v != null) v.requestFocus();
     }
 
-    private LinearLayout appsSections;
-    private android.widget.EditText appsSearch;
-
-    /**
-     * Page Applications : recherche en haut, puis une rangée par catégorie (Favoris, Vidéo et TV,
-     * Musique et radio, Jeux, Outils et autres). Pendant une recherche, une seule grille de résultats.
-     */
-    private void buildApps(String focusKey) {
-        dirtyApps = false;
-        if (appsScroll != null) appsLayer.removeView(appsScroll);
-        appsScroll = new ScrollView(this) {
-            @Override protected void onScrollChanged(int l, int t, int ol, int ot) {
-                super.onScrollChanged(l, t, ol, ot);
-                refreshGlass(this);
-            }
-        };
-        appsScroll.setVerticalScrollBarEnabled(false);
-        appsScroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        appsScroll.setClipChildren(false);
-        appsScroll.setClipToPadding(false);
-        appsScroll.setFillViewport(true);
-        appsScroll.setVerticalFadingEdgeEnabled(true);
-        appsScroll.setFadingEdgeLength(u(60));
-        LinearLayout col = new LinearLayout(this);
-        col.setOrientation(LinearLayout.VERTICAL);
-        col.setClipChildren(false);
-        col.setClipToPadding(false);
-        col.setPadding(0, u(64), 0, u(120));
-        appsScroll.addView(col);
-
-        // en-tête : titre à gauche, recherche à droite
-        LinearLayout head = new LinearLayout(this);
-        head.setOrientation(LinearLayout.HORIZONTAL);
-        head.setGravity(Gravity.CENTER_VERTICAL);
-        head.setPadding(u(112), 0, u(112), u(8));
-        TextView title = text(52, "sans-serif-light", 0xF5FFFFFF);
-        title.setText("Applications");
-        head.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        String keep = appsSearch != null ? appsSearch.getText().toString() : "";
-        appsSearch = searchField();
-        appsSearch.setText(keep);
-        head.addView(appsSearch, new LinearLayout.LayoutParams(u(520), u(76)));
-        col.addView(head);
-
-        appsSections = new LinearLayout(this);
-        appsSections.setOrientation(LinearLayout.VERTICAL);
-        appsSections.setClipChildren(false);
-        appsSections.setClipToPadding(false);
-        col.addView(appsSections);
-        Tile toFocus = fillApps(keep, focusKey);
-
-        appsLayer.addView(appsScroll, match());
-        if (appsOpen && overlay == null) {
-            if (toFocus != null) toFocus.requestFocus(); else focusFirstApp();
-        }
-    }
-
-    /** Champ de recherche en verre ; la liste se filtre à chaque lettre. */
-    private android.widget.EditText searchField() {
-        final android.widget.EditText e = new android.widget.EditText(this);
-        e.setSingleLine(true);
-        e.setHint("Rechercher une appli");
-        e.setHintTextColor(0x80FFFFFF);
-        e.setTextColor(0xF5FFFFFF);
-        e.setTextSize(TypedValue.COMPLEX_UNIT_PX, 26 * unit);
-        e.setTypeface(Fonts.get("sans-serif", Typeface.NORMAL));
-        e.setPadding(u(30), 0, u(30), 0);
-        e.setGravity(Gravity.CENTER_VERTICAL);
-        e.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH | android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);
-        e.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-        final GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(u(38));
-        bg.setColor(0x26FFFFFF);
-        bg.setStroke(Math.max(1, u(1.5f)), 0x33FFFFFF);
-        e.setBackground(bg);
-        e.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override public void onFocusChange(View v, boolean f) {
-                bg.setColor(f ? 0xFFF5F5F7 : 0x26FFFFFF);
-                e.setTextColor(f ? 0xFF111216 : 0xF5FFFFFF);
-                e.setHintTextColor(f ? 0x80111216 : 0x80FFFFFF);
-                if (f) Sounds.get(MainActivity.this).tick();
-            }
-        });
-        e.addTextChangedListener(new android.text.TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence c, int a, int b, int d) { }
-            @Override public void onTextChanged(CharSequence c, int a, int b, int d) { }
-            @Override public void afterTextChanged(android.text.Editable ed) { if (appsSections != null) fillApps(ed.toString(), null); }
-        });
-        e.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override public boolean onEditorAction(TextView v, int action, KeyEvent ev) {
-                hideKeyboard(e);
-                focusFirstApp(); // OK sur le clavier : on va directement au premier résultat
-                return true;
-            }
-        });
-        return e;
-    }
-
-    private void hideKeyboard(View v) {
-        try {
-            android.view.inputmethod.InputMethodManager im = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-            if (im != null) im.hideSoftInputFromWindow(v.getWindowToken(), 0);
-        } catch (Exception ignored) { }
-    }
-
-    /** Remplit les rangées (ou les résultats d'une recherche). Renvoie la vignette à sélectionner. */
-    private Tile fillApps(String query, String focusKey) {
-        appsSections.removeAllViews();
-        Set<String> hidden = prefs.hiddenApps();
-        final List<String> favs = prefs.favorites();
-        List<AppRepo.App> apps = new ArrayList<>();
-        for (AppRepo.App a : repo.all()) if (!hidden.contains(a.key)) apps.add(a);
-        final boolean bn = banner();
-        int screenW = root.getWidth() > 0 ? root.getWidth() : u(1920);
-        final int cols = 6, gap = u(30), tw = (screenW - u(224) - gap * (cols - 1)) / cols, th = tw * 9 / 16;
-        Tile[] focus = {null};
-        boolean[] first = {true};
-
-        String q = query == null ? "" : query.trim();
-        if (!q.isEmpty()) {
-            List<AppRepo.App> found = new ArrayList<>();
-            for (AppRepo.App a : apps) if (AppCategory.matches(a.label, q)) found.add(a);
-            appsSections.addView(sectionLabel(found.isEmpty() ? "Aucune appli ne correspond" : found.size() + (found.size() > 1 ? " résultats" : " résultat")));
-            LinearLayout line = null;
-            for (int i = 0; i < found.size(); i++) {
-                if (i % cols == 0) { line = appsLine(); appsSections.addView(line); }
-                addAppCell(line, found.get(i), tw, th, bn, favs, i % cols != cols - 1 && i < found.size() - 1 ? gap : 0, focusKey, focus, first);
-            }
-            return focus[0];
-        }
-
-        // Favoris d'abord, dans l'ordre de l'accueil
-        List<AppRepo.App> favApps = new ArrayList<>();
-        for (String k : favs) { AppRepo.App a = repo.get(k); if (a != null && !hidden.contains(k)) favApps.add(a); }
-        addAppRow("Favoris", favApps, tw, th, bn, favs, gap, focusKey, focus, first);
-        List<List<AppRepo.App>> groups = new ArrayList<>();
-        for (int i = 0; i < AppCategory.NAMES.length; i++) groups.add(new ArrayList<AppRepo.App>());
-        for (AppRepo.App a : apps) if (!favs.contains(a.key)) groups.get(a.section()).add(a); // pas de doublon avec les favoris
-        for (int i = 0; i < AppCategory.NAMES.length; i++)
-            addAppRow(AppCategory.NAMES[i], groups.get(i), tw, th, bn, favs, gap, focusKey, focus, first);
-        return focus[0];
-    }
-
-    private TextView sectionLabel(String s) {
-        TextView t = text(21, "sans-serif-medium", 0x99FFFFFF);
-        t.setText(s.toUpperCase());
-        t.setLetterSpacing(0.08f);
-        t.setPadding(u(112), u(34), 0, u(2));
-        return t;
-    }
-
-    private LinearLayout appsLine() {
-        LinearLayout line = new LinearLayout(this);
-        line.setOrientation(LinearLayout.HORIZONTAL);
-        line.setClipChildren(false);
-        line.setClipToPadding(false);
-        line.setPadding(u(112), u(22), u(112), u(banner() ? 10 : 22));
-        return line;
-    }
-
-    /** Une rangée qui défile horizontalement (toutes les applis d'une catégorie). */
-    private void addAppRow(String name, List<AppRepo.App> list, int tw, int th, boolean bn, List<String> favs, int gap,
-                           String focusKey, Tile[] focus, boolean[] first) {
-        if (list.isEmpty()) return;
-        appsSections.addView(sectionLabel(name));
-        LinearLayout line = appsLine();
-        HorizontalScrollView hs = new HorizontalScrollView(this) {
-            @Override protected void onScrollChanged(int l, int t, int ol, int ot) {
-                super.onScrollChanged(l, t, ol, ot);
-                refreshGlass(this);
-            }
-        };
-        hs.setHorizontalScrollBarEnabled(false);
-        hs.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        hs.setClipChildren(false);
-        hs.setClipToPadding(false);
-        hs.addView(line);
-        appsSections.addView(hs, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        for (int i = 0; i < list.size(); i++)
-            addAppCell(line, list.get(i), tw, th, bn, favs, i < list.size() - 1 ? gap : 0, focusKey, focus, first);
-    }
-
-    private void addAppCell(LinearLayout line, final AppRepo.App app, int tw, int th, boolean bn, List<String> favs, int rightGap,
-                            String focusKey, Tile[] focus, boolean[] first) {
-        LinearLayout cell = new LinearLayout(this);
-        cell.setOrientation(LinearLayout.VERTICAL);
-        cell.setClipChildren(false);
-        cell.setClipToPadding(false);
-        final Tile t = Tile.app(this, app, tw, th, bn, prefs.showIcons(), prefs.tintTiles(), bn, wordTiles());
-        if (first[0]) { t.setTag("first"); first[0] = false; }
-        t.setFavoriteMark(favs.contains(app.key));
-        t.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { launchAnimated(app, t); } });
-        t.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override public boolean onLongClick(View v) { openAppMenu(t, false); return true; }
-        });
-        cell.addView(t);
-        if (bn) {
-            final TextView name = text(22, "sans-serif", 0x99FFFFFF);
-            name.setText(app.label);
-            name.setSingleLine(true);
-            name.setEllipsize(TextUtils.TruncateAt.END);
-            name.setGravity(Gravity.CENTER_HORIZONTAL);
-            LinearLayout.LayoutParams nl = new LinearLayout.LayoutParams(tw, ViewGroup.LayoutParams.WRAP_CONTENT);
-            nl.topMargin = u(16);
-            cell.addView(name, nl);
-            t.setFocusListener(new Tile.FocusListener() {
-                @Override public void onTileFocus(Tile tile, boolean f) {
-                    name.setTextColor(f ? 0xFFFFFFFF : 0x99FFFFFF);
-                    name.animate().translationY(f ? u(12) : 0).setDuration(200).start();
-                }
-            });
-        }
-        LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        cl.rightMargin = rightGap;
-        line.addView(cell, cl);
-        if (focus[0] == null && app.key.equals(focusKey)) focus[0] = t;
-    }
+    /** Page Applications (rangées par catégorie, recherche) : voir AppsPage. */
+    void buildApps(String focusKey) { appsPage.build(focusKey); }
 
     // ------------------------------------------------------------------ panneaux (verre)
 
@@ -1381,73 +1202,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     // ------------------------------------------------------------------ appui long sur une appli
 
-    private void openAppMenu(final Tile t, final boolean fromHome) {
-        final AppRepo.App app = (AppRepo.App) t.tag;
-        FrameLayout o = openOverlay(null);
-        LinearLayout card = glassCard(44);
-        card.setPadding(u(24), u(40), u(24), u(24));
-
-        TextView title = text(40, "sans-serif-light", 0xF5FFFFFF);
-        title.setText(app.label);
-        title.setGravity(Gravity.CENTER);
-        title.setPadding(0, 0, 0, u(30));
-        card.addView(title, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        final boolean fav = prefs.favorites().contains(app.key);
-        LinearLayout first = null;
-        if (fromHome) {
-            first = listRow("Déplacer", null, new View.OnClickListener() {
-                @Override public void onClick(View v) { closeOverlay(true); startMoving(t); }
-            });
-            card.addView(first, rowLp());
-        }
-        LinearLayout favRow = listRow(fav ? "Retirer des favoris" : "Ajouter aux favoris", null, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                List<String> f = prefs.favorites();
-                if (fav) f.remove(app.key); else f.add(app.key);
-                prefs.setFavorites(f);
-                dirtyRow = true;
-                markAppsDirty();
-                closeOverlay(true);
-                showNotice(app.label + (fav ? " retirée des favoris" : " ajoutée aux favoris"));
-            }
-        });
-        card.addView(favRow, rowLp());
-        if (first == null) first = favRow;
-        card.addView(listRow("Masquer l'appli", null, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                prefs.setAppHidden(app.key, true);
-                dirtyRow = true;
-                markAppsDirty();
-                focusBeforeOverlay = null;
-                closeOverlay(true);
-                showNotice(app.label + " masquée");
-            }
-        }), rowLp());
-        card.addView(listRow("Infos sur l'appli", null, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                closeOverlay(false);
-                try {
-                    Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + app.pkg));
-                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(i);
-                } catch (Exception e) { showNotice("Infos indisponibles"); }
-            }
-        }), rowLp());
-        card.addView(listRow("Désinstaller", null, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                closeOverlay(false);
-                try {
-                    Intent i = new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + app.pkg));
-                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(i);
-                } catch (Exception e) { showNotice("Cette appli ne peut pas être désinstallée"); }
-            }
-        }), rowLp());
-
-        o.addView(card, new FrameLayout.LayoutParams(u(680), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
-        first.requestFocus();
-    }
+    void openAppMenu(Tile t, boolean fromHome) { AppMenu.open(this, t, fromHome); }
 
     // ------------------------------------------------------------------ réglages
     // ------------------------------------------------------------------ téléphone

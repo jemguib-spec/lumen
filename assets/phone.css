@@ -46,3 +46,4 @@ select option{background:#16171d;color:#f5f5f7}
 .btn{flex:1;border:0;border-radius:12px;padding:13px;font:600 15px inherit;font-family:inherit;background:#f5f5f7;color:#111}
 .btn.ghost{background:rgba(255,255,255,.1);color:var(--txt)}
 .tile .a{position:absolute;left:8px;top:6px;font-size:12px;background:rgba(0,0,0,.55);padding:2px 7px;border-radius:8px}
+.log{white-space:pre-wrap;word-break:break-word;font:12px/1.45 ui-monospace,Menlo,monospace;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;max-height:50vh;overflow:auto;margin:0 0 10px}

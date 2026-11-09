@@ -17,6 +17,7 @@ public class LumenDream extends DreamService implements Wall.Listener {
 
     @Override public void onAttachedToWindow() {
         super.onAttachedToWindow();
+        CrashLog.install(this);
         Fonts.init(this);
         setInteractive(false);
         setFullscreen(true);

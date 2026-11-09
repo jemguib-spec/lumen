@@ -84,6 +84,10 @@ final class Prefs {
     boolean sounds() { return sp.getBoolean("sounds", true); }
     void setSounds(boolean b) { sp.edit().putBoolean("sounds", b).apply(); }
 
+    /** Mesures affichées en haut à gauche (diagnostic). */
+    boolean showPerf() { return sp.getBoolean("show_perf", false); }
+    void setShowPerf(boolean b) { sp.edit().putBoolean("show_perf", b).apply(); }
+
     /** Mise à jour automatique depuis le dépôt GitHub de Lumen. */
     boolean autoUpdate() { return sp.getBoolean("auto_update", true); }
     void setAutoUpdate(boolean b) { sp.edit().putBoolean("auto_update", b).apply(); }
@@ -118,7 +122,7 @@ final class Prefs {
 
     void unhideWall(String id) { Set<String> s = hiddenWalls(); s.remove(id); put("hidden_walls", s); }
 
-    boolean video4k() { return sp.getBoolean("video_4k", true); }
+    boolean video4k() { return sp.getBoolean("video_4k", false); } // HD par défaut : plus léger pour le processeur de la TV
     void setVideo4k(boolean b) { sp.edit().putBoolean("video_4k", b).apply(); }
 
     static final int VT_ALL = 0, VT_CITY = 1, VT_NATURE = 2, VT_SPACE = 3;

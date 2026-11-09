@@ -148,4 +148,11 @@ async function setPexels(key) {
 $('pxSave').addEventListener('click', () => { const k = $('pxKey').value.trim(); if (k) setPexels(k); });
 $('pxDel').addEventListener('click', () => setPexels(''));
 
+async function loadLog() {
+  try { const r = await api('/api/log'); const t = await r.text(); $('log').textContent = t.trim() || 'Aucune erreur'; } catch (e) { }
+}
+$('logRefresh').addEventListener('click', loadLog);
+$('logClear').addEventListener('click', async () => { try { await api('/api/log/clear', {method: 'POST'}); toast('Journal effacé'); loadLog(); } catch (e) { } });
+document.querySelector('.tabs button[data-t="opt"]').addEventListener('click', loadLog);
+
 start();

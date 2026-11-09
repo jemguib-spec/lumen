@@ -10,7 +10,7 @@
 </head>
 <body>
 <header><h1>Lumen</h1><div class="sub" id="sub">Connexion à la TV…</div></header>
-<div class="tabs"><button class="on" data-t="fav">Favoris</button><button data-t="mine">Envois</button><button data-t="opt">Pexels</button></div>
+<div class="tabs"><button class="on" data-t="fav">Favoris</button><button data-t="mine">Envois</button><button data-t="opt">Plus</button></div>
 
 <section id="fav" class="on">
   <h2>Sur l'accueil</h2>
@@ -35,6 +35,10 @@
   <div class="list"><div class="row"><div class="name" id="pxState">…</div></div></div>
   <input type="password" id="pxKey" placeholder="Colle ta clé Pexels" autocomplete="off" autocapitalize="off" spellcheck="false">
   <div class="btns"><button class="btn" id="pxSave">Enregistrer</button><button class="btn ghost" id="pxDel">Retirer la clé</button></div>
+  <h2>Journal d'erreurs</h2>
+  <p class="note">Les erreurs de Lumen restent sur la TV ; rien n'est envoyé sur Internet.</p>
+  <pre class="log" id="log">…</pre>
+  <div class="btns"><button class="btn ghost" id="logRefresh">Actualiser</button><button class="btn ghost" id="logClear">Effacer</button></div>
 </section>
 
 <div class="toast" id="toast"></div>
