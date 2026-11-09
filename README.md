@@ -6,6 +6,7 @@
 - « Reprendre » : épisodes en cours au-dessus de l'appli sélectionnée
 - Fonds : paysages générés selon l'heure et la météo, photos et vidéos libres de droits (liste fermée, à choisir sur aperçus)
 - Mode veille sur une ligne, ambiances vidéo avec minuterie de sommeil
+- Maison : lumières, prises, scènes et volets Home Assistant depuis l'accueil
 - Sources HDMI sur l'accueil, économiseur d'écran officiel de la TV
 - Code PIN facultatif (réglages, désinstallation, applis verrouillées)
 - Applis habituelles selon l'heure, calculées sur la TV uniquement

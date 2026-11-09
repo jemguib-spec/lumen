@@ -305,6 +305,7 @@ final class PhoneServer {
         if (!post && p.equals("/api/pickthumb")) { byte[] b = pickThumb(r.query.get("scope"), r.query.get("key")); send(out, b == null ? 404 : 200, "image/jpeg", b == null ? new byte[0] : b, null); return; }
         if (!post && p.equals("/api/picks")) { json(out, 200, picks(r.query.get("scope")).toString()); return; }
         if (!post && p.equals("/api/log")) { send(out, 200, "text/plain; charset=utf-8", CrashLog.read(ctx).getBytes("UTF-8"), null); return; }
+        if (!post && p.equals("/api/ha/entities")) { json(out, 200, haEntities()); return; }
         if (!post && p.equals("/api/backup")) { json(out, 200, host.prefs().exportBackup().toString(1)); return; }
         if (!post) { send(out, 404, "text/plain", new byte[0], null); return; }
 
@@ -312,6 +313,13 @@ final class PhoneServer {
         switch (p) {
             case "/api/pin": json(out, 200, pin(HttpRequest.readBody(in, r.contentLength, 16), sid)); return;
             case "/api/ping": json(out, 200, "{\"ok\":true}"); return;
+            case "/api/ha/pin": {
+                final String id = r.query.get("id");
+                if (!HomeAssistant.validEntityId(id)) { ok(out, false); return; }
+                host.prefs().setHaPinned(id, "1".equals(r.query.get("on")));
+                ok(out, true);
+                return;
+            }
             case "/api/name": {
                 final String n = DeviceName.clean(new String(HttpRequest.readBody(in, r.contentLength, 4 * DeviceName.MAX), "UTF-8"));
                 if (n == null) { ok(out, false); return; }
@@ -350,6 +358,12 @@ final class PhoneServer {
             default: break;
         }
         // ---- actions sensibles : code PIN exigé s'il existe
+        if (p.equals("/api/ha")) {
+            byte[] body = HttpRequest.readBody(in, r.contentLength, 2048);
+            if (pinNeeded) { json(out, 200, "{\"ok\":false,\"pin\":true}"); return; }
+            json(out, 200, setHa(body));
+            return;
+        }
         if (p.equals("/api/pexels") || p.equals("/api/restore") || p.equals("/api/lock")) {
             if (pinNeeded) { HttpRequest.readBody(in, r.contentLength, 256 * 1024); json(out, 200, "{\"ok\":false,\"pin\":true}"); return; }
             if (p.equals("/api/pexels")) { ok(out, setPexels(HttpRequest.readBody(in, r.contentLength, 256))); return; }
@@ -423,6 +437,7 @@ final class PhoneServer {
         for (String n : Online.COSY_NAMES) amb.put(n);
         o.put("ambiances", amb);
         o.put("pexels", !host.prefs().pexelsKey().isEmpty());
+        o.put("ha", host.prefs().haConfigured() ? host.prefs().haUrl() : "");
         return o;
     }
 
@@ -519,6 +534,47 @@ final class PhoneServer {
         } else host.online().removeMine(id);
         main.post(new Runnable() { @Override public void run() { host.onMineChanged(0); } });
         return true;
+    }
+
+    /**
+     * Home Assistant : {"url":…,"token":…} vérifiés puis testés avant d'être gardés ; corps vide = délier.
+     * Le jeton reste sur la TV et n'est jamais renvoyé.
+     */
+    private String setHa(byte[] body) throws Exception {
+        String raw = new String(body, "UTF-8").trim();
+        if (raw.isEmpty()) { host.prefs().setHa("", ""); return "{\"ok\":true}"; }
+        JSONObject o;
+        try { o = new JSONObject(raw); } catch (Exception e) { return "{\"ok\":false}"; }
+        String url = HomeAssistant.normalizeUrl(o.optString("url"));
+        String token = o.optString("token").trim();
+        if (token.isEmpty()) token = host.prefs().haToken(); // changer seulement l'adresse
+        if (url == null) return err("Adresse refusée : en http, seulement une adresse du réseau local (ex. 192.168.1.20:8123)");
+        if (!HomeAssistant.validToken(token)) return err("Jeton invalide : crée un « jeton d'accès longue durée » dans ton profil Home Assistant");
+        try { HomeAssistant.ping(url, token); }
+        catch (Exception e) { CrashLog.note(ctx, "Home Assistant : " + e); return err(HomeAssistant.human(e)); }
+        host.prefs().setHa(url, token);
+        return "{\"ok\":true}";
+    }
+
+    private static String err(String m) throws Exception { return new JSONObject().put("ok", false).put("error", m).toString(); }
+
+    /** Appareils pilotables, avec ceux choisis pour la TV (sans aucun jeton). */
+    private String haEntities() throws Exception {
+        Prefs pr = host.prefs();
+        if (!pr.haConfigured()) return "{\"ok\":false,\"configured\":false}";
+        try {
+            java.util.Set<String> pinned = pr.haPinned();
+            JSONArray a = new JSONArray();
+            for (HomeAssistant.Entity e : HaStates.load(pr.haUrl(), pr.haToken())) {
+                JSONObject j = new JSONObject();
+                j.put("id", e.id); j.put("name", e.name); j.put("group", HomeAssistant.domainName(e.domain));
+                j.put("state", HomeAssistant.label(e)); j.put("pinned", pinned.contains(e.id));
+                a.put(j);
+            }
+            return new JSONObject().put("ok", true).put("entities", a).toString();
+        } catch (Exception e) {
+            return err(HomeAssistant.human(e));
+        }
     }
 
     /** Clé Pexels envoyée du téléphone (vide = retirer). Format contrôlé ; jamais renvoyée. */

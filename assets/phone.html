@@ -97,6 +97,18 @@
     <button class="go" aria-label="Enregistrer">✓</button>
   </form>
   <p class="note small">La TV affiche « Contrôlée par … » à la connexion.</p>
+  <h2>Home Assistant</h2>
+  <p class="note" id="haNote">Pilote tes lumières, prises, scènes et volets depuis le bouton « Maison » de la TV. Dans Home Assistant : Profil › Sécurité › Jetons d’accès longue durée › Créer un jeton.</p>
+  <form id="haForm" autocomplete="off">
+    <input type="text" id="haUrl" placeholder="192.168.1.20:8123 ou homeassistant.local:8123" autocapitalize="off" spellcheck="false" inputmode="url">
+    <div class="field"><input type="password" id="haToken" placeholder="Jeton d’accès longue durée" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="go" aria-label="Relier">✓</button></div>
+  </form>
+  <div class="list" id="haLinked" hidden><button class="row link" id="haDel"><span class="name" id="haState">…</span><span class="chev">Délier</span></button></div>
+  <div id="haBox" hidden>
+    <p class="note small">Coche les appareils à afficher sur la TV (aucun coché : tous).</p>
+    <input type="search" class="plain" id="haQ" placeholder="Rechercher un appareil" autocomplete="off">
+    <div class="list" id="haList"></div>
+  </div>
   <h2>Pexels</h2>
   <p class="note">Avec ta clé gratuite (pexels.com/api), Lumen propose aussi des vidéos Pexels. Sans clé, Lumen ne contacte jamais Pexels.</p>
   <div class="field"><input type="password" id="pxKey" placeholder="Clé Pexels" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="go" id="pxSave" aria-label="Enregistrer">✓</button></div>

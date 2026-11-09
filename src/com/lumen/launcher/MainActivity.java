@@ -431,13 +431,16 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         Tile inputs = Tile.button(this, Glyph.INPUT, "Entrées", bs);
         inputs.setFocusListener(homeFocus);
         inputs.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { InputsPanel.openInputs(MainActivity.this); } });
+        Tile house = Tile.button(this, Glyph.HOME, "Maison", bs);
+        house.setFocusListener(homeFocus);
+        house.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { HomePanel.open(MainActivity.this); } });
         Tile all = Tile.button(this, Glyph.GRID, "Toutes les applications", bs);
         all.setFocusListener(homeFocus);
         all.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { openApps(); } });
         Tile set = Tile.button(this, Glyph.SLIDERS, "Réglages", bs);
         set.setFocusListener(homeFocus);
         set.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { SettingsPanel.openSettings(MainActivity.this); } });
-        for (Tile b : new Tile[]{amb, inputs, all, set}) {
+        for (Tile b : new Tile[]{amb, inputs, house, all, set}) {
             LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             bl.leftMargin = u(18);
             topButtons.addView(b, bl);

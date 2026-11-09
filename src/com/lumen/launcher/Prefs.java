@@ -170,6 +170,14 @@ final class Prefs {
     int videoOkCount() { return set("video_ok").size(); }
 
     /** Clé Pexels personnelle (vide = Pexels désactivé). Reste sur la TV, n'est jamais renvoyée au téléphone. */
+    /** Home Assistant : adresse, jeton (jamais renvoyé au téléphone, absent de la sauvegarde), appareils choisis. */
+    String haUrl() { return sp.getString("ha_url", ""); }
+    String haToken() { return sp.getString("ha_token", ""); }
+    boolean haConfigured() { return !haUrl().isEmpty() && !haToken().isEmpty(); }
+    void setHa(String url, String token) { sp.edit().putString("ha_url", url).putString("ha_token", token).apply(); }
+    Set<String> haPinned() { return set("ha_pinned"); }
+    void setHaPinned(String id, boolean on) { Set<String> s = haPinned(); if (on) s.add(id); else s.remove(id); put("ha_pinned", s); }
+
     String pexelsKey() { return sp.getString("pexels_key", ""); }
     void setPexelsKey(String k) {
         String v = Pexels.validKey(k) ? k : "";

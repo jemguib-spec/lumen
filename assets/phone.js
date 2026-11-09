@@ -6,7 +6,7 @@
 // La page n'envoie que des actions prévues (liste fermée côté TV) ; jamais de commande libre.
 
 const H = {'X-Lumen': '1'};
-let S = {apps: [], favorites: [], mine: [], ambiances: [], pexels: false, tv: {}};
+let S = {apps: [], favorites: [], mine: [], ambiances: [], pexels: false, ha: '', tv: {}};
 let tab = 'tv', scope = 'cosy', picks = [], pickTimer = null, poll = null, alive = true;
 const $ = id => document.getElementById(id);
 const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
@@ -31,7 +31,7 @@ function show(t) {
   $('title').textContent = TITLES[t];
   window.scrollTo(0, 0);
   if (t === 'vid') loadPicks();
-  if (t === 'opt') loadLog();
+  if (t === 'opt') { loadLog(); if (S.ha && !haEntities) loadHa(); }
 }
 
 // ------------------------------------------------------------------ réseau
@@ -442,6 +442,62 @@ function upload(f) {
   });
 }
 
+// ---- Home Assistant : adresse et jeton (jeton jamais relu par la page), appareils affichés sur la TV
+let haEntities = null, haLoading = false;
+$('haForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const url = $('haUrl').value.trim(), token = $('haToken').value.trim();
+  if (!url) { toast('Adresse de Home Assistant ?'); return; }
+  toast('Connexion à Home Assistant…');
+  try {
+    const r = await api('/api/ha', {method: 'POST', body: JSON.stringify({url, token}), headers: {'Content-Type': 'text/plain'}});
+    const j = await r.json().catch(() => ({ok: false}));
+    if (j.pin) { if (await askPin()) $('haForm').requestSubmit(); return; }
+    if (!j.ok) { toast(j.error || 'Impossible'); return; }
+    $('haToken').value = ''; toast('Home Assistant relié'); haEntities = null; await load(); loadHa();
+  } catch (x) { }
+});
+$('haDel').addEventListener('click', async () => {
+  if (await act('/api/ha', '', 'Home Assistant délié')) { haEntities = null; $('haUrl').value = ''; }
+});
+$('haQ').addEventListener('input', renderHa);
+async function loadHa() {
+  if (!S.ha || haLoading) return;
+  haLoading = true;
+  try {
+    const r = await api('/api/ha/entities');
+    const j = await r.json();
+    if (j.ok) haEntities = j.entities; else { haEntities = []; toast(j.error || 'Home Assistant injoignable'); }
+  } catch (e) { } finally { haLoading = false; }
+  renderHa();
+}
+function renderHa() {
+  const on = !!S.ha;
+  $('haLinked').hidden = !on; $('haBox').hidden = !on || !haEntities;
+  $('haState').textContent = on ? 'Relié · ' + S.ha.replace(/^https?:\/\//, '') : '';
+  if (on && document.activeElement !== $('haUrl') && !$('haUrl').value) $('haUrl').value = S.ha.replace(/^https?:\/\//, '');
+  $('haToken').placeholder = on ? 'Nouveau jeton (facultatif)' : 'Jeton d’accès longue durée';
+  if (!on || !haEntities) return;
+  const q = $('haQ').value.trim().toLowerCase();
+  const l = $('haList'); clear(l);
+  let grp = null;
+  const list = haEntities.filter(x => !q || x.name.toLowerCase().includes(q));
+  if (!list.length) l.appendChild(el('div', 'empty', 'Aucun appareil'));
+  list.forEach(x => {
+    if (x.group !== grp) { grp = x.group; l.appendChild(el('div', 'grp', grp)); }
+    const r = el('div', 'row ha' + (x.pinned ? ' on' : ''));
+    r.appendChild(el('span', 'ck'));
+    r.appendChild(el('div', 'name', x.name));
+    r.appendChild(el('span', 'st', x.state));
+    r.addEventListener('click', async () => {
+      x.pinned = !x.pinned; r.classList.toggle('on', x.pinned);
+      try { await api('/api/ha/pin?id=' + encodeURIComponent(x.id) + '&on=' + (x.pinned ? 1 : 0), {method: 'POST'}); }
+      catch (e) { x.pinned = !x.pinned; r.classList.toggle('on', x.pinned); }
+    });
+    l.appendChild(r);
+  });
+}
+
 // ---- Nom de ce téléphone (affiché sur la TV : « Contrôlée par … »), gardé sur ce téléphone seulement
 function savedName() { try { return localStorage.getItem('lumen-name') || ''; } catch (e) { return ''; } }
 $('nameForm').addEventListener('submit', async e => {
@@ -454,6 +510,8 @@ $('nameForm').addEventListener('submit', async e => {
 
 // ---- Plus
 function renderOpt() {
+  renderHa();
+  if (tab === 'opt' && S.ha && !haEntities) loadHa();
   if (document.activeElement !== $('nameIn')) $('nameIn').value = savedName() || (S.tv || {}).device || '';
   const tv = S.tv || {};
   $('pinBox').hidden = !tv.pin;

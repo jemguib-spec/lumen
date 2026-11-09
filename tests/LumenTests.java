@@ -194,6 +194,36 @@ public class LumenTests {
         check("NASA retiré (photos Espace issues des sélections Commons)", !NetPolicy.allowed("https://images-api.nasa.gov/search?q=x"));
         check("https Commons autorisé", NetPolicy.allowed("https://commons.wikimedia.org/w/api.php"));
         check("https Wikimedia autorisé", NetPolicy.allowed("https://upload.wikimedia.org/a.jpg"));
+        check("HA : adresse locale complétée", "http://192.168.1.20:8123".equals(HomeAssistant.normalizeUrl("192.168.1.20:8123"))
+                && "http://homeassistant.local:8123".equals(HomeAssistant.normalizeUrl(" homeassistant.local:8123/ ")));
+        check("HA : HTTPS distant accepté", "https://maison.ui.nabu.casa".equals(HomeAssistant.normalizeUrl("https://maison.ui.nabu.casa")));
+        check("HA : jamais de jeton en clair sur Internet", HomeAssistant.normalizeUrl("http://exemple.com:8123") == null
+                && HomeAssistant.normalizeUrl("http://8.8.8.8:8123") == null && HomeAssistant.normalizeUrl("http://172.32.0.1") == null);
+        check("HA : adresses piégées refusées", HomeAssistant.normalizeUrl("http://user:pw@192.168.1.2") == null
+                && HomeAssistant.normalizeUrl("http://192.168.1.2/api?x=1") == null && HomeAssistant.normalizeUrl("ftp://192.168.1.2") == null
+                && HomeAssistant.normalizeUrl("javascript:alert(1)") == null);
+        check("HA : jeton", HomeAssistant.validToken("eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ4In0.abc_DEF-123")
+                && !HomeAssistant.validToken("court") && !HomeAssistant.validToken("eyJhbGciOiJIUzI1NiJ9\r\nX-Evil: 1"));
+        check("HA : appareils en liste fermée (pas de serrure ni d'alarme)", HomeAssistant.validEntityId("light.salon")
+                && HomeAssistant.validEntityId("scene.soiree_film") && !HomeAssistant.validEntityId("lock.porte")
+                && !HomeAssistant.validEntityId("alarm_control_panel.maison") && !HomeAssistant.validEntityId("light.salon/../x"));
+        HomeAssistant.Entity lamp = new HomeAssistant.Entity("light.salon", "Salon", "on", 60);
+        check("HA : actions et états lisibles", "toggle".equals(HomeAssistant.service(lamp)) && "Allumée · 60 %".equals(HomeAssistant.label(lamp))
+                && "turn_on".equals(HomeAssistant.service(new HomeAssistant.Entity("scene.film", "Film", "scening", -1)))
+                && "Fermé".equals(HomeAssistant.label(new HomeAssistant.Entity("cover.volet", "Volet", "closed", -1))));
+        java.util.List<HomeAssistant.Entity> ents = java.util.Arrays.asList(lamp, new HomeAssistant.Entity("switch.prise", "Prise", "off", -1));
+        check("HA : appareils choisis, sinon tous", HomeAssistant.shown(ents, new java.util.HashSet<String>(), 10).size() == 2
+                && HomeAssistant.shown(ents, new java.util.HashSet<>(java.util.Arrays.asList("switch.prise")), 10).size() == 1);
+        try {
+            String chunked = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n4\r\n[{\"a\r\n3\r\n\":1\r\n2\r\n}]\r\n0\r\n\r\n";
+            String plain = "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n[]";
+            check("HA : réponses HTTP lues (chunked et longueur)", "[{\"a\":1}]".equals(HomeAssistant.parseHttpResponse(new java.io.ByteArrayInputStream(chunked.getBytes("UTF-8"))))
+                    && "[]".equals(HomeAssistant.parseHttpResponse(new java.io.ByteArrayInputStream(plain.getBytes("UTF-8")))));
+            boolean refused = false;
+            try { HomeAssistant.parseHttpResponse(new java.io.ByteArrayInputStream("HTTP/1.1 302 Found\r\nLocation: http://ailleurs\r\n\r\n".getBytes("UTF-8"))); }
+            catch (java.io.IOException e) { refused = true; }
+            check("HA : redirection jamais suivie", refused);
+        } catch (Exception e) { check("HA : réponses HTTP lues", false); }
         check("bandeau : salutation selon l'heure", Greeting.hello(8).equals("Bonjour") && Greeting.hello(14).equals("Bon après-midi")
                 && Greeting.hello(20).equals("Bonsoir") && Greeting.hello(23).equals("Bonne nuit") && Greeting.hello(3).equals("Bonne nuit"));
         check("bandeau : ligne complète", Greeting.line(21, "", "12° · Pluie · Paris", "The Bear")
