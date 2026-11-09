@@ -1,0 +1,31 @@
+    private TextView dlPill;
+
+    /** Petit indicateur en bas à droite tant que Lumen télécharge photos ou vidéos (mis à jour chaque seconde). */
+    private final Runnable dlTick = new Runnable() {
+        @Override public void run() {
+            String s = online == null ? "" : online.activity();
+            if (dlPill == null) {
+                dlPill = text(18, "sans-serif-medium", 0xD9FFFFFF);
+                dlPill.setSingleLine(true);
+                dlPill.setPadding(u(22), u(10), u(22), u(10));
+                GradientDrawable bg = new GradientDrawable();
+                bg.setCornerRadius(u(30));
+                bg.setColor(0x80101218);
+                bg.setStroke(Math.max(1, u(1.5f)), 0x26FFFFFF);
+                dlPill.setBackground(bg);
+                dlPill.setAlpha(0f);
+                FrameLayout.LayoutParams lp = wrap(Gravity.BOTTOM | Gravity.END);
+                lp.rightMargin = u(48);
+                lp.bottomMargin = u(28);
+                root.addView(dlPill, root.indexOfChild(notice), lp);
+            }
+            boolean show = !s.isEmpty() && !ambientOn;
+            if (show) dlPill.setText("↓  " + s);
+            float want = show ? 1f : 0f;
+            if (dlPill.getAlpha() != want && dlPill.getTag() != (Object) Boolean.valueOf(show)) {
+                dlPill.setTag(show);
+                dlPill.animate().alpha(want).setStartDelay(0).setDuration(400).start();
+            }
+            if (resumedNow) h.postDelayed(this, 1000);
+        }
+    };

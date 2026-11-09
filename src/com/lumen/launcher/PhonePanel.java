@@ -59,7 +59,7 @@ final class PhonePanel {
         }, true);
         card.addView(off, a.rowLp());
         o.addView(card, new FrameLayout.LayoutParams(a.u(680), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
-        ((View) card.getChildAt(1)).requestFocus();
+        card.getChildAt(1).requestFocus();
     }
 
     private static void showQr(final MainActivity a) {

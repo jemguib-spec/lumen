@@ -1,0 +1,62 @@
+    /** Une mise à jour vérifiée est prête : on le dit, puis Android demande confirmation (une fois par version). */
+    private void updateStateChanged() {
+        for (Runnable r : new ArrayList<>(rowRefreshers)) r.run();
+        final String v = updater.readyVersion();
+        if (v.isEmpty() || v.equals(prefs.updatePrompted())) return;
+        showNotice("Mise à jour " + v + " prête");
+        h.postDelayed(new Runnable() {
+            @Override public void run() {
+                if (overlay != null || ambientOn || ambiance != null || !hasWindowFocus()) return; // on redemandera au prochain retour
+                prefs.setUpdatePrompted(v);
+                installUpdate();
+            }
+        }, 2500);
+    }
+
+    /**
+     * Redémarrage propre : écran « lumen · redémarrage », puis Lumen s'arrête et repart aussitôt ;
+     * au retour, l'écran de démarrage enchaîne sans coupure.
+     */
+    void restartLumenNicely() {
+        closeOverlay(false);
+        lumenScreen("Redémarrage");
+        prefs.setRestarting(true);
+        h.postDelayed(new Runnable() { @Override public void run() { restartLumen(); } }, 1400);
+    }
+
+    /**
+     * Installe la mise à jour derrière un écran « lumen · mise à jour » : pendant qu'Android
+     * remplace Lumen, il ne peut rien afficher ; dès que c'est fait, Lumen revient de lui-même
+     * (réception de « paquet remplacé » ou service « Lumen télécommande ») au lieu de laisser
+     * l'écran d'accueil d'origine de la TV.
+     */
+    void installUpdate() {
+        String v = updater.readyVersion();
+        prefs.setUpdatePending(updater.currentVersion());
+        FrameLayout z = lumenScreen("Mise à jour" + (v.isEmpty() ? "" : " · " + v));
+        systemVeil = z; // repart tout seul si la mise à jour est annulée (Lumen reprend la main)
+        veilApp = null;
+        final View veil = z;
+        if (!updater.install()) { prefs.setUpdatePending(""); hideSystemVeil(true); showNotice("Installation impossible"); return; }
+        // filet de sécurité : si aucune fenêtre d'Android ne s'est ouverte, on rend la main
+        h.postDelayed(new Runnable() {
+            @Override public void run() {
+                if (systemVeil == veil && hasWindowFocus()) { prefs.setUpdatePending(""); hideSystemVeil(true); }
+            }
+        }, 10_000);
+    }
+
+    /** Au démarrage : Lumen vient-il d'être mis à jour ? On le dit, simplement. */
+    private void announceUpdate() {
+        String from = prefs.updatePending();
+        if (from.isEmpty()) return;
+        String now = updater.currentVersion();
+        if (!from.equals(now)) {
+            prefs.setUpdatePending("");
+            showNotice("Lumen est à jour · " + now);
+        } else if (!hasUpdateVeil()) {
+            prefs.setUpdatePending(""); // installation annulée
+        }
+    }
+
+    private boolean hasUpdateVeil() { return systemVeil != null; }

@@ -448,7 +448,7 @@ final class AppsPage {
                 sections.addView(sectionLabel("Ambiances"));
                 for (final int k : moods) {
                     resultRow(a.iconRow(Glyph.SPARK, Online.COSY_NAMES[k], new MainActivity.Value() { @Override public String get() { return "Lancer l'ambiance"; } },
-                            new View.OnClickListener() { @Override public void onClick(View v) { remember(q0()); a.phoneAmbiance(k); } }, false));
+                            new View.OnClickListener() { @Override public void onClick(View v) { remember(q0()); a.phoneHost.phoneAmbiance(k); } }, false));
                 }
             }
             if (!shows.isEmpty()) {

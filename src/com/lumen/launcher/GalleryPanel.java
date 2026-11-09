@@ -36,10 +36,10 @@ final class GalleryPanel {
         ImageView bg = new ImageView(a);
         bg.setScaleType(ImageView.ScaleType.CENTER_CROP);
         if (Glass.backdrop() != null) bg.setImageBitmap(Glass.backdrop());
-        o.addView(bg, a.match());
+        o.addView(bg, MainActivity.match());
         View tint = new View(a);
         tint.setBackgroundColor(0xA605060A);
-        o.addView(tint, a.match());
+        o.addView(tint, MainActivity.match());
 
         ScrollView sv = new ScrollView(a) {
             @Override protected void onScrollChanged(int l, int t, int ol, int ot) {
@@ -57,7 +57,7 @@ final class GalleryPanel {
         col.setClipToPadding(false);
         col.setPadding(a.u(112), a.u(72), a.u(112), a.u(120));
         sv.addView(col);
-        o.addView(sv, a.match());
+        o.addView(sv, MainActivity.match());
 
         TextView title = a.text(52, "sans-serif-light", 0xF5FFFFFF);
         title.setText("Fonds · " + Prefs.SRC_NAMES[a.prefs.source()]);

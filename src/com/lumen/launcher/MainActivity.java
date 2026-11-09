@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class MainActivity extends Activity implements Wall.Listener, Online.Listener, PhoneServer.Host {
+public final class MainActivity extends Activity implements Wall.Listener, Online.Listener {
 
     // Favoris proposés au premier lancement, dans cet ordre, s'ils sont installés
     private static final String[] DEFAULT_FAVORITES = {
@@ -57,21 +57,21 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     FrameLayout root, homeLayer, appsLayer;
     LinearLayout captionBox, clockBox, dots;
-    private TextView captionTitle, captionCredit, focusLabel, notice;
-    private LinearLayout rowsBox, topButtons;
+    TextView captionTitle, captionCredit, focusLabel, notice;
+    LinearLayout rowsBox, topButtons;
     private FrameLayout wallLayer;
     private View appsTint;
     Cinema cinema;
     private LinearLayout sceneBar;
-    private Tile houseButton;
+    Tile houseButton;
 
     /** Affiche ou masque le bouton « Maison » (Réglages › Accueil et applis). */
     void setHouseButton(boolean on) {
         prefs.setHaButton(on);
         if (houseButton != null) houseButton.setVisibility(on ? View.VISIBLE : View.GONE);
     }
-    private TextView greet;
-    private final List<LinearLayout> rows = new ArrayList<>();
+    TextView greet;
+    final List<LinearLayout> rows = new ArrayList<>();
     private final List<HorizontalScrollView> rowScrolls = new ArrayList<>();
     private ImageView appsBg;
     FrameLayout overlay;
@@ -80,13 +80,19 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     private View focusBeforeApps;
     private Tile movingTile;
     boolean appsOpen, idle, dirtyRow, dirtyApps, ambientOn;
-    private AmbientView ambient;
+    AmbientView ambient;
     Weather weather;
     private View scrim;
     WeatherFx fx;
     Glow glow;
     private FrameLayout zoomView;
     PhoneServer phone;
+    /** Ce que la TV fait à la demande du téléphone. */
+    final PhoneBridge phoneHost = new PhoneBridge(this);
+    final DownloadPill downloads = new DownloadPill(this);
+    final GlassUi ui = new GlassUi(this);
+    final UpdateFlow updates = new UpdateFlow(this);
+    final Veille veille = new Veille(this);
     boolean resumeOpen, recoOpen;
     AmbiancePanel ambiance;
     TopShelf shelf;
@@ -120,7 +126,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         online = new Online(this, prefs);
         online.setListener(this);
         weather = new Weather(this);
-        phone = new PhoneServer(this, this);
+        phone = new PhoneServer(this, phoneHost);
         double[] c = weather.coords();
         if (c != null) Sky.setLocation(c[0], c[1]);
         Sounds.get(this).setEnabled(prefs.sounds());
@@ -132,7 +138,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         h.postDelayed(new Runnable() { @Override public void run() { repo.warmUp(); } }, 400);
         updater = new Updater(this, prefs);
         updater.setListener(new Updater.Listener() {
-            @Override public void onUpdateState() { updateStateChanged(); }
+            @Override public void onUpdateState() { updates.updateStateChanged(); }
         });
         h.postDelayed(prebuildApps, 2500);   // page Applications construite d'avance, à l'abri des regards
 
@@ -159,9 +165,8 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         super.onResume();
         resumedNow = true;
         wall.start();
-        announceUpdate();
-        h.removeCallbacks(dlTick);
-        h.postDelayed(dlTick, 1500);
+        updates.announceUpdate();
+        downloads.start();
         if (cinema == null) cinema = new Cinema(this, prefs);
         cinema.onHome(); // retour sur l'accueil : fin de la séance (lumières qui reviennent)
         if (appsOpen) LivingScene.paused = true;
@@ -668,7 +673,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     boolean banner() { return prefs.tileStyle() == Prefs.TILE_BANNER; }
     boolean wordTiles() { return prefs.tileStyle() == Prefs.TILE_WORD; }
 
-    private void buildRow(String focusKey) {
+    void buildRow(String focusKey) {
         dirtyRow = false;
         rowsBox.removeAllViews();
         rows.clear();
@@ -816,7 +821,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         }, 120); // laisse la rangée finir de défiler
     }
 
-    private String focusedKey() {
+    String focusedKey() {
         View f = getCurrentFocus();
         if (f instanceof Tile && ((Tile) f).tag instanceof AppRepo.App) return ((AppRepo.App) ((Tile) f).tag).key;
         return null;
@@ -896,7 +901,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     }
 
     /** Dernière appli ouverte depuis Lumen (pour « Fermer l'appli » depuis le téléphone). */
-    private AppRepo.App lastLaunched;
+    AppRepo.App lastLaunched;
 
     /**
      * Ferme une appli qui ne répond plus : Android arrête ses processus une fois qu'elle n'est plus
@@ -920,71 +925,6 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         } catch (Exception ignored) { }
         finishAffinity();
         android.os.Process.killProcess(android.os.Process.myPid());
-    }
-
-    /** Depuis le téléphone : retour sur Lumen puis fermeture de l'appli ouverte. */
-    @Override public void phoneRestart() { restartLumenNicely(); }
-
-    @Override public void onSettingsChangedFromPhone(boolean wallChanged) {
-        if (wallChanged) wall.restart();
-        Sounds.get(this).setEnabled(prefs.sounds());
-        clockBox.setVisibility(prefs.showClock() ? View.VISIBLE : View.GONE);
-        if (houseButton != null) houseButton.setVisibility(prefs.haButton() ? View.VISIBLE : View.GONE);
-        refreshGreeting();
-        updateWeatherFx();
-        wake(); // le délai du mode veille repart avec le nouveau réglage
-    }
-
-    /**
-     * Un téléphone vient de scanner le QR code : rien ne se passe tant que quelqu'un devant la TV
-     * ne l'a pas accepté (une photo du QR code ne suffit donc pas). Sans réponse en 60 s : refusé.
-     */
-    @Override public void askPhoneApproval(String name, final PhoneServer.Approval cb) {
-        final boolean[] done = {false};
-        final Runnable timeout = new Runnable() {
-            @Override public void run() { if (!done[0]) { done[0] = true; closeOverlay(true); cb.answer(false, false); showNotice("Téléphone refusé (pas de réponse)"); } }
-        };
-        FrameLayout o = openOverlay(new Runnable() {
-            @Override public void run() { h.removeCallbacks(timeout); if (!done[0]) { done[0] = true; cb.answer(false, false); } }
-        });
-        LinearLayout card = glassCard(44);
-        card.setPadding(u(24), u(40), u(24), u(24));
-        card.addView(menuHeader(null, false, "Nouveau téléphone", name));
-        TextView why = text(22, "sans-serif", 0x99FFFFFF);
-        why.setText("Il pourra piloter la TV, ouvrir des applis et écrire du texte. Accepte seulement si c'est le tien.");
-        why.setGravity(Gravity.CENTER);
-        why.setPadding(u(24), 0, u(24), u(24));
-        card.addView(why);
-        LinearLayout allow = iconRow(Glyph.UNLOCK, "Autoriser", null, new View.OnClickListener() {
-            @Override public void onClick(View v) { done[0] = true; h.removeCallbacks(timeout); closeOverlay(true); cb.answer(true, false); }
-        }, false);
-        card.addView(allow, rowLp());
-        card.addView(iconRow(Glyph.STAR, "Autoriser et se souvenir de ce téléphone", null, new View.OnClickListener() {
-            @Override public void onClick(View v) { done[0] = true; h.removeCallbacks(timeout); closeOverlay(true); cb.answer(true, true); }
-        }, false), rowLp());
-        card.addView(menuDivider());
-        card.addView(iconRow(Glyph.CLOSE, "Refuser", null, new View.OnClickListener() {
-            @Override public void onClick(View v) { done[0] = true; h.removeCallbacks(timeout); closeOverlay(true); cb.answer(false, false); showNotice("Téléphone refusé"); }
-        }, true), rowLp());
-        o.addView(card, new FrameLayout.LayoutParams(u(760), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
-        allow.requestFocus();
-        h.postDelayed(timeout, 60_000);
-    }
-
-    @Override public String phoneCloseApp() {
-        final AppRepo.App app = lastLaunched;
-        if (app == null) return "{\"ok\":false,\"none\":true}";
-        if (!resumedNow) {
-            if (!RemoteService.perform(RemoteService.HOME)) {
-                try { startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); } catch (Exception ignored) { }
-            }
-        }
-        h.postDelayed(new Runnable() {
-            @Override public void run() {
-                if (closeApp(app)) { showNotice(app.label + " fermée"); lastLaunched = null; }
-            }
-        }, 1500);
-        return "{\"ok\":true,\"name\":" + org.json.JSONObject.quote(app.label) + "}";
     }
 
     void launch(AppRepo.App app) {
@@ -1024,73 +964,13 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         }
     };
 
-    // ------------------------------------------------------------------ mise à jour automatique
+    // ------------------------------------------------------------------ mise à jour et redémarrage (voir UpdateFlow)
 
-    /** Une mise à jour vérifiée est prête : on le dit, puis Android demande confirmation (une fois par version). */
-    private void updateStateChanged() {
-        for (Runnable r : new ArrayList<>(rowRefreshers)) r.run();
-        final String v = updater.readyVersion();
-        if (v.isEmpty() || v.equals(prefs.updatePrompted())) return;
-        showNotice("Mise à jour " + v + " prête");
-        h.postDelayed(new Runnable() {
-            @Override public void run() {
-                if (overlay != null || ambientOn || ambiance != null || !hasWindowFocus()) return; // on redemandera au prochain retour
-                prefs.setUpdatePrompted(v);
-                installUpdate();
-            }
-        }, 2500);
-    }
+    void restartLumenNicely() { updates.restartLumenNicely(); }
+    void installUpdate() { updates.installUpdate(); }
 
     /** Écran noir « lumen » (mise à jour, redémarrage) : voir LumenScreen. */
     FrameLayout lumenScreen(String line) { return LumenScreen.show(this, line); }
-
-    /**
-     * Redémarrage propre : écran « lumen · redémarrage », puis Lumen s'arrête et repart aussitôt ;
-     * au retour, l'écran de démarrage enchaîne sans coupure.
-     */
-    void restartLumenNicely() {
-        closeOverlay(false);
-        lumenScreen("Redémarrage");
-        prefs.setRestarting(true);
-        h.postDelayed(new Runnable() { @Override public void run() { restartLumen(); } }, 1400);
-    }
-
-    /**
-     * Installe la mise à jour derrière un écran « lumen · mise à jour » : pendant qu'Android
-     * remplace Lumen, il ne peut rien afficher ; dès que c'est fait, Lumen revient de lui-même
-     * (réception de « paquet remplacé » ou service « Lumen télécommande ») au lieu de laisser
-     * l'écran d'accueil d'origine de la TV.
-     */
-    void installUpdate() {
-        String v = updater.readyVersion();
-        prefs.setUpdatePending(updater.currentVersion());
-        FrameLayout z = lumenScreen("Mise à jour" + (v.isEmpty() ? "" : " · " + v));
-        systemVeil = z; // repart tout seul si la mise à jour est annulée (Lumen reprend la main)
-        veilApp = null;
-        final View veil = z;
-        if (!updater.install()) { prefs.setUpdatePending(""); hideSystemVeil(true); showNotice("Installation impossible"); return; }
-        // filet de sécurité : si aucune fenêtre d'Android ne s'est ouverte, on rend la main
-        h.postDelayed(new Runnable() {
-            @Override public void run() {
-                if (systemVeil == veil && hasWindowFocus()) { prefs.setUpdatePending(""); hideSystemVeil(true); }
-            }
-        }, 10_000);
-    }
-
-    /** Au démarrage : Lumen vient-il d'être mis à jour ? On le dit, simplement. */
-    private void announceUpdate() {
-        String from = prefs.updatePending();
-        if (from.isEmpty()) return;
-        String now = updater.currentVersion();
-        if (!from.equals(now)) {
-            prefs.setUpdatePending("");
-            showNotice("Lumen est à jour · " + now);
-        } else if (!hasUpdateVeil()) {
-            prefs.setUpdatePending(""); // installation annulée
-        }
-    }
-
-    private boolean hasUpdateVeil() { return systemVeil != null; }
 
     // ------------------------------------------------------------------ « Reprendre » : autorisation
 
@@ -1240,7 +1120,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         return false;
     }
 
-    private final Runnable idleRun = new Runnable() {
+    final Runnable idleRun = new Runnable() {
         @Override public void run() {
             if (overlay != null || movingTile != null || appsOpen || ambiance != null || !prefs.idleFade()) return;
             idle = true;
@@ -1354,8 +1234,8 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     // ------------------------------------------------------------------ fenêtres du système par-dessus Lumen
 
-    private View systemVeil;
-    private AppRepo.App veilApp;
+    View systemVeil;
+    AppRepo.App veilApp;
 
     /**
      * Les fenêtres d'Android (désinstallation…) sont transparentes : sans voile, elles se mêlent
@@ -1421,11 +1301,11 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     }
 
     /** Le délai d'une animation reste attaché à la vue : on le remet à zéro (sinon tout s'ouvrirait en retard). */
-    private static Runnable noDelay(final View v) {
+    static Runnable noDelay(final View v) {
         return new Runnable() { @Override public void run() { v.animate().setStartDelay(0); } };
     }
 
-    private void wake() {
+    void wake() {
         h.removeCallbacks(idleRun);
         if (idle) {
             idle = false;
@@ -1469,7 +1349,10 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         wake();
     }
 
-    // ------------------------------------------------------------------ mode veille
+    // ------------------------------------------------------------------ mode veille (voir Veille)
+
+    void enterAmbient() { veille.enterAmbient(); }
+    void exitAmbient(boolean animate) { veille.exitAmbient(animate); }
 
     private final Runnable ambientRun = new Runnable() {
         @Override public void run() {
@@ -1479,103 +1362,10 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     };
 
     /** Fond propre au mode veille (images, sans vidéo) ; sinon le fond de l'accueil continue derrière. */
-    private Wall veilleWall;
-    private boolean veilleOwn;
-
-    void enterAmbient() {
-        ambientOn = true;
-        h.removeCallbacks(idleRun);
-        WallItem cur = wall.current();
-        ambient.setCaption(cur);
-        veilleOwn = prefs.veilleSource() != Prefs.VEILLE_LIVE;
-        if (veilleOwn) {
-            wall.stop();               // plus de vidéo derrière la veille
-            veilleWall.startWith(cur); // même image que l'accueil si c'en est une
-        }
-        ambient.start();
-        ambient.setVisibility(View.VISIBLE);
-        ambient.setAlpha(0f);
-        boolean cascade = !appsOpen && homeLayer.getAlpha() > 0.5f;
-        ambient.animate().alpha(1f).setStartDelay(cascade ? 500 : 0).setDuration(2000).withEndAction(noDelay(ambient)).start();
-        if (cascade) {
-            // les éléments s'en vont un à un : légende, boutons, bandeau, puis les vignettes de gauche à droite
-            final List<View> parts = homeParts();
-            long step = 70, last = 0;
-            for (int i = 0; i < parts.size(); i++) {
-                View v = parts.get(i);
-                v.animate().cancel();
-                last = i * step;
-                v.animate().alpha(0f).translationY(u(16)).setStartDelay(last).setDuration(650)
-                        .setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator()).start();
-            }
-            clockBox.animate().alpha(0f).setStartDelay(last + 200).setDuration(900).withEndAction(noDelay(clockBox)).start();
-            h.postDelayed(new Runnable() {
-                @Override public void run() {
-                    if (!ambientOn) return;
-                    homeLayer.setAlpha(0f); // tout est caché : on remet chaque élément en place, invisible
-                    for (View v : parts) { v.animate().cancel(); v.animate().setStartDelay(0); v.setTranslationY(0); v.setAlpha(1f); }
-                    captionBox.setAlpha(0f);
-                }
-            }, last + 750);
-        } else {
-            for (View v : new View[]{homeLayer, appsLayer, captionBox, clockBox}) v.animate().alpha(0f).setStartDelay(0).setDuration(1500).start();
-        }
-        glow.fade();
-    }
-
-    /** Éléments de l'accueil, dans l'ordre de la cascade du mode veille. */
-    private List<View> homeParts() {
-        List<View> out = new ArrayList<>();
-        out.add(captionBox);
-        for (int i = topButtons.getChildCount() - 1; i >= 0; i--) if (topButtons.getChildAt(i).getVisibility() == View.VISIBLE) out.add(topButtons.getChildAt(i));
-        if (greet != null && greet.getVisibility() == View.VISIBLE) out.add(greet);
-        for (LinearLayout r : rows) for (int i = 0; i < r.getChildCount(); i++) out.add(r.getChildAt(i));
-        return out;
-    }
-
-    void exitAmbient(boolean animate) {
-        ambientOn = false;
-        if (animate) Sounds.get(this).wake(); // léger fondu sonore au réveil
-        idle = false;
-        ambient.stop();
-        if (veilleOwn) {
-            veilleOwn = false;
-            veilleWall.stop();
-            if (resumedNow) wall.start();
-        }
-        long d = animate ? 400 : 0;
-        ambient.animate().alpha(0f).setDuration(d).withEndAction(new Runnable() {
-            @Override public void run() {
-                if (ambientOn) return;
-                ambient.setVisibility(View.GONE);
-                veilleWall.release();
-            }
-        }).start();
-        clockBox.animate().alpha(appsOpen ? 0f : 1f).setStartDelay(0).setDuration(d).start();
-        if (appsOpen) appsLayer.animate().alpha(1f).setStartDelay(0).setDuration(d).start();
-        else if (!animate) {
-            homeLayer.animate().alpha(1f).setStartDelay(0).setDuration(0).start();
-            captionBox.animate().alpha(1f).setStartDelay(0).setDuration(0).start();
-        } else {
-            // retour : les éléments reviennent un à un, dans le même ordre
-            homeLayer.animate().cancel();
-            homeLayer.setAlpha(1f);
-            List<View> parts = homeParts();
-            for (int i = 0; i < parts.size(); i++) {
-                final View v = parts.get(i);
-                float rest = v instanceof Tile ? ((Tile) v).restingAlpha() : 1f;
-                v.animate().cancel();
-                v.setAlpha(0f);
-                v.setTranslationY(u(14));
-                v.animate().alpha(rest).translationY(0).setStartDelay(120 + i * 40L).setDuration(420)
-                        .setInterpolator(new DecelerateInterpolator(2f)).withEndAction(noDelay(v)).start();
-            }
-        }
-        wake();
-    }
+    Wall veilleWall;
+    boolean veilleOwn;
 
     // ------------------------------------------------------------------ page « Toutes les applications »
-
 
     /** Signale que la page Applications doit être refaite ; elle l'est en arrière-plan, pas à l'ouverture. */
     void markAppsDirty() {
@@ -1603,7 +1393,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         h.postDelayed(new Runnable() { @Override public void run() { if (appsOpen) appsPage.focusSearch(); } }, 350);
     }
 
-    private void openApps() {
+    void openApps() {
         if (appsOpen) return;
         appsOpen = true;
         focusBeforeApps = getCurrentFocus();
@@ -1669,6 +1459,15 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     void buildApps(String focusKey) { appsPage.build(focusKey); }
 
     // ------------------------------------------------------------------ panneaux (verre)
+
+    // briques des panneaux : voir GlassUi
+    LinearLayout glassCard(float radiusPx) { return ui.glassCard(radiusPx); }
+    LinearLayout listRow(String label, final Value value, final View.OnClickListener click) { return ui.listRow(label, value, click); }
+    LinearLayout iconRow(int glyphType, String label, Value value, View.OnClickListener click, final boolean danger) { return ui.iconRow(glyphType, label, value, click, danger); }
+    LinearLayout menuHeader(android.graphics.drawable.Drawable art, boolean wide, String title, String sub) { return ui.menuHeader(art, wide, title, sub); }
+    View menuDivider() { return ui.menuDivider(); }
+    TextView section(String s) { return ui.section(s); }
+    LinearLayout.LayoutParams rowLp() { return ui.rowLp(); }
 
     FrameLayout openOverlay(Runnable onClosed) {
         closeOverlay(false);
@@ -1765,371 +1564,20 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         wake();
     }
 
-    /** Carte de verre flottante. */
-    LinearLayout glassCard(float radiusPx) {
-        LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.VERTICAL);
-        final float radius = u(radiusPx);
-        card.setBackground(new Glass.Surface(card, radius, highContrast ? 0xD90C0D12 : 0x2E14161E));
-        card.setElevation(u(40));
-        // le contenu (listes qui défilent) reste dans les bords arrondis
-        card.setOutlineProvider(new android.view.ViewOutlineProvider() {
-            @Override public void getOutline(View v, android.graphics.Outline o) {
-                o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), radius);
-            }
-        });
-        card.setClipToOutline(true);
-        return card;
-    }
-
     interface Value { String get(); }
 
     /** Rafraîchit toutes les valeurs affichées d'un panneau (un réglage peut en influencer un autre). */
     final List<Runnable> rowRefreshers = new ArrayList<>();
 
-    LinearLayout listRow(String label, final Value value, final View.OnClickListener click) {
-        final LinearLayout r = new LinearLayout(this);
-        r.setOrientation(LinearLayout.HORIZONTAL);
-        r.setGravity(Gravity.CENTER_VERTICAL);
-        r.setFocusable(true);
-        r.setClickable(true);
-        r.setSoundEffectsEnabled(false);
-        r.setPadding(u(32), 0, u(32), 0);
-        final GradientDrawable bg = new GradientDrawable();
-        // arrondi concentrique avec les cartes (rayon 48, marge 24) : les coins suivent ceux du panneau
-        bg.setCornerRadius(u(24));
-        bg.setColor(0x00FFFFFF);
-        r.setBackground(bg);
-        final TextView l = text(28, "sans-serif", 0xEBFFFFFF);
-        l.setText(label);
-        l.setSingleLine(true);
-        l.setEllipsize(TextUtils.TruncateAt.END);
-        r.addView(l, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        final TextView v = text(24, "sans-serif", 0x8CFFFFFF);
-        if (value != null) {
-            v.setText(value.get());
-            rowRefreshers.add(new Runnable() { @Override public void run() { v.setText(value.get()); } });
-        }
-        LinearLayout.LayoutParams vl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        vl.leftMargin = u(20);
-        r.addView(v, vl);
-        r.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override public void onFocusChange(View view, boolean f) {
-                if (f) Sounds.get(MainActivity.this).tick();
-                bg.setColor(f ? 0xFFF5F5F7 : 0x00FFFFFF);
-                l.setTextColor(f ? 0xFF111216 : 0xEBFFFFFF);
-                v.setTextColor(f ? 0x99111216 : 0x8CFFFFFF);
-                // ni agrandissement ni ombre : dans un panneau arrondi, ils seraient coupés aux bords
-            }
-        });
-        r.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View view) {
-                Sounds.get(MainActivity.this).tock();
-                click.onClick(view);
-                for (Runnable rr : new ArrayList<>(rowRefreshers)) rr.run();
-            }
-        });
-        return r;
-    }
-
-    /**
-     * Ligne de menu avec pictogramme au trait. danger = action qui retire quelque chose
-     * (texte rouge doux, fond rouge à la sélection).
-     */
-    LinearLayout iconRow(int glyphType, String label, Value value, View.OnClickListener click, final boolean danger) {
-        final LinearLayout r = listRow(label, value, click);
-        final Glyph g = new Glyph(glyphType, danger ? 0xFFFF8A80 : 0xD9FFFFFF);
-        ImageView iv = new ImageView(this);
-        iv.setImageDrawable(g);
-        LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(u(34), u(34));
-        il.rightMargin = u(22);
-        r.addView(iv, 0, il);
-        final TextView l = (TextView) r.getChildAt(1);
-        if (danger) l.setTextColor(0xFFFF8A80);
-        final View.OnFocusChangeListener base = r.getOnFocusChangeListener();
-        r.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override public void onFocusChange(View v, boolean f) {
-                if (base != null) base.onFocusChange(v, f);
-                if (danger) {
-                    ((GradientDrawable) r.getBackground()).setColor(f ? 0xFFFF6B5E : 0x00FFFFFF);
-                    l.setTextColor(f ? 0xFFFFFFFF : 0xFFFF8A80);
-                    g.setColor(f ? 0xFFFFFFFF : 0xFFFF8A80);
-                } else g.setColor(f ? 0xFF111216 : 0xD9FFFFFF);
-            }
-        });
-        return r;
-    }
-
-    /**
-     * En-tête des petits menus : visuel arrondi (bannière ou icône), titre, ligne discrète dessous.
-     * Le tout centré, comme une fiche.
-     */
-    LinearLayout menuHeader(android.graphics.drawable.Drawable art, boolean wide, String title, String sub) {
-        LinearLayout h = new LinearLayout(this);
-        h.setOrientation(LinearLayout.VERTICAL);
-        h.setGravity(Gravity.CENTER_HORIZONTAL);
-        h.setPadding(0, u(8), 0, u(28));
-        if (art != null) {
-            ImageView iv = new ImageView(this);
-            iv.setImageDrawable(art);
-            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            final int rad = u(wide ? 16 : 22);
-            iv.setOutlineProvider(new android.view.ViewOutlineProvider() {
-                @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), rad); }
-            });
-            iv.setClipToOutline(true);
-            iv.setElevation(u(10));
-            LinearLayout.LayoutParams al = new LinearLayout.LayoutParams(wide ? u(240) : u(112), wide ? u(135) : u(112));
-            al.bottomMargin = u(22);
-            h.addView(iv, al);
-        }
-        TextView t = text(36, "sans-serif-light", 0xF5FFFFFF);
-        t.setText(title);
-        t.setGravity(Gravity.CENTER);
-        t.setSingleLine(true);
-        t.setEllipsize(TextUtils.TruncateAt.END);
-        h.addView(t, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        if (sub != null && !sub.isEmpty()) {
-            TextView st = text(18, "sans-serif-medium", 0x80FFFFFF);
-            st.setText(sub.toUpperCase(java.util.Locale.FRANCE));
-            st.setLetterSpacing(0.14f);
-            st.setGravity(Gravity.CENTER);
-            LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            sl.topMargin = u(8);
-            h.addView(st, sl);
-        }
-        return h;
-    }
-
-    /** Fine séparation entre groupes d'actions d'un menu. */
-    View menuDivider() {
-        View d = new View(this);
-        d.setBackgroundColor(0x1AFFFFFF);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, u(1.5f)));
-        lp.setMargins(u(32), u(10), u(32), u(16));
-        d.setLayoutParams(lp);
-        return d;
-    }
-
-    TextView section(String s) {
-        TextView t = text(18, "sans-serif-medium", 0x80FFFFFF);
-        t.setText(s.toUpperCase());
-        t.setLetterSpacing(0.12f);
-        t.setPadding(u(32), u(40), 0, u(14));
-        return t;
-    }
-
-    LinearLayout.LayoutParams rowLp() {
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, u(88 * textScale));
-        lp.bottomMargin = u(6);
-        return lp;
-    }
-
     // ------------------------------------------------------------------ appui long sur une appli
 
     void openAppMenu(Tile t, boolean fromHome) { AppMenu.open(this, t, fromHome); }
 
-    // ------------------------------------------------------------------ réglages
-    // ------------------------------------------------------------------ téléphone
-
-    @Override public AppRepo repo() { return repo; }
-    @Override public Prefs prefs() { return prefs; }
-    @Override public Online online() { return online; }
-
-    @Override public void onFavoritesChanged() {
-        if (overlay == null && !appsOpen) buildRow(focusedKey()); else dirtyRow = true;
-        markAppsDirty();
-        showNotice("Favoris mis à jour");
-    }
+    // ------------------------------------------------------------------ téléphone (voir PhoneBridge)
 
     /** Écran éteint (veille de la TV) : le téléphone est déconnecté. */
     private final BroadcastReceiver screenOff = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) { phone.disconnect(); }
     };
-
-    // ------------------------------------------------------------------ télécommande (page du téléphone)
-
-    @Override public boolean onTvHome() { return resumedNow; }
-
-    @Override public String phoneKey(String k) { return PhoneRemote.press(this, k); }
-
-    @Override public void phoneLaunch(AppRepo.App app) {
-        if (ambiance != null) closeAmbiance();
-        if (ambientOn) exitAmbient(false);
-        closeOverlay(false);
-        launch(app);
-    }
-
-    @Override public void phoneText(String text) {
-        if (ambientOn) exitAmbient(false);
-        View f = getCurrentFocus();
-        if (text.isEmpty() && !(f instanceof android.widget.EditText)) { if (appsOpen) appsPage.setQuery(""); return; }
-        if (f instanceof android.widget.EditText) { // champ de Lumen déjà ouvert (recherche, ville)
-            android.widget.EditText e = (android.widget.EditText) f;
-            e.setText(text);
-            e.setSelection(e.length());
-            return;
-        }
-        if (ambiance != null) closeAmbiance();
-        closeOverlay(false);
-        openApps();
-        appsPage.typeFromPhone(text);
-    }
-
-    @Override public void phoneAmbiance(int kind) {
-        if (kind < 0) { closeAmbiance(); return; }
-        if (ambientOn) exitAmbient(false);
-        prefs.setAmbianceKind(kind);
-        if (ambiance == null) openAmbiance(); else ambiance.selectKind(kind);
-    }
-
-    @Override public boolean phoneTimer(int minutes) {
-        if (ambiance == null) return false;
-        return ambiance.setTimerMinutes(minutes);
-    }
-
-    @Override public int[] ambianceState() {
-        return ambiance == null ? new int[]{-1, 0, 0} : new int[]{ambiance.kind(), ambiance.timerLeftMinutes(), ambiance.timerChoice()};
-    }
-
-    @Override public void phoneVeille(boolean on) {
-        if (on && !ambientOn) { if (ambiance != null) closeAmbiance(); closeOverlay(false); enterAmbient(); }
-        else if (!on && ambientOn) exitAmbient(true);
-    }
-
-    @Override public boolean veilleOn() { return ambientOn; }
-
-    @Override public void phoneSource(int source) {
-        prefs.setSource(source);
-        SettingsPanel.applyWallChange(this);
-    }
-
-    @Override public void phoneNextWall() { if (ambientOn && veilleOwn) veilleWall.next(); else wall.next(); }
-
-    /** Plusieurs vidéos cochées d'affilée sur le téléphone : un seul rafraîchissement, 3 s après la dernière. */
-    private String picksScope;
-    private final Runnable picksRefresh = new Runnable() {
-        @Override public void run() {
-            if (Online.SCOPE_COSY.equals(picksScope)) online.refreshCosy();
-            else { online.refreshIfNeeded(Online.VIDEO, true); wall.restart(); }
-        }
-    };
-
-    @Override public void phonePicksChanged(String scope) {
-        picksScope = scope;
-        h.removeCallbacks(picksRefresh);
-        h.postDelayed(picksRefresh, 3000);
-    }
-
-    // ------------------------------------------------------------------ indicateur de téléchargement
-
-    private TextView dlPill;
-
-    /** Petit indicateur en bas à droite tant que Lumen télécharge photos ou vidéos (mis à jour chaque seconde). */
-    private final Runnable dlTick = new Runnable() {
-        @Override public void run() {
-            String s = online == null ? "" : online.activity();
-            if (dlPill == null) {
-                dlPill = text(18, "sans-serif-medium", 0xD9FFFFFF);
-                dlPill.setSingleLine(true);
-                dlPill.setPadding(u(22), u(10), u(22), u(10));
-                GradientDrawable bg = new GradientDrawable();
-                bg.setCornerRadius(u(30));
-                bg.setColor(0x80101218);
-                bg.setStroke(Math.max(1, u(1.5f)), 0x26FFFFFF);
-                dlPill.setBackground(bg);
-                dlPill.setAlpha(0f);
-                FrameLayout.LayoutParams lp = wrap(Gravity.BOTTOM | Gravity.END);
-                lp.rightMargin = u(48);
-                lp.bottomMargin = u(28);
-                root.addView(dlPill, root.indexOfChild(notice), lp);
-            }
-            boolean show = !s.isEmpty() && !ambientOn;
-            if (show) dlPill.setText("↓  " + s);
-            float want = show ? 1f : 0f;
-            if (dlPill.getAlpha() != want && dlPill.getTag() != (Object) Boolean.valueOf(show)) {
-                dlPill.setTag(show);
-                dlPill.animate().alpha(want).setStartDelay(0).setDuration(400).start();
-            }
-            if (resumedNow) h.postDelayed(this, 1000);
-        }
-    };
-
-    private View phonePill;
-
-    /**
-     * Simple pastille verte tout en haut à gauche tant qu'un téléphone est connecté,
-     * au-dessus du nom du fond (sans texte, pour ne rien chevaucher).
-     */
-    @Override public void onPhoneConnected(boolean connected) {
-        if (connected && phonePill == null) {
-            phonePill = new View(this);
-            GradientDrawable bg = new GradientDrawable();
-            bg.setShape(GradientDrawable.OVAL);
-            bg.setColor(0xFF34C759);
-            bg.setStroke(Math.max(1, u(2)), 0x66FFFFFF);
-            phonePill.setBackground(bg);
-            phonePill.setElevation(u(4));
-            phonePill.setContentDescription("Téléphone connecté");
-            FrameLayout.LayoutParams pl = new FrameLayout.LayoutParams(u(16), u(16), Gravity.TOP | Gravity.START);
-            pl.leftMargin = u(112);
-            pl.topMargin = u(36);
-            root.addView(phonePill, root.indexOfChild(notice), pl);
-            phonePill.setAlpha(0f);
-            phonePill.setScaleX(0.3f);
-            phonePill.setScaleY(0.3f);
-            phonePill.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(420)
-                    .setInterpolator(new android.view.animation.OvershootInterpolator(2.2f)).start();
-            pulse(pl, 0);
-            pulse(pl, 520);
-            showNotice("Contrôlée par " + phone.deviceName());
-        } else if (!connected && phonePill != null) {
-            final View pp = phonePill;
-            phonePill = null;
-            pp.animate().alpha(0f).setDuration(300).withEndAction(new Runnable() {
-                @Override public void run() { root.removeView(pp); }
-            }).start();
-        }
-    }
-
-    @Override public void onHaLinked() {
-        if (!prefs.haButton()) { setHouseButton(true); showNotice("Bouton Maison ajouté à l'accueil"); }
-    }
-
-    @Override public void onPhoneName(String name) { if (phonePill != null) showNotice("Contrôlée par " + name); }
-
-    /** Onde verte qui s'élargit autour de la pastille (connexion du téléphone). */
-    private void pulse(FrameLayout.LayoutParams at, long delay) {
-        final View ring = new View(this);
-        GradientDrawable g = new GradientDrawable();
-        g.setShape(GradientDrawable.OVAL);
-        g.setStroke(Math.max(1, u(2)), 0xFF34C759);
-        ring.setBackground(g);
-        FrameLayout.LayoutParams rl = new FrameLayout.LayoutParams(at.width, at.height, at.gravity);
-        rl.leftMargin = at.leftMargin;
-        rl.topMargin = at.topMargin;
-        root.addView(ring, root.indexOfChild(notice), rl);
-        ring.setAlpha(0.9f);
-        ring.animate().scaleX(3.4f).scaleY(3.4f).alpha(0f).setStartDelay(delay).setDuration(900)
-                .setInterpolator(new android.view.animation.DecelerateInterpolator(1.6f))
-                .withEndAction(new Runnable() { @Override public void run() { root.removeView(ring); } }).start();
-    }
-
-    @Override public void onSettingsRestored(int count) {
-        showNotice(count + " réglages restaurés");
-        h.postDelayed(new Runnable() { @Override public void run() { recreate(); } }, 1200); // tout est relu proprement
-    }
-
-    @Override public void onMineChanged(int received) {
-        if (received > 0 && prefs.source() != Prefs.SRC_MINE) {
-            prefs.setSource(Prefs.SRC_MINE);
-            wall.restart();
-        } else {
-            wall.refreshList();
-            if (prefs.source() == Prefs.SRC_MINE && wall.usingFallback()) wall.restart();
-        }
-        if (received > 0) showNotice("Reçu depuis le téléphone");
-    }
-
 
 }

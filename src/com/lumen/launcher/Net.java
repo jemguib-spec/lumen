@@ -133,6 +133,7 @@ final class Net {
 
     /** Réponse HTTP non 2xx : garde le code (429 = « trop de demandes ») et le délai demandé par le serveur. */
     static final class HttpError extends IOException {
+        private static final long serialVersionUID = 1L;
         final int code, retryAfterSec;
         HttpError(int code, int retryAfterSec) { super("HTTP " + code); this.code = code; this.retryAfterSec = retryAfterSec; }
         boolean busy() { return code == 429 || code == 503; }

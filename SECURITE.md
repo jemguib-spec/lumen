@@ -80,7 +80,10 @@
 ## Organisation du code (`src/com/lumen/launcher`)
 | Fichier | Rôle |
 |---|---|
-| `MainActivity` | Accueil, page des applis, gestes, mode veille, superpositions |
+| `MainActivity` | Accueil, page des applis, gestes, superpositions ; délègue aux classes ci-dessous |
+| `PhoneBridge` | Ce que la TV fait à la demande du téléphone (touches, applis, texte, ambiances, réglages, acceptation, pastille « connecté ») |
+| `Veille`, `UpdateFlow`, `DownloadPill` | Mode veille en cascade ; mises à jour et redémarrage ; indicateur de téléchargement |
+| `GlassUi` | Briques des panneaux en verre (carte, lignes, en-têtes) |
 | `SettingsPanel`, `GalleryPanel`, `ResumePanel`, `PhonePanel`, `InputsPanel`, `CityPanel` | Un panneau par fonction |
 | `Tile`, `Glass`, `Glyph`, `Glow`, `AnimatedScene`, `WeatherFx`, `AmbientView` | Composants visuels |
 | `Wall`, `Library`, `WallItem` | Moteur de fonds (images, scènes animées, vidéos) |
