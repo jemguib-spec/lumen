@@ -224,6 +224,23 @@ final class Prefs {
     /** Filtre de « À l'affiche » : "" = partout, "mine" = mes applis, sinon un paquet. */
     String recoFilter() { return sp.getString("reco_filter", "mine"); }
     void setRecoFilter(String f) { sp.edit().putString("reco_filter", f).apply(); }
+    /** Mode d'« À l'affiche » : popular, new, top, foryou. */
+    String recoMode() { return sp.getString("reco_mode", "popular"); }
+    void setRecoMode(String m) { sp.edit().putString("reco_mode", m).apply(); }
+    /** Titres ouverts depuis « À l'affiche » (« movie:123 »), les plus récents d'abord ; restent sur la TV. */
+    List<String> recoHistory() {
+        List<String> out = new ArrayList<>();
+        for (String s : sp.getString("reco_hist", "").split(",")) if (s.matches("(movie|tv):[0-9]{1,10}")) out.add(s);
+        return out;
+    }
+    void addRecoHistory(String typeId) {
+        List<String> l = recoHistory();
+        l.remove(typeId);
+        l.add(0, typeId);
+        while (l.size() > 12) l.remove(l.size() - 1);
+        sp.edit().putString("reco_hist", TextUtils.join(",", l)).apply();
+    }
+
     /** Type dans « À l'affiche » : "" = films et séries, "movie" ou "tv". */
     String recoType() { return sp.getString("reco_type", ""); }
     void setRecoType(String t) { sp.edit().putString("reco_type", t).apply(); }

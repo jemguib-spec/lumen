@@ -24,7 +24,7 @@ final class TmdbPolicy {
 
     /** Adresse d'API complète ; la clé v3 va dans l'adresse, le jeton v4 dans l'en-tête. */
     static String url(String path, String key) {
-        String u = "https://api.themoviedb.org/3" + path + (path.contains("?") ? "&" : "?") + "language=fr-FR";
+        String u = "https://api.themoviedb.org/3" + path + (path.contains("language=") ? "" : (path.contains("?") ? "&" : "?") + "language=fr-FR");
         return bearer(key) ? u : u + "&api_key=" + key;
     }
 

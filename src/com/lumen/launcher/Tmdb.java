@@ -141,6 +141,89 @@ final class Tmdb {
         return out;
     }
 
+    // ------------------------------------------------------------------ modes : nouveautés, mieux notés
+
+    static final String POPULAR = "popular", NEW = "new", TOP = "top", FOR_YOU = "foryou";
+
+    /**
+     * Découverte selon le mode, partout (abonnements disponibles en France) ou sur un service.
+     * provider null = partout.
+     */
+    static List<Title> discover(String key, String type, String mode, String[] provider) throws Exception {
+        List<Title> out = new ArrayList<>();
+        String[] types = type.isEmpty() ? new String[]{"movie", "tv"} : new String[]{type};
+        List<List<Title>> per = new ArrayList<>();
+        String today = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(new java.util.Date());
+        for (String ty : types) {
+            StringBuilder q = new StringBuilder("/discover/").append(ty).append("?watch_region=FR&with_watch_monetization_types=flatrate");
+            if (provider != null) q.append("&with_watch_providers=").append(provider[1]);
+            String date = "movie".equals(ty) ? "primary_release_date" : "first_air_date";
+            if (NEW.equals(mode)) q.append("&sort_by=").append(date).append(".desc&").append(date).append(".lte=").append(today).append("&vote_count.gte=15");
+            else if (TOP.equals(mode)) q.append("&sort_by=vote_average.desc&vote_count.gte=").append(provider == null ? 2000 : 300);
+            else q.append("&sort_by=popularity.desc&vote_count.gte=30");
+            per.add(parse(get(q.toString(), key), ty, provider));
+        }
+        for (int i = 0; i < 20 && out.size() < 20; i++) for (List<Title> l : per) if (i < l.size()) out.add(l.get(i));
+        return out;
+    }
+
+    /** Sur toutes mes applis, selon le mode (les meilleurs de chaque service, mêlés, sans doublon). */
+    static List<Title> discoverMine(String key, String type, String mode, List<String[]> providers) throws Exception {
+        List<List<Title>> per = new ArrayList<>();
+        for (String[] p : providers) { try { per.add(discover(key, type, mode, p)); } catch (Exception ignored) { } }
+        List<Title> out = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (int i = 0; i < 20 && out.size() < 24; i++)
+            for (List<Title> l : per) if (i < l.size() && seen.add(l.get(i).type + l.get(i).id)) out.add(l.get(i));
+        return out;
+    }
+
+    /** Titres proches de celui-ci (« Titres similaires »). */
+    static List<Title> similar(String key, Title t) throws Exception {
+        return parse(get("/" + t.type + "/" + t.id + "/recommendations", key), t.type, null);
+    }
+
+    /**
+     * « Pour toi » : à partir des derniers titres ouverts depuis Lumen (gardés sur la TV seulement),
+     * les recommandations de chacun, mêlées, sans ce que tu as déjà ouvert.
+     */
+    static List<Title> forYou(String key, List<String> history, String type) throws Exception {
+        List<List<Title>> per = new ArrayList<>();
+        Set<String> seen = new HashSet<>(history);
+        for (int i = 0; i < history.size() && i < 4; i++) {
+            String[] p = history.get(i).split(":");
+            if (p.length != 2) continue;
+            Title t = new Title();
+            t.type = p[0];
+            t.id = p[1];
+            try { per.add(similar(key, t)); } catch (Exception ignored) { }
+        }
+        List<Title> out = new ArrayList<>();
+        for (int i = 0; i < 20 && out.size() < 20; i++)
+            for (List<Title> l : per) {
+                if (i >= l.size()) continue;
+                Title x = l.get(i);
+                if ((type.isEmpty() || type.equals(x.type)) && seen.add(x.type + ":" + x.id)) out.add(x);
+            }
+        return out;
+    }
+
+    /** Bande-annonce YouTube (clé vidéo), en français de préférence ; null s'il n'y en a pas. */
+    static String trailer(String key, Title t) {
+        for (String lang : new String[]{"fr-FR", "en-US"}) {
+            try {
+                JSONArray r = get("/" + t.type + "/" + t.id + "/videos?language=" + lang, key).optJSONArray("results");
+                if (r == null) continue;
+                for (int i = 0; i < r.length(); i++) {
+                    JSONObject v = r.optJSONObject(i);
+                    if (v != null && "YouTube".equals(v.optString("site")) && "Trailer".equals(v.optString("type"))
+                            && v.optString("key").matches("[A-Za-z0-9_-]{6,20}")) return v.optString("key");
+                }
+            } catch (Exception ignored) { }
+        }
+        return null;
+    }
+
     /** Logo officiel du titre (PNG transparent), en français de préférence ; null s'il n'y en a pas. */
     static Bitmap logo(String key, Title t) {
         try {

@@ -238,6 +238,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     @Override public void onBackPressed() {
         if (overlay != null || appsOpen) Sounds.get(this).back();
+        if (recoOpen && RecoPanel.back()) return; // fiche ou « similaires » → retour d'un niveau
         if (movingTile != null) { stopMoving(); return; }
         if (overlay != null && SettingsPanel.back(this)) return; // sous-page des réglages : on remonte d'un niveau
         if (overlay != null) { closeOverlay(true); return; }
@@ -1212,6 +1213,8 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         // ◀ dans « À l'affiche » : on ferme seulement si rien n'est à gauche (les filtres défilent)
         if (recoOpen && down && code == KeyEvent.KEYCODE_DPAD_LEFT) {
             View f = getCurrentFocus();
+            View n0 = f == null ? null : f.focusSearch(View.FOCUS_LEFT);
+            if ((n0 == null || !isInside(n0, overlay)) && RecoPanel.back()) return true; // fiche → liste
             View next = f == null ? null : f.focusSearch(View.FOCUS_LEFT);
             if (next == null || !isInside(next, overlay)) { closeOverlay(true); return true; }
         }

@@ -38,7 +38,8 @@ final class RecoPanel {
 
     static void open(final MainActivity a) {
         a.recoOpen = true;
-        FrameLayout o = a.openOverlay(new Runnable() { @Override public void run() { a.recoOpen = false; } });
+        detailsBack = null;
+        FrameLayout o = a.openOverlay(new Runnable() { @Override public void run() { a.recoOpen = false; detailsBack = null; } });
         hero = new Hero(a, o);
         final LinearLayout card = a.glassCard(48);
         card.setPadding(a.u(24), a.u(48), a.u(24), a.u(28));
@@ -59,6 +60,10 @@ final class RecoPanel {
         seg.setPadding(a.u(4), a.u(4), a.u(4), a.u(4));
         head.addView(seg, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         card.addView(head);
+        // modes : de simples mots, le mode choisi en blanc et souligné (sobre, comme des onglets)
+        final LinearLayout modes = new LinearLayout(a);
+        modes.setPadding(a.u(24), a.u(4), a.u(24), a.u(6));
+        card.addView(modes);
         final TextView sub = a.text(18, "sans-serif-medium", 0x80FFFFFF);
         sub.setLetterSpacing(0.12f);
         sub.setPadding(a.u(28), 0, 0, a.u(20));
@@ -73,6 +78,7 @@ final class RecoPanel {
         final String key = a.prefs.tmdbKey();
         if (key.isEmpty()) {
             seg.setVisibility(View.GONE);
+            modes.setVisibility(View.GONE);
             sub.setText("FILMS ET SÉRIES DU MOMENT");
             TextView how = a.text(24, "sans-serif", 0xB3FFFFFF);
             how.setText("Pour voir les films et séries les plus regardés en ce moment, sur toutes les plateformes ou seulement sur tes applis :\n\n"
@@ -159,6 +165,38 @@ final class RecoPanel {
             });
             styleChip(a, c, f[0].equals(f0), false);
         }
+        // Populaire · Nouveautés · Mieux notés · Pour toi
+        mode = a.prefs.recoMode();
+        final String[][] modeList = {{Tmdb.POPULAR, "Populaire"}, {Tmdb.NEW, "Nouveautés"}, {Tmdb.TOP, "Mieux notés"}, {Tmdb.FOR_YOU, "Pour toi"}};
+        final List<TextView> modeViews = new ArrayList<>();
+        for (final String[] md : modeList) {
+            final TextView mv = a.text(22, "sans-serif-medium", 0x80FFFFFF);
+            mv.setText(md[1]);
+            mv.setSingleLine(true);
+            mv.setFocusable(true);
+            mv.setClickable(true);
+            mv.setSoundEffectsEnabled(false);
+            mv.setPadding(a.u(14), a.u(10), a.u(14), a.u(12));
+            mv.setTag(md[0]);
+            modes.addView(mv);
+            modeViews.add(mv);
+            mv.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override public void onFocusChange(View v, boolean has) {
+                    if (has) Sounds.get(a).tick();
+                    styleMode(a, mv, md[0].equals(mode), has);
+                }
+            });
+            mv.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    Sounds.get(a).tock();
+                    mode = md[0];
+                    a.prefs.setRecoMode(mode);
+                    for (TextView x : modeViews) styleMode(a, x, x.getTag().equals(mode), x.isFocused());
+                    if (lastFilter != null) load(a, card, list, sub, key, lastFilter, mine, false);
+                }
+            });
+            styleMode(a, mv, md[0].equals(mode), false);
+        }
         // Tout · Films · Séries
         type = a.prefs.recoType();
         final String[][] types = {{"", "Tout"}, {"movie", "Films"}, {"tv", "Séries"}};
@@ -197,8 +235,36 @@ final class RecoPanel {
         for (String[] f : filters) if (f[0].equals(f0)) load(a, card, list, sub, key, f, mine, true);
     }
 
-    private static String type = "";
+    private static String type = "", mode = Tmdb.POPULAR;
+
+    private static void styleMode(MainActivity a, TextView v, boolean selected, boolean focused) {
+        v.setTextColor(focused ? 0xFF111216 : selected ? 0xFFFFFFFF : 0x80FFFFFF);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(a.u(20));
+        bg.setColor(focused ? 0xFFF5F5F7 : 0x00FFFFFF);
+        // trait fin sous le mode choisi
+        android.graphics.drawable.LayerDrawable ld = new android.graphics.drawable.LayerDrawable(new android.graphics.drawable.Drawable[]{bg, line(a, selected && !focused)});
+        ld.setLayerInset(1, a.u(14), 0, a.u(14), 0);
+        v.setBackground(ld);
+    }
+
+    private static android.graphics.drawable.Drawable line(final MainActivity a, final boolean on) {
+        return new android.graphics.drawable.Drawable() {
+            final android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            @Override public void draw(android.graphics.Canvas c) {
+                if (!on) return;
+                p.setColor(0xFFFFFFFF);
+                android.graphics.Rect b = getBounds();
+                c.drawRoundRect(new android.graphics.RectF(b.left, b.bottom - a.u(3), b.right, b.bottom), a.u(2), a.u(2), p);
+            }
+            @Override public void setAlpha(int x) { }
+            @Override public void setColorFilter(android.graphics.ColorFilter cf) { }
+            @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
+        };
+    }
     private static String[] lastFilter;
+    private static List<Tmdb.Title> currentList;
+    private static final String KEY_REFUSED = "Clé TMDB refusée : elle est peut-être incomplète ou désactivée.";
 
     private static void styleSeg(TextView s, boolean selected, boolean focused) {
         ((GradientDrawable) s.getBackground()).setColor(focused ? 0xFFF5F5F7 : selected ? 0x40FFFFFF : 0x00FFFFFF);
@@ -222,10 +288,13 @@ final class RecoPanel {
                              final String key, final String[] filter, final List<String[]> mine, final boolean focusFirst) {
         list.removeAllViews();
         lastFilter = filter;
-        final String ty = type;
-        String what = ty.isEmpty() ? "" : ty.equals("movie") ? "FILMS " : "SÉRIES ";
-        sub.setText(filter[0].isEmpty() ? (what.isEmpty() ? "" : what + "· ") + "LES PLUS REGARDÉS CETTE SEMAINE"
-                : (what.isEmpty() ? "" : what + "· ") + (filter[0].equals("mine") ? "LES PLUS POPULAIRES SUR TES APPLIS" : "LES PLUS POPULAIRES SUR " + filter[1].toUpperCase(Locale.FRANCE)));
+        final String ty = type, md = mode;
+        String what = ty.isEmpty() ? "" : ty.equals("movie") ? "FILMS · " : "SÉRIES · ";
+        String where = filter[0].isEmpty() ? "PARTOUT" : filter[0].equals("mine") ? "SUR TES APPLIS" : "SUR " + filter[1].toUpperCase(Locale.FRANCE);
+        sub.setText(what + (Tmdb.FOR_YOU.equals(md) ? "D'APRÈS CE QUE TU AS OUVERT"
+                : Tmdb.NEW.equals(md) ? "LES NOUVEAUTÉS " + where
+                : Tmdb.TOP.equals(md) ? "LES MIEUX NOTÉS " + where
+                : filter[0].isEmpty() ? "LES PLUS REGARDÉS CETTE SEMAINE" : "LES PLUS POPULAIRES " + where));
         final TextView wait = a.text(24, "sans-serif", 0x99FFFFFF);
         wait.setText("Chargement…");
         wait.setPadding(a.u(28), a.u(16), 0, 0);
@@ -235,11 +304,21 @@ final class RecoPanel {
                 List<Tmdb.Title> got = null;
                 String err = null;
                 try {
-                    if (filter[0].isEmpty()) got = Tmdb.trending(key, ty);
-                    else if (filter[0].equals("mine")) got = Tmdb.mine(key, mine, ty);
-                    else for (String[] p : mine) if (p[0].equals(filter[0])) got = Tmdb.onProvider(key, p, 10, ty);
+                    if (Tmdb.FOR_YOU.equals(md)) {
+                        List<String> hist = a.prefs.recoHistory();
+                        if (hist.isEmpty()) err = "Ouvre quelques films ou séries depuis « À l'affiche » : Lumen te proposera ensuite des titres à ton goût (calculé sur la TV).";
+                        else got = Tmdb.forYou(key, hist, ty);
+                    } else if (Tmdb.POPULAR.equals(md)) {
+                        if (filter[0].isEmpty()) got = Tmdb.trending(key, ty);
+                        else if (filter[0].equals("mine")) got = Tmdb.mine(key, mine, ty);
+                        else for (String[] p : mine) if (p[0].equals(filter[0])) got = Tmdb.onProvider(key, p, 10, ty);
+                    } else {
+                        if (filter[0].isEmpty()) got = Tmdb.discover(key, ty, md, null);
+                        else if (filter[0].equals("mine")) got = Tmdb.discoverMine(key, ty, md, mine);
+                        else for (String[] p : mine) if (p[0].equals(filter[0])) got = Tmdb.discover(key, ty, md, p);
+                    }
                 } catch (Net.HttpError e) {
-                    err = e.code == 401 ? "Clé TMDB refusée · vérifie-la sur le téléphone (Plus › Films du moment)" : "Service indisponible pour l'instant";
+                    err = e.code == 401 ? KEY_REFUSED : "Service indisponible pour l'instant";
                 } catch (Exception e) {
                     err = Messages.download(String.valueOf(e));
                     CrashLog.note(a, "TMDB : " + e);
@@ -248,13 +327,23 @@ final class RecoPanel {
                 final String error = err;
                 a.h.post(new Runnable() {
                     @Override public void run() {
-                        if (!card.isAttachedToWindow() || lastFilter != filter || !ty.equals(type)) return; // filtre changé entre-temps
+                        if (!card.isAttachedToWindow() || lastFilter != filter || !ty.equals(type) || !md.equals(mode)) return; // filtre changé entre-temps
                         list.removeAllViews();
                         if (titles == null || titles.isEmpty()) {
                             wait.setText(error != null ? error : "Rien pour l'instant");
                             list.addView(wait);
+                            if (KEY_REFUSED.equals(error)) {
+                                LinearLayout fix = a.iconRow(Glyph.UNLOCK, "Changer la clé", null, new View.OnClickListener() {
+                                    @Override public void onClick(View v) { a.closeOverlay(false); KeyPanel.open(a, KeyPanel.TMDB); }
+                                }, false);
+                                LinearLayout.LayoutParams fl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, a.u(88));
+                                fl.topMargin = a.u(20);
+                                list.addView(fix, fl);
+                                fix.requestFocus();
+                            }
                             return;
                         }
+                        currentList = titles;
                         View first = null;
                         int n = 0;
                         for (Tmdb.Title t : titles) {
@@ -356,7 +445,7 @@ final class RecoPanel {
             }
         });
         r.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { Sounds.get(a).tock(); watch(a, t, key); }
+            @Override public void onClick(View v) { Sounds.get(a).tock(); details(a, (LinearLayout) r.getParent(), t, key, r); }
         });
         return r;
     }
@@ -478,6 +567,15 @@ final class RecoPanel {
                 @Override public void run() {
                     final Bitmap b = Tmdb.poster(t.backdrop.isEmpty() ? t.poster : t.backdrop, t.backdrop.isEmpty() ? 500 : 1280);
                     final Bitmap lg = Tmdb.logo(a.prefs.tmdbKey(), t);
+                    // « Disponible sur … » pour les titres dont l'appli n'est pas encore connue
+                    if (t.provider == null) {
+                        try {
+                            final List<String[]> ps = Tmdb.providersOf(a.prefs.tmdbKey(), t);
+                            if (!ps.isEmpty()) a.h.post(new Runnable() {
+                                @Override public void run() { if (shown == t) meta.setText((meta(t) + "  ·  SUR " + names(ps)).toUpperCase(Locale.FRANCE)); }
+                            });
+                        } catch (Exception ignored) { }
+                    }
                     if (lg != null) a.h.post(new Runnable() {
                         @Override public void run() {
                             if (shown != t) return;
@@ -515,8 +613,181 @@ final class RecoPanel {
         }
     }
 
+    // ------------------------------------------------------------------ fiche d'un titre
+
+    private static Runnable detailsBack;
+
+    /** Retour (◀ ou Retour) : de la fiche vers la liste. false s'il n'y a pas de fiche ouverte. */
+    static boolean back() {
+        if (detailsBack == null) return false;
+        Runnable r = detailsBack;
+        detailsBack = null;
+        r.run();
+        return true;
+    }
+
+    /**
+     * OK sur un titre : la liste laisse place à sa fiche (l'image reste à gauche) : regarder sur
+     * chaque appli qui le propose, bande-annonce, titres similaires, recherche de la TV.
+     */
+    private static void details(final MainActivity a, final LinearLayout list, final Tmdb.Title t, final String key, final View fromRow) {
+        final List<View> saved = new ArrayList<>();
+        for (int i = 0; i < list.getChildCount(); i++) saved.add(list.getChildAt(i));
+        list.removeAllViews();
+        final Runnable previous = detailsBack; // ex. retour vers « Titres similaires »
+        detailsBack = new Runnable() {
+            @Override public void run() {
+                list.removeAllViews();
+                for (View v : saved) list.addView(v);
+                fromRow.requestFocus();
+                detailsBack = previous;
+            }
+        };
+        TextView name = a.text(32, "sans-serif-light", 0xF5FFFFFF);
+        name.setText(t.name);
+        name.setPadding(a.u(28), a.u(8), a.u(20), 0);
+        list.addView(name);
+        TextView meta = a.text(18, "sans-serif-medium", 0x80FFFFFF);
+        meta.setText(meta(t).toUpperCase(Locale.FRANCE));
+        meta.setLetterSpacing(0.06f);
+        meta.setPadding(a.u(28), a.u(8), a.u(20), a.u(22));
+        list.addView(meta);
+
+        final LinearLayout actions = new LinearLayout(a);
+        actions.setOrientation(LinearLayout.VERTICAL);
+        list.addView(actions);
+        final TextView wait = a.text(22, "sans-serif", 0x80FFFFFF);
+        wait.setText("Recherche des applis qui le proposent…");
+        wait.setPadding(a.u(28), 0, 0, a.u(12));
+        actions.addView(wait);
+
+        // toujours présents : titres similaires, recherche de la TV, retour
+        list.addView(a.iconRow(Glyph.SPARK, "Titres similaires", null, new View.OnClickListener() {
+            @Override public void onClick(View v) { similar(a, list, t, key); }
+        }, false), a.rowLp());
+        list.addView(a.iconRow(Glyph.SEARCH, "Chercher sur la TV", null, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.addRecoHistory(t.type + ":" + t.id); globalSearch(a, t.name); }
+        }, false), a.rowLp());
+        final LinearLayout backRow = a.iconRow(Glyph.MOVE, "Retour à la liste", null, new View.OnClickListener() {
+            @Override public void onClick(View v) { back(); }
+        }, false);
+        list.addView(backRow, a.rowLp());
+        backRow.requestFocus();
+
+        io.execute(new Runnable() {
+            @Override public void run() {
+                List<String[]> ps = new ArrayList<>();
+                if (t.provider != null) ps.add(t.provider);
+                try { for (String[] p : Tmdb.providersOf(key, t)) { boolean dup = false; for (String[] q : ps) if (q[0].equals(p[0])) dup = true; if (!dup) ps.add(p); } }
+                catch (Exception ignored) { }
+                final String trailer = Tmdb.trailer(key, t);
+                final Set<String> have = visiblePackages(a);
+                final List<String[]> provs = ps;
+                a.h.post(new Runnable() {
+                    @Override public void run() {
+                        if (!actions.isAttachedToWindow()) return;
+                        actions.removeAllViews();
+                        View first = null;
+                        for (final String[] p : provs) {
+                            if (!have.contains(p[0])) continue;
+                            LinearLayout r = a.iconRow(Glyph.SPARK, "Regarder sur " + p[2], null, new View.OnClickListener() {
+                                @Override public void onClick(View v) { a.prefs.addRecoHistory(t.type + ":" + t.id); openIn(a, p, t.name); }
+                            }, false);
+                            AppRepo.App app = a.repo.findByPackage(p[0]);
+                            if (app != null) ((ImageView) r.getChildAt(0)).setImageDrawable(app.icon(a.getPackageManager()));
+                            actions.addView(r, a.rowLp());
+                            if (first == null) first = r;
+                        }
+                        if (first == null) {
+                            TextView none = a.text(22, "sans-serif", 0x80FFFFFF);
+                            boolean elsewhere = !provs.isEmpty();
+                            none.setText(elsewhere ? "Pas sur tes applis : disponible sur " + names(provs) : "Pas disponible en abonnement en France pour l'instant");
+                            none.setPadding(a.u(28), 0, a.u(20), a.u(14));
+                            actions.addView(none);
+                        }
+                        if (trailer != null) {
+                            LinearLayout tr = a.iconRow(Glyph.IMAGE, "Bande-annonce", null, new View.OnClickListener() {
+                                @Override public void onClick(View v) { a.prefs.addRecoHistory(t.type + ":" + t.id); playTrailer(a, trailer); }
+                            }, false);
+                            actions.addView(tr, a.rowLp());
+                            if (first == null) first = tr;
+                        }
+                        if (first != null && backRow.isFocused()) first.requestFocus();
+                    }
+                });
+            }
+        });
+    }
+
+    private static String names(List<String[]> ps) {
+        StringBuilder b = new StringBuilder();
+        for (String[] p : ps) b.append(b.length() > 0 ? ", " : "").append(p[2]);
+        return b.toString();
+    }
+
+    /** « Titres similaires » : la liste se remplit des titres proches ; Retour revient à la fiche. */
+    private static void similar(final MainActivity a, final LinearLayout list, final Tmdb.Title t, final String key) {
+        final List<View> saved = new ArrayList<>();
+        for (int i = 0; i < list.getChildCount(); i++) saved.add(list.getChildAt(i));
+        final View focused = a.getCurrentFocus();
+        final Runnable previous = detailsBack;
+        detailsBack = new Runnable() {
+            @Override public void run() {
+                list.removeAllViews();
+                for (View v : saved) list.addView(v);
+                if (focused != null) focused.requestFocus();
+                detailsBack = previous;
+            }
+        };
+        list.removeAllViews();
+        final TextView head = a.text(18, "sans-serif-medium", 0x80FFFFFF);
+        head.setText(("Dans le même esprit que " + t.name).toUpperCase(Locale.FRANCE));
+        head.setLetterSpacing(0.06f);
+        head.setPadding(a.u(28), a.u(8), a.u(20), a.u(16));
+        list.addView(head);
+        io.execute(new Runnable() {
+            @Override public void run() {
+                List<Tmdb.Title> got = null;
+                try { got = Tmdb.similar(key, t); } catch (Exception ignored) { }
+                final List<Tmdb.Title> titles = got;
+                a.h.post(new Runnable() {
+                    @Override public void run() {
+                        if (!list.isAttachedToWindow()) return;
+                        if (titles == null || titles.isEmpty()) { head.setText("Rien de proche pour l'instant"); return; }
+                        View first = null;
+                        int n = 0;
+                        for (Tmdb.Title x : titles) {
+                            View r = row(a, x, key, n + 1);
+                            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, a.u(124));
+                            lp.bottomMargin = a.u(6);
+                            list.addView(r, lp);
+                            r.setAlpha(0f);
+                            r.animate().alpha(1f).setStartDelay(Math.min(n++, 8) * 45L).setDuration(360).start();
+                            if (first == null) first = r;
+                        }
+                        if (first != null) first.requestFocus();
+                    }
+                });
+            }
+        });
+    }
+
+    private static void playTrailer(MainActivity a, String videoKey) {
+        Intent i = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://www.youtube.com/watch?v=" + videoKey));
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        for (String pkg : new String[]{"com.google.android.youtube.tv", "com.google.android.youtube", null}) {
+            try {
+                if (pkg != null) i.setPackage(pkg); else i.setPackage(null);
+                a.startActivity(i);
+                return;
+            } catch (Exception ignored) { }
+        }
+        a.showNotice("Installe YouTube pour voir les bandes-annonces");
+    }
+
     /** Ouvre le titre dans l'appli qui le propose (sa recherche) ; sinon la recherche de la TV. */
     private static void watch(final MainActivity a, final Tmdb.Title t, final String key) {
+        a.prefs.addRecoHistory(t.type + ":" + t.id);
         if (t.provider != null) { openIn(a, t.provider, t.name); return; }
         a.showNotice("Recherche de « " + t.name + " »…");
         io.execute(new Runnable() {
