@@ -94,6 +94,17 @@ final class PhoneServer {
 
     interface Approval { void answer(boolean allowed, boolean remember); }
 
+    /**
+     * Session liée à l'appareil qui a scanné le QR code (son adresse sur le Wi-Fi) : un cookie
+     * intercepté sur le réseau ne sert à rien depuis un autre appareil.
+     */
+    private final java.util.Map<String, InetAddress> sessionIp = java.util.Collections.synchronizedMap(new HashMap<String, InetAddress>());
+
+    private boolean sameDevice(String sid, Socket sock) {
+        InetAddress ip = sid == null ? null : sessionIp.get(sid);
+        return ip != null && ip.equals(sock.getInetAddress());
+    }
+
     /** Sessions acceptées sur la TV (les autres attendent la confirmation). */
     private final java.util.Set<String> approved = java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
 
@@ -180,6 +191,7 @@ final class PhoneServer {
     void disconnect() {
         auth.revokeAll();
         approved.clear();
+        sessionIp.clear();
         stop();
     }
 
@@ -274,7 +286,7 @@ final class PhoneServer {
         String key = r.header("sec-websocket-key");
         boolean upgrade = r.header("upgrade") != null && r.header("upgrade").equalsIgnoreCase("websocket");
         boolean sameOrigin = ("http://" + hostHeader).equals(r.header("origin"));
-        if (!upgrade || !sameOrigin || !WsFrames.validKey(key) || !auth.check(sid) || !approved.contains(sid)) { send(out, 403, "text/plain", new byte[0], null); return; }
+        if (!upgrade || !sameOrigin || !WsFrames.validKey(key) || !auth.check(sid) || !approved.contains(sid) || !sameDevice(sid, sock)) { send(out, 403, "text/plain", new byte[0], null); return; }
         synchronized (wsOpen) {
             if (wsOpen.size() >= 2) { send(out, 429, "text/plain", new byte[0], null); return; }
             wsOpen.add(sock);
@@ -404,6 +416,8 @@ final class PhoneServer {
             if (sid == null) { send(out, 403, "application/json", "{\"ok\":false}".getBytes("UTF-8"), null); return; }
             deviceName = DeviceName.pick(decode(r.header("x-lumen-device")), r.header("user-agent"));
             approved.remove(sid);
+            sessionIp.clear();
+            sessionIp.put(sid, sock.getInetAddress());
             requestApproval(sid, r.header("x-lumen-id"));
             String cookie = COOKIE + "=" + sid + "; HttpOnly; SameSite=Strict; Path=/; Max-Age=1800";
             setShown(true);
@@ -412,7 +426,7 @@ final class PhoneServer {
         }
 
         final String sid = r.cookie(COOKIE);
-        if (!auth.check(sid)) { send(out, 401, "application/json", "{\"ok\":false}".getBytes("UTF-8"), null); return; }
+        if (!auth.check(sid) || !sameDevice(sid, sock)) { send(out, 401, "application/json", "{\"ok\":false}".getBytes("UTF-8"), null); return; }
         // accepté sur la TV ? sinon le téléphone attend (seule la question « est-ce accepté ? » passe)
         if (!approved.contains(sid)) { json(out, 403, "{\"ok\":false,\"pending\":true}"); return; }
         // « télécommande seulement » : tout le reste est refusé
