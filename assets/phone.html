@@ -25,12 +25,14 @@
       <button class="k down" data-k="down" aria-label="Bas"></button>
     </div>
     <div class="keys">
-      <button class="kb" data-k="back" aria-label="Retour">‹ Retour</button>
-      <button class="kb" data-k="home" aria-label="Accueil">⌂ Accueil</button>
-      <button class="kb" data-k="play" aria-label="Lecture ou pause">⏯</button>
-      <button class="kb" data-k="voldown" aria-label="Baisser le volume">Vol −</button>
-      <button class="kb" data-k="mute" aria-label="Couper le son">🔇</button>
-      <button class="kb" data-k="volup" aria-label="Monter le volume">Vol +</button>
+      <button class="kb" data-k="back" aria-label="Retour"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+      <button class="kb" data-k="home" aria-label="Accueil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5"/><path d="M6.5 10v9h11v-9"/></svg></button>
+      <button class="kb" data-k="play" aria-label="Lecture ou pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5v11l7.5-5.5z" class="f"/><path d="M16 6.5v11M20 6.5v11"/></svg></button>
+    </div>
+    <div class="vol" role="group" aria-label="Volume">
+      <button data-k="voldown" aria-label="Baisser le volume"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
+      <button data-k="mute" aria-label="Couper le son" class="mid"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/></svg><span>Volume</span></button>
+      <button data-k="volup" aria-label="Monter le volume"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg></button>
     </div>
     <p class="note small" id="remoteHint" hidden></p>
   </div>

@@ -68,10 +68,17 @@ select option{background:#16171d;color:#f5f5f7}
 .k.right::after{transform:translate(-75%,-50%) rotate(45deg)}
 .k.okk{grid-area:2/2;border-radius:50%;background:#f5f5f7;color:#111;font-weight:600;font-size:17px;margin:6px}
 .k.okk:active{transform:scale(.94);background:#fff}
-.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
-.kb{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:13px 6px;font-size:16px;transition:.12s}
-.kb:active{transform:scale(.95);background:rgba(255,255,255,.12)}
-#remoteHint{text-align:center}
+.keys{display:flex;justify-content:center;gap:22px;margin-top:22px}
+.kb{width:62px;height:62px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;transition:.15s}
+.kb:active,.vol button:active{transform:scale(.93);background:rgba(255,255,255,.12)}
+#remote svg{width:22px;height:22px;fill:none;stroke:var(--txt);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+#remote svg .f{fill:var(--txt);stroke:none}
+.vol{display:flex;align-items:stretch;width:min(72vw,270px);margin:16px auto 0;border-radius:31px;border:1px solid var(--line);background:var(--card);overflow:hidden}
+.vol button{flex:1;border:0;background:none;height:56px;display:grid;place-items:center;transition:.15s}
+.vol .mid{flex:1.4;display:flex;align-items:center;justify-content:center;gap:8px;border-left:1px solid var(--line);border-right:1px solid var(--line);
+  font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.vol .mid svg{width:18px;height:18px;opacity:.7}
+#remoteHint{text-align:center;margin-top:16px}
 
 /* cartes */
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
