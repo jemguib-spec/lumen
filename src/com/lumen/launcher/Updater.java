@@ -90,7 +90,8 @@ final class Updater {
 
     private String run1() throws Exception {
         String mine = currentVersion();
-        JSONObject r = Net.getJson(UpdatePolicy.LATEST);
+        // paramètre unique : contourne le cache de GitHub (sinon une nouvelle version met jusqu'à 5 min à apparaître)
+        JSONObject r = Net.getJson(UpdatePolicy.LATEST + "?t=" + (System.currentTimeMillis() / 1000));
         String v = UpdatePolicy.version(r.optString("version"));
         if (v == null || UpdatePolicy.compare(v, mine) <= 0) return "Lumen est à jour (" + mine + ")";
         if (ready() != null && v.equals(prefs.updateReadyVersion())) return "";
@@ -98,7 +99,7 @@ final class Updater {
         long size = r.optLong("size");
         if (!UpdatePolicy.sha256Ok(sha) || size <= 0 || size > UpdatePolicy.MAX_BYTES) return "Mise à jour " + v + " mal décrite";
         File tmp = new File(dir(), "download.apk");
-        Net.download(UpdatePolicy.APK, tmp, UpdatePolicy.MAX_BYTES, null);
+        Net.download(UpdatePolicy.APK + "?v=" + v, tmp, UpdatePolicy.MAX_BYTES, null);
         if (tmp.length() != size || !sha.equals(sha256(tmp))) { tmp.delete(); return "Téléchargement incomplet · nouvel essai demain"; }
         String why = verify(tmp, v);
         if (why != null) { tmp.delete(); return why; }
