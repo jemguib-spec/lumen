@@ -3,13 +3,11 @@
 package com.lumen.launcher;
 
 import android.app.Activity;
-import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
@@ -31,7 +29,6 @@ import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextClock;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -139,6 +136,8 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         Sounds.get(this).setEnabled(prefs.sounds());
         ensureDefaultFavorites();
         addInputsOnce();
+        // « Qui regarde ? » au démarrage de la TV, pas après un redémarrage de Lumen ou une mise à jour
+        if (prefs.restarting() || !prefs.updatePending().isEmpty()) WhoPage.skipNextStart();
         builder.buildUi();
         buildRow(null);
         // icônes et couleurs : en arrière-plan, une fois l'accueil affiché
@@ -156,6 +155,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         f.addDataScheme("package");
         registerReceiver(packageReceiver, f);
         registerReceiver(screenOff, new IntentFilter(Intent.ACTION_SCREEN_OFF));
+        registerReceiver(screenOn, new IntentFilter(Intent.ACTION_SCREEN_ON));
         if (SettingsPanel.reopenPage >= 0) h.post(new Runnable() { @Override public void run() { SettingsPanel.reopen(MainActivity.this); } });
     }
 
@@ -180,6 +180,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         // tout ce qui n'est pas visible tout de suite attend la première image (démarrage plus rapide)
         h.removeCallbacks(afterShown);
         h.postDelayed(afterShown, firstResume ? 900 : 150);
+        WhoPage.maybeShow(this, firstResume ? 2600 : 350); // après l'écran « lumen » du démarrage
         firstResume = false;
         perf.setOn(prefs.showPerf());
         fx.setRunning(true);
@@ -233,6 +234,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     @Override protected void onDestroy() {
         try { unregisterReceiver(packageReceiver); } catch (Exception ignored) { }
         try { unregisterReceiver(screenOff); } catch (Exception ignored) { }
+        try { unregisterReceiver(screenOn); } catch (Exception ignored) { }
         phone.stop();
         super.onDestroy();
     }
@@ -1221,6 +1223,14 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     // ------------------------------------------------------------------ téléphone (voir PhoneBridge)
 
     /** Écran éteint (veille de la TV) : le téléphone est déconnecté. */
+    /** TV rallumée : « Qui regarde ? » au retour de Lumen à l'écran (s'il y a plusieurs profils). */
+    private final BroadcastReceiver screenOn = new BroadcastReceiver() {
+        @Override public void onReceive(Context c, Intent i) {
+            WhoPage.tvWoke();
+            if (resumedNow) WhoPage.maybeShow(MainActivity.this, 350);
+        }
+    };
+
     private final BroadcastReceiver screenOff = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) { phone.disconnect(); }
     };

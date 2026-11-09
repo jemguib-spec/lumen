@@ -87,7 +87,7 @@ final class HomeBuilder {
         house.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { HomePanel.open(a); } });
         Tile who = a.profileButton = Tile.button(a, Glyph.PERSON, "Profils", bs);
         who.setFocusListener(a.homeFocus);
-        who.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { ProfilePanel.open(a); } });
+        who.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { WhoPage.show(a, true); } });
         Tile all = Tile.button(a, Glyph.GRID, "Toutes les applications", bs);
         all.setFocusListener(a.homeFocus);
         all.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { a.openApps(); } });

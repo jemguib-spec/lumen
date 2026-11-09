@@ -13,36 +13,12 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
- * Profils sur la TV : « Qui regarde ? » (changer de profil, sans code) et la gestion des profils
- * (ajouter, renommer, supprimer : code PIN s'il existe). Voir Profiles pour ce qui est propre à
- * chacun et ce qui est partagé.
+ * Gestion des profils sur la TV (ajouter, renommer, supprimer : code PIN s'il existe) et
+ * changement de profil. Le choix « Qui regarde ? » est dans WhoPage. Voir Profiles pour ce qui
+ * est propre à chacun et ce qui est partagé.
  */
 final class ProfilePanel {
     private ProfilePanel() { }
-
-    /** « Qui regarde ? » : un toucher change de profil. */
-    static void open(final MainActivity a) {
-        FrameLayout o = a.openOverlay(null);
-        LinearLayout card = a.glassCard(44);
-        card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
-        card.addView(a.menuHeader(null, false, "Qui regarde ?", "Favoris et réglages de chacun"));
-        LinearLayout first = null;
-        for (final Profiles.Profile p : a.prefs.profiles()) {
-            LinearLayout row = a.iconRow(Glyph.PERSON, p.name, new MainActivity.Value() {
-                @Override public String get() { return p.id == a.prefs.activeProfile() ? "✓" : ""; }
-            }, new View.OnClickListener() {
-                @Override public void onClick(View v) { a.closeOverlay(true); switchTo(a, p.id); }
-            }, false);
-            card.addView(row, a.rowLp());
-            if (first == null || p.id == a.prefs.activeProfile()) first = row;
-        }
-        card.addView(a.menuDivider());
-        card.addView(a.iconRow(Glyph.SLIDERS, "Gérer les profils", null, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.closeOverlay(false); openManage(a); }
-        }, false), a.rowLp());
-        o.addView(card, new FrameLayout.LayoutParams(a.u(760), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
-        if (first != null) first.requestFocus();
-    }
 
     /** Gestion des profils : code PIN d'abord, s'il existe. */
     static void openManage(final MainActivity a) {
@@ -177,14 +153,23 @@ final class ProfilePanel {
     }
 
     /** Passe au profil « id » et réaffiche tout avec ses réglages. */
-    static boolean switchTo(MainActivity a, int id) {
+    static boolean switchTo(MainActivity a, int id) { return switchTo(a, id, false); }
+
+    /** quiet : sans le message « Profil : … » (la page « Qui regarde ? » dit déjà bonjour). */
+    static boolean switchTo(MainActivity a, int id, boolean quiet) {
         if (id == a.prefs.activeProfile()) return true;
         float scale = a.textScale;
         boolean contrast = a.highContrast;
         if (!a.prefs.switchProfile(id)) return false;
-        a.showNotice("Profil : " + a.prefs.activeProfileName());
+        if (!quiet) a.showNotice("Profil : " + a.prefs.activeProfileName());
         reload(a, scale, contrast);
         return true;
+    }
+
+    /** Passer au profil « id » oblige-t-il à reconstruire tout l'écran (taille du texte, contraste) ? */
+    static boolean needsRebuild(MainActivity a, int id) {
+        if (id == a.prefs.activeProfile()) return false;
+        return Prefs.TEXT_SCALES[a.prefs.textScaleOf(id)] != a.textScale || a.prefs.highContrastOf(id) != a.highContrast;
     }
 
     /**

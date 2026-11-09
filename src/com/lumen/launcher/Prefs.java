@@ -413,6 +413,9 @@ final class Prefs {
     int textScale() { return Math.max(0, Math.min(2, sp.getInt("text_scale", 0))); }
     void setTextScale(int i) { sp.edit().putInt("text_scale", i).commit(); }
     boolean highContrast() { return sp.getBoolean("high_contrast", false); }
+    /** Lisibilité d'un autre profil (sans en changer) : faudra-t-il reconstruire l'écran ? */
+    int textScaleOf(int profile) { return Math.max(0, Math.min(2, sp.raw().getInt(Profiles.key("text_scale", profile), 0))); }
+    boolean highContrastOf(int profile) { return sp.raw().getBoolean(Profiles.key("high_contrast", profile), false); }
     void setHighContrast(boolean b) { sp.edit().putBoolean("high_contrast", b).commit(); }
 
     // ------------------------------------------------------------------ habitudes selon l'heure (local)
