@@ -981,7 +981,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         if (idle) {
             idle = false;
             homeLayer.animate().alpha(1f).setDuration(350).start();
-            clockBox.animate().alpha(1f).setDuration(350).start();
+            clockBox.animate().alpha(appsOpen ? 0f : 1f).setDuration(350).start();
         }
         h.postDelayed(idleRun, IDLE_MS);
         h.removeCallbacks(ambientRun);
@@ -1049,7 +1049,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         ambient.animate().alpha(0f).setDuration(d).withEndAction(new Runnable() {
             @Override public void run() { if (!ambientOn) ambient.setVisibility(View.GONE); }
         }).start();
-        clockBox.animate().alpha(1f).setDuration(d).start();
+        clockBox.animate().alpha(appsOpen ? 0f : 1f).setDuration(d).start();
         if (appsOpen) appsLayer.animate().alpha(1f).setDuration(d).start();
         else {
             homeLayer.animate().alpha(1f).setDuration(d).start();
@@ -1095,6 +1095,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         homeLayer.animate().translationY(-u(60)).alpha(0f).setDuration(180).start();
         glow.fade();
         captionBox.animate().alpha(0f).setDuration(150).start();
+        clockBox.animate().alpha(0f).setDuration(150).start(); // l'horloge de l'accueil ne doit pas chevaucher la recherche
         appsLayer.setVisibility(View.VISIBLE);
         appsLayer.setAlpha(0f);
         appsLayer.setTranslationY(u(60));
@@ -1113,6 +1114,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         homeLayer.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
         homeLayer.animate().translationY(0).alpha(1f).setDuration(animate ? 300 : 0).start();
         captionBox.animate().alpha(1f).setDuration(300).start();
+        clockBox.animate().alpha(1f).setDuration(300).start();
         appsLayer.animate().alpha(0f).translationY(u(120)).setDuration(animate ? 260 : 0).withEndAction(new Runnable() {
             @Override public void run() { if (!appsOpen) appsLayer.setVisibility(View.GONE); }
         }).start();
