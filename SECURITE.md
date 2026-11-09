@@ -1,4 +1,4 @@
-# Lumen 4.17 — sécurité, vie privée et organisation du code
+# Lumen 4.18 — sécurité, vie privée et organisation du code
 
 ## Ce que Lumen ne fait jamais
 - Aucune télémétrie, aucune statistique, aucun compte, aucune publicité, aucun identifiant envoyé.
