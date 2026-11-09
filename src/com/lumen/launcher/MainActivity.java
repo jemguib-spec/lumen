@@ -439,10 +439,6 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         rowScrolls.clear();
         if (focusLabel.getParent() != null) ((ViewGroup) focusLabel.getParent()).removeView(focusLabel);
         if (shelf.view.getParent() != null) ((ViewGroup) shelf.view.getParent()).removeView(shelf.view);
-        if (greet.getParent() != null) ((ViewGroup) greet.getParent()).removeView(greet);
-        LinearLayout.LayoutParams gl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        gl.bottomMargin = u(18);
-        rowsBox.addView(greet, gl);
         refreshGreeting();
         buildSceneBar();
         LinearLayout.LayoutParams shl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -823,7 +819,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         }
         LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         bl.bottomMargin = u(14);
-        rowsBox.addView(sceneBar, rowsBox.indexOfChild(greet) + 1, bl);
+        rowsBox.addView(sceneBar, 0, bl);
     }
 
     /** Bandeau d'accueil : salutation, météo si une ville est réglée, dernier épisode en cours. */
@@ -831,6 +827,10 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         if (greet == null) return;
         if (!prefs.greeting()) { greet.setVisibility(View.GONE); return; }
         greet.setVisibility(View.VISIBLE);
+        // sous l'heure et la date ; à leur place si l'horloge est masquée
+        FrameLayout.LayoutParams gl = (FrameLayout.LayoutParams) greet.getLayoutParams();
+        int top = u(prefs.showClock() ? 170 : 64);
+        if (gl != null && gl.topMargin != top) { gl.topMargin = top; greet.setLayoutParams(gl); }
         weather.current(new Weather.Callback() {
             @Override public void onWeather(String line) {
                 java.util.Calendar now = java.util.Calendar.getInstance();

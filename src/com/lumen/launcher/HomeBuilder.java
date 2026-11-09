@@ -66,13 +66,16 @@ final class HomeBuilder {
         a.focusLabel.setShadowLayer(a.u(10), 0, 0, 0x66000000);
         a.focusLabel.setGravity(Gravity.CENTER_HORIZONTAL);
 
-        // bandeau d'accueil (une ligne) au-dessus des favoris
-        a.greet = a.text(24, "sans-serif", 0xD9FFFFFF);
-        a.greet.setShadowLayer(a.u(10), 0, 0, 0x66000000);
-        a.greet.setGravity(Gravity.CENTER_HORIZONTAL);
+        // bandeau d'accueil (« Bonsoir · Pluie 12° · Reprendre … ») : sous l'horloge, comme la date
+        a.greet = a.text(22, "sans-serif", 0xB3FFFFFF);
+        a.greet.setShadowLayer(a.u(8), 0, 0, 0x55000000);
+        a.greet.setGravity(Gravity.END);
         a.greet.setSingleLine(true);
         a.greet.setEllipsize(TextUtils.TruncateAt.END);
-        a.greet.setPadding(a.u(112), 0, a.u(112), 0);
+        a.greet.setMaxWidth(a.u(760));
+        FrameLayout.LayoutParams grl = MainActivity.wrap(Gravity.TOP | Gravity.END);
+        grl.rightMargin = a.u(112);
+        a.homeLayer.addView(a.greet, grl);
 
         // boutons ronds en haut à droite, à gauche de l'horloge
         a.topButtons = new LinearLayout(a);
