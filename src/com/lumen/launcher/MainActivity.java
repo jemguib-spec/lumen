@@ -804,56 +804,52 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     }
 
     /**
-     * Ouverture d'une appli : la vignette grossit doucement pendant que l'écran passe à un noir
-     * profond teinté de la couleur de l'appli, avec son logo au centre ; puis l'appli s'ouvre en fondu.
+     * Ouverture d'une appli : le même écran que le démarrage de Lumen — fond noir, « lumen » en
+     * lettres fines — avec le nom de l'appli écrit dessous ; puis l'appli s'ouvre en fondu.
      */
     private void launchUnlocked(final AppRepo.App app, Tile from) {
         Sounds.get(this).open();
         if (zoomView != null) { root.removeView(zoomView); zoomView = null; }
-        if (from == null || root.getWidth() == 0) { launch(app); return; }
+        if (root.getWidth() == 0) { launch(app); return; }
         FrameLayout z = new FrameLayout(this);
-        int color = app.color(getPackageManager());
-        int tint = (0x40 << 24) | (color & 0xFFFFFF);
-        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xFF07080C, 0xFF07080C});
-        z.setBackground(bg);
-        View glowV = new View(this);
-        GradientDrawable g = new GradientDrawable();
-        g.setGradientType(GradientDrawable.RADIAL_GRADIENT);
-        g.setGradientRadius(u(760));
-        g.setColors(new int[]{tint, 0x0007080C});
-        glowV.setBackground(g);
-        z.addView(glowV, match());
-        ImageView logo = new ImageView(this);
-        android.graphics.drawable.Drawable banner = app.banner(getPackageManager());
-        boolean wide = banner != null;
-        logo.setImageDrawable(wide ? banner : app.icon(getPackageManager()));
-        logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        logo.setOutlineProvider(new android.view.ViewOutlineProvider() {
-            @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), u(18)); }
-        });
-        logo.setClipToOutline(true);
-        logo.setAlpha(0f);
-        logo.setScaleX(0.92f);
-        logo.setScaleY(0.92f);
-        z.addView(logo, new FrameLayout.LayoutParams(wide ? u(400) : u(180), wide ? u(225) : u(180), Gravity.CENTER));
+        z.setBackgroundColor(Color.BLACK);
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setGravity(Gravity.CENTER_HORIZONTAL);
+        final TextView word = text(84, "sans-serif-thin", 0xFFFFFFFF);
+        word.setText("lumen");
+        word.setLetterSpacing(0.35f);
+        col.addView(word, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        final TextView name = text(24, "sans-serif-light", 0x99FFFFFF);
+        name.setText(app.label.toUpperCase(java.util.Locale.FRANCE));
+        name.setLetterSpacing(0.3f);
+        name.setSingleLine(true);
+        LinearLayout.LayoutParams nl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        nl.topMargin = u(18);
+        col.addView(name, nl);
+        z.addView(col, wrap(Gravity.CENTER));
         z.setAlpha(0f);
         z.setElevation(u(60));
         root.addView(z, match());
-        z.animate().alpha(1f).setStartDelay(60).setDuration(260).setInterpolator(new DecelerateInterpolator(1.6f)).start();
-        logo.animate().alpha(1f).scaleX(1f).scaleY(1f).setStartDelay(160).setDuration(320)
-                .setInterpolator(new DecelerateInterpolator(2f)).start();
-        from.animate().scaleX(1.18f).scaleY(1.18f).alpha(0f).setDuration(300)
-                .setInterpolator(new DecelerateInterpolator(1.6f)).start();
+        DecelerateInterpolator di = new DecelerateInterpolator(1.6f);
+        z.animate().alpha(1f).setDuration(280).setInterpolator(di).start();
+        word.setAlpha(0f);
+        word.setScaleX(0.96f);
+        word.setScaleY(0.96f);
+        word.animate().alpha(1f).scaleX(1f).scaleY(1f).setStartDelay(120).setDuration(600).setInterpolator(di).start();
+        name.setAlpha(0f);
+        name.setTranslationY(u(8));
+        name.animate().alpha(1f).translationY(0).setStartDelay(320).setDuration(500).setInterpolator(di).start();
+        if (from != null) from.animate().scaleX(1.12f).scaleY(1.12f).alpha(0f).setDuration(280).setInterpolator(di).start();
         final Tile src = from;
         zoomView = z;
         h.postDelayed(new Runnable() {
             @Override public void run() {
                 launch(app);
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-                // la vignette reprend sa place pour le retour sur l'accueil
-                src.restoreAfterLaunch();
+                if (src != null) src.restoreAfterLaunch(); // la vignette reprend sa place pour le retour
             }
-        }, 480);
+        }, 900);
         // filet de sécurité si l'appli ne s'ouvre pas
         h.postDelayed(new Runnable() {
             @Override public void run() {
