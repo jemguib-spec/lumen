@@ -225,6 +225,19 @@ public class LumenTests {
             check("HA : redirection jamais suivie", refused);
         } catch (Exception e) { check("HA : réponses HTTP lues", false); }
         try {
+            check("signature : HMAC-SHA256 (RFC 4231, cas 2)", "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843"
+                    .equals(Signer.hmacHex("Jefe".getBytes("UTF-8"), "what do ya want for nothing?")));
+            Signer sg = new Signer("cle-de-test");
+            String msg = Signer.httpMessage("POST", "/api/key?k=up", 1, Signer.sha256Hex(new byte[0]));
+            String sig = Signer.hmacHex("cle-de-test".getBytes("UTF-8"), msg);
+            check("signature : requête juste acceptée", sg.verify(1, msg, sig));
+            check("signature : rejeu refusé", !sg.verify(1, msg, sig));
+            String msg2 = Signer.httpMessage("POST", "/api/key?k=down", 2, Signer.sha256Hex(new byte[0]));
+            check("signature : requête modifiée refusée", !sg.verify(2, msg2, sig));
+            check("signature : mauvaise clé refusée", !sg.verify(3, msg, Signer.hmacHex("autre".getBytes("UTF-8"), msg)));
+            check("signature : SHA-256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".equals(Signer.sha256Hex(new byte[0])));
+        } catch (Exception e) { check("signature", false); }
+        try {
             check("WebSocket : clé d'acceptation (exemple de la RFC 6455)", "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=".equals(WsFrames.accept("dGhlIHNhbXBsZSBub25jZQ==")));
             check("WebSocket : clé du navigateur vérifiée", WsFrames.validKey("dGhlIHNhbXBsZSBub25jZQ==") && !WsFrames.validKey("x\r\nEvil: 1") && !WsFrames.validKey(null));
             // trame masquée « k up » (comme l'envoie le navigateur)

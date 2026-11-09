@@ -15,11 +15,11 @@ const toast = m => { const t = $('toast'); t.textContent = m; t.classList.add('o
 const app = key => S.apps.find(a => a.key === key) || {key, label: key};
 const TITLES = {tv: 'TV', fav: 'Accueil', vid: 'Vidéos', mine: 'Envois', opt: 'Plus'};
 
-function lost() {
+function lost(msg) {
   alive = false;
   clearInterval(poll);
   $('dot').className = '';
-  $('sub').textContent = 'Déconnecté · rescanne le QR code sur la TV';
+  $('sub').textContent = msg || 'Déconnecté · rescanne le QR code sur la TV';
 }
 
 // ------------------------------------------------------------------ onglets
@@ -35,6 +35,69 @@ function show(t) {
 }
 
 // ------------------------------------------------------------------ réseau
+// ---- Signature des échanges (HMAC-SHA256, écrit ici car le navigateur réserve ses outils
+// de chiffrement aux pages HTTPS). La clé vient du QR code et n'est jamais envoyée.
+const SHA_K = new Uint32Array([0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+  0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,
+  0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,
+  0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,
+  0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,
+  0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+function sha256(bytes) {
+  const l = bytes.length, n = ((l + 9 + 63) >> 6) << 6, m = new Uint8Array(n);
+  m.set(bytes); m[l] = 0x80;
+  const bits = l * 8; m[n - 4] = bits >>> 24; m[n - 3] = bits >>> 16; m[n - 2] = bits >>> 8; m[n - 1] = bits;
+  m[n - 8] = Math.floor(l / 0x20000000) >>> 0;
+  const h = new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]), w = new Uint32Array(64);
+  const r = (x, k) => (x >>> k) | (x << (32 - k));
+  for (let o = 0; o < n; o += 64) {
+    for (let i = 0; i < 16; i++) w[i] = (m[o + i * 4] << 24) | (m[o + i * 4 + 1] << 16) | (m[o + i * 4 + 2] << 8) | m[o + i * 4 + 3];
+    for (let i = 16; i < 64; i++) {
+      const s0 = r(w[i - 15], 7) ^ r(w[i - 15], 18) ^ (w[i - 15] >>> 3), s1 = r(w[i - 2], 17) ^ r(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+    }
+    let [a, b, c, d, e, f, g, hh] = h;
+    for (let i = 0; i < 64; i++) {
+      const t1 = (hh + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + SHA_K[i] + w[i]) >>> 0;
+      const t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
+      hh = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+    }
+    h[0] += a; h[1] += b; h[2] += c; h[3] += d; h[4] += e; h[5] += f; h[6] += g; h[7] += hh;
+  }
+  const out = new Uint8Array(32);
+  for (let i = 0; i < 8; i++) { out[i * 4] = h[i] >>> 24; out[i * 4 + 1] = h[i] >>> 16; out[i * 4 + 2] = h[i] >>> 8; out[i * 4 + 3] = h[i]; }
+  return out;
+}
+const utf8 = s => new TextEncoder().encode(s);
+const hex = b => Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+function hmac(key, msg) {
+  let k = utf8(key);
+  if (k.length > 64) k = sha256(k);
+  const ip = new Uint8Array(64 + msg.length), op = new Uint8Array(96);
+  for (let i = 0; i < 64; i++) { const x = k[i] || 0; ip[i] = x ^ 0x36; op[i] = x ^ 0x5c; }
+  ip.set(msg, 64);
+  op.set(sha256(ip), 64);
+  return hex(sha256(op));
+}
+
+let signKey = '';
+try { signKey = localStorage.getItem('lumen-k') || ''; } catch (e) { }
+let seqBase = Date.now() * 1000, seqN = 0;
+const nextSeq = () => seqBase + (++seqN);
+/** En-têtes de signature d'une requête (méthode, adresse, numéro, contenu). */
+function signHeaders(method, path, body) {
+  // l'adresse exactement telle que le navigateur l'enverra (il ré-encode certains caractères)
+  try { const u = new URL(path, location.href); path = u.pathname + u.search; } catch (e) { }
+  const seq = nextSeq();
+  const bh = body == null ? hex(sha256(new Uint8Array(0))) : typeof body === 'string' ? hex(sha256(utf8(body))) : '-';
+  return {'X-Lumen-Seq': String(seq), 'X-Lumen-Sig': hmac(signKey, utf8(method + '\n' + path + '\n' + seq + '\n' + bh))};
+}
+/** Message signé pour la connexion permanente. */
+function wsSigned(payload) {
+  const seq = nextSeq();
+  return 'S ' + seq + ' ' + hmac(signKey, utf8('ws\n' + seq + '\n' + payload)) + ' ' + payload;
+}
+
 // identifiant aléatoire de ce téléphone (reste sur le téléphone) : la TV peut s'en souvenir
 // après acceptation, sous forme d'empreinte seulement
 function deviceId() {
@@ -61,11 +124,18 @@ function showPending(on) {
 
 async function api(path, opts) {
   if (!alive) throw new Error('auth');
-  const r = await fetch(path, Object.assign({credentials: 'same-origin', cache: 'no-store'}, opts || {}, {headers: Object.assign({}, H, (opts || {}).headers)}));
+  const method = (opts && opts.method) || 'GET';
+  const body = opts && opts.body !== undefined ? opts.body : null;
+  const sh = signHeaders(method, path, body);
+  const r = await fetch(path, Object.assign({credentials: 'same-origin', cache: 'no-store'}, opts || {}, {headers: Object.assign({}, H, sh, (opts || {}).headers)}));
   if (r.status === 403) {
     const j = await r.clone().json().catch(() => ({}));
     if (j.pending) { showPending(true); throw new Error('pending'); }
     if (j.limited) { toast('Désactivé sur la TV : accès « télécommande seulement »'); throw new Error('limited'); }
+  }
+  if (r.status === 401) {
+    const j = await r.clone().json().catch(() => ({}));
+    if (j.sig) { lost('Connexion à revalider · rescanne le QR code sur la TV'); throw new Error('auth'); }
   }
   if (r.status === 401 || r.status === 403) { lost(); throw new Error('auth'); }
   if (r.status === 429) { toast('Doucement…'); throw new Error('slow'); }
@@ -89,7 +159,10 @@ async function act(path, body, okMsg) {
 }
 
 async function start() {
-  const token = location.hash.slice(1);
+  // « #jeton.clé » : le jeton ouvre la session, la clé signe tout (elle ne quitte jamais le téléphone)
+  const frag = location.hash.slice(1).split('.');
+  const token = frag[0];
+  if (frag[1] && /^[A-Za-z0-9]{32}$/.test(frag[1])) { signKey = frag[1]; try { localStorage.setItem('lumen-k', signKey); } catch (e) { } }
   history.replaceState(null, '', location.pathname); // le jeton disparaît de l'adresse et de l'historique
   if (token) {
     const r = await fetch('/api/session', {method: 'POST', credentials: 'same-origin',
@@ -207,7 +280,7 @@ function keyError(j) {
 
 function press(k, quiet) {
   if (navigator.vibrate) navigator.vibrate(quiet ? 4 : 8);
-  if (wsReady()) { ws.send('k ' + k); return; } // instantané
+  if (wsReady()) { ws.send(wsSigned('k ' + k)); return; } // instantané
   // en défilement continu on ne garde que quelques appuis d'avance (sinon ça continuerait après)
   if (quiet && keyQueue.length >= 2) return;
   if (keyQueue.length >= 8) return;
@@ -336,7 +409,7 @@ let typeTimer = null, typeSent = '';
 // version tapée (jamais d'ancienne frappe qui arriverait après la nouvelle)
 let textBusy = false, textNext = null;
 async function sendLive(t) {
-  if (wsReady()) { ws.send('t0 ' + t); return; } // instantané, toujours dans l'ordre
+  if (wsReady()) { ws.send(wsSigned('t0 ' + t)); return; } // instantané, toujours dans l'ordre
   if (textBusy) { textNext = t; return; }
   textBusy = true;
   await sendText(t, false);
@@ -526,6 +599,9 @@ function upload(f) {
     x.setRequestHeader('X-Lumen', '1');
     x.setRequestHeader('X-Lumen-Name', encodeURIComponent(f.name.slice(0, 120)));
     x.setRequestHeader('X-Lumen-Target', $('dest').value);
+    const sh = signHeaders('POST', '/api/upload', f); // fichier : adresse et numéro signés (contenu trop gros)
+    x.setRequestHeader('X-Lumen-Seq', sh['X-Lumen-Seq']);
+    x.setRequestHeader('X-Lumen-Sig', sh['X-Lumen-Sig']);
     x.upload.onprogress = ev => { if (ev.lengthComputable) fill.style.width = (ev.loaded * 100 / ev.total) + '%'; };
     x.onload = () => {
       if (x.status === 401 || x.status === 403) lost();

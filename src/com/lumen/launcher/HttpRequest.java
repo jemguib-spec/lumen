@@ -22,6 +22,8 @@ final class HttpRequest {
 
     final String method;
     final String path;
+    /** Adresse demandée telle qu'envoyée (chemin et paramètres) : c'est elle qui est signée. */
+    String target = "";
     final Map<String, String> query;
     final Map<String, String> headers; // noms en minuscules
     final long contentLength;
@@ -55,6 +57,7 @@ final class HttpRequest {
         String method = p[0];
         if (!method.equals("GET") && !method.equals("POST")) throw new IOException("Méthode refusée");
         String target = p[1];
+        final String rawTarget = target;
         if (!target.startsWith("/") || target.contains("..") || hasControl(target)) throw new IOException("Chemin refusé");
         String path = target, q = "";
         int qi = target.indexOf('?');
@@ -77,7 +80,9 @@ final class HttpRequest {
             try { len = Long.parseLong(cl); } catch (NumberFormatException e) { throw new IOException("Longueur invalide"); }
             if (len < 0) throw new IOException("Longueur invalide");
         }
-        return new HttpRequest(method, path, parseQuery(q), headers, len);
+        HttpRequest req = new HttpRequest(method, path, parseQuery(q), headers, len);
+        req.target = rawTarget;
+        return req;
     }
 
     /** Lit exactement len octets (au plus max), sinon erreur. */

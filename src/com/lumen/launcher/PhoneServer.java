@@ -232,8 +232,15 @@ final class PhoneServer {
         t.setDaemon(true);
         t.start();
         String token = auth.newToken();
-        touch();
-        return "http://" + hostHeader + "/#" + token;
+        // clé de signature : seulement dans le QR code (après « # », jamais envoyée sur le réseau)
+        try {
+            String k = randomKey();
+            signer = new Signer(k);
+            touch();
+            return "http://" + hostHeader + "/#" + token + "." + k;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     synchronized void stop() {
@@ -274,6 +281,24 @@ final class PhoneServer {
     // ------------------------------------------------------------------ WebSocket (télécommande rapide)
 
     private final java.util.Set<Socket> wsOpen = new java.util.HashSet<>();
+    private volatile Signer signer;
+
+    private static String randomKey() {
+        String a = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        java.security.SecureRandom r = new java.security.SecureRandom();
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < 32; i++) b.append(a.charAt(r.nextInt(a.length())));
+        return b.toString();
+    }
+
+    /** Signature d'une requête (HMAC de la clé du QR code) : vraie et jamais vue. */
+    private boolean signedOk(HttpRequest r, String bodyHash) {
+        Signer s = signer;
+        if (s == null) return false;
+        long seq;
+        try { seq = Long.parseLong(r.header("x-lumen-seq")); } catch (Exception e) { return false; }
+        return s.verify(seq, Signer.httpMessage(r.method, r.target, seq, bodyHash), r.header("x-lumen-sig"));
+    }
     private static volatile String wsSrc = "";
 
     /**
@@ -310,6 +335,15 @@ final class PhoneServer {
                 setShown(true);
                 String m = new String(data, "UTF-8");
                 if (m.equals("p")) { WsFrames.sendText(out, "p"); continue; }
+                // message signé : « S <numéro> <signature> <contenu> »
+                if (!m.startsWith("S ")) continue;
+                String[] parts = m.split(" ", 4);
+                if (parts.length < 4) continue;
+                long seq;
+                try { seq = Long.parseLong(parts[1]); } catch (Exception e) { continue; }
+                Signer sg = signer;
+                if (sg == null || !sg.verify(seq, Signer.wsMessage(seq, parts[3]), parts[2])) continue;
+                m = parts[3];
                 if (!keyLimiter.allow(System.currentTimeMillis())) continue;
                 String reply = null;
                 if (m.startsWith("k ")) {
@@ -396,7 +430,8 @@ final class PhoneServer {
         }
     }
 
-    private void route(HttpRequest r, InputStream in, OutputStream out, Socket sock) throws Exception {
+    private void route(HttpRequest r, InputStream rawIn, OutputStream out, Socket sock) throws Exception {
+        InputStream in = rawIn;
         String p = r.path;
         boolean post = r.method.equals("POST");
 
@@ -435,6 +470,18 @@ final class PhoneServer {
 
         // images : nombreuses mais inoffensives ; tout le reste passe par la limite de débit
         boolean image = !post && (p.equals("/api/icon") || p.equals("/api/thumb") || p.equals("/api/pickthumb"));
+
+        // signature (sauf les images, demandées par la page sans en-têtes) : contenu compris, sauf
+        // pour l'envoi de fichiers (trop gros pour être relu ; protégés par la session et l'appareil)
+        if (!image) {
+            String bodyHash;
+            if (post && !p.equals("/api/upload") && r.contentLength > 0) {
+                byte[] body = HttpRequest.readBody(rawIn, r.contentLength, 256 * 1024);
+                bodyHash = Signer.sha256Hex(body);
+                in = new java.io.ByteArrayInputStream(body);
+            } else bodyHash = p.equals("/api/upload") ? null : Signer.sha256Hex(new byte[0]);
+            if (!signedOk(r, bodyHash)) { json(out, 401, "{\"ok\":false,\"sig\":true}"); return; }
+        }
         boolean fast = post && (p.equals("/api/key") || p.equals("/api/text"));
         if (!image && !(fast ? keyLimiter : limiter).allow(System.currentTimeMillis())) { json(out, 429, "{\"ok\":false,\"slow\":true}"); return; }
         // action sensible avec un code PIN sur la TV : le code doit avoir été saisi sur ce téléphone
