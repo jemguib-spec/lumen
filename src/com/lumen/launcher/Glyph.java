@@ -13,7 +13,7 @@ import android.graphics.drawable.Drawable;
 /** Pictogrammes dessinés en vectoriel : boutons de l'accueil et rubriques des réglages. */
 final class Glyph extends Drawable {
     static final int GRID = 0, SLIDERS = 1, INPUT = 2, MOON = 3, IMAGE = 4, HOME = 5, PHONE = 6, GEAR = 7, INFO = 8, DOC = 9, SPARK = 10,
-            MOVE = 11, STAR = 12, STAR_OFF = 13, HIDE = 14, LOCK = 15, TRASH = 16, UNLOCK = 17;
+            MOVE = 11, STAR = 12, STAR_OFF = 13, HIDE = 14, LOCK = 15, TRASH = 16, UNLOCK = 17, CLOSE = 18, RESTART = 19;
     private final int type;
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -165,6 +165,18 @@ final class Glyph extends Drawable {
                 q.quadTo(cx - s * .16f, cy - s * .36f - lift, cx, cy - s * .36f - lift);
                 q.quadTo(cx + s * .16f, cy - s * .36f - lift, cx + s * .16f, cy - s * .16f - lift);
                 if (t == LOCK) q.lineTo(cx + s * .16f, cy - s * .04f);
+                c.drawPath(q, p);
+                break;
+            }
+            case CLOSE: { // croix dans un cercle : fermer l'appli
+                c.drawCircle(cx, cy, s * .36f, p);
+                c.drawLine(cx - s * .13f, cy - s * .13f, cx + s * .13f, cy + s * .13f, p);
+                c.drawLine(cx + s * .13f, cy - s * .13f, cx - s * .13f, cy + s * .13f, p);
+                break;
+            }
+            case RESTART: { // flèche circulaire : redémarrer
+                c.drawArc(new RectF(cx - s * .32f, cy - s * .32f, cx + s * .32f, cy + s * .32f), -60, 300, false, p);
+                q.moveTo(cx + s * .06f, cy - s * .40f); q.lineTo(cx + s * .19f, cy - s * .28f); q.lineTo(cx + s * .03f, cy - s * .20f);
                 c.drawPath(q, p);
                 break;
             }

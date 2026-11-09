@@ -160,6 +160,8 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         super.onResume();
         resumedNow = true;
         wall.start();
+        h.removeCallbacks(dlTick);
+        h.postDelayed(dlTick, 1500);
         if (cinema == null) cinema = new Cinema(this, prefs);
         cinema.onHome(); // retour sur l'accueil : fin de la séance (lumières qui reviennent)
         if (appsOpen) LivingScene.paused = true;
@@ -871,7 +873,52 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         }, 4000);
     }
 
+    /** Dernière appli ouverte depuis Lumen (pour « Fermer l'appli » depuis le téléphone). */
+    private AppRepo.App lastLaunched;
+
+    /**
+     * Ferme une appli qui ne répond plus : Android arrête ses processus une fois qu'elle n'est plus
+     * à l'écran (Lumen y est revenu). Elle redémarrera proprement à la prochaine ouverture.
+     */
+    boolean closeApp(AppRepo.App app) {
+        if (app == null || app.isInput() || app.pkg.equals(getPackageName())) return false;
+        try {
+            ((android.app.ActivityManager) getSystemService(ACTIVITY_SERVICE)).killBackgroundProcesses(app.pkg);
+            return true;
+        } catch (Exception e) { return false; }
+    }
+
+    /** Redémarre Lumen (en cas de souci) : Android relance l'écran d'accueil aussitôt. */
+    void restartLumen() {
+        try {
+            Intent i = new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            android.app.PendingIntent pi = android.app.PendingIntent.getActivity(this, 7, i,
+                    android.app.PendingIntent.FLAG_CANCEL_CURRENT | 0x04000000 /* FLAG_IMMUTABLE */);
+            ((android.app.AlarmManager) getSystemService(ALARM_SERVICE)).set(android.app.AlarmManager.RTC, System.currentTimeMillis() + 600, pi);
+        } catch (Exception ignored) { }
+        finishAffinity();
+        android.os.Process.killProcess(android.os.Process.myPid());
+    }
+
+    /** Depuis le téléphone : retour sur Lumen puis fermeture de l'appli ouverte. */
+    @Override public String phoneCloseApp() {
+        final AppRepo.App app = lastLaunched;
+        if (app == null) return "{\"ok\":false,\"none\":true}";
+        if (!resumedNow) {
+            if (!RemoteService.perform(RemoteService.HOME)) {
+                try { startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); } catch (Exception ignored) { }
+            }
+        }
+        h.postDelayed(new Runnable() {
+            @Override public void run() {
+                if (closeApp(app)) { showNotice(app.label + " fermée"); lastLaunched = null; }
+            }
+        }, 1500);
+        return "{\"ok\":true,\"name\":" + org.json.JSONObject.quote(app.label) + "}";
+    }
+
     void launch(AppRepo.App app) {
+        lastLaunched = app;
         if (cinema != null) cinema.onLaunch(app.pkg);
         prefs.addRecent(app.key);
         prefs.recordHabit(app.key);
@@ -1897,6 +1944,40 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         h.removeCallbacks(picksRefresh);
         h.postDelayed(picksRefresh, 3000);
     }
+
+    // ------------------------------------------------------------------ indicateur de téléchargement
+
+    private TextView dlPill;
+
+    /** Petit indicateur en bas à droite tant que Lumen télécharge photos ou vidéos (mis à jour chaque seconde). */
+    private final Runnable dlTick = new Runnable() {
+        @Override public void run() {
+            String s = online == null ? "" : online.activity();
+            if (dlPill == null) {
+                dlPill = text(18, "sans-serif-medium", 0xD9FFFFFF);
+                dlPill.setSingleLine(true);
+                dlPill.setPadding(u(22), u(10), u(22), u(10));
+                GradientDrawable bg = new GradientDrawable();
+                bg.setCornerRadius(u(30));
+                bg.setColor(0x80101218);
+                bg.setStroke(Math.max(1, u(1.5f)), 0x26FFFFFF);
+                dlPill.setBackground(bg);
+                dlPill.setAlpha(0f);
+                FrameLayout.LayoutParams lp = wrap(Gravity.BOTTOM | Gravity.END);
+                lp.rightMargin = u(48);
+                lp.bottomMargin = u(28);
+                root.addView(dlPill, root.indexOfChild(notice), lp);
+            }
+            boolean show = !s.isEmpty() && !ambientOn;
+            if (show) dlPill.setText("↓  " + s);
+            float want = show ? 1f : 0f;
+            if (dlPill.getAlpha() != want && dlPill.getTag() != (Object) Boolean.valueOf(show)) {
+                dlPill.setTag(show);
+                dlPill.animate().alpha(want).setStartDelay(0).setDuration(400).start();
+            }
+            if (resumedNow) h.postDelayed(this, 1000);
+        }
+    };
 
     private View phonePill;
 

@@ -272,6 +272,22 @@ final class Online {
 
     private void setStatus(String theme, String s) { status.put(theme, s); }
 
+    /**
+     * Téléchargement en cours, toutes catégories (« Vidéo 2 sur 4 · 37 % »), ou vide si rien ne
+     * se télécharge. Sert au petit indicateur de l'accueil.
+     */
+    String activity() {
+        String[] names = {"Photos", "Photos", "Photos", "Vidéos de fond", "Photo du jour", "Ambiances"};
+        String[] themes = {SPACE, NATURE, ANIMALS, VIDEO, POTD, COSY};
+        for (int i = 0; i < themes.length; i++) {
+            boolean busy = COSY.equals(themes[i]) ? cosyRunning : isBusy(themes[i]);
+            if (!busy) continue;
+            String st = status(themes[i]);
+            return names[i] + (st.isEmpty() ? " · préparation…" : " · " + st);
+        }
+        return "";
+    }
+
     // ------------------------------------------------------------------ téléchargement
 
     private static final class Candidate {
@@ -706,14 +722,18 @@ final class Online {
                 try {
                     purgeOffCatalog(COSY);
                     setStatus(COSY, "Préparation…");
+                    lastError = "";
                     List<Candidate> all = catalog(SCOPE_COSY, false);
                     for (int round = 1; round <= COSY_PER_KIND && active; round++)
                         for (int k = 0; k < COSY_NAMES.length && active; k++)
                             if (cosyItems(k).size() < round) cosyFetchOne(k, all);
-                    setStatus(COSY, "");
+                    // on garde la raison d'un échec visible (sinon l'écran ne dit rien)
+                    setStatus(COSY, lastError.isEmpty() ? "" : Messages.download(lastError));
+                    if (!lastError.isEmpty()) CrashLog.note(ctx, "Ambiances : " + lastError);
                 } catch (Throwable e) {
                     lastError = "Commons : " + e.getMessage();
-                    setStatus(COSY, "");
+                    CrashLog.note(ctx, "Ambiances : " + lastError);
+                    setStatus(COSY, Messages.download(lastError));
                 } finally { cosyRunning = false; }
             }
         });

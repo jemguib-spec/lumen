@@ -105,6 +105,12 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - **Bandeau d'accueil** : une ligne au-dessus des favoris — salutation selon l'heure, météo (si une ville est réglée) et dernier épisode en cours. Réglages › Accueil et applis › Bandeau d'accueil pour le masquer.
 - L'appli que tu ouvres d'habitude à cette heure est sélectionnée au démarrage et entourée d'un liseré qui respire doucement.
 
+## Quand une appli bloque
+- Appui long sur l'appli › **Fermer l'appli** : Android arrête ses processus ; elle redémarre proprement à la prochaine ouverture.
+- Depuis le téléphone (onglet TV) : **Fermer l'appli** revient sur l'accueil puis ferme la dernière appli ouverte depuis Lumen.
+- Si c'est Lumen qui se comporte mal : Réglages › Système › **Redémarrer Lumen**.
+- Pendant un téléchargement de photos ou de vidéos, un petit indicateur en bas à droite de l'accueil dit ce qui se passe (« Ambiances · Vidéo 2 sur 4 · 37 % »).
+
 ## Recherche
 - La recherche de « Toutes les applications » trouve aussi les épisodes en cours (Reprendre) et les réglages (« veille », « stockage », « pin »…).
 

@@ -242,6 +242,14 @@ function renderScreen() {
   $('srcName').textContent = (tv.sources || [])[tv.source] || '';
 }
 $('veilleBtn').addEventListener('click', () => act('/api/veille?on=' + (S.tv.veille ? 0 : 1)));
+$('closeAppBtn').addEventListener('click', async () => {
+  try {
+    const r = await api('/api/closeapp', {method: 'POST'});
+    const j = await r.json();
+    toast(j.ok ? (j.name + ' : fermeture…') : 'Aucune appli ouverte depuis Lumen');
+  } catch (e) { }
+});
+$('homeBtn').addEventListener('click', () => press('home'));
 $('nextBtn').addEventListener('click', () => act('/api/next', null, 'Fond suivant'));
 $('srcSel').addEventListener('change', e => act('/api/source?n=' + e.target.value, null, 'Fond : ' + e.target.selectedOptions[0].textContent));
 // ---- Texte : écrit en direct dans la recherche à l'écran (Lumen ou autre appli), Entrée valide

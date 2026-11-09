@@ -84,6 +84,8 @@ final class PhoneServer {
         void onPhoneName(String name);
         /** Home Assistant vient d'être relié : le bouton « Maison » apparaît. */
         void onHaLinked();
+        /** Ferme l'appli ouverte depuis Lumen (retour à l'accueil puis arrêt). */
+        String phoneCloseApp();
     }
 
     /** Touches acceptées depuis le téléphone (liste fermée). */
@@ -315,6 +317,7 @@ final class PhoneServer {
         switch (p) {
             case "/api/pin": json(out, 200, pin(HttpRequest.readBody(in, r.contentLength, 16), sid)); return;
             case "/api/ping": json(out, 200, "{\"ok\":true}"); return;
+            case "/api/closeapp": json(out, 200, onMain(new Callable<String>() { @Override public String call() { return host.phoneCloseApp(); } })); return;
             case "/api/storage/clear": {
                 final int what = intParam(r, "what", -1);
                 if (what < Online.CLEAR_PHOTOS || what > Online.CLEAR_ALL) { ok(out, false); return; }

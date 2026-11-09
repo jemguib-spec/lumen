@@ -272,7 +272,8 @@ final class AmbiancePanel {
                         + "Le mode veille avec tes images : Réglages › Mode veille › Lancer le mode veille.");
             else wait.setText(a.online.cosyBusy()
                     ? "Téléchargement des vidéos choisies…" + (st.isEmpty() ? "" : "\n" + st)
-                    : "Aucune vidéo prête pour l'instant.\nAppuie sur OK pour en choisir d'autres.");
+                    : "Aucune vidéo prête pour l'instant." + (st.isEmpty() ? "" : "\n" + st)
+                    + "\nOK : choisir d'autres vidéos ou réessayer");
             wait.setVisibility(View.VISIBLE);
             status.setText("");
             credit.setText("");
@@ -430,6 +431,15 @@ final class AmbiancePanel {
                 @Override public void onClick(View v) { a.pickCosyVideos(); }
             });
             menu.addView(first, a.rowLp());
+            if (a.prefs.videoOkCount() > 0) {
+                LinearLayout retry = a.listRow("Réessayer le téléchargement", new MainActivity.Value() {
+                    @Override public String get() { return a.online.cosyBusy() ? "En cours…" : ""; }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) { a.online.refreshCosy(); a.showNotice("Téléchargement relancé"); }
+                });
+                menu.addView(retry, 0, a.rowLp());
+                first = retry;
+            }
         }
         LinearLayout quit = a.listRow("Quitter", null, new View.OnClickListener() {
             @Override public void onClick(View v) { a.closeAmbiance(); }

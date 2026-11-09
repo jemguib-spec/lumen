@@ -83,6 +83,12 @@ final class AppMenu {
             }, false), a.rowLp());
         }
         if (!app.isInput()) {
+            card.addView(a.iconRow(Glyph.CLOSE, "Fermer l'appli", null, new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    a.closeOverlay(true);
+                    a.showNotice(a.closeApp(app) ? app.label + " fermée · elle redémarrera proprement" : "Impossible de fermer " + app.label);
+                }
+            }, false), a.rowLp());
             card.addView(a.menuDivider());
             card.addView(a.iconRow(Glyph.INFO, "Infos sur l'appli", null, new View.OnClickListener() {
                 @Override public void onClick(View v) {
