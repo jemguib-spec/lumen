@@ -29,6 +29,9 @@ input[type=text],input[type=search],input[type=password],select{width:100%;paddi
 input:focus,select:focus{border-color:rgba(255,255,255,.35)}
 input::placeholder{color:var(--dim)}
 select{margin-top:10px}
+.selwrap{position:relative;margin:12px 0}
+.selwrap select{margin:0;padding-right:40px}
+.selwrap::after{content:"▾";position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--dim);pointer-events:none}
 select option{background:#16171d;color:#f5f5f7}
 .go{width:48px;flex:none;border:0;border-radius:14px;background:#f5f5f7;color:#111;font-size:19px;font-weight:600}
 .go:active,.btn:active,.card:active,.chip:active{transform:scale(.96)}

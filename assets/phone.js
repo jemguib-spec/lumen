@@ -327,15 +327,17 @@ async function pumpKeys() {
   }
   keyBusy = false;
 }
-// boutons hors du pavé ; ceux du pavé seulement au clavier (detail 0), le doigt passe par les gestes
+// boutons hors du pavé ; ceux du pavé seulement au clavier : au doigt, le geste a déjà envoyé la
+// touche, et certains navigateurs ajoutent ensuite un « clic » (la touche partait deux fois)
+let lastPadTouch = 0;
 document.querySelectorAll('#remote [data-k]').forEach(b => b.addEventListener('click', e => {
-  if (b.closest('.pad') && e.detail !== 0) return;
+  if (b.closest('.pad') && (e.pointerType || Date.now() - lastPadTouch < 800)) return;
   press(b.dataset.k);
 }));
 
 // ---- Pavé : glisser pour se déplacer, toucher pour OK, garder le doigt pour défiler vite
 const pad = document.querySelector('.pad');
-const STEP = 28; // px de glissement par case
+const STEP = 40; // px de glissement par case
 let g = null;
 function stopRepeat() { if (!g) return; clearTimeout(g.hold); clearInterval(g.rep); g.hold = g.rep = null; }
 function armRepeat(k) {
@@ -344,6 +346,7 @@ function armRepeat(k) {
 }
 pad.addEventListener('pointerdown', e => {
   e.preventDefault();
+  lastPadTouch = Date.now();
   try { pad.setPointerCapture(e.pointerId); } catch (x) { }
   const b = e.target.closest('[data-k]');
   g = {x: e.clientX, y: e.clientY, moved: false, repeated: false, k: b ? b.dataset.k : 'ok', hold: null, rep: null};
@@ -360,6 +363,7 @@ pad.addEventListener('pointermove', e => {
   armRepeat(k); // doigt immobile au bout du geste : la sélection continue d'avancer
 });
 function endGesture() {
+  lastPadTouch = Date.now();
   if (!g) return;
   stopRepeat();
   pad.classList.remove('glide');
@@ -894,6 +898,13 @@ $('profForm').addEventListener('submit', async e => {
   if (await act('/api/profile/add', n, 'Profil « ' + n + ' » ajouté')) { $('profIn').value = ''; $('profIn').blur(); }
 });
 
+/** Clé enregistrée ou non : dit clairement, et « Retirer » seulement s'il y a une clé. */
+function keyState(id, saved, label) {
+  $(id + 'State').textContent = '✓ Clé enregistrée';
+  $(id + 'Del').parentElement.hidden = !saved;
+  $(id + 'Key').placeholder = saved ? 'Remplacer la clé enregistrée' : label + ' · aucune clé enregistrée';
+}
+
 // ---- Plus
 function renderOpt() {
   renderProfiles();
@@ -904,8 +915,8 @@ function renderOpt() {
   const tv = S.tv || {};
   $('pinBox').hidden = !tv.pin;
   $('pinState').textContent = tv.unlocked ? 'Déverrouillé pour 5 min' : 'Déverrouiller les actions protégées';
-  $('pxState').textContent = S.pexels ? 'Pexels activé' : 'Pexels désactivé';
-  $('tmState').textContent = S.tmdb ? 'Films du moment activés' : 'Films du moment désactivés';
+  keyState('px', S.pexels, 'Clé Pexels');
+  keyState('tm', S.tmdb, 'Clé API TMDB');
 }
 $('pinOpen').addEventListener('click', () => askPin());
 $('pxSave').addEventListener('click', async () => {
