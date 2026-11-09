@@ -102,7 +102,10 @@ final class RecoPanel {
 
         HorizontalScrollView chipsScroll = new HorizontalScrollView(a);
         chipsScroll.setHorizontalScrollBarEnabled(false);
-        chipsScroll.setClipToPadding(false);
+        chipsScroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        // un bouton qui dépasse s'efface en douceur au bord (la rangée défile), au lieu d'être coupé net
+        chipsScroll.setHorizontalFadingEdgeEnabled(true);
+        chipsScroll.setFadingEdgeLength(a.u(70));
         final LinearLayout chips = new LinearLayout(a);
         chips.setPadding(a.u(20), a.u(6), a.u(20), a.u(18));
         chipsScroll.addView(chips);
