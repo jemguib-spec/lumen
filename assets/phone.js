@@ -31,7 +31,7 @@ function show(t) {
   $('title').textContent = TITLES[t];
   window.scrollTo(0, 0);
   if (t === 'vid') loadPicks();
-  if (t === 'opt') { loadLog(); if (S.ha && !haEntities) loadHa(); }
+  if (t === 'opt') { loadSettings(); loadLog(); if (S.ha && !haEntities) loadHa(); }
 }
 
 // ------------------------------------------------------------------ réseau
@@ -194,7 +194,12 @@ async function load() {
 // ------------------------------------------------------------------ rendu
 function iconImg(key, cls) {
   const i = el('img', cls); i.loading = 'lazy'; i.alt = '';
-  i.addEventListener('error', () => { const p = el('div', 'ph', (app(key).label || '?').slice(0, 2)); i.replaceWith(p); });
+  // sans icône : un pictogramme sobre plutôt que deux lettres
+  i.addEventListener('error', () => {
+    const p = el('div', 'ph');
+    p.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></svg>';
+    i.replaceWith(p);
+  });
   i.src = '/api/icon?key=' + encodeURIComponent(key);
   return i;
 }
@@ -736,6 +741,92 @@ function renderCine() {
 $('cineFilm').addEventListener('change', e => { const c = cineState(); c.film = e.target.value; saveCine(c, c.film ? 'Scène « film » enregistrée' : 'Mode cinéma désactivé'); });
 $('cinePause').addEventListener('change', e => { const c = cineState(); c.pause = e.target.value; saveCine(c, 'Scène « pause » enregistrée'); });
 $('cineOpen').addEventListener('click', () => { const c = cineState(); c.onOpen = !c.onOpen; saveCine(c); });
+
+// ---- Réglages de la TV depuis le téléphone (liste fermée, appliqués aussitôt)
+let SET = null, WALLS = null;
+async function loadSettings() {
+  try { SET = await (await api('/api/settings')).json(); } catch (e) { return; }
+  renderSettings();
+  try { WALLS = await (await api('/api/walls')).json(); renderWalls(); } catch (e) { }
+}
+async function setSetting(k, v, msg) {
+  try {
+    const r = await api('/api/setting?k=' + k + '&v=' + v, {method: 'POST'});
+    const j = await r.json();
+    if (!j.ok) { toast('Impossible'); return; }
+    if (msg) toast(msg);
+    SET[k] = typeof SET[k] === 'boolean' ? v === 1 : v;
+    if (k === 'source' || k === 'interval' || k === 'follow') setTimeout(loadSettings, 700);
+    else renderSettings();
+  } catch (e) { }
+}
+function selRow(label, key, values, names, fmt) {
+  const r = el('div', 'row');
+  r.appendChild(el('div', 'name', label));
+  const s = el('select');
+  values.forEach((v, i) => { const o = el('option', null, names ? names[i] : fmt(v)); o.value = v; s.appendChild(o); });
+  s.value = SET[key];
+  s.addEventListener('change', () => setSetting(key, +s.value, label + ' : ' + s.selectedOptions[0].textContent));
+  r.appendChild(s);
+  return r;
+}
+function tgRow(label, key, local) {
+  const r = el('button', 'row link');
+  r.appendChild(el('span', 'name', label));
+  const on = local ? local() : !!SET[key];
+  const t = el('span', 'tg' + (on ? ' on' : ''));
+  r.appendChild(t);
+  r.addEventListener('click', () => {
+    if (local) { local(true); t.classList.toggle('on'); return; }
+    setSetting(key, SET[key] ? 0 : 1);
+  });
+  return r;
+}
+const fmtInterval = v => v === 0 ? 'Fond fixe' : v < 60 ? v + ' s' : (v / 60) + ' min';
+function renderSettings() {
+  if (!SET) return;
+  const w = $('setWall'); clear(w);
+  w.appendChild(selRow('Source', 'source', SET.sources.map((_, i) => i), SET.sources));
+  w.appendChild(selRow('Changement', 'interval', SET.intervals, null, fmtInterval));
+  w.appendChild(tgRow('Paysages selon l’heure', 'follow'));
+  w.appendChild(tgRow('Paysages animés', 'living'));
+  w.appendChild(tgRow('Effets météo', 'weatherFx'));
+  const v = $('setVeille'); clear(v);
+  v.appendChild(selRow('Images', 'veille', SET.veilles, SET.veilleNames));
+  v.appendChild(selRow('Activer après', 'ambient', SET.ambients, null, x => x === 0 ? 'Jamais' : x + ' min'));
+  v.appendChild(selRow('Écran de nuit', 'night', SET.nights, null, x => x < 0 ? 'Désactivé' : (x === 0 ? 'De minuit' : 'De ' + x + ' h') + ' à 7 h'));
+  const h = $('setHome'); clear(h);
+  h.appendChild(tgRow('Bandeau d’accueil', 'greeting'));
+  h.appendChild(tgRow('Horloge', 'clock'));
+  h.appendChild(tgRow('Bouton Maison', 'haButton'));
+  h.appendChild(tgRow('Sons de l’interface', 'sounds'));
+  h.appendChild(tgRow('Icônes monochromes ici', null, set => {
+    let m = true; try { m = localStorage.getItem('lumen-mono') !== '0'; } catch (e) { }
+    if (set) { m = !m; try { localStorage.setItem('lumen-mono', m ? '1' : '0'); } catch (e) { } document.body.classList.toggle('mono', m); }
+    return m;
+  }));
+}
+function renderWalls() {
+  const g = $('wallGrid'); clear(g);
+  if (!WALLS || !WALLS.walls.length) { $('wallNote').textContent = 'Aucun fond à gérer pour cette source (paysages animés ou photos pas encore téléchargées).'; return; }
+  $('wallNote').textContent = WALLS.source + ' · touche un fond pour le retirer de la rotation (ou le remettre).';
+  WALLS.walls.forEach(x => {
+    const b = el('button', 'wall' + (x.hidden ? ' off' : ''));
+    const i = el('img'); i.loading = 'lazy'; i.alt = x.title || ''; i.src = '/api/wallthumb?id=' + encodeURIComponent(x.id);
+    b.appendChild(i);
+    b.appendChild(el('span', 'eye', 'Retiré'));
+    b.addEventListener('click', async () => {
+      x.hidden = !x.hidden; b.classList.toggle('off', x.hidden);
+      try {
+        const r = await api('/api/wall?id=' + encodeURIComponent(x.id) + '&hidden=' + (x.hidden ? 1 : 0), {method: 'POST'});
+        const j = await r.json(); if (!j.ok) throw 0;
+        toast(x.hidden ? 'Fond retiré de la rotation' : 'Fond remis');
+      } catch (e) { x.hidden = !x.hidden; b.classList.toggle('off', x.hidden); }
+    });
+    g.appendChild(b);
+  });
+}
+try { document.body.classList.toggle('mono', localStorage.getItem('lumen-mono') !== '0'); } catch (e) { document.body.classList.add('mono'); }
 
 // ---- Nom de ce téléphone (affiché sur la TV : « Contrôlée par … »), gardé sur ce téléphone seulement
 function savedName() { try { return localStorage.getItem('lumen-name') || ''; } catch (e) { return ''; } }

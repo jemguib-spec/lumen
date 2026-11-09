@@ -926,6 +926,16 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     /** Depuis le téléphone : retour sur Lumen puis fermeture de l'appli ouverte. */
     @Override public void phoneRestart() { restartLumenNicely(); }
 
+    @Override public void onSettingsChangedFromPhone(boolean wallChanged) {
+        if (wallChanged) wall.restart();
+        Sounds.get(this).setEnabled(prefs.sounds());
+        clockBox.setVisibility(prefs.showClock() ? View.VISIBLE : View.GONE);
+        if (houseButton != null) houseButton.setVisibility(prefs.haButton() ? View.VISIBLE : View.GONE);
+        refreshGreeting();
+        updateWeatherFx();
+        wake(); // le délai du mode veille repart avec le nouveau réglage
+    }
+
     /**
      * Un téléphone vient de scanner le QR code : rien ne se passe tant que quelqu'un devant la TV
      * ne l'a pas accepté (une photo du QR code ne suffit donc pas). Sans réponse en 60 s : refusé.

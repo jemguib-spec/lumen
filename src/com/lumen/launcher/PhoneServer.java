@@ -90,6 +90,8 @@ final class PhoneServer {
         void phoneRestart();
         /** Un nouveau téléphone demande l'accès : la TV demande confirmation (réponse via cb). */
         void askPhoneApproval(String name, Approval cb);
+        /** Un réglage a changé depuis le téléphone ; wall = le fond doit être rechargé. */
+        void onSettingsChangedFromPhone(boolean wall);
     }
 
     interface Approval { void answer(boolean allowed, boolean remember); }
@@ -111,7 +113,7 @@ final class PhoneServer {
     /** Actions permises en « télécommande seulement ». */
     static final java.util.Set<String> REMOTE_ONLY = new java.util.HashSet<>(java.util.Arrays.asList(
             "/api/state", "/api/icon", "/api/key", "/api/text", "/api/ping", "/api/launch", "/api/bye", "/api/name",
-            "/api/closeapp", "/api/next", "/api/veille", "/api/ambiance", "/api/timer", "/api/pin"));
+            "/api/closeapp", "/api/next", "/api/veille", "/api/ambiance", "/api/timer", "/api/pin", "/api/pickthumb"));
 
     /** Empreinte d'un identifiant de téléphone (on ne garde jamais l'identifiant). */
     static String fingerprint(String deviceId) {
@@ -444,7 +446,10 @@ final class PhoneServer {
         // connexion permanente de la télécommande (WebSocket) : chaque appui part aussitôt
         if (!post && p.equals("/ws")) { webSocket(r, in, out, sock); return; }
 
-        if (!"1".equals(r.header("x-lumen"))) { send(out, 403, "text/plain", new byte[0], null); return; }
+        // images (icônes, aperçus) : demandées par la page via <img>, qui ne peut pas ajouter d'en-tête ;
+        // lecture seule, cookie de session (SameSite=Strict) et appareil vérifiés plus bas
+        boolean imgReq = !post && (p.equals("/api/icon") || p.equals("/api/thumb") || p.equals("/api/pickthumb") || p.equals("/api/wallthumb"));
+        if (!imgReq && !"1".equals(r.header("x-lumen"))) { send(out, 403, "text/plain", new byte[0], null); return; }
 
         if (post && p.equals("/api/session")) {
             String sid = auth.openSession(r.header("x-lumen-token"));
@@ -469,7 +474,7 @@ final class PhoneServer {
         setShown(true); // le téléphone revient (page rouverte, téléphone déverrouillé)
 
         // images : nombreuses mais inoffensives ; tout le reste passe par la limite de débit
-        boolean image = !post && (p.equals("/api/icon") || p.equals("/api/thumb") || p.equals("/api/pickthumb"));
+        boolean image = imgReq;
 
         // signature (sauf les images, demandées par la page sans en-têtes) : contenu compris, sauf
         // pour l'envoi de fichiers (trop gros pour être relu ; protégés par la session et l'appareil)
@@ -491,6 +496,9 @@ final class PhoneServer {
         if (!post && p.equals("/api/icon")) { byte[] b = icon(r.query.get("key")); send(out, b == null ? 404 : 200, "image/png", b == null ? new byte[0] : b, null); return; }
         if (!post && p.equals("/api/thumb")) { byte[] b = thumb(r.query.get("id")); send(out, b == null ? 404 : 200, "image/jpeg", b == null ? new byte[0] : b, null); return; }
         if (!post && p.equals("/api/pickthumb")) { byte[] b = pickThumb(r.query.get("scope"), r.query.get("key")); send(out, b == null ? 404 : 200, "image/jpeg", b == null ? new byte[0] : b, null); return; }
+        if (!post && p.equals("/api/wallthumb")) { byte[] b = wallThumb(r.query.get("id")); send(out, b == null ? 404 : 200, "image/jpeg", b == null ? new byte[0] : b, null); return; }
+        if (!post && p.equals("/api/settings")) { json(out, 200, settings().toString()); return; }
+        if (!post && p.equals("/api/walls")) { json(out, 200, walls().toString()); return; }
         if (!post && p.equals("/api/picks")) { json(out, 200, picks(r.query.get("scope")).toString()); return; }
         if (!post && p.equals("/api/log")) { send(out, 200, "text/plain; charset=utf-8", CrashLog.read(ctx).getBytes("UTF-8"), null); return; }
         if (!post && p.equals("/api/ha/entities")) { json(out, 200, haEntities()); return; }
@@ -574,6 +582,21 @@ final class PhoneServer {
             case "/api/timer": json(out, 200, timer(intParam(r, "min", -1))); return;
             case "/api/veille": json(out, 200, veille("1".equals(r.query.get("on")))); return;
             case "/api/source": json(out, 200, source(intParam(r, "n", -1))); return;
+            case "/api/setting": ok(out, setSetting(r.query.get("k"), intParam(r, "v", Integer.MIN_VALUE))); return;
+            case "/api/wall": {
+                final String id = r.query.get("id");
+                final boolean hide = "1".equals(r.query.get("hidden"));
+                if (id == null || id.length() > 300 || !wallIds().contains(id)) { ok(out, false); return; }
+                onMain(new Callable<Void>() {
+                    @Override public Void call() {
+                        if (hide) host.prefs().hideWall(id); else host.prefs().unhideWall(id);
+                        host.onSettingsChangedFromPhone(true);
+                        return null;
+                    }
+                });
+                ok(out, true);
+                return;
+            }
             case "/api/next": json(out, 200, onTv(new Runnable() { @Override public void run() { host.phoneNextWall(); } })); return;
             default: break;
         }
@@ -965,6 +988,130 @@ final class PhoneServer {
 
     private String veille(final boolean on) throws Exception {
         return onTv(new Runnable() { @Override public void run() { host.phoneVeille(on); } });
+    }
+
+    // ------------------------------------------------------------------ réglages depuis le téléphone
+
+    /** Réglages modifiables depuis le téléphone (liste fermée) avec leurs choix possibles. */
+    private JSONObject settings() throws Exception {
+        Prefs pr = host.prefs();
+        JSONObject o = new JSONObject();
+        o.put("source", pr.source()).put("sources", new JSONArray(java.util.Arrays.asList(Prefs.SRC_NAMES)));
+        o.put("interval", pr.intervalSeconds()).put("intervals", ints(Prefs.INTERVALS));
+        o.put("follow", pr.followTime());
+        o.put("veille", pr.veilleSource()).put("veilles", ints(Prefs.VEILLE_CHOICES));
+        JSONArray vn = new JSONArray();
+        for (int v : Prefs.VEILLE_CHOICES) vn.put(Prefs.veilleName(v));
+        o.put("veilleNames", vn);
+        o.put("ambient", pr.ambientMinutes()).put("ambients", ints(Prefs.AMBIENT_MIN));
+        o.put("night", pr.nightHour()).put("nights", ints(Prefs.NIGHT_HOURS));
+        o.put("greeting", pr.greeting()).put("clock", pr.showClock()).put("sounds", pr.sounds())
+                .put("living", pr.livingScenes()).put("weatherFx", pr.weatherFx()).put("haButton", pr.haButton());
+        return o;
+    }
+
+    private static JSONArray ints(int[] a) { JSONArray j = new JSONArray(); for (int x : a) j.put(x); return j; }
+
+    private static boolean in(int v, int[] a) { for (int x : a) if (x == v) return true; return false; }
+
+    private boolean setSetting(final String k, final int v) throws Exception {
+        if (k == null || v == Integer.MIN_VALUE) return false;
+        final Prefs pr = host.prefs();
+        final boolean b = v == 1;
+        boolean okv;
+        switch (k) {
+            case "source": okv = v >= 0 && v < Prefs.SRC_NAMES.length; break;
+            case "interval": okv = in(v, Prefs.INTERVALS); break;
+            case "veille": okv = in(v, Prefs.VEILLE_CHOICES); break;
+            case "ambient": okv = in(v, Prefs.AMBIENT_MIN); break;
+            case "night": okv = in(v, Prefs.NIGHT_HOURS); break;
+            case "follow": case "greeting": case "clock": case "sounds": case "living": case "weatherFx": case "haButton": okv = v == 0 || v == 1; break;
+            default: return false;
+        }
+        if (!okv) return false;
+        return onMain(new Callable<Boolean>() {
+            @Override public Boolean call() {
+                boolean wall = false;
+                switch (k) {
+                    case "source": host.phoneSource(v); return true;
+                    case "interval": pr.setIntervalSeconds(v); wall = true; break;
+                    case "follow": pr.setFollowTime(b); wall = true; break;
+                    case "veille": pr.setVeilleSource(v); break;
+                    case "ambient": pr.setAmbientMinutes(v); break;
+                    case "night": pr.setNightHour(v); break;
+                    case "greeting": pr.setGreeting(b); break;
+                    case "clock": pr.setShowClock(b); break;
+                    case "sounds": pr.setSounds(b); break;
+                    case "living": pr.setLivingScenes(b); wall = true; break;
+                    case "weatherFx": pr.setWeatherFx(b); break;
+                    case "haButton": pr.setHaButton(b); break;
+                }
+                host.onSettingsChangedFromPhone(wall);
+                return true;
+            }
+        });
+    }
+
+    /** Fonds de la source actuelle (masqués compris), dans l'ordre de la galerie. */
+    private List<WallItem> currentWalls() throws Exception {
+        return onMain(new Callable<List<WallItem>>() {
+            @Override public List<WallItem> call() { return Library.buildAll(ctx, host.prefs(), host.online()); }
+        });
+    }
+
+    private java.util.Set<String> wallIds() throws Exception {
+        java.util.Set<String> s = new java.util.HashSet<>();
+        for (WallItem w : currentWalls()) s.add(w.id);
+        return s;
+    }
+
+    private JSONObject walls() throws Exception {
+        Set<String> hidden = host.prefs().hiddenWalls();
+        JSONArray a = new JSONArray();
+        for (WallItem w : currentWalls()) {
+            if (w.kind == WallItem.ANIM) continue;
+            JSONObject j = new JSONObject();
+            j.put("id", w.id).put("title", w.title).put("video", w.kind == WallItem.VIDEO_FILE).put("hidden", hidden.contains(w.id));
+            a.put(j);
+        }
+        return new JSONObject().put("source", Prefs.SRC_NAMES[host.prefs().source()]).put("walls", a);
+    }
+
+    /** Aperçu d'un fond (image embarquée, téléchargée ou vidéo), petite taille. */
+    private byte[] wallThumb(String id) {
+        if (id == null) return null;
+        byte[] cached = iconCache.get("w:" + id);
+        if (cached != null) return cached;
+        try {
+            for (WallItem w : currentWalls()) {
+                if (!w.id.equals(id)) continue;
+                Bitmap b = null;
+                android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
+                o.inSampleSize = 8;
+                if (w.kind == WallItem.IMAGE_ASSET) {
+                    try (InputStream in = ctx.getAssets().open(w.path)) { b = android.graphics.BitmapFactory.decodeStream(in, null, o); }
+                } else if (w.kind == WallItem.IMAGE_FILE) {
+                    b = android.graphics.BitmapFactory.decodeFile(w.path, o);
+                } else if (w.kind == WallItem.VIDEO_FILE) {
+                    android.media.MediaMetadataRetriever r = new android.media.MediaMetadataRetriever();
+                    try { r.setDataSource(w.path); b = r.getFrameAtTime(1_000_000, android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC); }
+                    finally { r.release(); }
+                }
+                if (b == null) return null;
+                if (b.getWidth() > 400) {
+                    Bitmap sc = Bitmap.createScaledBitmap(b, 400, Math.max(1, b.getHeight() * 400 / b.getWidth()), true);
+                    if (sc != b) b.recycle();
+                    b = sc;
+                }
+                ByteArrayOutputStream bo = new ByteArrayOutputStream();
+                b.compress(Bitmap.CompressFormat.JPEG, 78, bo);
+                b.recycle();
+                byte[] out = bo.toByteArray();
+                if (iconCache.size() < 300) iconCache.put("w:" + id, out);
+                return out;
+            }
+        } catch (Exception ignored) { }
+        return null;
     }
 
     private String source(final int n) throws Exception {

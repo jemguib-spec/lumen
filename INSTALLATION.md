@@ -94,6 +94,7 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
   - **Accueil** : réorganiser, ajouter, retirer les favoris ; verrouiller une appli (avec le code PIN) ;
   - **Vidéos** : cocher les vidéos d'ambiance et de fond sur aperçus (liste fermée, décocher efface la vidéo) ;
   - **Envois** : envoyer tes photos et vidéos ;
+  - **Plus** : réglages de la TV (source et changement du fond, retirer ou remettre chaque fond d'un toucher sur son aperçu, mode veille, écran de nuit, bandeau, horloge, sons…), Home Assistant, films du moment, stockage, sauvegarde ;
   - **Plus** : code PIN, Pexels, sauvegarde, journal, déconnexion.
 
   Tout reste sur ton réseau local. Un seul téléphone à la fois ; la connexion survit quand tu ouvres une appli, et se coupe quand la TV s'éteint ou après 15 minutes sans activité.
