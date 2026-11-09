@@ -4,6 +4,13 @@
 # L'APK doit être signé avec la même clé (lumen.keystore) que la version installée.
 set -e
 cd "$(dirname "$0")/.."
+# sans la clé d'origine, build.sh en créerait une nouvelle : toutes les TV refuseraient la mise à jour
+[ -f lumen.keystore ] || { echo "lumen.keystore introuvable : publie depuis la machine qui a la clé d'origine."; exit 1; }
+NEW=$(sed -n 's/.*android:versionName="\([^"]*\)".*/\1/p' AndroidManifest.xml)
+OLD=$(sed -n 's/.*"version": "\([^"]*\)".*/\1/p' dist/latest.json 2>/dev/null)
+if [ -n "$OLD" ] && [ "$(printf '%s\n%s\n' "$OLD" "$NEW" | sort -V | tail -1)" != "$NEW" -o "$OLD" = "$NEW" ]; then
+  echo "Version $NEW pas plus récente que celle déjà publiée ($OLD) : augmente versionName et versionCode."; exit 1
+fi
 ./build.sh >/dev/null
 tests/run.sh >/dev/null
 VERSION=$(sed -n 's/.*android:versionName="\([^"]*\)".*/\1/p' AndroidManifest.xml)
