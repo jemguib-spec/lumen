@@ -31,7 +31,13 @@
 - Les fichiers sont nommés par Lumen et gardés dans son dossier privé. Rien n'est jamais exécuté.
 
 ## Réglages depuis le téléphone (`PhoneServer`, `PhoneAuth`, `HttpRequest`)
-- Le serveur ne démarre qu'à l'ouverture du QR code. Il s'arrête dès que Lumen passe en arrière-plan, après 15 minutes sans activité, ou après 5 tentatives d'accès refusées.
+- Le serveur ne démarre qu'à l'ouverture du QR code. Il s'arrête quand Lumen passe en arrière-plan sans téléphone connecté, quand l'écran de la TV s'éteint, après 15 minutes sans activité, après 5 tentatives d'accès refusées, ou sur demande (téléphone › Plus › Déconnecter, ou TV › Réglages › Réglages depuis le téléphone › Déconnecter).
+- **Un seul téléphone à la fois.** Tant qu'il est connecté, une pastille discrète « Téléphone connecté » reste visible sur la TV.
+- **Liste fermée d'actions** : lancer une appli installée et non masquée (ou une source HDMI), remplir un champ de Lumen (recherche, ville ; 100 caractères, sans caractère de contrôle), ambiances et minuterie (valeurs proposées seulement), mode veille, source du fond, fond suivant, cocher une vidéo **du catalogue fermé**. Jamais d'installation d'appli, d'ouverture d'adresse web, de commande système ni d'accès aux fichiers.
+- Les actions visibles sur la TV ne sont faites que si Lumen est à l'écran : le téléphone ne peut pas interrompre une appli en cours.
+- **Code PIN** : s'il existe, il est exigé sur le téléphone pour ouvrir une appli verrouillée, (dé)verrouiller une appli, restaurer une sauvegarde et changer la clé Pexels. Même vérification et mêmes attentes croissantes que sur la TV ; une fois saisi, il vaut 5 minutes pour cette session seulement.
+- **Limite de débit** : rafale de 20 actions, puis 4 par seconde (les images ne comptent pas). Au-delà, la TV répond « 429 ».
+- Les aperçus de vidéos ne sont servis que s'ils sont déjà sur la TV, pour une vidéo du catalogue ; le téléphone ne déclenche jamais de téléchargement arbitraire.
 - Il écoute uniquement sur l'adresse locale de la TV et n'accepte que les appareils du réseau privé (10.x, 172.16-31.x, 192.168.x).
 - Le QR code contient un jeton aléatoire de 128 bits, **à usage unique**, valable 10 minutes. Il est placé après « # » : le navigateur ne le met jamais dans l'adresse envoyée. La page l'échange une fois contre une session (cookie `HttpOnly`, `SameSite=Strict`, 30 min), puis l'efface de l'adresse.
 - Toute requête d'API exige l'en-tête `X-Lumen` : une page d'un autre site ne peut pas forger de requête. L'en-tête `Host` est vérifié, ce qui bloque les attaques par « DNS rebinding ».
@@ -88,7 +94,7 @@
 ## Tests
 Le dépôt GitHub compile et lance les tests à chaque envoi (`.github/workflows/verifier.yml`) et vérifie que `dist/latest.json` décrit bien `dist/Lumen.apk`.
 
-`tests/run.sh` lance 169 tests sur la politique réseau, le code PIN, la sauvegarde, les habitudes, les licences, les signatures de fichiers, le parseur HTTP, l'authentification, les catalogues de vidéos (fonds et ambiances), l'option Pexels et les calculs du ciel (comparés aux éphémérides de l'IMCCE, ±3 min). Il vérifie aussi que le QR code est lisible par un vrai décodeur (`zbarimg`).
+`tests/run.sh` lance 180 tests sur la politique réseau, le code PIN, la sauvegarde, les habitudes, les licences, les signatures de fichiers, le parseur HTTP, l'authentification, les catalogues de vidéos (fonds et ambiances), l'option Pexels et les calculs du ciel (comparés aux éphémérides de l'IMCCE, ±3 min). Il vérifie aussi que le QR code est lisible par un vrai décodeur (`zbarimg`).
 
 ## Licence
 Lumen est un logiciel libre sous licence GNU GPL version 3 ou ultérieure (fichier `LICENSE`, en-tête `SPDX-License-Identifier: GPL-3.0-or-later` dans chaque fichier source). La police Inter reste sous SIL Open Font License 1.1.

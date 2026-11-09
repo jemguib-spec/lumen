@@ -298,6 +298,27 @@ final class AmbiancePanel {
         }
     };
 
+    // ------------------------------------------------------------------ commande depuis le téléphone
+
+    /** Ambiance affichée (n° dans Online.COSY_NAMES). */
+    int kind() { return kind; }
+
+    /** Minuterie restante en minutes (0 = désactivée). */
+    int timerLeftMinutes() { return timerEnd <= 0 ? 0 : (int) Math.max(1, (timerEnd - System.currentTimeMillis() + 59_999) / 60_000); }
+
+    /** Durée choisie pour la minuterie en cours (0 = aucune). */
+    int timerChoice() { return timerEnd <= 0 ? 0 : TIMER_MIN[timerIdx]; }
+
+    void selectKind(int k) { if (k >= 0 && k < Online.COSY_NAMES.length && k != kind) showKind(k, 1); }
+
+    /** Minuterie réglée sur l'une des durées proposées (0, 15, 30, 60, 90 min). false sinon. */
+    boolean setTimerMinutes(int minutes) {
+        for (int i = 0; i < TIMER_MIN.length; i++) if (TIMER_MIN[i] == minutes) { setTimer(i); return true; }
+        return false;
+    }
+
+    static int[] timerChoices() { return TIMER_MIN.clone(); }
+
     private void setTimer(int idx) {
         timerIdx = idx % TIMER_MIN.length;
         h.removeCallbacks(tick);

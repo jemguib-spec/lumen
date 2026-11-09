@@ -4,7 +4,7 @@ set -e
 cd "$(dirname "$0")/.."
 OUT=$(mktemp -d)
 S=src/com/lumen/launcher
-javac -encoding UTF-8 -d "$OUT" $S/NetPolicy.java $S/MediaSniff.java $S/HttpRequest.java $S/PhoneAuth.java $S/QrCode.java $S/Sky.java $S/CosyCatalog.java $S/VideoCatalog.java $S/Pexels.java $S/WatchNextFormat.java $S/CommonsThumb.java $S/AppCategory.java $S/UpdatePolicy.java $S/Pin.java $S/Habits.java $S/Backup.java tests/LumenTests.java
+javac -encoding UTF-8 -d "$OUT" $S/NetPolicy.java $S/MediaSniff.java $S/HttpRequest.java $S/PhoneAuth.java $S/QrCode.java $S/Sky.java $S/CosyCatalog.java $S/VideoCatalog.java $S/Pexels.java $S/WatchNextFormat.java $S/CommonsThumb.java $S/AppCategory.java $S/UpdatePolicy.java $S/Pin.java $S/Habits.java $S/Backup.java $S/RateLimit.java tests/LumenTests.java
 RES=$(java -cp "$OUT" com.lumen.launcher.LumenTests)
 echo "$RES" | grep -v '^QR_FILE'
 QR=$(echo "$RES" | sed -n 's/^QR_FILE=\([^ ]*\) QR_EXPECT=\(.*\)$/\1/p')

@@ -63,11 +63,29 @@ final class PhoneServer {
         void onFavoritesChanged();
         void onMineChanged(int received);
         void onSettingsRestored(int count);
+        /** Lumen est-il à l'écran (accueil, applis, ambiances) ? Sinon, la TV affiche une autre appli. */
+        boolean onTvHome();
+        void phoneLaunch(AppRepo.App app);
+        void phoneText(String text);
+        /** n° d'ambiance à afficher, ou -1 pour quitter les ambiances. */
+        void phoneAmbiance(int kind);
+        boolean phoneTimer(int minutes);
+        /** {ambiance affichée ou -1, minutes restantes de la minuterie, durée choisie} */
+        int[] ambianceState();
+        void phoneVeille(boolean on);
+        boolean veilleOn();
+        void phoneSource(int source);
+        void phoneNextWall();
+        void phonePicksChanged(String scope);
+        void onPhoneConnected(boolean connected);
     }
 
     private static final long IDLE_STOP_MS = 15 * 60_000L;
     private static final String COOKIE = "lumen_s";
     private static final int MAX_FAVORITES = 60;
+    private static final int MAX_TEXT = 100;
+    /** Actions : rafale de 20, puis 4 par seconde (images exclues). */
+    private final RateLimit limiter = new RateLimit(4, 20, System.currentTimeMillis());
 
     private final Context ctx;
     private final Host host;
@@ -84,6 +102,18 @@ final class PhoneServer {
     PhoneServer(Context c, Host h) { ctx = c.getApplicationContext(); host = h; }
 
     synchronized boolean running() { return server != null && !server.isClosed(); }
+
+    /** Un téléphone est-il connecté ? */
+    boolean connected() { return running() && auth.hasSessions(); }
+
+    /** Lumen passe en arrière-plan : on garde la connexion seulement si un téléphone est là. */
+    void onBackground() { if (!connected()) stop(); }
+
+    /** Déconnecte le téléphone et arrête le serveur (bouton sur la TV, extinction de l'écran). */
+    void disconnect() {
+        auth.revokeAll();
+        stop();
+    }
 
     /** Démarre avec un nouveau jeton et renvoie l'adresse du QR code, ou null sans réseau. */
     synchronized String start() {
@@ -124,6 +154,8 @@ final class PhoneServer {
 
     synchronized void stop() {
         main.removeCallbacks(idleStop);
+        boolean wasConnected = server != null && auth.hasSessions();
+        if (wasConnected) main.post(new Runnable() { @Override public void run() { host.onPhoneConnected(false); } });
         try { if (server != null) server.close(); } catch (Exception ignored) { }
         server = null;
         if (pool != null) pool.shutdownNow();
@@ -209,58 +241,101 @@ final class PhoneServer {
             String sid = auth.openSession(r.header("x-lumen-token"));
             if (sid == null) { send(out, 403, "application/json", "{\"ok\":false}".getBytes("UTF-8"), null); return; }
             String cookie = COOKIE + "=" + sid + "; HttpOnly; SameSite=Strict; Path=/; Max-Age=1800";
+            main.post(new Runnable() { @Override public void run() { host.onPhoneConnected(true); } });
             send(out, 200, "application/json", "{\"ok\":true}".getBytes("UTF-8"), cookie);
             return;
         }
 
-        if (!auth.check(r.cookie(COOKIE))) { send(out, 401, "application/json", "{\"ok\":false}".getBytes("UTF-8"), null); return; }
+        final String sid = r.cookie(COOKIE);
+        if (!auth.check(sid)) { send(out, 401, "application/json", "{\"ok\":false}".getBytes("UTF-8"), null); return; }
 
-        if (!post && p.equals("/api/state")) { send(out, 200, "application/json; charset=utf-8", state().toString().getBytes("UTF-8"), null); return; }
+        // images : nombreuses mais inoffensives ; tout le reste passe par la limite de débit
+        boolean image = !post && (p.equals("/api/icon") || p.equals("/api/thumb") || p.equals("/api/pickthumb"));
+        if (!image && !limiter.allow(System.currentTimeMillis())) { json(out, 429, "{\"ok\":false,\"slow\":true}"); return; }
+        // action sensible avec un code PIN sur la TV : le code doit avoir été saisi sur ce téléphone
+        final boolean pinNeeded = host.prefs().hasPin() && !auth.isElevated(sid);
+
+        if (!post && p.equals("/api/state")) { send(out, 200, "application/json; charset=utf-8", state(sid).toString().getBytes("UTF-8"), null); return; }
         if (!post && p.equals("/api/icon")) { byte[] b = icon(r.query.get("key")); send(out, b == null ? 404 : 200, "image/png", b == null ? new byte[0] : b, null); return; }
         if (!post && p.equals("/api/thumb")) { byte[] b = thumb(r.query.get("id")); send(out, b == null ? 404 : 200, "image/jpeg", b == null ? new byte[0] : b, null); return; }
-        if (post && p.equals("/api/favorites")) { boolean ok = setFavorites(HttpRequest.readBody(in, r.contentLength, 64 * 1024)); send(out, ok ? 200 : 400, "application/json", ("{\"ok\":" + ok + "}").getBytes("UTF-8"), null); return; }
-        if (post && p.equals("/api/upload")) {
-            sock.setSoTimeout(60_000);
-            boolean ok = upload(in, r.contentLength, r.header("x-lumen-name"), r.header("x-lumen-target"));
-            send(out, ok ? 200 : 400, "application/json", ("{\"ok\":" + ok + "}").getBytes("UTF-8"), null);
-            return;
-        }
+        if (!post && p.equals("/api/pickthumb")) { byte[] b = pickThumb(r.query.get("scope"), r.query.get("key")); send(out, b == null ? 404 : 200, "image/jpeg", b == null ? new byte[0] : b, null); return; }
+        if (!post && p.equals("/api/picks")) { json(out, 200, picks(r.query.get("scope")).toString()); return; }
         if (!post && p.equals("/api/log")) { send(out, 200, "text/plain; charset=utf-8", CrashLog.read(ctx).getBytes("UTF-8"), null); return; }
-        if (post && p.equals("/api/log/clear")) { CrashLog.clear(ctx); send(out, 200, "application/json", "{\"ok\":true}".getBytes("UTF-8"), null); return; }
-        if (post && p.equals("/api/pexels")) {
-            boolean ok = setPexels(HttpRequest.readBody(in, r.contentLength, 256));
-            send(out, ok ? 200 : 400, "application/json", ("{\"ok\":" + ok + "}").getBytes("UTF-8"), null);
-            return;
+        if (!post && p.equals("/api/backup")) { json(out, 200, host.prefs().exportBackup().toString(1)); return; }
+        if (!post) { send(out, 404, "text/plain", new byte[0], null); return; }
+
+        // ---- écritures
+        switch (p) {
+            case "/api/pin": json(out, 200, pin(HttpRequest.readBody(in, r.contentLength, 16), sid)); return;
+            case "/api/bye":
+                json(out, 200, "{\"ok\":true}");
+                main.post(new Runnable() { @Override public void run() { disconnect(); } });
+                return;
+            case "/api/favorites": { boolean ok = setFavorites(HttpRequest.readBody(in, r.contentLength, 64 * 1024)); ok(out, ok); return; }
+            case "/api/upload": {
+                sock.setSoTimeout(60_000);
+                ok(out, upload(in, r.contentLength, r.header("x-lumen-name"), r.header("x-lumen-target")));
+                return;
+            }
+            case "/api/delete": ok(out, deleteMine(r.query.get("id"))); return;
+            case "/api/log/clear": CrashLog.clear(ctx); ok(out, true); return;
+            case "/api/pick": ok(out, setPick(r.query.get("scope"), r.query.get("key"), "1".equals(r.query.get("on")))); return;
+            case "/api/launch": json(out, 200, launch(r.query.get("key"), pinNeeded)); return;
+            case "/api/text": json(out, 200, text(HttpRequest.readBody(in, r.contentLength, 4 * MAX_TEXT))); return;
+            case "/api/ambiance": json(out, 200, ambiance(intParam(r, "kind", -2))); return;
+            case "/api/timer": json(out, 200, timer(intParam(r, "min", -1))); return;
+            case "/api/veille": json(out, 200, veille("1".equals(r.query.get("on")))); return;
+            case "/api/source": json(out, 200, source(intParam(r, "n", -1))); return;
+            case "/api/next": json(out, 200, onTv(new Runnable() { @Override public void run() { host.phoneNextWall(); } })); return;
+            default: break;
         }
-        if (!post && p.equals("/api/backup")) {
-            byte[] b = host.prefs().exportBackup().toString(1).getBytes("UTF-8");
-            send(out, 200, "application/json; charset=utf-8", b, null);
-            return;
-        }
-        if (post && p.equals("/api/restore")) {
+        // ---- actions sensibles : code PIN exigé s'il existe
+        if (p.equals("/api/pexels") || p.equals("/api/restore") || p.equals("/api/lock")) {
+            if (pinNeeded) { HttpRequest.readBody(in, r.contentLength, 256 * 1024); json(out, 200, "{\"ok\":false,\"pin\":true}"); return; }
+            if (p.equals("/api/pexels")) { ok(out, setPexels(HttpRequest.readBody(in, r.contentLength, 256))); return; }
+            if (p.equals("/api/lock")) { ok(out, setLock(r.query.get("key"), "1".equals(r.query.get("on")))); return; }
             int n = restore(HttpRequest.readBody(in, r.contentLength, 256 * 1024));
-            send(out, n >= 0 ? 200 : 400, "application/json", ("{\"ok\":" + (n >= 0) + ",\"count\":" + Math.max(0, n) + "}").getBytes("UTF-8"), null);
+            json(out, n >= 0 ? 200 : 400, "{\"ok\":" + (n >= 0) + ",\"count\":" + Math.max(0, n) + "}");
             return;
         }
-        if (post && p.equals("/api/delete")) { boolean ok = deleteMine(r.query.get("id")); send(out, ok ? 200 : 400, "application/json", ("{\"ok\":" + ok + "}").getBytes("UTF-8"), null); return; }
         send(out, 404, "text/plain", new byte[0], null);
     }
 
     // ------------------------------------------------------------------ actions
 
-    private JSONObject state() throws Exception {
+    private JSONObject state(final String sid) throws Exception {
         final JSONObject o = new JSONObject();
         onMain(new Callable<Void>() {
             @Override public Void call() throws Exception {
+                Prefs pr = host.prefs();
+                Set<String> hidden = pr.hiddenApps();
                 JSONArray apps = new JSONArray();
                 for (AppRepo.App a : host.repo().all()) {
                     JSONObject j = new JSONObject();
                     j.put("key", a.key);
                     j.put("label", a.label);
+                    if (a.isInput()) j.put("input", true);
+                    if (hidden.contains(a.key)) j.put("hidden", true);
+                    if (pr.isLocked(a.key)) j.put("locked", true);
                     apps.put(j);
                 }
                 o.put("apps", apps);
-                o.put("favorites", new JSONArray(host.prefs().favorites()));
+                o.put("favorites", new JSONArray(pr.favorites()));
+                JSONObject tv = new JSONObject();
+                int[] amb = host.ambianceState();
+                tv.put("home", host.onTvHome());
+                tv.put("veille", host.veilleOn());
+                tv.put("ambiance", amb[0]);
+                tv.put("timer", amb[1]);
+                tv.put("timerSet", amb[2]);
+                tv.put("source", pr.source());
+                tv.put("sources", new JSONArray(java.util.Arrays.asList(Prefs.SRC_NAMES)));
+                JSONArray timers = new JSONArray();
+                for (int m : AmbiancePanel.timerChoices()) timers.put(m);
+                tv.put("timers", timers);
+                tv.put("pin", pr.hasPin());
+                tv.put("unlocked", pr.hasPin() && auth.isElevated(sid));
+                o.put("tv", tv);
                 return null;
             }
         });
@@ -457,6 +532,171 @@ final class PhoneServer {
         return null;
     }
 
+    // ------------------------------------------------------------------ télécommande
+
+    /** Code PIN saisi sur le téléphone : mêmes règles que sur la TV (empreinte, attente croissante). */
+    private String pin(byte[] body, final String sid) throws Exception {
+        final String pin = new String(body, "UTF-8").trim();
+        return onMain(new Callable<String>() {
+            @Override public String call() {
+                Prefs pr = host.prefs();
+                if (!pr.hasPin()) return "{\"ok\":true}";
+                long lock = Pin.lockMillis(pr.pinFails());
+                long wait = lock <= 0 ? 0 : pr.pinLastFail() + lock - System.currentTimeMillis();
+                if (wait > 0) return "{\"ok\":false,\"wait\":" + ((wait + 999) / 1000) + "}";
+                if (Pin.check(pin, pr.pinStored())) { pr.pinOk(); auth.elevate(sid); return "{\"ok\":true}"; }
+                pr.pinFailed();
+                long next = Pin.lockMillis(pr.pinFails());
+                return "{\"ok\":false" + (next > 0 ? ",\"wait\":" + (next / 1000) : "") + "}";
+            }
+        });
+    }
+
+    /** Lance une appli (ou une source HDMI) installée et visible ; une appli verrouillée exige le code. */
+    private String launch(final String key, final boolean pinNeeded) throws Exception {
+        if (key == null || key.length() > 300) return "{\"ok\":false}";
+        return onMain(new Callable<String>() {
+            @Override public String call() {
+                AppRepo.App a = host.repo().get(key);
+                if (a == null || host.prefs().hiddenApps().contains(key)) return "{\"ok\":false}";
+                if (host.prefs().isLocked(key) && pinNeeded) return "{\"ok\":false,\"pin\":true}";
+                if (!host.onTvHome()) return "{\"ok\":false,\"busy\":true}";
+                host.phoneLaunch(a);
+                return "{\"ok\":true}";
+            }
+        });
+    }
+
+    /** Texte tapé sur le téléphone : uniquement vers les champs de Lumen (recherche d'appli, ville). */
+    private String text(byte[] body) throws Exception {
+        final String t = new String(body, "UTF-8").trim();
+        if (t.isEmpty() || t.length() > MAX_TEXT || !Backup.textOk(t, MAX_TEXT)) return "{\"ok\":false}";
+        return onTv(new Runnable() { @Override public void run() { host.phoneText(t); } });
+    }
+
+    private String ambiance(final int kind) throws Exception {
+        if (kind < -1 || kind >= Online.COSY_NAMES.length) return "{\"ok\":false}";
+        return onTv(new Runnable() { @Override public void run() { host.phoneAmbiance(kind); } });
+    }
+
+    private String timer(final int minutes) throws Exception {
+        return onMain(new Callable<String>() {
+            @Override public String call() {
+                if (!host.onTvHome()) return "{\"ok\":false,\"busy\":true}";
+                return "{\"ok\":" + host.phoneTimer(minutes) + "}";
+            }
+        });
+    }
+
+    private String veille(final boolean on) throws Exception {
+        return onTv(new Runnable() { @Override public void run() { host.phoneVeille(on); } });
+    }
+
+    private String source(final int n) throws Exception {
+        if (n < 0 || n >= Prefs.SRC_NAMES.length) return "{\"ok\":false}";
+        return onMain(new Callable<String>() {
+            @Override public String call() { host.phoneSource(n); return "{\"ok\":true}"; }
+        });
+    }
+
+    /** Action visible sur la TV : seulement si Lumen est à l'écran (sinon, on ne vole pas l'écran à l'appli en cours). */
+    private String onTv(final Runnable r) throws Exception {
+        return onMain(new Callable<String>() {
+            @Override public String call() {
+                if (!host.onTvHome()) return "{\"ok\":false,\"busy\":true}";
+                r.run();
+                return "{\"ok\":true}";
+            }
+        });
+    }
+
+    private boolean setLock(final String key, final boolean on) throws Exception {
+        if (key == null || key.length() > 300) return false;
+        return onMain(new Callable<Boolean>() {
+            @Override public Boolean call() {
+                if (!host.prefs().hasPin() || host.repo().get(key) == null) return false;
+                host.prefs().setLocked(key, on);
+                return true;
+            }
+        });
+    }
+
+    // ------------------------------------------------------------------ choix des vidéos
+
+    private static String scopeOf(String s) {
+        return Online.SCOPE_COSY.equals(s) ? Online.SCOPE_COSY : Online.SCOPE_FONDS.equals(s) ? Online.SCOPE_FONDS : null;
+    }
+
+    /** Liste fermée des vidéos proposées (mêmes catalogues que sur la TV), avec l'état coché. */
+    private JSONArray picks(String scope) throws Exception {
+        String sc = scopeOf(scope);
+        JSONArray arr = new JSONArray();
+        if (sc == null) return arr;
+        List<Online.Pick> list = host.online().picks(sc);
+        Prefs pr = host.prefs();
+        for (Online.Pick k : list) {
+            JSONObject j = new JSONObject();
+            j.put("key", k.key);
+            j.put("title", k.title);
+            j.put("group", k.group);
+            j.put("dur", (int) k.duration);
+            j.put("hd", k.height >= 1080 ? (k.height >= 2160 ? "4K" : "HD") : "");
+            j.put("ok", pr.videoOk(k.key));
+            j.put("img", host.online().thumbCached(k) != null);
+            arr.put(j);
+        }
+        host.online().prefetchThumbs(list); // les aperçus manquants arrivent peu à peu
+        return arr;
+    }
+
+    private Online.Pick findPick(String scope, String key) throws Exception {
+        String sc = scopeOf(scope);
+        if (sc == null || key == null || key.length() > 300) return null;
+        for (Online.Pick k : host.online().picks(sc)) if (k.key.equals(key)) return k;
+        return null;
+    }
+
+    /** Aperçu d'une vidéo du catalogue, seulement s'il est déjà sur la TV (jamais de téléchargement ici). */
+    private byte[] pickThumb(String scope, String key) throws Exception {
+        Online.Pick k = findPick(scope, key);
+        File f = k == null ? null : host.online().thumbCached(k);
+        if (f == null || f.length() > (2 << 20)) return null;
+        try (InputStream in = new java.io.FileInputStream(f)) {
+            ByteArrayOutputStream b = new ByteArrayOutputStream();
+            byte[] buf = new byte[16384];
+            int n;
+            while ((n = in.read(buf)) > 0) b.write(buf, 0, n);
+            return b.toByteArray();
+        }
+    }
+
+    /** Coche ou décoche une vidéo du catalogue (comme sur la TV : décocher l'efface). */
+    private boolean setPick(final String scope, String key, final boolean on) throws Exception {
+        final Online.Pick k = findPick(scope, key);
+        if (k == null) return false;
+        return onMain(new Callable<Boolean>() {
+            @Override public Boolean call() {
+                host.prefs().setVideoOk(k.key, on);
+                host.phonePicksChanged(scopeOf(scope));
+                return true;
+            }
+        });
+    }
+
+    private static int intParam(HttpRequest r, String name, int def) {
+        String v = r.query.get(name);
+        if (v == null || !v.matches("-?[0-9]{1,4}")) return def;
+        return Integer.parseInt(v);
+    }
+
+    private static void json(OutputStream out, int code, String body) throws Exception {
+        send(out, code, "application/json; charset=utf-8", body.getBytes("UTF-8"), null);
+    }
+
+    private static void ok(OutputStream out, boolean ok) throws Exception {
+        json(out, ok ? 200 : 400, "{\"ok\":" + ok + "}");
+    }
+
     // ------------------------------------------------------------------ outils
 
     private <T> T onMain(final Callable<T> c) throws Exception {
@@ -492,6 +732,7 @@ final class PhoneServer {
             case 403: status = "Forbidden"; break;
             case 404: status = "Not Found"; break;
             case 421: status = "Misdirected Request"; break;
+            case 429: status = "Too Many Requests"; break;
             default: status = "Bad Request";
         }
         StringBuilder h = new StringBuilder();

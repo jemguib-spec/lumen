@@ -13,13 +13,16 @@ import java.util.Map;
  * - Le QR code contient un jeton aléatoire de 128 bits, à usage unique, valable 10 minutes.
  * - Il est placé après « # » dans l'adresse : le navigateur ne l'envoie jamais tel quel sur le
  *   réseau ; la page l'échange une seule fois contre une session (cookie HttpOnly).
- * - Sessions : 2 au plus, expirent après 30 minutes sans activité.
+ * - Une seule session (un seul téléphone à la fois), qui expire après 30 minutes sans activité.
+ * - Si un code PIN existe, les actions sensibles exigent qu'il ait été saisi sur le téléphone
+ *   depuis moins de 5 minutes (« élévation » attachée à la session, perdue avec elle).
  * - 5 échecs d'authentification → verrouillage (le serveur s'arrête).
  */
 final class PhoneAuth {
     static final long TOKEN_TTL_MS = 10 * 60_000L;
     static final long SESSION_IDLE_MS = 30 * 60_000L;
-    static final int MAX_SESSIONS = 2;
+    static final int MAX_SESSIONS = 1;
+    static final long ELEVATION_MS = 5 * 60_000L;
     static final int MAX_FAILURES = 5;
 
     interface Clock { long now(); }
@@ -29,6 +32,7 @@ final class PhoneAuth {
     private String token;
     private long tokenExpiry;
     private final Map<String, Long> sessions = new HashMap<>();
+    private final Map<String, Long> elevated = new HashMap<>();
     private int failures;
 
     PhoneAuth(Clock clock) { this.clock = clock; }
@@ -38,6 +42,7 @@ final class PhoneAuth {
         token = random(22);
         tokenExpiry = clock.now() + TOKEN_TTL_MS;
         sessions.clear();
+        elevated.clear();
         failures = 0;
         return token;
     }
@@ -68,12 +73,38 @@ final class PhoneAuth {
 
     synchronized boolean locked() { return failures >= MAX_FAILURES; }
 
+    /** Code PIN correct saisi sur ce téléphone : actions sensibles permises pendant 5 minutes. */
+    synchronized void elevate(String sessionId) {
+        String k = find(sessionId);
+        if (k != null) elevated.put(k, clock.now() + ELEVATION_MS);
+    }
+
+    synchronized boolean isElevated(String sessionId) {
+        String k = find(sessionId);
+        Long until = k == null ? null : elevated.get(k);
+        return until != null && clock.now() < until;
+    }
+
+    /** Déconnecte tous les téléphones (le QR code devra être rescanné). */
+    synchronized void revokeAll() {
+        sessions.clear();
+        elevated.clear();
+        token = null;
+    }
+
+    private String find(String sessionId) {
+        if (sessionId == null) return null;
+        purge();
+        for (String k : sessions.keySet()) if (equal(k, sessionId)) return k;
+        return null;
+    }
+
     synchronized boolean hasSessions() { purge(); return !sessions.isEmpty(); }
 
     private void purge() {
         long now = clock.now();
         for (Iterator<Map.Entry<String, Long>> it = sessions.entrySet().iterator(); it.hasNext(); )
-            if (now - it.next().getValue() > SESSION_IDLE_MS) it.remove();
+            { Map.Entry<String, Long> e = it.next(); if (now - e.getValue() > SESSION_IDLE_MS) { elevated.remove(e.getKey()); it.remove(); } }
     }
 
     /** Comparaison en temps constant (pas de fuite d'information par la durée). */

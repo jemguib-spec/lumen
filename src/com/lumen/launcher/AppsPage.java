@@ -57,6 +57,13 @@ final class AppsPage {
 
     boolean built() { return scroll != null; }
 
+    /** Texte tapé sur le téléphone : il remplit la recherche (la liste se filtre aussitôt). */
+    void setQuery(String q) {
+        if (search == null) return;
+        search.setText(q);
+        search.setSelection(search.length());
+    }
+
 
     /**
      * Page Applications : recherche en haut, puis une rangée par catégorie (Favoris, Vidéo et TV,

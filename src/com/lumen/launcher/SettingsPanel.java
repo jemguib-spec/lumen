@@ -186,7 +186,7 @@ final class SettingsPanel {
                 for (int i = 0; i < rows.length; i++) {
                     if (rows[i] == null) {
                         col.addView(a.listRow("Réglages depuis le téléphone", new MainActivity.Value() {
-                            @Override public String get() { return a.phone.running() ? "Actif" : "QR code"; }
+                            @Override public String get() { return a.phone.connected() ? "Connecté" : "QR code"; }
                         }, new View.OnClickListener() {
                             @Override public void onClick(View v) { PhonePanel.openPhonePanel(a); }
                         }), a.rowLp());

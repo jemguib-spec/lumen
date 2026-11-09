@@ -9,41 +9,97 @@
 <link rel="stylesheet" href="/app.css">
 </head>
 <body>
-<header><h1>Lumen</h1><div class="sub" id="sub">Connexion à la TV…</div></header>
-<div class="tabs"><button class="on" data-t="fav">Favoris</button><button data-t="mine">Envois</button><button data-t="opt">Plus</button></div>
+<header>
+  <h1 id="title">TV</h1>
+  <div class="state"><i id="dot"></i><span id="sub">Connexion…</span></div>
+</header>
 
-<section id="fav" class="on">
-  <h2>Sur l'accueil</h2>
+<!-- TV : télécommande -->
+<section id="tv" class="on">
+  <form class="field" id="typeForm" autocomplete="off">
+    <input type="text" id="typeText" placeholder="Taper sur la TV" maxlength="100" enterkeyhint="send">
+    <button class="go" aria-label="Envoyer">↑</button>
+  </form>
+
+  <h2>Ouvrir</h2>
+  <input type="search" class="plain" id="appQ" placeholder="Rechercher une appli" autocomplete="off">
+  <div class="apps" id="launchGrid"></div>
+
+  <h2>Ambiances</h2>
+  <div class="chips" id="ambChips"></div>
+  <div class="chips sub" id="timerChips"></div>
+
+  <h2>Écran</h2>
+  <div class="pair">
+    <button class="card" id="veilleBtn"><b>Mode veille</b><span id="veilleState">Désactivé</span></button>
+    <button class="card" id="nextBtn"><b>Fond suivant</b><span id="srcName">…</span></button>
+  </div>
+  <select id="srcSel" aria-label="Source du fond"></select>
+</section>
+
+<!-- Accueil : favoris -->
+<section id="fav">
   <div class="list" id="favList"></div>
-  <h2>Ajouter une appli</h2>
-  <input type="search" id="q" placeholder="Rechercher une appli" autocomplete="off">
+  <h2>Ajouter</h2>
+  <input type="search" class="plain" id="q" placeholder="Rechercher une appli" autocomplete="off">
   <div class="list" id="allList"></div>
 </section>
 
+<!-- Vidéos : choix sur aperçus -->
+<section id="vid">
+  <div class="seg" id="scopeSeg"><button class="on" data-s="cosy">Ambiances</button><button data-s="fonds">Fonds vidéo</button></div>
+  <p class="note" id="vidNote">Touche une vidéo pour la garder sur la TV. La décocher l’efface.</p>
+  <div id="picks"></div>
+</section>
+
+<!-- Envois -->
 <section id="mine">
-  <h2>Envoyer à la TV</h2>
-  <select id="dest"><option value="fond">Fonds d'écran (photos et vidéos)</option></select>
+  <select id="dest" aria-label="Destination"><option value="fond">Fonds d'écran</option></select>
   <label class="upload"><input type="file" id="file" multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm">＋ Photos ou vidéos</label>
   <div id="jobs"></div>
   <h2>Sur la TV</h2>
   <div class="grid" id="mineGrid"></div>
 </section>
 
+<!-- Plus -->
 <section id="opt">
-  <h2>Pexels (facultatif)</h2>
-  <p class="note">Avec ta clé Pexels gratuite (pexels.com/api), Lumen propose aussi des vidéos Pexels dans le choix des vidéos sur la TV : villes en 4K, cheminées longues… Rien n'est téléchargé sans être coché. Sans clé, Lumen ne contacte jamais Pexels.</p>
-  <div class="list"><div class="row"><div class="name" id="pxState">…</div></div></div>
-  <input type="password" id="pxKey" placeholder="Colle ta clé Pexels" autocomplete="off" autocapitalize="off" spellcheck="false">
-  <div class="btns"><button class="btn" id="pxSave">Enregistrer</button><button class="btn ghost" id="pxDel">Retirer la clé</button></div>
-  <h2>Sauvegarde des réglages</h2>
-  <p class="note">Favoris, fonds, villes, vidéos cochées, apparence… dans un petit fichier à garder sur ton téléphone. Le code PIN et la clé Pexels n'y figurent jamais.</p>
-  <div class="btns"><button class="btn" id="bkSave">Télécharger la sauvegarde</button><button class="btn ghost" id="bkLoad">Restaurer…</button></div>
+  <div id="pinBox" hidden>
+    <h2>Code PIN</h2>
+    <div class="list"><button class="row link" id="pinOpen"><span class="name" id="pinState">Déverrouiller</span><span class="chev">›</span></button></div>
+  </div>
+  <h2>Pexels</h2>
+  <p class="note">Avec ta clé gratuite (pexels.com/api), Lumen propose aussi des vidéos Pexels. Sans clé, Lumen ne contacte jamais Pexels.</p>
+  <div class="field"><input type="password" id="pxKey" placeholder="Clé Pexels" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="go" id="pxSave" aria-label="Enregistrer">✓</button></div>
+  <div class="list"><button class="row link" id="pxDel"><span class="name" id="pxState">…</span><span class="chev">Retirer</span></button></div>
+  <h2>Sauvegarde</h2>
+  <div class="list">
+    <button class="row link" id="bkSave"><span class="name">Télécharger les réglages</span><span class="chev">›</span></button>
+    <button class="row link" id="bkLoad"><span class="name">Restaurer…</span><span class="chev">›</span></button>
+  </div>
+  <p class="note small">Ni le code PIN ni la clé Pexels ne sont dans la sauvegarde.</p>
   <input type="file" id="bkFile" accept=".json,application/json" hidden>
   <h2>Journal d'erreurs</h2>
-  <p class="note">Les erreurs de Lumen restent sur la TV ; rien n'est envoyé sur Internet.</p>
   <pre class="log" id="log">…</pre>
-  <div class="btns"><button class="btn ghost" id="logRefresh">Actualiser</button><button class="btn ghost" id="logClear">Effacer</button></div>
+  <div class="list"><button class="row link" id="logClear"><span class="name">Effacer le journal</span><span class="chev">›</span></button></div>
+  <div class="list danger"><button class="row link" id="bye"><span class="name">Déconnecter ce téléphone</span></button></div>
 </section>
+
+<nav class="tabs">
+  <button class="on" data-t="tv"><i class="ic tv"></i>TV</button>
+  <button data-t="fav"><i class="ic home"></i>Accueil</button>
+  <button data-t="vid"><i class="ic play"></i>Vidéos</button>
+  <button data-t="mine"><i class="ic up"></i>Envois</button>
+  <button data-t="opt"><i class="ic more"></i>Plus</button>
+</nav>
+
+<div class="sheet" id="pinSheet" hidden>
+  <form class="panel" id="pinForm" autocomplete="off">
+    <h3>Code PIN de la TV</h3>
+    <p class="note" id="pinMsg">Nécessaire pour cette action.</p>
+    <input type="password" id="pinIn" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="one-time-code" aria-label="Code PIN">
+    <div class="pair"><button type="button" class="btn ghost" id="pinCancel">Annuler</button><button class="btn">Valider</button></div>
+  </form>
+</div>
 
 <div class="toast" id="toast"></div>
 <script src="/app.js"></script>

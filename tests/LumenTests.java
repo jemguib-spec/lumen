@@ -15,6 +15,8 @@ import java.nio.file.Files;
 public class LumenTests {
     static int ok, ko;
 
+    static int countAllowed(RateLimit r, long at) { int n = 0; for (int i = 0; i < 100; i++) if (r.allow(at)) n++; return n; }
+
     static void check(String name, boolean cond) {
         if (cond) ok++; else { ko++; System.out.println("ÉCHEC : " + name); }
     }
@@ -279,6 +281,28 @@ public class LumenTests {
         check("verrouillage après échecs", c.locked());
         check("même le bon jeton est refusé une fois verrouillé", c.openSession(t3) == null);
         check("comparaison constante", PhoneAuth.equal("abc", "abc") && !PhoneAuth.equal("abc", "abd"));
+        PhoneAuth e = new PhoneAuth(new PhoneAuth.Clock() { public long now() { return now[0]; } });
+        String s1 = e.openSession(e.newToken());
+        check("téléphone : une seule session à la fois", PhoneAuth.MAX_SESSIONS == 1 && s1 != null);
+        check("code PIN : pas d'élévation par défaut", !e.isElevated(s1));
+        e.elevate(s1);
+        check("code PIN : élévation après saisie", e.isElevated(s1));
+        check("code PIN : élévation liée à la session", !e.isElevated("autre"));
+        now[0] += PhoneAuth.ELEVATION_MS + 1;
+        check("code PIN : élévation expire après 5 min", !e.isElevated(s1) && e.check(s1));
+        e.elevate(s1);
+        e.revokeAll();
+        check("déconnexion : session et élévation supprimées", !e.check(s1) && !e.isElevated(s1));
+        check("déconnexion : l'ancien QR code ne sert plus", !e.hasSessions());
+
+        // ---- limite de débit
+        RateLimit rl = new RateLimit(4, 20, 0);
+        int passed = 0;
+        for (int i = 0; i < 100; i++) if (rl.allow(0)) passed++;
+        check("débit : rafale limitée à 20", passed == 20);
+        check("débit : bloqué juste après", !rl.allow(100));
+        check("débit : 4 actions par seconde ensuite", rl.allow(1000) && rl.allow(1000) && rl.allow(1000) && rl.allow(1000) && !rl.allow(1000));
+        check("débit : jamais plus que la rafale après une pause", countAllowed(new RateLimit(4, 20, 0), 3_600_000L) == 20);
 
         // ---- QR code (rendu vérifié par zbarimg si disponible)
         String url = "http://192.168.1.23:8765/#AbCdEfGhIjKlMnOpQrStUv";

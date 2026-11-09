@@ -847,6 +847,27 @@ final class Online {
         synchronized (THUMB_LOCK) { thumbNext = Math.max(thumbNext, System.currentTimeMillis() + ms); }
     }
 
+    /** Aperçu déjà présent sur la TV (sans réseau), ou null. */
+    File thumbCached(Pick p) {
+        File f = new File(new File(catalogDir(), "thumbs"), "t" + Integer.toHexString(p.key.hashCode()) + ".jpg");
+        return f.exists() && f.length() > 0 ? f : null;
+    }
+
+    /** Prépare en arrière-plan les aperçus manquants (un à la fois, file polie), pour le téléphone. */
+    void prefetchThumbs(final List<Pick> picks) {
+        if (!prefetching.compareAndSet(false, true)) return; // déjà en cours
+        thumbWorker.execute(new Runnable() {
+            @Override public void run() {
+                try { for (Pick p : picks) if (thumbCached(p) == null) thumbOf(p); }
+                finally { prefetching.set(false); }
+            }
+        });
+    }
+
+    private final java.util.concurrent.atomic.AtomicBoolean prefetching = new java.util.concurrent.atomic.AtomicBoolean();
+
+    private final java.util.concurrent.ExecutorService thumbWorker = java.util.concurrent.Executors.newSingleThreadExecutor();
+
     /** Dernière raison d'échec d'un aperçu (affichée dans l'écran de choix). */
     volatile String thumbError = "";
 

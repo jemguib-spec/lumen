@@ -131,6 +131,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         f.addAction(Intent.ACTION_PACKAGE_CHANGED);
         f.addDataScheme("package");
         registerReceiver(packageReceiver, f);
+        registerReceiver(screenOff, new IntentFilter(Intent.ACTION_SCREEN_OFF));
         if (SettingsPanel.reopenPage >= 0) h.post(new Runnable() { @Override public void run() { SettingsPanel.reopen(MainActivity.this); } });
     }
 
@@ -140,8 +141,12 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         recreate();
     }
 
+    /** Lumen est à l'écran (au premier plan). */
+    boolean resumedNow;
+
     @Override protected void onResume() {
         super.onResume();
+        resumedNow = true;
         wall.start();
         if (appsOpen) LivingScene.paused = true;
         // tout ce qui n'est pas visible tout de suite attend la première image (démarrage plus rapide)
@@ -168,6 +173,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     @Override protected void onPause() {
         super.onPause();
+        resumedNow = false;
         h.removeCallbacks(afterShown);
         perf.setOn(false);
         wall.stop();
@@ -178,10 +184,14 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         if (ambientOn) exitAmbient(false);
     }
 
-    /** Lumen n'est plus affiché : le serveur téléphone s'arrête (rien ne reste ouvert en arrière-plan). */
+    /**
+     * Lumen n'est plus affiché : le serveur téléphone s'arrête, sauf si un téléphone est connecté
+     * (on peut alors revenir à l'accueil sans rescanner). Il s'arrête de toute façon quand l'écran
+     * s'éteint, après 15 min sans activité, ou sur demande.
+     */
     @Override protected void onStop() {
         super.onStop();
-        phone.stop();
+        phone.onBackground();
         online.setActive(false);
         closeAmbiance();
     }
@@ -194,6 +204,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     @Override protected void onDestroy() {
         try { unregisterReceiver(packageReceiver); } catch (Exception ignored) { }
+        try { unregisterReceiver(screenOff); } catch (Exception ignored) { }
         phone.stop();
         super.onDestroy();
     }
@@ -1277,6 +1288,111 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         if (overlay == null && !appsOpen) buildRow(focusedKey()); else dirtyRow = true;
         markAppsDirty();
         showNotice("Favoris mis à jour");
+    }
+
+    /** Écran éteint (veille de la TV) : le téléphone est déconnecté. */
+    private final BroadcastReceiver screenOff = new BroadcastReceiver() {
+        @Override public void onReceive(Context c, Intent i) { phone.disconnect(); }
+    };
+
+    // ------------------------------------------------------------------ télécommande (page du téléphone)
+
+    @Override public boolean onTvHome() { return resumedNow; }
+
+    @Override public void phoneLaunch(AppRepo.App app) {
+        if (ambiance != null) closeAmbiance();
+        if (ambientOn) exitAmbient(false);
+        closeOverlay(false);
+        launch(app);
+    }
+
+    @Override public void phoneText(String text) {
+        if (ambientOn) exitAmbient(false);
+        View f = getCurrentFocus();
+        if (f instanceof android.widget.EditText) { // champ de Lumen déjà ouvert (recherche, ville)
+            android.widget.EditText e = (android.widget.EditText) f;
+            e.setText(text);
+            e.setSelection(e.length());
+            return;
+        }
+        if (ambiance != null) closeAmbiance();
+        closeOverlay(false);
+        openApps();
+        appsPage.setQuery(text);
+    }
+
+    @Override public void phoneAmbiance(int kind) {
+        if (kind < 0) { closeAmbiance(); return; }
+        if (ambientOn) exitAmbient(false);
+        prefs.setAmbianceKind(kind);
+        if (ambiance == null) openAmbiance(); else ambiance.selectKind(kind);
+    }
+
+    @Override public boolean phoneTimer(int minutes) {
+        if (ambiance == null) return false;
+        return ambiance.setTimerMinutes(minutes);
+    }
+
+    @Override public int[] ambianceState() {
+        return ambiance == null ? new int[]{-1, 0, 0} : new int[]{ambiance.kind(), ambiance.timerLeftMinutes(), ambiance.timerChoice()};
+    }
+
+    @Override public void phoneVeille(boolean on) {
+        if (on && !ambientOn) { if (ambiance != null) closeAmbiance(); closeOverlay(false); enterAmbient(); }
+        else if (!on && ambientOn) exitAmbient(true);
+    }
+
+    @Override public boolean veilleOn() { return ambientOn; }
+
+    @Override public void phoneSource(int source) {
+        prefs.setSource(source);
+        SettingsPanel.applyWallChange(this);
+    }
+
+    @Override public void phoneNextWall() { wall.next(); }
+
+    /** Plusieurs vidéos cochées d'affilée sur le téléphone : un seul rafraîchissement, 3 s après la dernière. */
+    private String picksScope;
+    private final Runnable picksRefresh = new Runnable() {
+        @Override public void run() {
+            if (Online.SCOPE_COSY.equals(picksScope)) online.refreshCosy();
+            else { online.refreshIfNeeded(Online.VIDEO, true); wall.restart(); }
+        }
+    };
+
+    @Override public void phonePicksChanged(String scope) {
+        picksScope = scope;
+        h.removeCallbacks(picksRefresh);
+        h.postDelayed(picksRefresh, 3000);
+    }
+
+    private TextView phonePill;
+
+    /** Petite pastille discrète en haut à gauche tant qu'un téléphone est connecté. */
+    @Override public void onPhoneConnected(boolean connected) {
+        if (connected && phonePill == null) {
+            phonePill = text(20, "sans-serif-medium", 0xE6FFFFFF);
+            phonePill.setText("Téléphone connecté");
+            GradientDrawable bg = new GradientDrawable();
+            bg.setCornerRadius(u(30));
+            bg.setColor(0x66101218);
+            bg.setStroke(Math.max(1, u(1.5f)), 0x33FFFFFF);
+            phonePill.setBackground(bg);
+            phonePill.setPadding(u(24), u(12), u(24), u(12));
+            FrameLayout.LayoutParams pl = wrap(Gravity.TOP | Gravity.START);
+            pl.leftMargin = u(112);
+            pl.topMargin = u(48);
+            root.addView(phonePill, root.indexOfChild(notice), pl);
+            phonePill.setAlpha(0f);
+            phonePill.animate().alpha(1f).setDuration(300).start();
+            showNotice("Téléphone connecté");
+        } else if (!connected && phonePill != null) {
+            final TextView pp = phonePill;
+            phonePill = null;
+            pp.animate().alpha(0f).setDuration(300).withEndAction(new Runnable() {
+                @Override public void run() { root.removeView(pp); }
+            }).start();
+        }
     }
 
     @Override public void onSettingsRestored(int count) {

@@ -88,7 +88,14 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - Sans clé, Lumen ne contacte jamais Pexels. Réglages › Fond d'écran › Avancé › Pexels pour retirer la clé.
 
 ## Téléphone et Reprendre
-- **Réglages depuis le téléphone** (Réglages, première ligne) : un QR code s'affiche ; scanne-le avec le téléphone connecté au même Wi-Fi. La page permet de réorganiser, ajouter ou retirer les favoris, et d'envoyer tes propres photos et vidéos (source « Mes photos et vidéos », choisie automatiquement au premier envoi). Tout reste sur ton réseau local ; l'accès est protégé par un code unique contenu dans le QR code, et le serveur s'arrête seul après 15 minutes sans activité.
+- **Réglages depuis le téléphone** (Réglages, première ligne) : un QR code s'affiche ; scanne-le avec le téléphone connecté au même Wi-Fi. Cinq onglets en bas :
+  - **TV** : taper du texte sur la TV (recherche d'appli, ville), ouvrir une appli ou une source HDMI, lancer une ambiance et sa minuterie, mode veille, fond suivant, source du fond ;
+  - **Accueil** : réorganiser, ajouter, retirer les favoris ; verrouiller une appli (avec le code PIN) ;
+  - **Vidéos** : cocher les vidéos d'ambiance et de fond sur aperçus (liste fermée, décocher efface la vidéo) ;
+  - **Envois** : envoyer tes photos et vidéos ;
+  - **Plus** : code PIN, Pexels, sauvegarde, journal, déconnexion.
+
+  Tout reste sur ton réseau local. Un seul téléphone à la fois ; la connexion survit quand tu ouvres une appli, et se coupe quand la TV s'éteint ou après 15 minutes sans activité.
 - **Reprendre** : sur l'accueil, ◀ depuis la première vignette d'une ligne ouvre le panneau des dernières applis utilisées (▶ ou Retour pour le fermer). Par défaut, il connaît les applis ouvertes depuis Lumen. Pour y inclure aussi celles ouvertes autrement (bouton de la télécommande, Gemini…), autorise une fois :
 
     adb shell appops set com.lumen.launcher GET_USAGE_STATS allow

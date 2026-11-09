@@ -10,7 +10,7 @@
 - Code PIN facultatif (réglages, désinstallation, applis verrouillées)
 - Applis habituelles selon l'heure, calculées sur la TV uniquement
 - Taille du texte et contraste réglables
-- Réglages, envois et sauvegarde depuis le téléphone par QR code (réseau local uniquement)
+- Télécommande, choix des vidéos, envois et sauvegarde depuis le téléphone par QR code (réseau local, un seul téléphone, actions en liste fermée)
 
 Installation et utilisation : [INSTALLATION.md](INSTALLATION.md) · Sécurité et organisation du code : [SECURITE.md](SECURITE.md)
 
