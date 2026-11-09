@@ -77,14 +77,17 @@ final class RecoPanel {
             TextView how = a.text(24, "sans-serif", 0xB3FFFFFF);
             how.setText("Pour voir les films et séries les plus regardés en ce moment, sur toutes les plateformes ou seulement sur tes applis :\n\n"
                     + "1. Crée une clé gratuite sur themoviedb.org (Compte › Paramètres › API).\n"
-                    + "2. Sur le téléphone connecté : Plus › Films du moment, colle la clé.\n\n"
+                    + "2. Saisis-la ici, ou colle-la depuis le téléphone (Plus › Films du moment).\n\n"
                     + "Sans clé, Lumen ne contacte jamais ce service.");
             how.setPadding(a.u(28), a.u(10), a.u(28), a.u(24));
             card.addView(how);
-            LinearLayout r = a.iconRow(Glyph.PHONE, "Ouvrir les réglages du téléphone", null, new View.OnClickListener() {
-                @Override public void onClick(View v) { a.closeOverlay(false); PhonePanel.openPhonePanel(a); }
+            LinearLayout r = a.iconRow(Glyph.UNLOCK, "Saisir la clé sur la TV", null, new View.OnClickListener() {
+                @Override public void onClick(View v) { a.closeOverlay(false); KeyPanel.open(a, KeyPanel.TMDB); }
             }, false);
             card.addView(r, a.rowLp());
+            card.addView(a.iconRow(Glyph.PHONE, "La coller depuis le téléphone", null, new View.OnClickListener() {
+                @Override public void onClick(View v) { a.closeOverlay(false); PhonePanel.openPhonePanel(a); }
+            }, false), a.rowLp());
             r.requestFocus();
             return;
         }

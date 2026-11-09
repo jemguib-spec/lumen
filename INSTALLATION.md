@@ -109,7 +109,7 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - Flèche **droite** depuis la dernière appli d'une rangée de l'accueil (le pendant de « Reprendre » à gauche), ou « affiche » dans la recherche : les films et séries du moment, avec affiches, année et note.
 - Filtres : **Mes applis** (seulement ce qui est sur Netflix, Prime Video, Disney+, Canal+… installés sur la TV), **Partout** (le plus regardé cette semaine, toutes plateformes), ou une appli précise.
 - OK : le titre s'ouvre dans l'appli qui le propose (sa recherche) ; s'il n'est sur aucune de tes applis, dans la recherche de la TV.
-- Il faut une clé gratuite TMDB (themoviedb.org › Compte › Paramètres › API), à coller sur le téléphone : Plus › Films du moment. Sans clé, Lumen ne contacte jamais ce service.
+- Il faut une clé gratuite TMDB (themoviedb.org › Compte › Paramètres › API) : à saisir sur la TV (Réglages › Accueil et applis › Films du moment, ou directement depuis le panneau) ou à coller depuis le téléphone (Plus › Films du moment). Sans clé, Lumen ne contacte jamais ce service.
 
 ## Quand une appli bloque
 - Appui long sur l'appli › **Fermer l'appli** : Android arrête ses processus ; elle redémarre proprement à la prochaine ouverture.

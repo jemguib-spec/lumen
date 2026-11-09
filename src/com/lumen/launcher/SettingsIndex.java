@@ -49,6 +49,8 @@ final class SettingsIndex {
             new Entry("Réglages depuis le téléphone", "Réglages", PHONE, "telephone qr code smartphone telecommande"),
             new Entry("Maison", "Home Assistant", HOME, "maison home assistant lumieres scenes volets"),
             new Entry("À l'affiche", "Films et séries du moment", RECO, "affiche films series tendances populaire recommandations nouveautes top"),
+            new Entry("Clé TMDB (films du moment)", A, ACCUEIL, "cle tmdb api themoviedb films moment"),
+            new Entry("Clé Pexels", F, FOND, "cle pexels api videos"),
     };
 
     /** Réglages qui correspondent à la recherche (au plus max). */

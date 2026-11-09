@@ -332,16 +332,9 @@ final class SettingsPanel {
             }
         }), a.rowLp());
         col.addView(a.listRow("Pexels", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.pexelsKey().isEmpty() ? "Désactivé" : "Activé · OK pour retirer la clé"; }
+            @Override public String get() { return a.prefs.pexelsKey().isEmpty() ? "Désactivé · ajouter une clé" : "Activé"; }
         }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                if (a.prefs.pexelsKey().isEmpty()) {
-                    a.showNotice("Ajoute ta clé Pexels depuis le téléphone (Réglages depuis le téléphone)");
-                } else {
-                    a.prefs.setPexelsKey("");
-                    a.showNotice("Clé Pexels retirée : Lumen ne contacte plus Pexels");
-                }
-            }
+            @Override public void onClick(View v) { KeyPanel.open(a, KeyPanel.PEXELS); }
         }), a.rowLp());
                 break;
             }
@@ -354,6 +347,11 @@ final class SettingsPanel {
                 a.setHouseButton(on);
                 if (on && !a.prefs.haConfigured()) a.showNotice("À relier depuis le téléphone : Plus › Home Assistant");
             }
+        }), a.rowLp());
+        col.addView(a.listRow("Films du moment (TMDB)", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.tmdbKey().isEmpty() ? "Ajouter une clé" : "Activé"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { KeyPanel.open(a, KeyPanel.TMDB); }
         }), a.rowLp());
         col.addView(a.listRow("Bandeau d'accueil", new MainActivity.Value() {
             @Override public String get() { return a.prefs.greeting() ? "Oui" : "Non"; }
