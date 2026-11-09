@@ -31,7 +31,7 @@ Police : Inter (licence OFL, `assets/fonts/LICENCE-Inter.txt`).
 
 ## Publier une mise à jour
 
-Les TV équipées de Lumen lisent chaque jour `dist/latest.json` sur la branche `main`, puis téléchargent `dist/Lumen.apk` si la version est plus récente.
+Les TV équipées de Lumen lisent toutes les 6 heures (ou à l'ouverture de Réglages › Système) `dist/latest.json` sur la branche `main`, puis téléchargent `dist/Lumen.apk` si la version est plus récente.
 
 1. Augmenter `versionCode` et `versionName` dans `AndroidManifest.xml`.
 2. `tools/publish.sh` (compile, lance les tests, remplit `dist/`).

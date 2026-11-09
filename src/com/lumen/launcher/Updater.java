@@ -23,7 +23,7 @@ import java.util.Arrays;
 
 /**
  * Mise à jour automatique depuis le dépôt GitHub de Lumen (dist/latest.json et dist/Lumen.apk).
- * Une fois par jour (quand Lumen est à l'écran) : lecture de latest.json, téléchargement de Lumen.apk
+ * Toutes les 6 heures au plus (quand Lumen est à l'écran), ou dès qu'on ouvre Réglages › Système : lecture de latest.json, téléchargement de Lumen.apk
  * si la version est plus récente, puis contrôles : taille et empreinte SHA-256 annoncées, fichier APK,
  * même nom d'appli, version plus récente et MÊME CLÉ DE SIGNATURE que Lumen installé. Android demande ensuite une confirmation
  * (une appli ne peut pas s'installer seule sans l'accord de l'utilisateur).
@@ -31,7 +31,10 @@ import java.util.Arrays;
 final class Updater {
     interface Listener { void onUpdateState(); }
 
-    private static final long DAY = 24L * 3600 * 1000;
+    /** Écart entre deux recherches automatiques. */
+    private static final long EVERY = 6L * 3600 * 1000;
+    /** Écart minimal quand on ouvre Réglages › Système. */
+    private static final long SOON = 5L * 60 * 1000;
     private final Context ctx;
     private final Prefs prefs;
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -71,10 +74,15 @@ final class Updater {
         return d;
     }
 
-    /** Vérifie si une mise à jour existe (au plus une fois par jour, sauf demande explicite). */
+    /** Réglages › Système ouvert : on regarde tout de suite, sauf si on vient de le faire. */
+    void checkSoon() {
+        if (ready() == null && System.currentTimeMillis() - prefs.lastUpdateCheck() >= SOON) check(true);
+    }
+
+    /** Vérifie si une mise à jour existe (au plus toutes les 6 heures, sauf demande explicite). */
     void check(final boolean force) {
         if (busy) return;
-        if (!force && (!prefs.autoUpdate() || System.currentTimeMillis() - prefs.lastUpdateCheck() < DAY)) return;
+        if (!force && (!prefs.autoUpdate() || System.currentTimeMillis() - prefs.lastUpdateCheck() < EVERY)) return;
         busy = true;
         notifyState();
         new Thread(new Runnable() {

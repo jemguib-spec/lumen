@@ -42,7 +42,7 @@ final class SettingsIndex {
             new Entry("Économiseur d'écran de la TV", V, VEILLE, "economiseur ecran screensaver daydream"),
             new Entry("Ambiances", AM, AMBIANCES, "ambiances cheminee feu pluie videos son"),
             new Entry("Stockage", S, STORAGE, "stockage espace memoire plein vider supprimer cache"),
-            new Entry("Mise à jour de Lumen", S, SYSTEME, "mise a jour version update"),
+            new Entry("Rechercher une mise à jour", S, SYSTEME, "mise a jour version update rechercher"),
             new Entry("Sons de l'interface", S, SYSTEME, "sons bruit clic"),
             new Entry("Code PIN", S, SYSTEME, "code pin verrou enfant parental"),
             new Entry("À propos et licences", S, ABOUT, "a propos version licences"),

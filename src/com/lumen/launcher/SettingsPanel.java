@@ -541,6 +541,7 @@ final class SettingsPanel {
                 break;
             }
             case SYSTEME: {
+                a.updater.checkSoon(); // une nouvelle version se voit dès qu'on ouvre cette page
         col.addView(a.listRow("Redémarrer Lumen", null, new View.OnClickListener() {
             @Override public void onClick(View v) { a.restartLumenNicely(); }
         }), a.rowLp());
@@ -549,7 +550,7 @@ final class SettingsPanel {
         }, new View.OnClickListener() {
             @Override public void onClick(View v) { StoragePanel.open(a); }
         }), a.rowLp());
-        col.addView(a.listRow("Mise à jour de Lumen", new MainActivity.Value() {
+        col.addView(a.listRow("Rechercher une mise à jour", new MainActivity.Value() {
             @Override public String get() { return a.updater.state(); }
         }, new View.OnClickListener() {
             @Override public void onClick(View v) {

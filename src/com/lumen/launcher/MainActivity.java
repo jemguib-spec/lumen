@@ -597,7 +597,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         @Override public void run() {
             if (isFinishing()) return;
             askWatchNextOnce();
-            updater.check(false);                // une fois par jour au plus
+            updater.check(false);                // toutes les 6 heures au plus
             shelf.reload();                      // on revient peut-être d'un épisode
             for (String t : Library.themesFor(prefs.source())) online.refreshIfNeeded(t, false);
             refreshGreeting();
@@ -827,10 +827,6 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         if (greet == null) return;
         if (!prefs.greeting()) { greet.setVisibility(View.GONE); return; }
         greet.setVisibility(View.VISIBLE);
-        // sous l'heure et la date ; à leur place si l'horloge est masquée
-        FrameLayout.LayoutParams gl = (FrameLayout.LayoutParams) greet.getLayoutParams();
-        int top = u(prefs.showClock() ? 170 : 64);
-        if (gl != null && gl.topMargin != top) { gl.topMargin = top; greet.setLayoutParams(gl); }
         weather.current(new Weather.Callback() {
             @Override public void onWeather(String line) {
                 java.util.Calendar now = java.util.Calendar.getInstance();

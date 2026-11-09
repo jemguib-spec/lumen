@@ -179,7 +179,7 @@ Page du téléphone › Plus › Télécharger la sauvegarde (un petit fichier .
 ## Mises à jour
 - Une fois par jour, quand Lumen est à l'écran, il regarde s'il existe une nouvelle version dans le dépôt GitHub du projet. Si oui, il la télécharge, vérifie qu'elle est signée avec la même clé que Lumen installé, puis Android demande « Mettre à jour ? » : un clic suffit.
 - La toute première fois, Android demande d'autoriser Lumen à installer des applis : accepte (Paramètres › Applis › Lumen › Installer des applis inconnues).
-- Réglages › Système › Mise à jour de Lumen : vérifier maintenant ou installer ; « Mises à jour automatiques » pour couper.
+- Réglages › Système : ouvrir la page lance la recherche ; « Rechercher une mise à jour » pour vérifier ou installer ; « Mises à jour automatiques » pour couper.
 
 ## Mesures et journal d'erreurs
 - Réglages › Système › Mesures : affiche en haut à gauche le temps de démarrage, les images par seconde, la mémoire et le processeur utilisés par Lumen, et le type de fond. Utile pour repérer ce qui ralentit la TV.
