@@ -203,7 +203,7 @@ final class TopShelf {
                 cell.animate().scaleX(f ? 1.07f : 1f).scaleY(f ? 1.07f : 1f).setDuration(220)
                         .setInterpolator(new DecelerateInterpolator(2f)).start();
                 card.setElevation(f ? a.u(30) : 0);
-                card.setForeground(f ? GalleryPanel.ring(a, radius) : null);
+                card.setForeground(f ? CheckCell.ring(a, radius) : null);
             }
         });
         cell.setOnClickListener(new View.OnClickListener() {

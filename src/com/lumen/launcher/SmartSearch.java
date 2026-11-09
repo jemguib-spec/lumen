@@ -3,7 +3,6 @@
 package com.lumen.launcher;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Recherche « intelligente » de Lumen (Java pur, testé) :
@@ -101,6 +100,4 @@ final class SmartSearch {
         String title = t.toString().trim();
         return title.length() < 2 ? null : new Object[]{best, title};
     }
-
-    static String lower(String s) { return s == null ? "" : s.toLowerCase(Locale.FRANCE); }
 }

@@ -11,13 +11,9 @@ import android.text.Html;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -207,13 +203,8 @@ final class Online {
     }
 
     private synchronized void writeIndex(String theme, JSONArray a) {
-        try {
-            File tmp = new File(dir(theme), "index.tmp");
-            OutputStream o = new FileOutputStream(tmp);
-            o.write(a.toString().getBytes("UTF-8"));
-            o.close();
-            tmp.renameTo(new File(dir(theme), "index.json"));
-        } catch (Exception ignored) { }
+        try { SafeFile.write(new File(dir(theme), "index.json"), a.toString().getBytes("UTF-8")); }
+        catch (Exception ignored) { } // encodage UTF-8 : toujours disponible
     }
 
     /** Fonds déjà téléchargés pour un thème. */
@@ -872,9 +863,7 @@ final class Online {
             JSONArray a = new JSONArray();
             for (Candidate c : out) a.put(c.toJson());
             o.put("items", a);
-            File tmp = new File(catalogDir(), scope + ".tmp");
-            try (OutputStream os = new FileOutputStream(tmp)) { os.write(o.toString().getBytes("UTF-8")); }
-            tmp.renameTo(f);
+            SafeFile.write(f, o.toString().getBytes("UTF-8"));
         } catch (Exception ignored) { }
         return out;
     }
@@ -1127,7 +1116,6 @@ final class Online {
 
     private String pick(String[] a) { return a[rnd.nextInt(a.length)]; }
     private static String enc(String s) throws Exception { return URLEncoder.encode(s, "UTF-8"); }
-    private static String encPath(String s) throws Exception { return URLEncoder.encode(s, "UTF-8").replace("+", "%20"); }
     private static String safe(String s) { return s.replaceAll("[^A-Za-z0-9_-]", "_"); }
 
     @SuppressWarnings("deprecation")

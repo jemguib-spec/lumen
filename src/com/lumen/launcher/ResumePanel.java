@@ -3,15 +3,9 @@
 package com.lumen.launcher;
 
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.drawable.GradientDrawable;
-import android.net.Uri;
-import android.provider.Settings;
 import android.text.TextUtils;
-import android.util.TypedValue;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;

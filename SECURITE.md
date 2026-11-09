@@ -99,6 +99,8 @@
 | `Backup`, `Habits` | Sauvegarde des réglages, habitudes selon l'heure |
 | `AppsPage`, `AppMenu`, `SmartSearch`, `SettingsIndex` | Page Applications, menu de l'appui long, recherche |
 | `Greeting`, `Messages`, `LumenScreen` | Bandeau d'accueil, messages à l'écran, écran « lumen » de mise à jour |
+| `CheckCell` | Vignette cochable commune (galerie des fonds, choix des vidéos) |
+| `SafeFile` | Écriture sûre des index et catalogues (rien de corrompu si la TV est débranchée) |
 | `About`, `StoragePanel`, `Perf`, `CrashLog` | À propos et licences, stockage, mesures, journal d'erreurs local |
 | `ScreenSaver` | Lumen comme économiseur d'écran |
 | `Sky` | Lever / coucher du soleil, phase de lune, saisons (calcul local, sans réseau) |

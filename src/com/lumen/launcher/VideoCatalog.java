@@ -77,14 +77,6 @@ final class VideoCatalog {
         return null;
     }
 
-    /** Titres d'un groupe, dans l'ordre de préférence. */
-    static String[] filesOf(String group) {
-        if (NATURE.equals(group)) return NATURE_FILES;
-        if (SPACE.equals(group)) return SPACE_FILES;
-        for (String[] c : CITIES) if (c[0].equals(group)) return java.util.Arrays.copyOfRange(c, 1, c.length);
-        return new String[0];
-    }
-
     static boolean isCity(String name) {
         for (String[] c : CITIES) if (c[0].equals(name)) return true;
         return false;

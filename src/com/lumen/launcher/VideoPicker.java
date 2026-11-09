@@ -5,11 +5,9 @@ package com.lumen.launcher;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.GradientDrawable;
-import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -172,21 +170,9 @@ final class VideoPicker {
     }
 
     private static View cell(final MainActivity a, final Online.Pick p, int tw, int th, final boolean[] changed, final Runnable count) {
-        final FrameLayout cell = new FrameLayout(a);
-        cell.setFocusable(true);
-        cell.setClickable(true);
-        cell.setSoundEffectsEnabled(false);
-        cell.setClipChildren(false);
-        final FrameLayout card = new FrameLayout(a);
-        final float radius = a.u(18);
-        card.setOutlineProvider(new android.view.ViewOutlineProvider() {
-            @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), radius); }
-        });
-        card.setClipToOutline(true);
-        card.setBackgroundColor(0xFF15161B);
-        final ImageView img = new ImageView(a);
-        img.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        card.addView(img, MainActivity.match());
+        final CheckCell c = new CheckCell(a, tw, th);
+        final FrameLayout card = c.card;
+        final ImageView img = c.img;
         // en attendant l'aperçu (ou s'il est indisponible) : un pictogramme plutôt qu'une case vide
         final ImageView ph = new ImageView(a);
         ph.setImageDrawable(new Glyph(Glyph.IMAGE, 0x59FFFFFF));
@@ -203,46 +189,18 @@ final class VideoPicker {
         il.leftMargin = a.u(14);
         il.bottomMargin = a.u(10);
         card.addView(info, il);
-        final TextView check = a.text(28, "sans-serif-medium", 0xFF111216);
-        check.setGravity(Gravity.CENTER);
-        final GradientDrawable cb = new GradientDrawable();
-        cb.setShape(GradientDrawable.OVAL);
-        check.setBackground(cb);
-        FrameLayout.LayoutParams ckl = new FrameLayout.LayoutParams(a.u(48), a.u(48), Gravity.TOP | Gravity.END);
-        ckl.topMargin = ckl.rightMargin = a.u(14);
-        card.addView(check, ckl);
-        cell.addView(card, new FrameLayout.LayoutParams(tw, th));
-        TextView name = a.text(22, "sans-serif", 0xB3FFFFFF);
-        name.setText(p.title);
-        name.setMaxLines(1);
-        name.setEllipsize(TextUtils.TruncateAt.END);
-        FrameLayout.LayoutParams nl = new FrameLayout.LayoutParams(tw, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP);
-        nl.topMargin = th + a.u(12);
-        cell.addView(name, nl);
-        cell.setLayoutParams(new LinearLayout.LayoutParams(tw, th + a.u(48)));
-
         final Runnable paint = new Runnable() {
             @Override public void run() {
                 // cochée : pastille blanche avec ✓ ; pas cochée : simple cercle, l'aperçu reste bien visible
                 boolean on = a.prefs.videoOk(p.key);
-                check.setText(on ? "✓" : "");
-                cb.setColor(on ? 0xFFF5F5F7 : 0x33000000);
-                cb.setStroke(Math.max(1, a.u(3)), on ? 0xFFF5F5F7 : 0xE6FFFFFF);
+                c.check.setText(on ? "✓" : "");
+                c.checkBg.setColor(on ? 0xFFF5F5F7 : 0x33000000);
+                c.checkBg.setStroke(Math.max(1, a.u(3)), on ? 0xFFF5F5F7 : 0xE6FFFFFF);
             }
         };
         paint.run();
-        cell.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override public void onFocusChange(View v, boolean f) {
-                if (f) Sounds.get(a).tick();
-                cell.animate().scaleX(f ? 1.08f : 1f).scaleY(f ? 1.08f : 1f).setDuration(220)
-                        .setInterpolator(new DecelerateInterpolator(2f)).start();
-                card.setElevation(f ? a.u(30) : 0);
-                card.setForeground(f ? GalleryPanel.ring(a, radius) : null);
-            }
-        });
-        cell.setOnClickListener(new View.OnClickListener() {
+        final View cell = c.finish(p.title, new View.OnClickListener() {
             @Override public void onClick(View v) {
-                Sounds.get(a).tock();
                 a.prefs.setVideoOk(p.key, !a.prefs.videoOk(p.key));
                 changed[0] = true;
                 paint.run();

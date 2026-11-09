@@ -507,6 +507,16 @@ public class LumenTests {
         Files.write(png2.toPath(), pgm.toString().getBytes(StandardCharsets.US_ASCII));
         System.out.println("QR_FILE=" + png2.getAbsolutePath() + " QR_EXPECT=" + url);
 
+        try {
+            File sdir = Files.createTempDirectory("lumen-safe").toFile();
+            File idx = new File(sdir, "index.json");
+            check("écriture sûre : fichier écrit", SafeFile.write(idx, "[1]".getBytes("UTF-8")) && "[1]".equals(new String(Files.readAllBytes(idx.toPath()), "UTF-8")));
+            check("écriture sûre : remplacé d'un coup", SafeFile.write(idx, "[2]".getBytes("UTF-8")) && "[2]".equals(new String(Files.readAllBytes(idx.toPath()), "UTF-8")));
+            check("écriture sûre : aucun fichier temporaire laissé", sdir.list().length == 1);
+            File gone = new File(new File(sdir, "absent"), "x.json");
+            check("écriture sûre : échec signalé, rien d'écrit", !SafeFile.write(gone, new byte[1]) && !gone.exists());
+            idx.delete(); sdir.delete();
+        } catch (Exception safeErr) { check("écriture sûre : " + safeErr, false); }
         try { phoneGate(); } catch (Exception gateErr) { check("contrôles de la page du téléphone : " + gateErr, false); }
 
         // ---- ciel (références : éphémérides publiées, tolérance 4 min)

@@ -2,28 +2,17 @@
 // Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.drawable.GradientDrawable;
-import android.net.Uri;
 import android.provider.Settings;
-import android.text.TextUtils;
-import android.util.TypedValue;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 /** Panneau du QR code pour régler Lumen depuis le téléphone. */
 final class PhonePanel {

@@ -2,28 +2,16 @@
 // Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
-import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.drawable.GradientDrawable;
-import android.net.Uri;
-import android.provider.Settings;
-import android.text.TextUtils;
-import android.util.TypedValue;
-import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /** Galerie des fonds : miniatures de la source, OK coche ou décoche chaque image. */
 final class GalleryPanel {
@@ -138,65 +126,23 @@ final class GalleryPanel {
     }
 
     static View galleryCell(final MainActivity a, final WallItem it, int tw, int th, final boolean[] changed) {
-        final FrameLayout cell = new FrameLayout(a);
-        cell.setFocusable(true);
-        cell.setClickable(true);
-        cell.setSoundEffectsEnabled(false);
-        cell.setClipChildren(false);
-        final FrameLayout card = new FrameLayout(a);
-        final float radius = a.u(18);
-        card.setOutlineProvider(new android.view.ViewOutlineProvider() {
-            @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), radius); }
-        });
-        card.setClipToOutline(true);
-        card.setBackgroundColor(0xFF15161B);
-        final ImageView img = new ImageView(a);
-        img.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        card.addView(img, a.match());
-        // voile + coche
+        final CheckCell c = new CheckCell(a, tw, th);
+        final ImageView img = c.img;
+        // voile sur les fonds masqués
         final View dim = new View(a);
         dim.setBackgroundColor(0xB3000000);
-        card.addView(dim, a.match());
-        final TextView check = a.text(28, "sans-serif-medium", 0xFF111216);
-        check.setText("✓");
-        check.setGravity(Gravity.CENTER);
-        GradientDrawable cb = new GradientDrawable();
-        cb.setShape(GradientDrawable.OVAL);
-        cb.setColor(0xFFF5F5F7);
-        check.setBackground(cb);
-        FrameLayout.LayoutParams ckl = new FrameLayout.LayoutParams(a.u(48), a.u(48), Gravity.TOP | Gravity.END);
-        ckl.topMargin = ckl.rightMargin = a.u(14);
-        card.addView(check, ckl);
-        cell.addView(card, new FrameLayout.LayoutParams(tw, th));
-        TextView name = a.text(22, "sans-serif", 0xB3FFFFFF);
-        name.setText(it.title);
-        name.setMaxLines(1);
-        name.setEllipsize(TextUtils.TruncateAt.END);
-        FrameLayout.LayoutParams nl = new FrameLayout.LayoutParams(tw, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP);
-        nl.topMargin = th + a.u(12);
-        cell.addView(name, nl);
-        cell.setLayoutParams(new LinearLayout.LayoutParams(tw, th + a.u(48)));
-
+        c.card.addView(dim, MainActivity.match());
+        c.check.setText("✓");
         final Runnable paint = new Runnable() {
             @Override public void run() {
                 boolean visible = !a.prefs.hiddenWalls().contains(it.id);
                 dim.setVisibility(visible ? View.GONE : View.VISIBLE);
-                check.setVisibility(visible ? View.VISIBLE : View.GONE);
+                c.check.setVisibility(visible ? View.VISIBLE : View.GONE);
             }
         };
         paint.run();
-        cell.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override public void onFocusChange(View v, boolean f) {
-                if (f) Sounds.get(a).tick();
-                cell.animate().scaleX(f ? 1.08f : 1f).scaleY(f ? 1.08f : 1f).setDuration(220)
-                        .setInterpolator(new DecelerateInterpolator(2f)).start();
-                card.setElevation(f ? a.u(30) : 0);
-                card.setForeground(f ? ring(a, radius) : null);
-            }
-        });
-        cell.setOnClickListener(new View.OnClickListener() {
+        View cell = c.finish(it.title, new View.OnClickListener() {
             @Override public void onClick(View v) {
-                Sounds.get(a).tock();
                 if (a.prefs.hiddenWalls().contains(it.id)) a.prefs.unhideWall(it.id); else a.prefs.hideWall(it.id);
                 changed[0] = true;
                 paint.run();
@@ -210,13 +156,6 @@ final class GalleryPanel {
             }
         });
         return cell;
-    }
-
-    static GradientDrawable ring(final MainActivity a, float radius) {
-        GradientDrawable g = new GradientDrawable();
-        g.setCornerRadius(radius);
-        g.setStroke(a.u(4), 0xFFF5F5F7);
-        return g;
     }
 
     static Bitmap thumbnail(final MainActivity a, WallItem it) {

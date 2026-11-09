@@ -2,16 +2,10 @@
 // Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.drawable.GradientDrawable;
-import android.net.Uri;
 import android.provider.Settings;
-import android.text.TextUtils;
-import android.util.TypedValue;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
@@ -21,9 +15,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 /** Panneau des réglages (à droite) et ses sous-pages : villes, applis masquées. */
 final class SettingsPanel {
@@ -86,8 +77,6 @@ final class SettingsPanel {
     private static int page = ROOT, lastRubric = -1;
     private static LinearLayout openCard;
 
-    static void fillSettings(final MainActivity a, final LinearLayout card) { page(a, card, ROOT); }
-
     /** Retour (ou ◀) dans une sous-page : on remonte d'un niveau. false si on est déjà à l'accueil. */
     static boolean back(MainActivity a) {
         if (openCard == null || !openCard.isAttachedToWindow() || page == ROOT) return false;
@@ -98,13 +87,8 @@ final class SettingsPanel {
 
     static boolean inSubPage() { return openCard != null && openCard.isAttachedToWindow() && page != ROOT; }
 
-    /** Cadre commun : titre (avec « ‹ » dans les sous-pages), liste qui défile, arrivée en glissant. */
-    private static LinearLayout frame(final MainActivity a, final LinearLayout card, int which) {
-        int from = page;
-        page = which;
-        openCard = card;
-        card.removeAllViews();
-        a.rowRefreshers.clear();
+    /** Colonne qui défile (sans barre, bords estompés) remplissant la carte des réglages. */
+    private static LinearLayout scrollColumn(MainActivity a, LinearLayout card, int top) {
         ScrollView sv = new ScrollView(a);
         sv.setVerticalScrollBarEnabled(false);
         sv.setOverScrollMode(View.OVER_SCROLL_NEVER);
@@ -113,9 +97,20 @@ final class SettingsPanel {
         LinearLayout col = new LinearLayout(a);
         col.setOrientation(LinearLayout.VERTICAL);
         col.setClipChildren(false);
-        col.setPadding(a.u(24), a.u(44), a.u(24), a.u(48));
+        col.setPadding(a.u(24), a.u(top), a.u(24), a.u(48));
         sv.addView(col);
         card.addView(sv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        return col;
+    }
+
+    /** Cadre commun : titre (avec « ‹ » dans les sous-pages), liste qui défile, arrivée en glissant. */
+    private static LinearLayout frame(final MainActivity a, final LinearLayout card, int which) {
+        int from = page;
+        page = which;
+        openCard = card;
+        card.removeAllViews();
+        a.rowRefreshers.clear();
+        LinearLayout col = scrollColumn(a, card, 44);
         TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
         title.setText(which == ROOT ? TITLES[ROOT] : "‹  " + TITLES[which]);
         title.setPadding(a.u(32), 0, 0, a.u(18));
@@ -628,17 +623,7 @@ final class SettingsPanel {
     static void fillCities(final MainActivity a, final LinearLayout card) {
         card.removeAllViews();
         a.rowRefreshers.clear();
-        ScrollView sv = new ScrollView(a);
-        sv.setVerticalScrollBarEnabled(false);
-        sv.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        sv.setVerticalFadingEdgeEnabled(true);
-        sv.setFadingEdgeLength(a.u(70));
-        LinearLayout col = new LinearLayout(a);
-        col.setOrientation(LinearLayout.VERTICAL);
-        col.setClipChildren(false);
-        col.setPadding(a.u(24), a.u(48), a.u(24), a.u(48));
-        sv.addView(col);
-        card.addView(sv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        LinearLayout col = scrollColumn(a, card, 48);
         final boolean[] changed = {false};
         page = CITIES;
         openCard = card;
@@ -665,17 +650,7 @@ final class SettingsPanel {
     static void fillHiddenApps(final MainActivity a, final LinearLayout card) {
         card.removeAllViews();
         a.rowRefreshers.clear();
-        ScrollView sv = new ScrollView(a);
-        sv.setVerticalScrollBarEnabled(false);
-        sv.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        sv.setVerticalFadingEdgeEnabled(true);
-        sv.setFadingEdgeLength(a.u(70));
-        LinearLayout col = new LinearLayout(a);
-        col.setOrientation(LinearLayout.VERTICAL);
-        col.setClipChildren(false);
-        col.setPadding(a.u(24), a.u(48), a.u(24), a.u(48));
-        sv.addView(col);
-        card.addView(sv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        LinearLayout col = scrollColumn(a, card, 48);
 
         page = HIDDEN;
         openCard = card;

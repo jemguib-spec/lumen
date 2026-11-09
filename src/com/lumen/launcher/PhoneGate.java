@@ -59,12 +59,6 @@ final class PhoneGate {
     /** Touches et frappe en direct : limite plus large (défilement continu). */
     static boolean isFast(HttpRequest r) { return post(r) && (r.path.equals("/api/key") || r.path.equals("/api/text")); }
 
-    /** Fichiers de la page : publics, sans donnée. */
-    static boolean isPageAsset(HttpRequest r) {
-        String p = r.path;
-        return !post(r) && (p.equals("/") || p.equals("/index.html") || p.equals("/app.js") || p.equals("/app.css"));
-    }
-
     /** Anti « DNS rebinding » : la page doit être demandée par l'adresse de la TV. */
     static Refusal host(HttpRequest r, String expectedHost) {
         return expectedHost != null && expectedHost.equals(r.header("host")) ? null : BAD_HOST;

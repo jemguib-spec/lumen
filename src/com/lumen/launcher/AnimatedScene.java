@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.SystemClock;
 import android.view.View;
@@ -70,7 +69,6 @@ final class AnimatedScene extends View {
     private final long start = SystemClock.uptimeMillis();
     private final float[] sx = new float[140], sy = new float[140], sp = new float[140], sph = new float[140];
     private boolean running = true;
-    private final Rect src = new Rect();
     private final RectF dst = new RectF();
 
     AnimatedScene(Context c, Data d) {
