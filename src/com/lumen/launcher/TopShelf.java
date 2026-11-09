@@ -78,6 +78,17 @@ final class TopShelf {
         });
     }
 
+    /** Programmes en cours dont le titre (ou l'épisode) correspond à la recherche. */
+    List<WatchNext.Entry> search(String q, int max) {
+        List<WatchNext.Entry> out = new java.util.ArrayList<>();
+        for (List<WatchNext.Entry> l : data.values())
+            for (WatchNext.Entry e : l) {
+                if (out.size() >= max) return out;
+                if (AppCategory.matches(e.title, q) || (e.subtitle != null && AppCategory.matches(e.subtitle, q))) out.add(e);
+            }
+        return out;
+    }
+
     /** Le programme en cours regardé le plus récemment, toutes applis confondues (ou null). */
     WatchNext.Entry latest() {
         WatchNext.Entry best = null;

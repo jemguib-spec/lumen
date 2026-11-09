@@ -62,6 +62,8 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     private LinearLayout rowsBox, topButtons;
     private FrameLayout wallLayer;
     private View appsTint;
+    Cinema cinema;
+    private LinearLayout sceneBar;
     private Tile houseButton;
 
     /** Affiche ou masque le bouton « Maison » (Réglages › Accueil et applis). */
@@ -158,6 +160,8 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         super.onResume();
         resumedNow = true;
         wall.start();
+        if (cinema == null) cinema = new Cinema(this, prefs);
+        cinema.onHome(); // retour sur l'accueil : fin de la séance (lumières qui reviennent)
         if (appsOpen) LivingScene.paused = true;
         // tout ce qui n'est pas visible tout de suite attend la première image (démarrage plus rapide)
         h.removeCallbacks(afterShown);
@@ -652,6 +656,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         gl.bottomMargin = u(18);
         rowsBox.addView(greet, gl);
         refreshGreeting();
+        buildSceneBar();
         LinearLayout.LayoutParams shl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         shl.bottomMargin = u(6);
         rowsBox.addView(shelf.view, shl); // « Reprendre » au-dessus des applis
@@ -860,6 +865,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     }
 
     void launch(AppRepo.App app) {
+        if (cinema != null) cinema.onLaunch(app.pkg);
         prefs.addRecent(app.key);
         prefs.recordHabit(app.key);
         try {
@@ -1055,6 +1061,53 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
             glow.fade();
         }
     };
+
+    /** Raccourcis de scènes Home Assistant (choisies sur le téléphone), sous le bandeau d'accueil. */
+    private void buildSceneBar() {
+        if (sceneBar != null && sceneBar.getParent() != null) ((ViewGroup) sceneBar.getParent()).removeView(sceneBar);
+        List<String[]> scenes = prefs.haConfigured() ? prefs.haHome() : new ArrayList<String[]>();
+        if (scenes.isEmpty()) return;
+        sceneBar = new LinearLayout(this);
+        sceneBar.setOrientation(LinearLayout.HORIZONTAL);
+        sceneBar.setGravity(Gravity.CENTER);
+        sceneBar.setClipChildren(false);
+        for (final String[] sc : scenes) {
+            final TextView pill = text(22, "sans-serif-medium", 0xEBFFFFFF);
+            pill.setText("✦  " + sc[1]);
+            pill.setSingleLine(true);
+            pill.setFocusable(true);
+            pill.setClickable(true);
+            pill.setSoundEffectsEnabled(false);
+            pill.setPadding(u(30), u(14), u(30), u(14));
+            final GradientDrawable bg = new GradientDrawable();
+            bg.setCornerRadius(u(40));
+            bg.setColor(0x33FFFFFF);
+            bg.setStroke(Math.max(1, u(1.5f)), 0x26FFFFFF);
+            pill.setBackground(bg);
+            pill.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override public void onFocusChange(View v, boolean f) {
+                    if (f) Sounds.get(MainActivity.this).tick();
+                    bg.setColor(f ? 0xFFF5F5F7 : 0x33FFFFFF);
+                    pill.setTextColor(f ? 0xFF111216 : 0xEBFFFFFF);
+                    pill.animate().scaleX(f ? 1.06f : 1f).scaleY(f ? 1.06f : 1f).setStartDelay(0).setDuration(200).start();
+                }
+            });
+            pill.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    Sounds.get(MainActivity.this).tock();
+                    if (cinema == null) cinema = new Cinema(MainActivity.this, prefs);
+                    cinema.run(sc[0]);
+                    showNotice(sc[1]);
+                }
+            });
+            LinearLayout.LayoutParams pl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            pl.leftMargin = pl.rightMargin = u(10);
+            sceneBar.addView(pill, pl);
+        }
+        LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        bl.bottomMargin = u(14);
+        rowsBox.addView(sceneBar, rowsBox.indexOfChild(greet) + 1, bl);
+    }
 
     /** Bandeau d'accueil : salutation, météo si une ville est réglée, dernier épisode en cours. */
     void refreshGreeting() {
@@ -1254,9 +1307,42 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         ambient.start();
         ambient.setVisibility(View.VISIBLE);
         ambient.setAlpha(0f);
-        ambient.animate().alpha(1f).setDuration(2000).start();
-        for (View v : new View[]{homeLayer, appsLayer, captionBox, clockBox}) v.animate().alpha(0f).setDuration(1500).start();
+        boolean cascade = !appsOpen && homeLayer.getAlpha() > 0.5f;
+        ambient.animate().alpha(1f).setStartDelay(cascade ? 500 : 0).setDuration(2000).withEndAction(noDelay(ambient)).start();
+        if (cascade) {
+            // les éléments s'en vont un à un : légende, boutons, bandeau, puis les vignettes de gauche à droite
+            final List<View> parts = homeParts();
+            long step = 70, last = 0;
+            for (int i = 0; i < parts.size(); i++) {
+                View v = parts.get(i);
+                v.animate().cancel();
+                last = i * step;
+                v.animate().alpha(0f).translationY(u(16)).setStartDelay(last).setDuration(650)
+                        .setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator()).start();
+            }
+            clockBox.animate().alpha(0f).setStartDelay(last + 200).setDuration(900).withEndAction(noDelay(clockBox)).start();
+            h.postDelayed(new Runnable() {
+                @Override public void run() {
+                    if (!ambientOn) return;
+                    homeLayer.setAlpha(0f); // tout est caché : on remet chaque élément en place, invisible
+                    for (View v : parts) { v.animate().cancel(); v.animate().setStartDelay(0); v.setTranslationY(0); v.setAlpha(1f); }
+                    captionBox.setAlpha(0f);
+                }
+            }, last + 750);
+        } else {
+            for (View v : new View[]{homeLayer, appsLayer, captionBox, clockBox}) v.animate().alpha(0f).setStartDelay(0).setDuration(1500).start();
+        }
         glow.fade();
+    }
+
+    /** Éléments de l'accueil, dans l'ordre de la cascade du mode veille. */
+    private List<View> homeParts() {
+        List<View> out = new ArrayList<>();
+        out.add(captionBox);
+        for (int i = topButtons.getChildCount() - 1; i >= 0; i--) if (topButtons.getChildAt(i).getVisibility() == View.VISIBLE) out.add(topButtons.getChildAt(i));
+        if (greet != null && greet.getVisibility() == View.VISIBLE) out.add(greet);
+        for (LinearLayout r : rows) for (int i = 0; i < r.getChildCount(); i++) out.add(r.getChildAt(i));
+        return out;
     }
 
     private void exitAmbient(boolean animate) {
@@ -1277,11 +1363,25 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
                 veilleWall.release();
             }
         }).start();
-        clockBox.animate().alpha(appsOpen ? 0f : 1f).setDuration(d).start();
-        if (appsOpen) appsLayer.animate().alpha(1f).setDuration(d).start();
-        else {
-            homeLayer.animate().alpha(1f).setDuration(d).start();
-            captionBox.animate().alpha(1f).setDuration(d).start();
+        clockBox.animate().alpha(appsOpen ? 0f : 1f).setStartDelay(0).setDuration(d).start();
+        if (appsOpen) appsLayer.animate().alpha(1f).setStartDelay(0).setDuration(d).start();
+        else if (!animate) {
+            homeLayer.animate().alpha(1f).setStartDelay(0).setDuration(0).start();
+            captionBox.animate().alpha(1f).setStartDelay(0).setDuration(0).start();
+        } else {
+            // retour : les éléments reviennent un à un, dans le même ordre
+            homeLayer.animate().cancel();
+            homeLayer.setAlpha(1f);
+            List<View> parts = homeParts();
+            for (int i = 0; i < parts.size(); i++) {
+                final View v = parts.get(i);
+                float rest = v instanceof Tile ? ((Tile) v).restingAlpha() : 1f;
+                v.animate().cancel();
+                v.setAlpha(0f);
+                v.setTranslationY(u(14));
+                v.animate().alpha(rest).translationY(0).setStartDelay(120 + i * 40L).setDuration(420)
+                        .setInterpolator(new DecelerateInterpolator(2f)).withEndAction(noDelay(v)).start();
+            }
         }
         wake();
     }
@@ -1389,10 +1489,52 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         o.setAlpha(0f);
         root.addView(o, root.indexOfChild(notice), match());
         o.animate().alpha(1f).setDuration(220).start();
+        growFrom(o, focusBeforeOverlay);
         homeLayer.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
         appsLayer.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
         overlay = o;
         return o;
+    }
+
+    /** Centre (à l'écran) du bouton qui a ouvert le panneau ; le panneau y retourne en se fermant. */
+    private float[] overlayOrigin;
+
+    /**
+     * Le panneau en verre (ajouté par l'appelant juste après) grandit depuis le bouton choisi :
+     * il part petit, centré sur ce bouton, et s'installe à sa place en douceur.
+     */
+    private void growFrom(final FrameLayout o, View from) {
+        overlayOrigin = null;
+        if (from != null && from.isAttachedToWindow()) {
+            int[] l = new int[2];
+            from.getLocationOnScreen(l);
+            overlayOrigin = new float[]{l[0] + from.getWidth() * from.getScaleX() / 2f, l[1] + from.getHeight() * from.getScaleY() / 2f};
+        }
+        final float[] origin = overlayOrigin;
+        o.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
+            @Override public boolean onPreDraw() {
+                o.getViewTreeObserver().removeOnPreDrawListener(this);
+                if (o.getChildCount() < 2) return true;
+                View card = o.getChildAt(o.getChildCount() - 1);
+                if (card.getWidth() == 0) return true;
+                int[] c = new int[2];
+                card.getLocationOnScreen(c);
+                float px = card.getWidth() / 2f, py = card.getHeight() / 2f;
+                if (origin != null) {
+                    // pivot ramené dans le panneau, du côté du bouton
+                    px = Math.max(0, Math.min(card.getWidth(), origin[0] - c[0]));
+                    py = Math.max(0, Math.min(card.getHeight(), origin[1] - c[1]));
+                }
+                card.setPivotX(px);
+                card.setPivotY(py);
+                card.setScaleX(0.72f);
+                card.setScaleY(0.72f);
+                card.setAlpha(0f);
+                card.animate().scaleX(1f).scaleY(1f).alpha(1f).setStartDelay(0).setDuration(340)
+                        .setInterpolator(new DecelerateInterpolator(2.4f)).start();
+                return true;
+            }
+        });
     }
 
     void closeOverlay(boolean animate) {
@@ -1414,6 +1556,12 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
             else if (appsOpen) focusFirstApp(); else focusFirst();
         }
         if (animate) {
+            // le panneau rapetisse vers son bouton en s'effaçant
+            if (o.getChildCount() >= 2) {
+                View card = o.getChildAt(o.getChildCount() - 1);
+                card.animate().scaleX(0.86f).scaleY(0.86f).setStartDelay(0).setDuration(200)
+                        .setInterpolator(new android.view.animation.AccelerateInterpolator(1.4f)).start();
+            }
             o.animate().alpha(0f).setDuration(200).withEndAction(new Runnable() {
                 @Override public void run() { root.removeView(o); }
             }).start();

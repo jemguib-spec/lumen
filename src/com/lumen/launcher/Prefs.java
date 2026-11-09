@@ -181,6 +181,31 @@ final class Prefs {
     Set<String> haPinned() { return set("ha_pinned"); }
     void setHaPinned(String id, boolean on) { Set<String> s = haPinned(); if (on) s.add(id); else s.remove(id); put("ha_pinned", s); }
 
+    /** Scènes Home Assistant en raccourci sur l'accueil : « id\tnom », 4 au plus. */
+    List<String[]> haHome() {
+        List<String[]> out = new ArrayList<>();
+        for (String s : new java.util.TreeSet<>(set("ha_home"))) { String[] p = s.split("\t", 2); if (p.length == 2) out.add(p); }
+        return out.size() > 4 ? out.subList(0, 4) : out;
+    }
+    void setHaHome(String id, String name, boolean on) {
+        Set<String> s = set("ha_home"), out = new HashSet<>();
+        for (String x : s) if (!x.startsWith(id + "\t")) out.add(x);
+        if (on) out.add(id + "\t" + name);
+        put("ha_home", out);
+    }
+    /** Mode cinéma : scène au début d'un film, scène en pause ou au retour, applis concernées. */
+    String haFilmScene() { return sp.getString("ha_film", ""); }
+    String haPauseScene() { return sp.getString("ha_pause", ""); }
+    boolean haCinemaOnOpen() { return sp.getBoolean("ha_cine_open", false); }
+    Set<String> haCinemaApps() {
+        if (!sp.contains("ha_cine_apps")) return new HashSet<>(Arrays.asList(Cinema.DEFAULT_APPS));
+        return set("ha_cine_apps");
+    }
+    void setHaCinema(String film, String pause, boolean onOpen, Set<String> apps) {
+        sp.edit().putString("ha_film", film).putString("ha_pause", pause).putBoolean("ha_cine_open", onOpen)
+                .putStringSet("ha_cine_apps", new HashSet<>(apps)).apply();
+    }
+
     String pexelsKey() { return sp.getString("pexels_key", ""); }
     void setPexelsKey(String k) {
         String v = Pexels.validKey(k) ? k : "";

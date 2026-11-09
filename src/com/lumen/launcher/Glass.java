@@ -47,6 +47,22 @@ final class Glass {
         } catch (Throwable ignored) { }
     }
 
+    /** Version très floue d'une image (transition entre deux fonds). Peut renvoyer null. */
+    static Bitmap soft(Bitmap src) {
+        if (src == null || src.isRecycled()) return null;
+        try {
+            int w = 160, h = 90;
+            Bitmap small = Bitmap.createScaledBitmap(src, w, h, true);
+            int[] px = new int[w * h];
+            small.getPixels(px, 0, w, 0, 0, w, h);
+            if (small != src) small.recycle();
+            for (int pass = 0; pass < 2; pass++) boxBlur(px, w, h, 3);
+            return Bitmap.createBitmap(px, w, h, Bitmap.Config.ARGB_8888);
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
     private static void boxBlur(int[] px, int w, int h, int r) {
         int[] tmp = new int[px.length];
         for (int dir = 0; dir < 2; dir++) {

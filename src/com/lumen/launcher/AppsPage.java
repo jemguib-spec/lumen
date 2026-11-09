@@ -214,6 +214,22 @@ final class AppsPage {
         } catch (Exception ignored) { }
     }
 
+    /** Ligne de résultat (épisode, réglage) alignée sur les vignettes, de largeur raisonnable. */
+    private void resultRow(LinearLayout r) {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(a.u(1100), a.u(84 * a.textScale));
+        lp.leftMargin = a.u(112);
+        lp.bottomMargin = a.u(6);
+        sections.addView(r, lp);
+    }
+
+    private void openSetting(SettingsIndex.Entry e) {
+        if (e.page == SettingsIndex.PHONE) { PhonePanel.openPhonePanel(a); return; }
+        if (e.page == SettingsIndex.STORAGE) { StoragePanel.open(a); return; }
+        if (e.page == SettingsIndex.HOME) { HomePanel.open(a); return; }
+        SettingsPanel.reopenPage = e.page;
+        SettingsPanel.openSettings(a);
+    }
+
     /** Remplit les rangées (ou les résultats d'une recherche). Renvoie la vignette à sélectionner. */
     private Tile fillApps(String query, String focusKey) {
         sections.removeAllViews();
@@ -231,11 +247,40 @@ final class AppsPage {
         if (!q.isEmpty()) {
             List<AppRepo.App> found = new ArrayList<>();
             for (AppRepo.App x : apps) if (AppCategory.matches(x.label, q)) found.add(x);
-            sections.addView(sectionLabel(found.isEmpty() ? "Aucune appli ne correspond" : found.size() + (found.size() > 1 ? " résultats" : " résultat")));
+            // recherche universelle : applis, puis épisodes en cours, puis réglages
+            List<WatchNext.Entry> shows = a.shelf == null ? new ArrayList<WatchNext.Entry>() : a.shelf.search(q, 6);
+            List<SettingsIndex.Entry> sets = SettingsIndex.search(q, 6);
+            boolean none = found.isEmpty() && shows.isEmpty() && sets.isEmpty();
+            if (!found.isEmpty() || none)
+                sections.addView(sectionLabel(none ? "Rien ne correspond" : found.size() + (found.size() > 1 ? " applis" : " appli")));
             LinearLayout line = null;
             for (int i = 0; i < found.size(); i++) {
                 if (i % cols == 0) { line = appsLine(); sections.addView(line); }
                 addAppCell(line, found.get(i), tw, th, bn, favs, i % cols != cols - 1 && i < found.size() - 1 ? gap : 0, focusKey, focus, first);
+            }
+            if (!shows.isEmpty()) {
+                sections.addView(sectionLabel("En cours"));
+                for (final WatchNext.Entry e : shows) {
+                    AppRepo.App owner = a.repo.findByPackage(e.pkg);
+                    final String sub = owner == null ? "" : owner.label;
+                    String label = e.title + (e.subtitle == null || e.subtitle.isEmpty() ? "" : " · " + e.subtitle);
+                    resultRow(a.iconRow(Glyph.SPARK, label, new MainActivity.Value() { @Override public String get() { return sub; } },
+                            new View.OnClickListener() {
+                                @Override public void onClick(View v) {
+                                    android.content.Intent i = WatchNext.intentFor(e);
+                                    try { if (i != null) a.startActivity(i); else a.showNotice("Impossible de reprendre ce programme"); }
+                                    catch (Exception ex) { a.showNotice("Impossible de reprendre ce programme"); }
+                                }
+                            }, false));
+                }
+            }
+            if (!sets.isEmpty()) {
+                sections.addView(sectionLabel("Réglages"));
+                for (final SettingsIndex.Entry e : sets) {
+                    resultRow(a.iconRow(e.page == SettingsIndex.HOME ? Glyph.HOME : e.page == SettingsIndex.PHONE ? Glyph.PHONE : Glyph.SLIDERS,
+                            e.label, new MainActivity.Value() { @Override public String get() { return e.where; } },
+                            new View.OnClickListener() { @Override public void onClick(View v) { openSetting(e); } }, false));
+                }
             }
             return focus[0];
         }

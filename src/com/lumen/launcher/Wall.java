@@ -36,7 +36,7 @@ final class Wall {
         void onWallShown(WallItem item, Bitmap backdrop);
     }
 
-    private static final long FADE_MS = 2400, VEILLE_FADE_MS = 4500;
+    private static final long FADE_MS = 3200, VEILLE_FADE_MS = 4800;
     private long fade() { return veille ? VEILLE_FADE_MS : FADE_MS; }
     private final Context ctx;
     private final Prefs prefs;
@@ -405,6 +405,20 @@ final class Wall {
 
     // ------------------------------------------------------------------ fondu enchaîné
 
+    /** Couche floue de la nouvelle image, posée juste sous elle pendant la transition. */
+    private ImageView softLayer(Bitmap sharp, View incoming) {
+        Bitmap b = Glass.soft(sharp);
+        if (b == null) return null;
+        ImageView v = new ImageView(ctx);
+        v.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        v.setImageBitmap(b);
+        v.setAlpha(0f);
+        v.setScaleX(1.04f);
+        v.setScaleY(1.04f);
+        host.addView(v, host.indexOfChild(incoming), new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        return v;
+    }
+
     private void swapIn(WallItem item, final View incoming, Bitmap backdrop, AnimatedScene scene, MediaPlayer mp) {
         final View outgoing = currentView;
         final Bitmap oldBitmap = currentBitmap;
@@ -417,8 +431,17 @@ final class Wall {
             incoming.bringToFront();
         }
         incoming.setAlpha(0f);
-        incoming.animate().alpha(1f).setDuration(outgoing == null ? 900 : fade()).withEndAction(new Runnable() {
+        // entre deux images : la nouvelle arrive d'abord floue, puis devient nette (mise au point)
+        final long fd = outgoing == null ? 900 : fade();
+        final ImageView softView = outgoing != null && mp == null && scene == null ? softLayer(backdrop, incoming) : null;
+        if (softView != null) {
+            softView.animate().alpha(1f).setStartDelay(0).setDuration(fd * 45 / 100)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator(1.4f)).start();
+        }
+        incoming.animate().alpha(1f).setStartDelay(softView != null ? fd * 30 / 100 : 0)
+                .setDuration(softView != null ? fd * 70 / 100 : fd).withEndAction(new Runnable() {
             @Override public void run() {
+                if (softView != null) host.removeView(softView);
                 if (outgoing != null) {
                     Object a = outgoing.getTag();
                     if (a instanceof Animator) ((Animator) a).cancel();

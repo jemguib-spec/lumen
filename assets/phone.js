@@ -489,6 +489,16 @@ function renderHa() {
     r.appendChild(el('span', 'ck'));
     r.appendChild(el('div', 'name', x.name));
     r.appendChild(el('span', 'st', x.state));
+    if (/^(scene|script)\./.test(x.id)) {
+      const hm = el('button', 'hm' + (x.home ? ' on' : ''), '✦ Accueil');
+      hm.addEventListener('click', async ev => {
+        ev.stopPropagation();
+        x.home = !x.home; hm.classList.toggle('on', x.home);
+        try { await api('/api/ha/home?id=' + encodeURIComponent(x.id) + '&name=' + encodeURIComponent(x.name.slice(0, 32)) + '&on=' + (x.home ? 1 : 0), {method: 'POST'}); toast(x.home ? x.name + ' sur l’accueil' : x.name + ' retirée de l’accueil'); }
+        catch (e) { x.home = !x.home; hm.classList.toggle('on', x.home); }
+      });
+      r.appendChild(hm);
+    }
     r.addEventListener('click', async () => {
       x.pinned = !x.pinned; r.classList.toggle('on', x.pinned);
       try { await api('/api/ha/pin?id=' + encodeURIComponent(x.id) + '&on=' + (x.pinned ? 1 : 0), {method: 'POST'}); }
@@ -496,6 +506,7 @@ function renderHa() {
     });
     l.appendChild(r);
   });
+  renderCine();
 }
 
 // ---- Stockage de la TV
@@ -514,6 +525,44 @@ function renderStorage() {
   $('stFree').textContent = 'Libre sur la TV : ' + s.free + '. Lumen garde toujours 2 Go libres et réduit ses vidéos si la place manque.';
   $('stPhotos').textContent = s.photos; $('stVideos').textContent = s.videos; $('stCosy').textContent = s.cosy; $('stMine').textContent = s.mine;
 }
+
+// ---- Cinéma : scènes au début et en pause d'un film, applis concernées
+function cineState() { return Object.assign({film: '', pause: '', onOpen: false, apps: []}, S.cinema || {}); }
+async function saveCine(c, msg) {
+  S.cinema = c;
+  try { await api('/api/ha/cinema', {method: 'POST', body: JSON.stringify(c), headers: {'Content-Type': 'text/plain'}}); if (msg) toast(msg); } catch (e) { }
+  renderCine();
+}
+function fillSel(sel, value) {
+  const scenes = (haEntities || []).filter(x => /^(scene|script)\./.test(x.id));
+  clear(sel);
+  const none = el('option', null, 'Aucune'); none.value = ''; sel.appendChild(none);
+  scenes.forEach(x => { const o = el('option', null, x.name); o.value = x.id; sel.appendChild(o); });
+  sel.value = value || '';
+}
+function renderCine() {
+  if (!haEntities) return;
+  const c = cineState();
+  if (document.activeElement !== $('cineFilm')) fillSel($('cineFilm'), c.film);
+  if (document.activeElement !== $('cinePause')) fillSel($('cinePause'), c.pause);
+  $('cineOpen').classList.toggle('on', !!c.onOpen);
+  const l = $('cineApps'); clear(l);
+  const pkgs = new Set(c.apps);
+  S.apps.filter(a => a.pkg && (pkgs.has(a.pkg) || S.favorites.includes(a.key))).forEach(a => {
+    const r = el('div', 'row ha' + (pkgs.has(a.pkg) ? ' on' : ''));
+    r.appendChild(el('span', 'ck'));
+    r.appendChild(el('div', 'name', a.label));
+    r.addEventListener('click', () => {
+      const cc = cineState(), s = new Set(cc.apps);
+      if (s.has(a.pkg)) s.delete(a.pkg); else s.add(a.pkg);
+      cc.apps = [...s]; saveCine(cc);
+    });
+    l.appendChild(r);
+  });
+}
+$('cineFilm').addEventListener('change', e => { const c = cineState(); c.film = e.target.value; saveCine(c, c.film ? 'Scène « film » enregistrée' : 'Mode cinéma désactivé'); });
+$('cinePause').addEventListener('change', e => { const c = cineState(); c.pause = e.target.value; saveCine(c, 'Scène « pause » enregistrée'); });
+$('cineOpen').addEventListener('click', () => { const c = cineState(); c.onOpen = !c.onOpen; saveCine(c); });
 
 // ---- Nom de ce téléphone (affiché sur la TV : « Contrôlée par … »), gardé sur ce téléphone seulement
 function savedName() { try { return localStorage.getItem('lumen-name') || ''; } catch (e) { return ''; } }

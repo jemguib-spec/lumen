@@ -100,6 +100,9 @@ select option{background:#16171d;color:#f5f5f7}
 .row.ha .ck{width:24px;height:24px;border-radius:7px;border:1.5px solid var(--line);flex:none;display:grid;place-items:center;transition:.15s}
 .row.ha.on .ck{background:#f5f5f7;border-color:#f5f5f7}
 .row.ha.on .ck::after{content:"";width:6px;height:11px;border:solid #111;border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
+.lbl{display:block;font-size:13px;color:var(--dim);margin:16px 6px 0}
+.row.ha .hm{border:1px solid var(--line);background:none;border-radius:14px;padding:4px 10px;font-size:13px;color:var(--dim);flex:none}
+.row.ha .hm.on{background:#f5f5f7;color:#111;border-color:#f5f5f7}
 .grp{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);padding:12px 14px 6px;border-top:1px solid var(--line)}
 .grp:first-child{border-top:0}
 

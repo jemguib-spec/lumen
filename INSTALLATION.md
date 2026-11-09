@@ -105,6 +105,9 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - **Bandeau d'accueil** : une ligne au-dessus des favoris — salutation selon l'heure, météo (si une ville est réglée) et dernier épisode en cours. Réglages › Accueil et applis › Bandeau d'accueil pour le masquer.
 - L'appli que tu ouvres d'habitude à cette heure est sélectionnée au démarrage et entourée d'un liseré qui respire doucement.
 
+## Recherche
+- La recherche de « Toutes les applications » trouve aussi les épisodes en cours (Reprendre) et les réglages (« veille », « stockage », « pin »…).
+
 ## Stockage
 - Réglages › Système › Stockage (ou sur le téléphone : Plus › Stockage de la TV) : place prise par les photos, les vidéos de fond et celles des ambiances, avec de quoi vider chaque catégorie. Tes photos et vidéos envoyées du téléphone ne sont jamais effacées là.
 - Lumen garde toujours au moins 2 Go libres sur la TV : s'il manque de place, il réduit ses vidéos et n'en télécharge plus. Les téléchargements interrompus sont effacés au démarrage.
@@ -114,6 +117,8 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - Pour relier Lumen : dans Home Assistant, Profil › Sécurité › Jetons d'accès longue durée › Créer un jeton. Puis sur le téléphone connecté à la TV : Plus › Home Assistant, colle l'adresse (ex. `192.168.1.20:8123` ou `homeassistant.local:8123`, ou ton adresse `https://…` à distance) et le jeton.
 - Toujours sur le téléphone, coche les appareils à garder sur la TV (aucun coché : tous, 60 au plus).
 - Serrures et alarmes ne sont jamais pilotables depuis la TV.
+- **Scènes sur l'accueil** : sur le téléphone, ✦ Accueil à côté d'une scène ou d'un script : elle apparaît en raccourci sous le bandeau d'accueil (4 au plus), OK pour la lancer.
+- **Cinéma** : sur le téléphone, Plus › Home Assistant › Cinéma, choisis la scène « film » (ex. lumières tamisées) et, si tu veux, la scène « pause ». Quand un film démarre dans une appli cochée (Netflix, Plex…), ouverte depuis Lumen, la scène se lance ; après 15 s de pause ou au retour sur l'accueil, la seconde. Lumen sait seulement si un son de type film est en cours : il ne lit rien d'autre.
 
 ## Mode veille et économiseur d'écran
 - **Mode veille** : après quelques minutes sans activité (réglable : 1, 3, 5, 10 min ou jamais), les applis disparaissent ; il reste le fond en plein écran et une seule ligne discrète en bas : heure, date, météo, lever et coucher du soleil, phase de la Lune, et à droite la légende de l'image. La ligne se déplace de quelques pixels chaque minute pour protéger l'écran. Un appui sur la télécommande revient à l'accueil. Réglages › Mode veille › Lancer le mode veille pour l'essayer tout de suite.

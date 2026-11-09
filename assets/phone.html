@@ -105,9 +105,18 @@
   </form>
   <div class="list" id="haLinked" hidden><button class="row link" id="haDel"><span class="name" id="haState">…</span><span class="chev">Délier</span></button></div>
   <div id="haBox" hidden>
-    <p class="note small">Coche les appareils à afficher sur la TV (aucun coché : tous).</p>
+    <p class="note small">Coche les appareils à afficher sur la TV (aucun coché : tous). ✦ sur une scène : raccourci sur l’accueil.</p>
     <input type="search" class="plain" id="haQ" placeholder="Rechercher un appareil" autocomplete="off">
     <div class="list" id="haList"></div>
+    <h2>Cinéma</h2>
+    <p class="note small">Quand un film démarre dans une de ces applis (ouverte depuis Lumen), la TV lance ta scène ; en pause d’au moins 15 s ou au retour sur l’accueil, la seconde.</p>
+    <label class="lbl">Quand un film démarre</label>
+    <select id="cineFilm"></select>
+    <label class="lbl">En pause ou au retour sur l’accueil</label>
+    <select id="cinePause"></select>
+    <div class="list"><div class="row ha" id="cineOpen"><span class="ck"></span><div class="name">Dès l’ouverture de l’appli</div></div></div>
+    <label class="lbl">Applis concernées</label>
+    <div class="list" id="cineApps"></div>
   </div>
   <h2>Pexels</h2>
   <p class="note">Avec ta clé gratuite (pexels.com/api), Lumen propose aussi des vidéos Pexels. Sans clé, Lumen ne contacte jamais Pexels.</p>

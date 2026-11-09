@@ -225,6 +225,9 @@ final class Tile extends FrameLayout {
         }).start();
     }
 
+    /** Opacité au repos (sélectionnée ou non). */
+    float restingAlpha() { return isFocused() ? 1f : restAlpha; }
+
     /** Après l'ouverture d'une appli : la vignette reprend sa taille, prête pour le retour. */
     void restoreAfterLaunch() {
         animate().cancel();

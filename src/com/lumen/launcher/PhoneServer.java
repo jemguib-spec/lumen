@@ -323,6 +323,28 @@ final class PhoneServer {
                 ok(out, true);
                 return;
             }
+            case "/api/ha/home": {
+                final String id = r.query.get("id"), name = DeviceName.clean(r.query.get("name"));
+                if (!HomeAssistant.validEntityId(id) || !(id.startsWith("scene.") || id.startsWith("script."))) { ok(out, false); return; }
+                host.prefs().setHaHome(id, name == null ? id : name, "1".equals(r.query.get("on")));
+                main.post(new Runnable() { @Override public void run() { host.onHaLinked(); host.onFavoritesChanged(); } });
+                ok(out, true);
+                return;
+            }
+            case "/api/ha/cinema": {
+                JSONObject c;
+                try { c = new JSONObject(new String(HttpRequest.readBody(in, r.contentLength, 16 * 1024), "UTF-8")); }
+                catch (Exception e) { ok(out, false); return; }
+                String film = c.optString("film"), pause = c.optString("pause");
+                if (!film.isEmpty() && !HomeAssistant.validEntityId(film)) { ok(out, false); return; }
+                if (!pause.isEmpty() && !HomeAssistant.validEntityId(pause)) { ok(out, false); return; }
+                java.util.Set<String> apps = new java.util.HashSet<>();
+                JSONArray ja = c.optJSONArray("apps");
+                if (ja != null) for (int i = 0; i < ja.length() && i < 100; i++) { String pkg = ja.optString(i); if (pkg.matches("[A-Za-z0-9._]{1,150}")) apps.add(pkg); }
+                host.prefs().setHaCinema(film, pause, c.optBoolean("onOpen"), apps);
+                ok(out, true);
+                return;
+            }
             case "/api/ha/pin": {
                 final String id = r.query.get("id");
                 if (!HomeAssistant.validEntityId(id)) { ok(out, false); return; }
@@ -398,6 +420,7 @@ final class PhoneServer {
                     JSONObject j = new JSONObject();
                     j.put("key", a.key);
                     j.put("label", a.label);
+                    if (!a.isInput()) j.put("pkg", a.pkg);
                     if (a.isInput()) j.put("input", true);
                     if (hidden.contains(a.key)) j.put("hidden", true);
                     if (pr.isLocked(a.key)) j.put("locked", true);
@@ -448,6 +471,8 @@ final class PhoneServer {
         o.put("ambiances", amb);
         o.put("pexels", !host.prefs().pexelsKey().isEmpty());
         o.put("ha", host.prefs().haConfigured() ? host.prefs().haUrl() : "");
+        o.put("cinema", new JSONObject().put("film", host.prefs().haFilmScene()).put("pause", host.prefs().haPauseScene())
+                .put("onOpen", host.prefs().haCinemaOnOpen()).put("apps", new JSONArray(host.prefs().haCinemaApps())));
         long[] st = host.online().storage();
         o.put("storage", new JSONObject().put("photos", Online.human(st[0])).put("videos", Online.human(st[1]))
                 .put("cosy", Online.human(st[2])).put("mine", Online.human(st[3]))
@@ -579,11 +604,14 @@ final class PhoneServer {
         if (!pr.haConfigured()) return "{\"ok\":false,\"configured\":false}";
         try {
             java.util.Set<String> pinned = pr.haPinned();
+            java.util.Set<String> home = new java.util.HashSet<>();
+            for (String[] h : pr.haHome()) home.add(h[0]);
             JSONArray a = new JSONArray();
             for (HomeAssistant.Entity e : HaStates.load(pr.haUrl(), pr.haToken())) {
                 JSONObject j = new JSONObject();
                 j.put("id", e.id); j.put("name", e.name); j.put("group", HomeAssistant.domainName(e.domain));
                 j.put("state", HomeAssistant.label(e)); j.put("pinned", pinned.contains(e.id));
+                j.put("home", home.contains(e.id));
                 a.put(j);
             }
             return new JSONObject().put("ok", true).put("entities", a).toString();

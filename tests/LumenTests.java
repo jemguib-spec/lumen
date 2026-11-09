@@ -224,6 +224,11 @@ public class LumenTests {
             catch (java.io.IOException e) { refused = true; }
             check("HA : redirection jamais suivie", refused);
         } catch (Exception e) { check("HA : réponses HTTP lues", false); }
+        check("recherche : réglages trouvés sans accents", !SettingsIndex.search("veille", 6).isEmpty()
+                && SettingsIndex.search("stockage", 6).get(0).page == SettingsIndex.STORAGE
+                && !SettingsIndex.search("ecran de nuit", 6).isEmpty() && SettingsIndex.search("x", 6).isEmpty()
+                && SettingsIndex.search("zzzz", 6).isEmpty());
+        check("recherche : au plus N réglages", SettingsIndex.search("ve", 3).size() <= 3);
         check("bandeau : salutation selon l'heure", Greeting.hello(8).equals("Bonjour") && Greeting.hello(14).equals("Bon après-midi")
                 && Greeting.hello(20).equals("Bonsoir") && Greeting.hello(23).equals("Bonne nuit") && Greeting.hello(3).equals("Bonne nuit"));
         check("bandeau : ligne complète", Greeting.line(21, "", "12° · Pluie · Paris", "The Bear")
