@@ -599,7 +599,25 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         word.setText("lumen");
         word.setLetterSpacing(0.35f);
         word.setAlpha(0f);
-        splash.addView(word, wrap(Gravity.CENTER));
+        // après « Redémarrer Lumen » : la même ligne qu'avant l'arrêt, pour enchaîner sans coupure
+        final boolean restarted = prefs.restarting();
+        if (restarted) {
+            prefs.setRestarting(false);
+            LinearLayout col = new LinearLayout(this);
+            col.setOrientation(LinearLayout.VERTICAL);
+            col.setGravity(Gravity.CENTER_HORIZONTAL);
+            col.addView(word, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            word.setAlpha(1f); // il était déjà à l'écran juste avant l'arrêt
+            TextView sub = text(24, "sans-serif-light", 0x99FFFFFF);
+            sub.setText("REDÉMARRAGE");
+            sub.setLetterSpacing(0.3f);
+            LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            sl.topMargin = u(18);
+            col.addView(sub, sl);
+            sub.animate().alpha(0f).setStartDelay(700).setDuration(500).start();
+            splash.addView(col, wrap(Gravity.CENTER));
+            h.postDelayed(new Runnable() { @Override public void run() { showNotice("Lumen a redémarré"); } }, 2200);
+        } else splash.addView(word, wrap(Gravity.CENTER));
         root.addView(splash, match());
         word.setScaleX(0.96f);
         word.setScaleY(0.96f);
@@ -898,13 +916,15 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
             Intent i = new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             android.app.PendingIntent pi = android.app.PendingIntent.getActivity(this, 7, i,
                     android.app.PendingIntent.FLAG_CANCEL_CURRENT | 0x04000000 /* FLAG_IMMUTABLE */);
-            ((android.app.AlarmManager) getSystemService(ALARM_SERVICE)).set(android.app.AlarmManager.RTC, System.currentTimeMillis() + 600, pi);
+            ((android.app.AlarmManager) getSystemService(ALARM_SERVICE)).set(android.app.AlarmManager.RTC, System.currentTimeMillis() + 250, pi);
         } catch (Exception ignored) { }
         finishAffinity();
         android.os.Process.killProcess(android.os.Process.myPid());
     }
 
     /** Depuis le téléphone : retour sur Lumen puis fermeture de l'appli ouverte. */
+    @Override public void phoneRestart() { restartLumenNicely(); }
+
     @Override public String phoneCloseApp() {
         final AppRepo.App app = lastLaunched;
         if (app == null) return "{\"ok\":false,\"none\":true}";
@@ -975,15 +995,8 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         }, 2500);
     }
 
-    /**
-     * Installe la mise à jour derrière un écran « lumen · mise à jour » : pendant qu'Android
-     * remplace Lumen, il ne peut rien afficher ; dès que c'est fait, Lumen revient de lui-même
-     * (réception de « paquet remplacé » ou service « Lumen télécommande ») au lieu de laisser
-     * l'écran d'accueil d'origine de la TV.
-     */
-    void installUpdate() {
-        String v = updater.readyVersion();
-        prefs.setUpdatePending(updater.currentVersion());
+    /** Écran noir « lumen » avec une ligne dessous et une fine barre animée (mise à jour, redémarrage). */
+    FrameLayout lumenScreen(String line) {
         FrameLayout z = new FrameLayout(this);
         z.setBackgroundColor(Color.BLACK);
         z.setClickable(true);
@@ -996,7 +1009,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         word.setLetterSpacing(0.35f);
         col.addView(word, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         TextView sub = text(24, "sans-serif-light", 0x99FFFFFF);
-        sub.setText(("Mise à jour" + (v.isEmpty() ? "" : " · " + v)).toUpperCase(java.util.Locale.FRANCE));
+        sub.setText(line.toUpperCase(java.util.Locale.FRANCE));
         sub.setLetterSpacing(0.3f);
         LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         sl.topMargin = u(18);
@@ -1020,6 +1033,30 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         z.setAlpha(0f);
         root.addView(z, match());
         z.animate().alpha(1f).setStartDelay(0).setDuration(400).start();
+        return z;
+    }
+
+    /**
+     * Redémarrage propre : écran « lumen · redémarrage », puis Lumen s'arrête et repart aussitôt ;
+     * au retour, l'écran de démarrage enchaîne sans coupure.
+     */
+    void restartLumenNicely() {
+        closeOverlay(false);
+        lumenScreen("Redémarrage");
+        prefs.setRestarting(true);
+        h.postDelayed(new Runnable() { @Override public void run() { restartLumen(); } }, 1400);
+    }
+
+    /**
+     * Installe la mise à jour derrière un écran « lumen · mise à jour » : pendant qu'Android
+     * remplace Lumen, il ne peut rien afficher ; dès que c'est fait, Lumen revient de lui-même
+     * (réception de « paquet remplacé » ou service « Lumen télécommande ») au lieu de laisser
+     * l'écran d'accueil d'origine de la TV.
+     */
+    void installUpdate() {
+        String v = updater.readyVersion();
+        prefs.setUpdatePending(updater.currentVersion());
+        FrameLayout z = lumenScreen("Mise à jour" + (v.isEmpty() ? "" : " · " + v));
         systemVeil = z; // repart tout seul si la mise à jour est annulée (Lumen reprend la main)
         veilApp = null;
         final View veil = z;

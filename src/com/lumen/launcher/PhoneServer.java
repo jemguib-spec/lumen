@@ -86,6 +86,8 @@ final class PhoneServer {
         void onHaLinked();
         /** Ferme l'appli ouverte depuis Lumen (retour à l'accueil puis arrêt). */
         String phoneCloseApp();
+        /** Redémarre Lumen (écran « redémarrage », puis retour). */
+        void phoneRestart();
     }
 
     /** Touches acceptées depuis le téléphone (liste fermée). */
@@ -317,6 +319,7 @@ final class PhoneServer {
         switch (p) {
             case "/api/pin": json(out, 200, pin(HttpRequest.readBody(in, r.contentLength, 16), sid)); return;
             case "/api/ping": json(out, 200, "{\"ok\":true}"); return;
+            case "/api/restart": json(out, 200, "{\"ok\":true}"); main.postDelayed(new Runnable() { @Override public void run() { host.phoneRestart(); } }, 300); return;
             case "/api/closeapp": json(out, 200, onMain(new Callable<String>() { @Override public String call() { return host.phoneCloseApp(); } })); return;
             case "/api/storage/clear": {
                 final int what = intParam(r, "what", -1);

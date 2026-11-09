@@ -539,7 +539,7 @@ final class SettingsPanel {
             }
             case SYSTEME: {
         col.addView(a.listRow("Redémarrer Lumen", null, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.restartLumen(); }
+            @Override public void onClick(View v) { a.restartLumenNicely(); }
         }), a.rowLp());
         col.addView(a.listRow("Stockage", new MainActivity.Value() {
             @Override public String get() { long[] s = a.online.storage(); return Online.human(s[0] + s[1] + s[2] + s[3]) + " utilisés"; }

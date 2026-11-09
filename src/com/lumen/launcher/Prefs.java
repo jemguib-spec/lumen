@@ -129,6 +129,10 @@ final class Prefs {
     String updatePending() { return sp.getString("update_from", ""); }
     void setUpdatePending(String v) { sp.edit().putString("update_from", v).commit(); } // écrit tout de suite : Lumen va être arrêté
 
+    /** Redémarrage demandé (l'écran de démarrage le dit au retour). */
+    boolean restarting() { return sp.getBoolean("restarting", false); }
+    void setRestarting(boolean b) { sp.edit().putBoolean("restarting", b).commit(); }
+
     String updatePrompted() { return sp.getString("update_prompted", ""); }
     void setUpdatePrompted(String v) { sp.edit().putString("update_prompted", v).apply(); }
 

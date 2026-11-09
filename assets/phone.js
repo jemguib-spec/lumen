@@ -242,6 +242,12 @@ function renderScreen() {
   $('srcName').textContent = (tv.sources || [])[tv.source] || '';
 }
 $('veilleBtn').addEventListener('click', () => act('/api/veille?on=' + (S.tv.veille ? 0 : 1)));
+$('restartBtn').addEventListener('click', async () => {
+  const b = $('restartBtn');
+  if (!b.classList.contains('arm')) { b.classList.add('arm'); toast('Touche encore pour redémarrer Lumen'); setTimeout(() => b.classList.remove('arm'), 3000); return; }
+  b.classList.remove('arm');
+  try { await api('/api/restart', {method: 'POST'}); toast('Lumen redémarre… reconnecte-toi avec le QR code ensuite'); } catch (e) { }
+});
 $('closeAppBtn').addEventListener('click', async () => {
   try {
     const r = await api('/api/closeapp', {method: 'POST'});
