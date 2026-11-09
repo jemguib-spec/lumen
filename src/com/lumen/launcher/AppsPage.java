@@ -57,6 +57,34 @@ final class AppsPage {
 
     boolean built() { return scroll != null; }
 
+    /**
+     * Arrivée de la page : l'en-tête puis chaque rangée montent l'une après l'autre (cascade
+     * douce), au lieu d'un bloc qui glisse d'un coup.
+     */
+    void animateIn() {
+        if (scroll == null || !(scroll.getChildAt(0) instanceof ViewGroup)) return;
+        java.util.List<View> parts = new java.util.ArrayList<>();
+        ViewGroup col = (ViewGroup) scroll.getChildAt(0);
+        for (int i = 0; i < col.getChildCount(); i++) {
+            View c = col.getChildAt(i);
+            if (c == sections) for (int k = 0; k < sections.getChildCount(); k++) parts.add(sections.getChildAt(k));
+            else parts.add(c);
+        }
+        android.view.animation.DecelerateInterpolator di = new android.view.animation.DecelerateInterpolator(2.4f);
+        int n = 0;
+        for (final View v : parts) {
+            if (n >= 9) break; // au-delà, hors de l'écran : rien à animer
+            v.animate().cancel();
+            v.setAlpha(0f);
+            v.setTranslationY(a.u(46));
+            v.animate().alpha(1f).translationY(0).setStartDelay(90 + n * 55L).setDuration(460).setInterpolator(di)
+                    .withEndAction(new Runnable() {
+                        @Override public void run() { v.animate().setStartDelay(0); a.refreshGlass(scroll); }
+                    }).start();
+            n++;
+        }
+    }
+
     /** Texte tapé sur le téléphone : il remplit la recherche (la liste se filtre aussitôt). */
     /**
      * Texte qui arrive du téléphone : le champ de recherche prend le focus pour que son curseur

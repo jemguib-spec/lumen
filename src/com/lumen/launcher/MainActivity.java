@@ -61,6 +61,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     private TextView captionTitle, captionCredit, focusLabel, notice;
     private LinearLayout rowsBox, topButtons;
     private FrameLayout wallLayer;
+    private View appsTint;
     private Tile houseButton;
 
     /** Affiche ou masque le bouton « Maison » (Réglages › Accueil et applis). */
@@ -524,9 +525,9 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         appsBg = new ImageView(this);
         appsBg.setScaleType(ImageView.ScaleType.CENTER_CROP);
         appsLayer.addView(appsBg, match());
-        View tint = new View(this);
-        tint.setBackgroundColor(0x9905060A);
-        appsLayer.addView(tint, match());
+        appsTint = new View(this);
+        appsTint.setBackgroundColor(0x9905060A);
+        appsLayer.addView(appsTint, match());
         root.addView(appsLayer, root.indexOfChild(captionBox), match());
 
         // ---- mode veille
@@ -1319,15 +1320,23 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         if (!appsPage.built() || dirtyApps || appsPage.stale()) buildApps(null);  // sinon : déjà prête
         else appsPage.rewind();
         homeLayer.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
-        homeLayer.animate().translationY(-u(60)).alpha(0f).setDuration(180).start();
+        // l'accueil s'éloigne vers le haut ; le fond se floute et s'assombrit sur place (profondeur) ;
+        // puis les rangées des applis montent l'une après l'autre
+        DecelerateInterpolator soft = new DecelerateInterpolator(2f);
+        homeLayer.animate().translationY(-u(36)).scaleX(0.97f).scaleY(0.97f).alpha(0f).setStartDelay(0).setDuration(260).setInterpolator(soft).start();
         glow.fade();
-        captionBox.animate().alpha(0f).setDuration(150).start();
-        clockBox.animate().alpha(0f).setDuration(150).start(); // l'horloge de l'accueil ne doit pas chevaucher la recherche
+        captionBox.animate().alpha(0f).setStartDelay(0).setDuration(200).start();
+        clockBox.animate().alpha(0f).setStartDelay(0).setDuration(200).start(); // l'horloge de l'accueil ne doit pas chevaucher la recherche
+        wallLayer.animate().scaleX(1.08f).scaleY(1.08f).setStartDelay(0).setDuration(700).setInterpolator(soft).start();
+        appsLayer.animate().cancel();
         appsLayer.setVisibility(View.VISIBLE);
-        appsLayer.setAlpha(0f);
-        appsLayer.setTranslationY(u(60));
-        appsLayer.animate().alpha(1f).translationY(0).setDuration(220)
-                .setInterpolator(new DecelerateInterpolator(2f)).start();
+        appsLayer.setAlpha(1f);
+        appsLayer.setTranslationY(0);
+        appsBg.setAlpha(0f);
+        appsTint.setAlpha(0f);
+        appsBg.animate().alpha(1f).setStartDelay(0).setDuration(420).setInterpolator(soft).start();
+        appsTint.animate().alpha(1f).setStartDelay(0).setDuration(420).setInterpolator(soft).start();
+        appsPage.animateIn();
         focusFirstApp();
     }
 
@@ -1339,12 +1348,18 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         wall.resumeLiving();
         fx.setRunning(true);
         homeLayer.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
-        homeLayer.animate().translationY(0).alpha(1f).setDuration(animate ? 300 : 0).start();
-        captionBox.animate().alpha(1f).setDuration(300).start();
-        clockBox.animate().alpha(1f).setDuration(300).start();
-        appsLayer.animate().alpha(0f).translationY(u(120)).setDuration(animate ? 260 : 0).withEndAction(new Runnable() {
-            @Override public void run() { if (!appsOpen) appsLayer.setVisibility(View.GONE); }
-        }).start();
+        // l'inverse de l'ouverture : la page s'efface en descendant un peu, le fond redevient net,
+        // l'accueil revient de derrière
+        DecelerateInterpolator soft = new DecelerateInterpolator(2f);
+        homeLayer.animate().translationY(0).scaleX(1f).scaleY(1f).alpha(1f).setStartDelay(animate ? 90 : 0)
+                .setDuration(animate ? 380 : 0).setInterpolator(soft).start();
+        captionBox.animate().alpha(1f).setStartDelay(0).setDuration(300).start();
+        clockBox.animate().alpha(1f).setStartDelay(0).setDuration(300).start();
+        wallLayer.animate().scaleX(1.04f).scaleY(1.04f).setStartDelay(0).setDuration(animate ? 600 : 0).setInterpolator(soft).start();
+        appsLayer.animate().alpha(0f).translationY(u(40)).setStartDelay(0).setDuration(animate ? 280 : 0).setInterpolator(soft)
+                .withEndAction(new Runnable() {
+                    @Override public void run() { if (!appsOpen) { appsLayer.setVisibility(View.GONE); appsLayer.setTranslationY(0); } }
+                }).start();
         if (dirtyRow) buildRow(null);
         if (focusBeforeApps != null && focusBeforeApps.isAttachedToWindow()) focusBeforeApps.requestFocus();
         else focusFirst();
