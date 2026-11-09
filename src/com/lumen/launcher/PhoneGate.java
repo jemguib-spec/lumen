@@ -34,6 +34,7 @@ final class PhoneGate {
     static final Refusal BAD_SIG = new Refusal(401, "{\"ok\":false,\"sig\":true}");
     static final Refusal SLOW = new Refusal(429, "{\"ok\":false,\"slow\":true}");
     static final Refusal PIN = new Refusal(200, "{\"ok\":false,\"pin\":true}");
+    static final Refusal NOT_SEALED = new Refusal(400, "{\"ok\":false,\"seal\":true}");
 
     /** Touches acceptées depuis le téléphone (liste fermée). */
     static final List<String> KEYS = Collections.unmodifiableList(Arrays.asList(
@@ -51,6 +52,10 @@ final class PhoneGate {
     /** Écritures qui exigent le code PIN de la TV (s'il existe) déjà saisi sur ce téléphone. */
     static final Set<String> PIN_PATHS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             "/api/ha", "/api/tmdb", "/api/pexels", "/api/restore", "/api/lock")));
+
+    /** Écritures dont le contenu est un secret : chiffré par la page (Seal), jamais accepté en clair. */
+    static final Set<String> SEALED = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            "/api/ha", "/api/tmdb", "/api/pexels", "/api/pin", "/api/text")));
 
     static boolean post(HttpRequest r) { return "POST".equals(r.method); }
 
@@ -88,6 +93,13 @@ final class PhoneGate {
         return (isFast(r) ? keys : actions).allow(now) ? null : SLOW;
     }
 
+    static boolean isSealed(HttpRequest r) { return post(r) && SEALED.contains(r.path); }
+
+    /** Contenu déchiffré d'un envoi secret, ou null s'il est arrivé en clair ou abîmé. */
+    static byte[] unseal(byte[] body, byte[] sealKey) {
+        try { return Seal.open(sealKey, new String(body, "UTF-8").trim()); } catch (Exception e) { return null; }
+    }
+
     /** Action sensible sans le code PIN saisi sur ce téléphone. */
     static Refusal pin(HttpRequest r, boolean pinNeeded) {
         return pinNeeded && post(r) && PIN_PATHS.contains(r.path) ? PIN : null;
@@ -108,10 +120,11 @@ final class PhoneGate {
 
     /**
      * Message de la connexion permanente « S <numéro> <signature> <contenu> » : renvoie le contenu
-     * si la signature est vraie et le numéro jamais vu, et si c'est une commande connue
-     * (« k <touche> » de la liste fermée, « t0 texte » ou « t1 texte ») ; sinon null.
+     * si la signature est vraie et le numéro jamais vu, et si c'est une commande connue :
+     * « k <touche> » de la liste fermée, ou « t0 <texte chiffré> » / « t1 <texte chiffré> »
+     * (texte en direct / avec Entrée), renvoyé déchiffré ; sinon null.
      */
-    static String wsCommand(String m, Signer signer) {
+    static String wsCommand(String m, Signer signer, byte[] sealKey) {
         if (signer == null || m == null || !m.startsWith("S ")) return null;
         String[] parts = m.split(" ", 4);
         if (parts.length < 4) return null;
@@ -120,7 +133,11 @@ final class PhoneGate {
         if (!signer.verify(seq, Signer.wsMessage(seq, parts[3]), parts[2])) return null;
         String c = parts[3];
         if (c.startsWith("k ")) return KEYS.contains(c.substring(2).trim()) ? c : null;
-        if (c.startsWith("t0 ") || c.startsWith("t1 ") || c.equals("t0") || c.equals("t1")) return c;
+        if (c.startsWith("t0 ") || c.startsWith("t1 ")) {
+            byte[] plain = Seal.open(sealKey, c.substring(3));
+            if (plain == null) return null;
+            try { return c.substring(0, 3) + new String(plain, "UTF-8"); } catch (Exception e) { return null; }
+        }
         return null;
     }
 }

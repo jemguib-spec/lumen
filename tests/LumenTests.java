@@ -82,17 +82,19 @@ public class LumenTests {
         // WebSocket : messages signés
         Signer wsSg = new Signer("cle-ws");
         String k1 = Signer.hmacHex("cle-ws".getBytes("UTF-8"), Signer.wsMessage(1, "k up"));
-        check("WebSocket : touche signée acceptée", "k up".equals(PhoneGate.wsCommand("S 1 " + k1 + " k up", wsSg)));
-        check("WebSocket : message rejoué refusé", PhoneGate.wsCommand("S 1 " + k1 + " k up", wsSg) == null);
-        check("WebSocket : message non signé refusé", PhoneGate.wsCommand("k up", wsSg) == null);
-        check("WebSocket : contenu modifié refusé", PhoneGate.wsCommand("S 2 " + k1 + " k down", wsSg) == null);
+        check("WebSocket : touche signée acceptée", "k up".equals(PhoneGate.wsCommand("S 1 " + k1 + " k up", wsSg, null)));
+        check("WebSocket : message rejoué refusé", PhoneGate.wsCommand("S 1 " + k1 + " k up", wsSg, null) == null);
+        check("WebSocket : message non signé refusé", PhoneGate.wsCommand("k up", wsSg, null) == null);
+        check("WebSocket : contenu modifié refusé", PhoneGate.wsCommand("S 2 " + k1 + " k down", wsSg, null) == null);
         String k3 = Signer.hmacHex("cle-ws".getBytes("UTF-8"), Signer.wsMessage(3, "k reboot"));
-        check("WebSocket : touche hors liste refusée même signée", PhoneGate.wsCommand("S 3 " + k3 + " k reboot", wsSg) == null);
-        String k4 = Signer.hmacHex("cle-ws".getBytes("UTF-8"), Signer.wsMessage(4, "t1 bonjour"));
-        check("WebSocket : texte signé accepté", "t1 bonjour".equals(PhoneGate.wsCommand("S 4 " + k4 + " t1 bonjour", wsSg)));
+        check("WebSocket : touche hors liste refusée même signée", PhoneGate.wsCommand("S 3 " + k3 + " k reboot", wsSg, null) == null);
+        byte[] wsKey = Seal.key("cle-ws");
+        String t4 = "t1 " + Seal.seal(wsKey, "bonjour".getBytes("UTF-8"));
+        String k4 = Signer.hmacHex("cle-ws".getBytes("UTF-8"), Signer.wsMessage(4, t4));
+        check("WebSocket : texte signé et chiffré accepté", "t1 bonjour".equals(PhoneGate.wsCommand("S 4 " + k4 + " " + t4, wsSg, wsKey)));
         String k5 = Signer.hmacHex("cle-ws".getBytes("UTF-8"), Signer.wsMessage(5, "x"));
-        check("WebSocket : commande inconnue refusée", PhoneGate.wsCommand("S 5 " + k5 + " x", wsSg) == null);
-        check("WebSocket : sans clé, tout est refusé", PhoneGate.wsCommand("S 6 " + k1 + " k up", null) == null);
+        check("WebSocket : commande inconnue refusée", PhoneGate.wsCommand("S 5 " + k5 + " x", wsSg, null) == null);
+        check("WebSocket : sans clé, tout est refusé", PhoneGate.wsCommand("S 6 " + k1 + " k up", null, null) == null);
     }
 
     static void check(String name, boolean cond) {
@@ -517,6 +519,43 @@ public class LumenTests {
             check("écriture sûre : échec signalé, rien d'écrit", !SafeFile.write(gone, new byte[1]) && !gone.exists());
             idx.delete(); sdir.delete();
         } catch (Exception safeErr) { check("écriture sûre : " + safeErr, false); }
+        try {
+            byte[] sk = Seal.key("cle-du-qr"), nonce = new byte[16];
+            for (int i = 0; i < 16; i++) nonce[i] = (byte) i;
+            // mêmes valeurs que tests/phone_crypto.js (vrai code de phone.js) : la page et la TV s'accordent
+            check("chiffrement : identique à la page du téléphone",
+                    "E1.000102030405060708090a0b0c0d0e0f.81e378f003adf5a9b1dfe53f7b65bb".equals(Seal.seal(sk, "jeton secret é".getBytes("UTF-8"), nonce)));
+            String longText = "Jeton Home Assistant très long : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.abc";
+            check("chiffrement : identique sur plusieurs blocs",
+                    "E1.000102030405060708090a0b0c0d0e0f.a1e378f003adcea3bfc8a00a28d57ba7f7829ef224653e0e66809b149f9b6f53b25036bd009c1b24ac8fe96b882099f04a6d1e625db33eb9ea691ff1964b919b92e4b7c7c702ad3363f8"
+                            .equals(Seal.seal(sk, longText.getBytes("UTF-8"), nonce)));
+            String sealed = Seal.seal(sk, longText.getBytes("UTF-8"));
+            check("chiffrement : aller-retour", longText.equals(new String(Seal.open(sk, sealed), "UTF-8")));
+            check("chiffrement : le secret n'apparaît pas", !sealed.contains("eyJ") && !sealed.contains("Jeton"));
+            check("chiffrement : deux envois différents (nonce aléatoire)", !sealed.equals(Seal.seal(sk, longText.getBytes("UTF-8"))));
+            check("chiffrement : texte vide", Seal.open(sk, Seal.seal(sk, new byte[0])).length == 0);
+            check("chiffrement : autre clé, pas le bon texte", !longText.equals(new String(Seal.open(Seal.key("autre"), sealed), "UTF-8")));
+            check("chiffrement : texte en clair refusé", Seal.open(sk, "abc") == null && Seal.open(sk, "") == null && Seal.open(sk, null) == null);
+            check("chiffrement : format abîmé refusé", Seal.open(sk, "E1.00.zz") == null && Seal.open(sk, "E1.000102030405060708090a0b0c0d0e0f.abc") == null
+                    && Seal.open(sk, "E1.000102030405060708090a0b0c0d0e0f.ab.cd") == null);
+            StringBuilder huge = new StringBuilder("E1.000102030405060708090a0b0c0d0e0f.");
+            for (int i = 0; i <= Seal.MAX; i++) huge.append("00");
+            check("chiffrement : trop long refusé", Seal.open(sk, huge.toString()) == null);
+            // la page du téléphone : secrets refusés en clair, acceptés chiffrés
+            check("envoi secret en clair refusé", PhoneGate.unseal("abcd".getBytes("UTF-8"), sk) == null);
+            check("envoi secret chiffré accepté", "1234".equals(new String(PhoneGate.unseal(Seal.seal(sk, "1234".getBytes("UTF-8")).getBytes("UTF-8"), sk), "UTF-8")));
+            for (String path : new String[]{"/api/ha", "/api/tmdb", "/api/pexels", "/api/pin", "/api/text"})
+                check("secret chiffré exigé : " + path, PhoneGate.isSealed(req("POST", path)));
+            check("pas de chiffrement pour une touche", !PhoneGate.isSealed(req("POST", "/api/key?k=up")));
+            // connexion permanente : texte chiffré
+            Signer ws = new Signer("cle-du-qr");
+            String payload = "t1 " + Seal.seal(sk, "mot de passe".getBytes("UTF-8"));
+            String sig = Signer.hmacHex("cle-du-qr".getBytes("UTF-8"), Signer.wsMessage(9, payload));
+            check("WebSocket : texte chiffré déchiffré", "t1 mot de passe".equals(PhoneGate.wsCommand("S 9 " + sig + " " + payload, ws, sk)));
+            String clear = "t1 mot de passe";
+            String sig2 = Signer.hmacHex("cle-du-qr".getBytes("UTF-8"), Signer.wsMessage(10, clear));
+            check("WebSocket : texte en clair refusé", PhoneGate.wsCommand("S 10 " + sig2 + " " + clear, ws, sk) == null);
+        } catch (Exception sealErr) { check("chiffrement : " + sealErr, false); }
         try { phoneGate(); } catch (Exception gateErr) { check("contrôles de la page du téléphone : " + gateErr, false); }
 
         // ---- ciel (références : éphémérides publiées, tolérance 4 min)

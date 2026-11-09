@@ -70,14 +70,31 @@ function sha256(bytes) {
 }
 const utf8 = s => new TextEncoder().encode(s);
 const hex = b => Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
-function hmac(key, msg) {
-  let k = utf8(key);
+function hmacRaw(k, msg) {
   if (k.length > 64) k = sha256(k);
   const ip = new Uint8Array(64 + msg.length), op = new Uint8Array(96);
   for (let i = 0; i < 64; i++) { const x = k[i] || 0; ip[i] = x ^ 0x36; op[i] = x ^ 0x5c; }
   ip.set(msg, 64);
   op.set(sha256(ip), 64);
-  return hex(sha256(op));
+  return sha256(op);
+}
+const hmac = (key, msg) => hex(hmacRaw(utf8(key), msg));
+
+// ---- Chiffrement des secrets (jeton Home Assistant, clés, code PIN, texte) : même calcul que
+// Seal.java. Clé tirée de celle du QR code ; flux HMAC-SHA256(clé, nonce ‖ n° de bloc).
+// Le résultat est ensuite signé comme le reste : impossible à modifier ou à rejouer.
+const SEALED = ['/api/ha', '/api/tmdb', '/api/pexels', '/api/pin', '/api/text'];
+function seal(text) {
+  const key = hmacRaw(utf8(signKey), utf8('lumen-chiffrement'));
+  const nonce = new Uint8Array(16); crypto.getRandomValues(nonce);
+  const p = utf8(text), out = new Uint8Array(p.length), blk = new Uint8Array(20);
+  blk.set(nonce);
+  let ks = null;
+  for (let i = 0; i < p.length; i++) {
+    if (i % 32 === 0) { const n = i / 32; blk[16] = n >>> 24; blk[17] = n >>> 16; blk[18] = n >>> 8; blk[19] = n; ks = hmacRaw(key, blk); }
+    out[i] = p[i] ^ ks[i % 32];
+  }
+  return 'E1.' + hex(nonce) + '.' + hex(out);
 }
 
 let signKey = '';
@@ -125,6 +142,9 @@ function showPending(on) {
 async function api(path, opts) {
   if (!alive) throw new Error('auth');
   const method = (opts && opts.method) || 'GET';
+  if (method === 'POST' && opts && typeof opts.body === 'string' && SEALED.includes(path.split('?')[0])) {
+    opts = Object.assign({}, opts, {body: seal(opts.body)});
+  }
   const body = opts && opts.body !== undefined ? opts.body : null;
   const sh = signHeaders(method, path, body);
   const r = await fetch(path, Object.assign({credentials: 'same-origin', cache: 'no-store'}, opts || {}, {headers: Object.assign({}, H, sh, (opts || {}).headers)}));
@@ -414,7 +434,7 @@ let typeTimer = null, typeSent = '';
 // version tapée (jamais d'ancienne frappe qui arriverait après la nouvelle)
 let textBusy = false, textNext = null;
 async function sendLive(t) {
-  if (wsReady()) { ws.send(wsSigned('t0 ' + t)); return; } // instantané, toujours dans l'ordre
+  if (wsReady()) { ws.send(wsSigned('t0 ' + seal(t))); return; } // instantané, toujours dans l'ordre
   if (textBusy) { textNext = t; return; }
   textBusy = true;
   await sendText(t, false);

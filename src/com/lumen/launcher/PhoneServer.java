@@ -230,6 +230,7 @@ final class PhoneServer {
         try {
             String k = randomKey();
             signer = new Signer(k);
+            sealKey = Seal.key(k);
             touch();
             return "http://" + hostHeader + "/#" + token + "." + k;
         } catch (Exception e) {
@@ -276,6 +277,8 @@ final class PhoneServer {
 
     private final java.util.Set<Socket> wsOpen = new java.util.HashSet<>();
     private volatile Signer signer;
+    /** Clé de chiffrement des secrets (tirée de la clé du QR code). */
+    private volatile byte[] sealKey;
 
     private static String randomKey() {
         String a = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -328,7 +331,7 @@ final class PhoneServer {
                 String m = new String(data, "UTF-8");
                 if (m.equals("p")) { WsFrames.sendText(out, "p"); continue; }
                 // message signé « S <numéro> <signature> <contenu> », commande de la liste fermée
-                m = PhoneGate.wsCommand(m, signer);
+                m = PhoneGate.wsCommand(m, signer, sealKey);
                 if (m == null) continue;
                 if (!keyLimiter.allow(System.currentTimeMillis())) continue;
                 String reply = null;
@@ -417,6 +420,7 @@ final class PhoneServer {
 
     private void route(HttpRequest r, InputStream rawIn, OutputStream out, Socket sock) throws Exception {
         InputStream in = rawIn;
+        long bodyLen = r.contentLength; // longueur du contenu à traiter (texte déchiffré compris)
         String p = r.path;
         boolean post = r.method.equals("POST");
 
@@ -467,6 +471,13 @@ final class PhoneServer {
             no = PhoneGate.signature(r, signedOk(r, bodyHash));
             if (no != null) { json(out, no.code, no.body); return; }
         }
+        // secrets (jeton Home Assistant, clés, code PIN, texte) : chiffrés par la page, refusés en clair
+        if (PhoneGate.isSealed(r)) {
+            byte[] plain = PhoneGate.unseal(HttpRequest.readBody(in, bodyLen, 256 * 1024), sealKey);
+            if (plain == null) { json(out, PhoneGate.NOT_SEALED.code, PhoneGate.NOT_SEALED.body); return; }
+            in = new java.io.ByteArrayInputStream(plain);
+            bodyLen = plain.length;
+        }
         // images : nombreuses mais inoffensives ; tout le reste passe par la limite de débit
         no = PhoneGate.rate(r, limiter, keyLimiter, System.currentTimeMillis());
         if (no != null) { json(out, no.code, no.body); return; }
@@ -488,7 +499,7 @@ final class PhoneServer {
 
         // ---- écritures
         switch (p) {
-            case "/api/pin": json(out, 200, pin(HttpRequest.readBody(in, r.contentLength, 16), sid)); return;
+            case "/api/pin": json(out, 200, pin(HttpRequest.readBody(in, bodyLen, 16), sid)); return;
             case "/api/ping": json(out, 200, "{\"ok\":true}"); return;
             case "/api/restart": json(out, 200, "{\"ok\":true}"); main.postDelayed(new Runnable() { @Override public void run() { host.phoneRestart(); } }, 300); return;
             case "/api/closeapp": json(out, 200, onMain(new Callable<String>() { @Override public String call() { return host.phoneCloseApp(); } })); return;
@@ -510,7 +521,7 @@ final class PhoneServer {
             }
             case "/api/ha/cinema": {
                 JSONObject c;
-                try { c = new JSONObject(new String(HttpRequest.readBody(in, r.contentLength, 16 * 1024), "UTF-8")); }
+                try { c = new JSONObject(new String(HttpRequest.readBody(in, bodyLen, 16 * 1024), "UTF-8")); }
                 catch (Exception e) { ok(out, false); return; }
                 String film = c.optString("film"), pause = c.optString("pause");
                 if (!film.isEmpty() && !HomeAssistant.validEntityId(film)) { ok(out, false); return; }
@@ -530,7 +541,7 @@ final class PhoneServer {
                 return;
             }
             case "/api/name": {
-                final String n = DeviceName.clean(new String(HttpRequest.readBody(in, r.contentLength, 4 * DeviceName.MAX), "UTF-8"));
+                final String n = DeviceName.clean(new String(HttpRequest.readBody(in, bodyLen, 4 * DeviceName.MAX), "UTF-8"));
                 if (n == null) { ok(out, false); return; }
                 deviceName = n;
                 main.post(new Runnable() { @Override public void run() { host.onPhoneName(n); } });
@@ -547,17 +558,17 @@ final class PhoneServer {
                 json(out, 200, "{\"ok\":true}");
                 main.post(new Runnable() { @Override public void run() { disconnect(); } });
                 return;
-            case "/api/favorites": { boolean ok = setFavorites(HttpRequest.readBody(in, r.contentLength, 64 * 1024)); ok(out, ok); return; }
+            case "/api/favorites": { boolean ok = setFavorites(HttpRequest.readBody(in, bodyLen, 64 * 1024)); ok(out, ok); return; }
             case "/api/upload": {
                 sock.setSoTimeout(60_000);
-                ok(out, upload(in, r.contentLength, r.header("x-lumen-name"), r.header("x-lumen-target")));
+                ok(out, upload(in, bodyLen, r.header("x-lumen-name"), r.header("x-lumen-target")));
                 return;
             }
             case "/api/delete": ok(out, deleteMine(r.query.get("id"))); return;
             case "/api/log/clear": CrashLog.clear(ctx); ok(out, true); return;
             case "/api/pick": ok(out, setPick(r.query.get("scope"), r.query.get("key"), "1".equals(r.query.get("on")))); return;
             case "/api/launch": json(out, 200, launch(r.query.get("key"), pinNeeded)); return;
-            case "/api/text": json(out, 200, text(HttpRequest.readBody(in, r.contentLength, 4 * MAX_TEXT),
+            case "/api/text": json(out, 200, text(HttpRequest.readBody(in, bodyLen, 4 * MAX_TEXT),
                     "1".equals(r.query.get("live")), "1".equals(r.query.get("enter")))); return;
             case "/api/ambiance": json(out, 200, ambiance(intParam(r, "kind", -2))); return;
             case "/api/timer": json(out, 200, timer(intParam(r, "min", -1))); return;
@@ -583,19 +594,19 @@ final class PhoneServer {
         }
         // ---- actions sensibles : code PIN exigé s'il existe
         no = PhoneGate.pin(r, pinNeeded);
-        if (no != null) { HttpRequest.readBody(in, r.contentLength, 256 * 1024); json(out, no.code, no.body); return; }
-        if (p.equals("/api/ha")) { json(out, 200, setHa(HttpRequest.readBody(in, r.contentLength, 2048))); return; }
+        if (no != null) { HttpRequest.readBody(in, bodyLen, 256 * 1024); json(out, no.code, no.body); return; }
+        if (p.equals("/api/ha")) { json(out, 200, setHa(HttpRequest.readBody(in, bodyLen, 2048))); return; }
         if (p.equals("/api/tmdb")) {
-            final String k = new String(HttpRequest.readBody(in, r.contentLength, 1024), "UTF-8").trim();
+            final String k = new String(HttpRequest.readBody(in, bodyLen, 1024), "UTF-8").trim();
             if (!k.isEmpty() && !TmdbPolicy.validKey(k)) { json(out, 200, "{\"ok\":false,\"error\":\"Clé non reconnue : la clé API (32 caractères) ou le jeton de lecture\"}"); return; }
             host.prefs().setTmdbKey(k);
             ok(out, true);
             return;
         }
         if (p.equals("/api/pexels") || p.equals("/api/restore") || p.equals("/api/lock")) {
-            if (p.equals("/api/pexels")) { ok(out, setPexels(HttpRequest.readBody(in, r.contentLength, 256))); return; }
+            if (p.equals("/api/pexels")) { ok(out, setPexels(HttpRequest.readBody(in, bodyLen, 256))); return; }
             if (p.equals("/api/lock")) { ok(out, setLock(r.query.get("key"), "1".equals(r.query.get("on")))); return; }
-            int n = restore(HttpRequest.readBody(in, r.contentLength, 256 * 1024));
+            int n = restore(HttpRequest.readBody(in, bodyLen, 256 * 1024));
             json(out, n >= 0 ? 200 : 400, "{\"ok\":" + (n >= 0) + ",\"count\":" + Math.max(0, n) + "}");
             return;
         }
