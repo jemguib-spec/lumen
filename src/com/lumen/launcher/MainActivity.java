@@ -160,6 +160,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         super.onResume();
         resumedNow = true;
         wall.start();
+        announceUpdate();
         h.removeCallbacks(dlTick);
         h.postDelayed(dlTick, 1500);
         if (cinema == null) cinema = new Cinema(this, prefs);
@@ -969,10 +970,82 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
             @Override public void run() {
                 if (overlay != null || ambientOn || ambiance != null || !hasWindowFocus()) return; // on redemandera au prochain retour
                 prefs.setUpdatePrompted(v);
-                updater.install();
+                installUpdate();
             }
         }, 2500);
     }
+
+    /**
+     * Installe la mise à jour derrière un écran « lumen · mise à jour » : pendant qu'Android
+     * remplace Lumen, il ne peut rien afficher ; dès que c'est fait, Lumen revient de lui-même
+     * (réception de « paquet remplacé » ou service « Lumen télécommande ») au lieu de laisser
+     * l'écran d'accueil d'origine de la TV.
+     */
+    void installUpdate() {
+        String v = updater.readyVersion();
+        prefs.setUpdatePending(updater.currentVersion());
+        FrameLayout z = new FrameLayout(this);
+        z.setBackgroundColor(Color.BLACK);
+        z.setClickable(true);
+        z.setElevation(u(80));
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setGravity(Gravity.CENTER_HORIZONTAL);
+        TextView word = text(84, "sans-serif-thin", 0xFFFFFFFF);
+        word.setText("lumen");
+        word.setLetterSpacing(0.35f);
+        col.addView(word);
+        TextView sub = text(24, "sans-serif-light", 0x99FFFFFF);
+        sub.setText(("Mise à jour" + (v.isEmpty() ? "" : " · " + v)).toUpperCase(java.util.Locale.FRANCE));
+        sub.setLetterSpacing(0.3f);
+        LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        sl.topMargin = u(18);
+        col.addView(sub, sl);
+        // fine barre qui va et vient : quelque chose se passe
+        FrameLayout track = new FrameLayout(this);
+        track.setBackgroundColor(0x1FFFFFFF);
+        final View bar = new View(this);
+        bar.setBackgroundColor(0xB3FFFFFF);
+        track.addView(bar, new FrameLayout.LayoutParams(u(90), ViewGroup.LayoutParams.MATCH_PARENT));
+        LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(u(360), Math.max(2, u(3)));
+        tl.topMargin = u(46);
+        col.addView(track, tl);
+        android.animation.ObjectAnimator slide = android.animation.ObjectAnimator.ofFloat(bar, "translationX", 0, u(270));
+        slide.setDuration(1100);
+        slide.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        slide.setRepeatMode(android.animation.ValueAnimator.REVERSE);
+        slide.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+        slide.start();
+        z.addView(col, wrap(Gravity.CENTER));
+        z.setAlpha(0f);
+        root.addView(z, match());
+        z.animate().alpha(1f).setStartDelay(0).setDuration(400).start();
+        systemVeil = z; // repart tout seul si la mise à jour est annulée (Lumen reprend la main)
+        veilApp = null;
+        final View veil = z;
+        if (!updater.install()) { prefs.setUpdatePending(""); hideSystemVeil(true); showNotice("Installation impossible"); return; }
+        // filet de sécurité : si aucune fenêtre d'Android ne s'est ouverte, on rend la main
+        h.postDelayed(new Runnable() {
+            @Override public void run() {
+                if (systemVeil == veil && hasWindowFocus()) { prefs.setUpdatePending(""); hideSystemVeil(true); }
+            }
+        }, 10_000);
+    }
+
+    /** Au démarrage : Lumen vient-il d'être mis à jour ? On le dit, simplement. */
+    private void announceUpdate() {
+        String from = prefs.updatePending();
+        if (from.isEmpty()) return;
+        String now = updater.currentVersion();
+        if (!from.equals(now)) {
+            prefs.setUpdatePending("");
+            showNotice("Lumen est à jour · " + now);
+        } else if (!hasUpdateVeil()) {
+            prefs.setUpdatePending(""); // installation annulée
+        }
+    }
+
+    private boolean hasUpdateVeil() { return systemVeil != null; }
 
     // ------------------------------------------------------------------ « Reprendre » : autorisation
 
@@ -1187,7 +1260,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     // ------------------------------------------------------------------ désinstallation
 
-    private static final int REQ_UNINSTALL = 41;
+    private static final int REQ_UNINSTALL = 43;
     private AppRepo.App uninstalling;
 
     /**

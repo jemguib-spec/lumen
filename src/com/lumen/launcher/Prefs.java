@@ -125,6 +125,10 @@ final class Prefs {
     void setLastUpdateCheck(long t) { sp.edit().putLong("update_check", t).apply(); }
     String updateReadyVersion() { return sp.getString("update_ready", ""); }
     void setUpdateReadyVersion(String v) { sp.edit().putString("update_ready", v).apply(); }
+    /** Version avant une mise à jour lancée (vide sinon) : sert à revenir et à annoncer « à jour ». */
+    String updatePending() { return sp.getString("update_from", ""); }
+    void setUpdatePending(String v) { sp.edit().putString("update_from", v).commit(); } // écrit tout de suite : Lumen va être arrêté
+
     String updatePrompted() { return sp.getString("update_prompted", ""); }
     void setUpdatePrompted(String v) { sp.edit().putString("update_prompted", v).apply(); }
 

@@ -550,7 +550,7 @@ final class SettingsPanel {
             @Override public String get() { return a.updater.state(); }
         }, new View.OnClickListener() {
             @Override public void onClick(View v) {
-                if (a.updater.ready() != null) a.updater.install(); else a.updater.check(true);
+                if (a.updater.ready() != null) { a.closeOverlay(false); a.installUpdate(); } else a.updater.check(true);
             }
         }), a.rowLp());
         col.addView(a.listRow("Mises à jour automatiques", new MainActivity.Value() {

@@ -184,6 +184,22 @@ final class Updater {
     }
 
     /** Résultat de l'installation : si Android demande une confirmation, on affiche sa fenêtre. */
+    /** Lumen vient d'être remplacé par sa nouvelle version : il revient aussitôt à l'écran. */
+    public static final class ReplacedReceiver extends BroadcastReceiver {
+        @Override public void onReceive(Context c, Intent i) {
+            if (!Intent.ACTION_MY_PACKAGE_REPLACED.equals(i.getAction())) return;
+            backHome(c);
+        }
+    }
+
+    /** Relance l'accueil Lumen (après une mise à jour). */
+    static void backHome(Context c) {
+        try {
+            Intent home = new Intent(c, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            c.startActivity(home);
+        } catch (Exception ignored) { }
+    }
+
     public static final class UpdateReceiver extends BroadcastReceiver {
         @Override public void onReceive(Context c, Intent i) {
             int status = i.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
