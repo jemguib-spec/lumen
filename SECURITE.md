@@ -98,3 +98,4 @@ Le dépôt GitHub compile et lance les tests à chaque envoi (`.github/workflows
 
 ## Licence
 Lumen est un logiciel libre sous licence GNU GPL version 3 ou ultérieure (fichier `LICENSE`, en-tête `SPDX-License-Identifier: GPL-3.0-or-later` dans chaque fichier source). La police Inter reste sous SIL Open Font License 1.1.
+- Télécommande du téléphone : liste fermée de touches (flèches, OK, Retour, Accueil, volume, lecture). Hors de Lumen, elle passe par le service d'accessibilité facultatif « Lumen télécommande », désactivé tant que l'utilisateur ne l'active pas : il ne reçoit les événements d'aucune autre appli, ne lit pas le contenu de l'écran (`canRetrieveWindowContent=false`) et ne fait qu'appuyer sur des touches globales.

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.lumen.launcher"
-    android:versionCode="36"
-    android:versionName="4.5.1">
+    android:versionCode="37"
+    android:versionName="4.6.0">
 
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="29" />
 
@@ -62,6 +62,17 @@
                 <action android:name="android.service.dreams.DreamService" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+        </service>
+        <!-- Facultatif : télécommande du téléphone dans les autres applis (activé par l'utilisateur dans Accessibilité) -->
+        <service
+            android:name=".RemoteService"
+            android:exported="true"
+            android:label="@string/remote_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/remote_service" />
         </service>
         <!-- Résultat de l'installation d'une mise à jour (interne à Lumen) -->
         <receiver android:name=".Updater$UpdateReceiver" android:exported="false" />

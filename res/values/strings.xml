@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Lumen</string>
+    <string name="remote_name">Lumen télécommande</string>
+    <string name="remote_desc">Permet à la page « Réglages depuis le téléphone » de Lumen d\'appuyer sur Retour, Accueil et les flèches dans les autres applis. Ne lit rien à l\'écran et n\'envoie rien sur Internet.</string>
 </resources>

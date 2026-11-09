@@ -1324,6 +1324,58 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     @Override public boolean onTvHome() { return resumedNow; }
 
+    /**
+     * Télécommande du téléphone. Lumen à l'écran : la touche est rejouée dans Lumen (toutes versions).
+     * Autre appli : service d'accessibilité « Lumen télécommande » s'il est activé. Volume et lecture :
+     * toujours, par le système audio (aucune autorisation nécessaire).
+     */
+    @Override public String phoneKey(String k) {
+        android.media.AudioManager am = (android.media.AudioManager) getSystemService(AUDIO_SERVICE);
+        switch (k) {
+            case "volup": case "voldown": case "mute":
+                int dir = "volup".equals(k) ? android.media.AudioManager.ADJUST_RAISE
+                        : "voldown".equals(k) ? android.media.AudioManager.ADJUST_LOWER : android.media.AudioManager.ADJUST_TOGGLE_MUTE;
+                try { am.adjustStreamVolume(android.media.AudioManager.STREAM_MUSIC, dir, android.media.AudioManager.FLAG_SHOW_UI); }
+                catch (Exception e) { return "{\"ok\":false}"; }
+                return "{\"ok\":true}";
+            case "play": {
+                long t = android.os.SystemClock.uptimeMillis();
+                am.dispatchMediaKeyEvent(new KeyEvent(t, t, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, 0));
+                am.dispatchMediaKeyEvent(new KeyEvent(t, t, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, 0));
+                return "{\"ok\":true}";
+            }
+            default: break;
+        }
+        if (resumedNow) {
+            if ("home".equals(k)) {
+                if (ambiance != null) closeAmbiance();
+                if (ambientOn) exitAmbient(true);
+                onNewIntent(getIntent()); // comme la touche Accueil : tout se referme, premier favori
+                return "{\"ok\":true}";
+            }
+            int code = "up".equals(k) ? KeyEvent.KEYCODE_DPAD_UP : "down".equals(k) ? KeyEvent.KEYCODE_DPAD_DOWN
+                    : "left".equals(k) ? KeyEvent.KEYCODE_DPAD_LEFT : "right".equals(k) ? KeyEvent.KEYCODE_DPAD_RIGHT
+                    : "ok".equals(k) ? KeyEvent.KEYCODE_DPAD_CENTER : KeyEvent.KEYCODE_BACK;
+            long t = android.os.SystemClock.uptimeMillis();
+            dispatchKeyEvent(new KeyEvent(t, t, KeyEvent.ACTION_DOWN, code, 0));
+            dispatchKeyEvent(new KeyEvent(t, t + 40, KeyEvent.ACTION_UP, code, 0));
+            return "{\"ok\":true}";
+        }
+        int action = "back".equals(k) ? RemoteService.BACK : "home".equals(k) ? RemoteService.HOME
+                : "up".equals(k) ? RemoteService.DPAD_UP : "down".equals(k) ? RemoteService.DPAD_DOWN
+                : "left".equals(k) ? RemoteService.DPAD_LEFT : "right".equals(k) ? RemoteService.DPAD_RIGHT : RemoteService.DPAD_CENTER;
+        if (RemoteService.perform(action)) return "{\"ok\":true}";
+        if ("home".equals(k)) {
+            try {
+                startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                        .setPackage(getPackageName()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                return "{\"ok\":true}";
+            } catch (Exception ignored) { }
+        }
+        boolean svc = RemoteService.connected();
+        return "{\"ok\":false,\"service\":" + svc + ",\"dpad\":" + RemoteService.dpadSupported() + "}";
+    }
+
     @Override public void phoneLaunch(AppRepo.App app) {
         if (ambiance != null) closeAmbiance();
         if (ambientOn) exitAmbient(false);

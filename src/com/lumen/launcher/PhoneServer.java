@@ -78,7 +78,15 @@ final class PhoneServer {
         void phoneNextWall();
         void phonePicksChanged(String scope);
         void onPhoneConnected(boolean connected);
+        /** Touche de la télécommande du téléphone ; renvoie la réponse JSON. */
+        String phoneKey(String key);
     }
+
+    /** Touches acceptées depuis le téléphone (liste fermée). */
+    static final java.util.List<String> KEYS = java.util.Arrays.asList(
+            "up", "down", "left", "right", "ok", "back", "home", "volup", "voldown", "mute", "play");
+    /** Sans nouvelle du téléphone depuis ce délai (page fermée, téléphone verrouillé), la pastille s'éteint. */
+    private static final long SILENT_MS = 45_000L;
 
     private static final long IDLE_STOP_MS = 15 * 60_000L;
     private static final String COOKIE = "lumen_s";
@@ -98,6 +106,8 @@ final class PhoneServer {
     private ServerSocket server;
     private String hostHeader;
     private volatile long lastActivity;
+    /** La TV montre-t-elle « téléphone connecté » ? (indépendant des sessions, pour toujours l'éteindre) */
+    private volatile boolean shown;
 
     PhoneServer(Context c, Host h) { ctx = c.getApplicationContext(); host = h; }
 
@@ -154,14 +164,32 @@ final class PhoneServer {
 
     synchronized void stop() {
         main.removeCallbacks(idleStop);
-        boolean wasConnected = server != null && auth.hasSessions();
-        if (wasConnected) main.post(new Runnable() { @Override public void run() { host.onPhoneConnected(false); } });
+        main.removeCallbacks(silentCheck);
+        setShown(false); // même si les sessions viennent d'être révoquées (bouton « Déconnecter »)
         try { if (server != null) server.close(); } catch (Exception ignored) { }
         server = null;
         if (pool != null) pool.shutdownNow();
         pool = null;
         iconCache.clear();
     }
+
+    /** Allume ou éteint la pastille sur la TV, une seule fois par changement. */
+    private void setShown(final boolean on) {
+        if (shown == on) return;
+        shown = on;
+        main.post(new Runnable() { @Override public void run() { host.onPhoneConnected(on); } });
+        main.removeCallbacks(silentCheck);
+        if (on) main.postDelayed(silentCheck, SILENT_MS);
+    }
+
+    private final Runnable silentCheck = new Runnable() {
+        @Override public void run() {
+            if (!shown) return;
+            long quiet = System.currentTimeMillis() - lastActivity;
+            if (quiet >= SILENT_MS - 1000 || !auth.hasSessions()) setShown(false);
+            else main.postDelayed(this, SILENT_MS - quiet);
+        }
+    };
 
     private void touch() {
         lastActivity = System.currentTimeMillis();
@@ -241,13 +269,14 @@ final class PhoneServer {
             String sid = auth.openSession(r.header("x-lumen-token"));
             if (sid == null) { send(out, 403, "application/json", "{\"ok\":false}".getBytes("UTF-8"), null); return; }
             String cookie = COOKIE + "=" + sid + "; HttpOnly; SameSite=Strict; Path=/; Max-Age=1800";
-            main.post(new Runnable() { @Override public void run() { host.onPhoneConnected(true); } });
+            setShown(true);
             send(out, 200, "application/json", "{\"ok\":true}".getBytes("UTF-8"), cookie);
             return;
         }
 
         final String sid = r.cookie(COOKIE);
         if (!auth.check(sid)) { send(out, 401, "application/json", "{\"ok\":false}".getBytes("UTF-8"), null); return; }
+        setShown(true); // le téléphone revient (page rouverte, téléphone déverrouillé)
 
         // images : nombreuses mais inoffensives ; tout le reste passe par la limite de débit
         boolean image = !post && (p.equals("/api/icon") || p.equals("/api/thumb") || p.equals("/api/pickthumb"));
@@ -267,6 +296,13 @@ final class PhoneServer {
         // ---- écritures
         switch (p) {
             case "/api/pin": json(out, 200, pin(HttpRequest.readBody(in, r.contentLength, 16), sid)); return;
+            case "/api/ping": json(out, 200, "{\"ok\":true}"); return;
+            case "/api/key": {
+                final String k = r.query.get("k");
+                if (k == null || !KEYS.contains(k)) { json(out, 400, "{\"ok\":false}"); return; }
+                json(out, 200, onMain(new Callable<String>() { @Override public String call() { return host.phoneKey(k); } }));
+                return;
+            }
             case "/api/bye":
                 json(out, 200, "{\"ok\":true}");
                 main.post(new Runnable() { @Override public void run() { disconnect(); } });
@@ -335,6 +371,8 @@ final class PhoneServer {
                 tv.put("timers", timers);
                 tv.put("pin", pr.hasPin());
                 tv.put("unlocked", pr.hasPin() && auth.isElevated(sid));
+                tv.put("remote", RemoteService.connected());
+                tv.put("dpadOutside", RemoteService.connected() && RemoteService.dpadSupported());
                 o.put("tv", tv);
                 return null;
             }

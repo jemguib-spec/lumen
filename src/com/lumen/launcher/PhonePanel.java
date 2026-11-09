@@ -48,6 +48,17 @@ final class PhonePanel {
             @Override public void onClick(View v) { a.closeOverlay(true); a.phone.disconnect(); a.showNotice("Téléphone déconnecté"); }
         });
         card.addView(off, a.rowLp());
+        card.addView(a.listRow("Télécommande dans les autres applis", new MainActivity.Value() {
+            @Override public String get() { return RemoteService.connected() ? "Activée" : "À activer"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                try {
+                    a.startActivity(new android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+                    a.showNotice("Choisis « Lumen télécommande » et active-le");
+                } catch (Exception e) { a.showNotice("Paramètres › Accessibilité › Lumen télécommande"); }
+            }
+        }), a.rowLp());
         card.addView(a.listRow("Connecter un autre téléphone", null, new View.OnClickListener() {
             @Override public void onClick(View v) { a.closeOverlay(false); showQr(a); }
         }), a.rowLp());

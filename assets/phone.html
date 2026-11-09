@@ -16,6 +16,25 @@
 
 <!-- TV : télécommande -->
 <section id="tv" class="on">
+  <div class="remote" id="remote">
+    <div class="pad">
+      <button class="k up" data-k="up" aria-label="Haut"></button>
+      <button class="k left" data-k="left" aria-label="Gauche"></button>
+      <button class="k okk" data-k="ok" aria-label="OK">OK</button>
+      <button class="k right" data-k="right" aria-label="Droite"></button>
+      <button class="k down" data-k="down" aria-label="Bas"></button>
+    </div>
+    <div class="keys">
+      <button class="kb" data-k="back" aria-label="Retour">‹ Retour</button>
+      <button class="kb" data-k="home" aria-label="Accueil">⌂ Accueil</button>
+      <button class="kb" data-k="play" aria-label="Lecture ou pause">⏯</button>
+      <button class="kb" data-k="voldown" aria-label="Baisser le volume">Vol −</button>
+      <button class="kb" data-k="mute" aria-label="Couper le son">🔇</button>
+      <button class="kb" data-k="volup" aria-label="Monter le volume">Vol +</button>
+    </div>
+    <p class="note small" id="remoteHint" hidden></p>
+  </div>
+
   <form class="field" id="typeForm" autocomplete="off">
     <input type="text" id="typeText" placeholder="Taper sur la TV" maxlength="100" enterkeyhint="send">
     <button class="go" aria-label="Envoyer">↑</button>

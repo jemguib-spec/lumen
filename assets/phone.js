@@ -68,6 +68,9 @@ async function start() {
   }
   await load();
   poll = setInterval(() => { if (!document.hidden && (tab === 'tv' || tab === 'opt')) load(); }, 5000);
+  // signe de vie : sans lui pendant 45 s, la TV éteint sa pastille « téléphone connecté »
+  setInterval(() => { if (alive && !document.hidden) api('/api/ping', {method: 'POST'}).catch(() => {}); }, 15000);
+  document.addEventListener('visibilitychange', () => { if (alive && !document.hidden) load(); });
 }
 
 async function load() {
@@ -93,7 +96,7 @@ function render() {
   else if (tv.ambiance >= 0) { d.className = 'on'; sub.textContent = 'Ambiance · ' + S.ambiances[tv.ambiance] + (tv.timer ? ' · ' + tv.timer + ' min' : ''); }
   else if (tv.home) { d.className = 'on'; sub.textContent = 'Connecté · accueil Lumen'; }
   else { d.className = 'busy'; sub.textContent = 'Connecté · une appli est ouverte'; }
-  renderLaunch(); renderAmb(); renderScreen(); renderFav(); renderMine(); renderOpt();
+  renderRemote(); renderLaunch(); renderAmb(); renderScreen(); renderFav(); renderMine(); renderOpt();
 }
 
 function renderLaunch() {
@@ -134,6 +137,30 @@ function renderAmb() {
     b.addEventListener('click', () => act('/api/timer?min=' + m, null, m ? 'Minuterie : ' + m + ' min' : 'Minuterie désactivée'));
     t.appendChild(b);
   });
+}
+
+// ---- Télécommande : liste fermée de touches, la TV décide de ce qu'elle en fait
+let keyBusy = false;
+async function press(k) {
+  if (navigator.vibrate) navigator.vibrate(8);
+  if (keyBusy) return;
+  keyBusy = true;
+  try {
+    const r = await api('/api/key?k=' + k, {method: 'POST'});
+    const j = await r.json().catch(() => ({ok: r.ok}));
+    if (!j.ok) toast(j.service && !j.dpad ? 'Flèches hors de Lumen : Android 13 minimum sur la TV'
+      : 'Active « Lumen télécommande » sur la TV : Paramètres › Accessibilité');
+  } catch (e) { /* toast déjà affiché */ }
+  finally { keyBusy = false; }
+}
+document.querySelectorAll('#remote [data-k]').forEach(b => b.addEventListener('click', () => press(b.dataset.k)));
+
+function renderRemote() {
+  const tv = S.tv || {}, h = $('remoteHint');
+  let msg = '';
+  if (!tv.home && !tv.remote) msg = 'Pour piloter les autres applis : sur la TV, Réglages › Réglages depuis le téléphone › Télécommande dans les autres applis.';
+  else if (!tv.home && !tv.dpadOutside) msg = 'Dans les autres applis : Retour, Accueil, volume et lecture (flèches à partir d’Android 13).';
+  h.textContent = msg; h.hidden = !msg;
 }
 
 function renderScreen() {

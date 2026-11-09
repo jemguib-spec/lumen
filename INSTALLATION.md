@@ -89,7 +89,8 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 
 ## Téléphone et Reprendre
 - **Réglages depuis le téléphone** (Réglages, première ligne) : un QR code s'affiche ; scanne-le avec le téléphone connecté au même Wi-Fi. Cinq onglets en bas :
-  - **TV** : taper du texte sur la TV (recherche d'appli, ville), ouvrir une appli ou une source HDMI, lancer une ambiance et sa minuterie, mode veille, fond suivant, source du fond ;
+  - **TV** : télécommande (flèches, OK, Retour, Accueil, lecture/pause, volume), taper du texte sur la TV (recherche d'appli, ville), ouvrir une appli ou une source HDMI, lancer une ambiance et sa minuterie, mode veille, fond suivant, source du fond ;
+    La télécommande marche toujours dans Lumen. Pour les autres applis (Netflix, YouTube…), active une fois « Lumen télécommande » : Réglages › Réglages depuis le téléphone › Télécommande dans les autres applis (Paramètres › Accessibilité de la TV). Retour, Accueil, volume et lecture marchent partout ; les flèches et OK hors de Lumen demandent Android 13 ou plus sur la TV.
   - **Accueil** : réorganiser, ajouter, retirer les favoris ; verrouiller une appli (avec le code PIN) ;
   - **Vidéos** : cocher les vidéos d'ambiance et de fond sur aperçus (liste fermée, décocher efface la vidéo) ;
   - **Envois** : envoyer tes photos et vidéos ;
