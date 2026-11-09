@@ -224,6 +224,16 @@ public class LumenTests {
             catch (java.io.IOException e) { refused = true; }
             check("HA : redirection jamais suivie", refused);
         } catch (Exception e) { check("HA : réponses HTTP lues", false); }
+        check("TMDB : clés acceptées", TmdbPolicy.validKey("0123456789abcdef0123456789abcdef")
+                && TmdbPolicy.validKey("eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIxMjM0NTY3ODkwYWJjZGVmIn0.abcdefghijklmnopqrstu-_")
+                && !TmdbPolicy.validKey("abc") && !TmdbPolicy.validKey("0123456789abcdef0123456789abcdeG")
+                && !TmdbPolicy.validKey("eyJ" + "a".repeat(80) + "\r\nX: y"));
+        check("TMDB : clé v3 dans l'adresse, jeton v4 jamais dans l'adresse",
+                TmdbPolicy.url("/trending/all/week", "0123456789abcdef0123456789abcdef").endsWith("&api_key=0123456789abcdef0123456789abcdef")
+                && !TmdbPolicy.url("/x", "eyJabc").contains("eyJ") && TmdbPolicy.url("/x?a=1", "k").contains("?a=1&language=fr-FR"));
+        check("TMDB : hôtes fermés sans clé", !NetPolicy.allowed("https://api.themoviedb.org/3/trending/all/week"));
+        check("TMDB : mes applis seulement", TmdbPolicy.installed(new java.util.HashSet<>(java.util.Arrays.asList("com.netflix.ninja", "com.x"))).size() == 1
+                && "Netflix".equals(TmdbPolicy.byProviderId(8)[2]));
         check("recherche : début de mot et initiales", SmartSearch.score("YouTube Music", "mus") > 0 && SmartSearch.score("YouTube Music", "ytm") > 0);
         check("recherche : fautes de frappe tolérées", SmartSearch.score("Netflix", "netflx") > 0 && SmartSearch.score("Disney+", "disnay") > 0
                 && SmartSearch.score("Netflix", "zzz") == 0);

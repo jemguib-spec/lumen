@@ -52,7 +52,8 @@ final class Net {
             c.setRequestMethod("GET");
             c.setRequestProperty("User-Agent", USER_AGENT);
             c.setRequestProperty("Accept-Encoding", "identity");
-            if (auth != null && i == 0 && "api.pexels.com".equals(u.getHost())) c.setRequestProperty("Authorization", auth);
+            if (auth != null && i == 0 && ("api.pexels.com".equals(u.getHost()) || "api.themoviedb.org".equals(u.getHost())))
+                c.setRequestProperty("Authorization", auth);
             int code = c.getResponseCode();
             if (code >= 300 && code < 400) {
                 String loc = c.getHeaderField("Location");

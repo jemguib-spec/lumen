@@ -71,6 +71,7 @@ final class Online {
         ctx = c.getApplicationContext();
         prefs = p;
         NetPolicy.setPexelsEnabled(!prefs.pexelsKey().isEmpty());
+        NetPolicy.setTmdbEnabled(!prefs.tmdbKey().isEmpty());
         // v2.3 : purge des anciennes photos « Espace » (filtrage amélioré)
         android.content.SharedPreferences sp = ctx.getSharedPreferences("lumen_online", Context.MODE_PRIVATE);
         if (!sp.getBoolean("space_v2", false)) {

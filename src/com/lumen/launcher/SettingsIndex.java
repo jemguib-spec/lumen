@@ -13,7 +13,7 @@ final class SettingsIndex {
     private SettingsIndex() { }
 
     /** Cibles spéciales (hors rubriques des réglages). */
-    static final int PHONE = -2, STORAGE = -3, HOME = -4;
+    static final int PHONE = -2, STORAGE = -3, HOME = -4, RECO = -5;
     /** Rubriques (mêmes numéros que SettingsPanel). */
     static final int FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5, ABOUT = 6;
 
@@ -48,6 +48,7 @@ final class SettingsIndex {
             new Entry("À propos et licences", S, ABOUT, "a propos version licences"),
             new Entry("Réglages depuis le téléphone", "Réglages", PHONE, "telephone qr code smartphone telecommande"),
             new Entry("Maison", "Home Assistant", HOME, "maison home assistant lumieres scenes volets"),
+            new Entry("À l'affiche", "Films et séries du moment", RECO, "affiche films series tendances populaire recommandations nouveautes top"),
     };
 
     /** Réglages qui correspondent à la recherche (au plus max). */

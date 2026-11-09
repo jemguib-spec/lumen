@@ -36,6 +36,12 @@ final class NetPolicy {
     private static volatile boolean pexels;
     static void setPexelsEnabled(boolean on) { pexels = on; }
 
+    /** TMDB (« À l'affiche ») : joignable uniquement si l'utilisateur a réglé sa propre clé. */
+    static final Set<String> TMDB_HOSTS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            "api.themoviedb.org", "image.tmdb.org")));
+    private static volatile boolean tmdb;
+    static void setTmdbEnabled(boolean on) { tmdb = on; }
+
     /** Licences acceptées pour les contenus Wikimedia (comparaison en minuscules, préfixe). */
     private static final String[] FREE_LICENSES = {"cc0", "public domain", "pd", "cc by", "cc-by", "cc by-sa", "cc-by-sa"};
 
@@ -45,7 +51,7 @@ final class NetPolicy {
         URL u = new URL(url);
         if (!"https".equals(u.getProtocol())) throw new MalformedURLException("HTTPS obligatoire");
         String host = u.getHost() == null ? "" : u.getHost().toLowerCase(Locale.ROOT);
-        if (!ALLOWED_HOSTS.contains(host) && !(pexels && PEXELS_HOSTS.contains(host)))
+        if (!ALLOWED_HOSTS.contains(host) && !(pexels && PEXELS_HOSTS.contains(host)) && !(tmdb && TMDB_HOSTS.contains(host)))
             throw new MalformedURLException("Hôte non autorisé : " + host);
         if (u.getPort() != -1 && u.getPort() != 443) throw new MalformedURLException("Port non autorisé");
         if (u.getUserInfo() != null) throw new MalformedURLException("Identifiants interdits dans l'URL");

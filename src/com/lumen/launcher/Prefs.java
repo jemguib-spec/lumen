@@ -214,6 +214,17 @@ final class Prefs {
                 .putStringSet("ha_cine_apps", new HashSet<>(apps)).apply();
     }
 
+    /** Clé TMDB personnelle (vide = « À l'affiche » désactivé) ; jamais renvoyée au téléphone. */
+    String tmdbKey() { return sp.getString("tmdb_key", ""); }
+    void setTmdbKey(String k) {
+        String v = TmdbPolicy.validKey(k) ? k : "";
+        sp.edit().putString("tmdb_key", v).apply();
+        NetPolicy.setTmdbEnabled(!v.isEmpty());
+    }
+    /** Filtre de « À l'affiche » : "" = partout, "mine" = mes applis, sinon un paquet. */
+    String recoFilter() { return sp.getString("reco_filter", "mine"); }
+    void setRecoFilter(String f) { sp.edit().putString("reco_filter", f).apply(); }
+
     String pexelsKey() { return sp.getString("pexels_key", ""); }
     void setPexelsKey(String k) {
         String v = Pexels.validKey(k) ? k : "";

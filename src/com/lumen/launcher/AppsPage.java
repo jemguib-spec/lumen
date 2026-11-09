@@ -377,6 +377,7 @@ final class AppsPage {
         if (e.page == SettingsIndex.PHONE) { PhonePanel.openPhonePanel(a); return; }
         if (e.page == SettingsIndex.STORAGE) { StoragePanel.open(a); return; }
         if (e.page == SettingsIndex.HOME) { HomePanel.open(a); return; }
+        if (e.page == SettingsIndex.RECO) { RecoPanel.open(a); return; }
         SettingsPanel.reopenPage = e.page;
         SettingsPanel.openSettings(a);
     }
@@ -478,7 +479,7 @@ final class AppsPage {
             if (!sets.isEmpty()) {
                 sections.addView(sectionLabel("Réglages"));
                 for (final SettingsIndex.Entry e : sets) {
-                    resultRow(a.iconRow(e.page == SettingsIndex.HOME ? Glyph.HOME : e.page == SettingsIndex.PHONE ? Glyph.PHONE : Glyph.SLIDERS,
+                    resultRow(a.iconRow(e.page == SettingsIndex.HOME ? Glyph.HOME : e.page == SettingsIndex.PHONE ? Glyph.PHONE : e.page == SettingsIndex.RECO ? Glyph.SPARK : Glyph.SLIDERS,
                             e.label, new MainActivity.Value() { @Override public String get() { return e.where; } },
                             new View.OnClickListener() { @Override public void onClick(View v) { openSetting(e); } }, false));
                 }

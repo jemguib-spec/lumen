@@ -402,6 +402,14 @@ final class PhoneServer {
             json(out, 200, setHa(body));
             return;
         }
+        if (p.equals("/api/tmdb")) {
+            final String k = new String(HttpRequest.readBody(in, r.contentLength, 1024), "UTF-8").trim();
+            if (pinNeeded) { json(out, 200, "{\"ok\":false,\"pin\":true}"); return; }
+            if (!k.isEmpty() && !TmdbPolicy.validKey(k)) { json(out, 200, "{\"ok\":false,\"error\":\"Clé non reconnue : la clé API (32 caractères) ou le jeton de lecture\"}"); return; }
+            host.prefs().setTmdbKey(k);
+            ok(out, true);
+            return;
+        }
         if (p.equals("/api/pexels") || p.equals("/api/restore") || p.equals("/api/lock")) {
             if (pinNeeded) { HttpRequest.readBody(in, r.contentLength, 256 * 1024); json(out, 200, "{\"ok\":false,\"pin\":true}"); return; }
             if (p.equals("/api/pexels")) { ok(out, setPexels(HttpRequest.readBody(in, r.contentLength, 256))); return; }
@@ -476,6 +484,7 @@ final class PhoneServer {
         for (String n : Online.COSY_NAMES) amb.put(n);
         o.put("ambiances", amb);
         o.put("pexels", !host.prefs().pexelsKey().isEmpty());
+        o.put("tmdb", !host.prefs().tmdbKey().isEmpty());
         o.put("ha", host.prefs().haConfigured() ? host.prefs().haUrl() : "");
         o.put("cinema", new JSONObject().put("film", host.prefs().haFilmScene()).put("pause", host.prefs().haPauseScene())
                 .put("onOpen", host.prefs().haCinemaOnOpen()).put("apps", new JSONArray(host.prefs().haCinemaApps())));

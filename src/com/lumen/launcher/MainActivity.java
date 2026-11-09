@@ -88,7 +88,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     Glow glow;
     private FrameLayout zoomView;
     PhoneServer phone;
-    boolean resumeOpen;
+    boolean resumeOpen, recoOpen;
     private AmbiancePanel ambiance;
     TopShelf shelf;
     Perf.Overlay perf;
@@ -1197,6 +1197,11 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
                 View next = f.focusSearch(View.FOCUS_LEFT);
                 if (next == null || !isInside(next, rowsBox)) { ResumePanel.openResume(MainActivity.this); return true; }
             }
+            // Geste droite depuis la dernière vignette d'une ligne → « À l'affiche »
+            if (!appsOpen && code == KeyEvent.KEYCODE_DPAD_RIGHT && f instanceof Tile && isInside(f, rowsBox)) {
+                View next = f.focusSearch(View.FOCUS_RIGHT);
+                if (next == null || !isInside(next, rowsBox)) { RecoPanel.open(MainActivity.this); return true; }
+            }
             // Geste haut depuis la première ligne des applis → accueil
             if (appsOpen && code == KeyEvent.KEYCODE_DPAD_UP && f != null) {
                 View next = f.focusSearch(View.FOCUS_UP);
@@ -1204,6 +1209,12 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
             }
         }
         if (resumeOpen && down && code == KeyEvent.KEYCODE_DPAD_RIGHT) { closeOverlay(true); return true; }
+        // ◀ dans « À l'affiche » : on ferme seulement si rien n'est à gauche (les filtres défilent)
+        if (recoOpen && down && code == KeyEvent.KEYCODE_DPAD_LEFT) {
+            View f = getCurrentFocus();
+            View next = f == null ? null : f.focusSearch(View.FOCUS_LEFT);
+            if (next == null || !isInside(next, overlay)) { closeOverlay(true); return true; }
+        }
         // ◀ dans une sous-page des réglages : retour à la page précédente
         if (down && code == KeyEvent.KEYCODE_DPAD_LEFT && overlay != null && e.getRepeatCount() == 0
                 && SettingsPanel.inSubPage() && !(getCurrentFocus() instanceof android.widget.EditText)) { SettingsPanel.back(this); return true; }

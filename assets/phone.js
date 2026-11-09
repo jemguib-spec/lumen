@@ -598,12 +598,25 @@ function renderOpt() {
   $('pinBox').hidden = !tv.pin;
   $('pinState').textContent = tv.unlocked ? 'Déverrouillé pour 5 min' : 'Déverrouiller les actions protégées';
   $('pxState').textContent = S.pexels ? 'Pexels activé' : 'Pexels désactivé';
+  $('tmState').textContent = S.tmdb ? 'Films du moment activés' : 'Films du moment désactivés';
 }
 $('pinOpen').addEventListener('click', () => askPin());
 $('pxSave').addEventListener('click', async () => {
   const k = $('pxKey').value.trim(); if (!k) return;
   if (await act('/api/pexels', k, 'Clé enregistrée')) $('pxKey').value = '';
 });
+$('tmSave').addEventListener('click', async () => {
+  const k = $('tmKey').value.trim();
+  if (!k) return;
+  try {
+    const r = await api('/api/tmdb', {method: 'POST', body: k, headers: {'Content-Type': 'text/plain'}});
+    const j = await r.json();
+    if (j.pin) { if (await askPin()) $('tmSave').click(); return; }
+    if (!j.ok) { toast(j.error || 'Clé refusée'); return; }
+    $('tmKey').value = ''; toast('Clé enregistrée'); load();
+  } catch (e) { }
+});
+$('tmDel').addEventListener('click', () => act('/api/tmdb', '', 'Clé retirée'));
 $('pxDel').addEventListener('click', () => act('/api/pexels', '', 'Clé retirée'));
 
 $('bkSave').addEventListener('click', async () => {
