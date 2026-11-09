@@ -34,7 +34,7 @@ final class CityPanel {
         FrameLayout o = a.openOverlay(null);
         LinearLayout card = a.glassCard(44);
         card.setPadding(a.u(40), a.u(44), a.u(40), a.u(32));
-        TextView title = a.text(40, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
         title.setText("Ville pour la météo");
         card.addView(title);
         TextView hint = a.text(22, "sans-serif", 0x8CFFFFFF);

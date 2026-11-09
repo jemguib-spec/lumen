@@ -46,7 +46,7 @@ final class TopShelf {
         view.setClipChildren(false);
         view.setClipToPadding(false);
         view.setVisibility(View.GONE);
-        label = a.text(20, "sans-serif-medium", 0xB3FFFFFF);
+        label = a.text(22, "sans-serif-medium", 0xB3FFFFFF);
         label.setShadowLayer(a.u(8), 0, 0, 0x66000000);
         label.setLetterSpacing(0.06f);
         label.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -73,9 +73,17 @@ final class TopShelf {
         io.execute(new Runnable() {
             @Override public void run() {
                 data = WatchNext.load(a);
-                a.h.post(new Runnable() { @Override public void run() { shown = null; show(wanted); } });
+                a.h.post(new Runnable() { @Override public void run() { shown = null; show(wanted); a.refreshGreeting(); } });
             }
         });
+    }
+
+    /** Le programme en cours regardé le plus récemment, toutes applis confondues (ou null). */
+    WatchNext.Entry latest() {
+        WatchNext.Entry best = null;
+        for (List<WatchNext.Entry> l : data.values())
+            for (WatchNext.Entry e : l) if (best == null || e.engaged > best.engaged) best = e;
+        return best;
     }
 
     /** Une vignette de l'accueil vient d'être sélectionnée (null = aucune appli). */
@@ -144,14 +152,14 @@ final class TopShelf {
         LinearLayout txt = new LinearLayout(a);
         txt.setOrientation(LinearLayout.VERTICAL);
         txt.setPadding(a.u(16), 0, a.u(16), a.u(e.progress >= 0 ? 22 : 14));
-        TextView t = a.text(21, "sans-serif-medium", 0xFFFFFFFF);
+        TextView t = a.text(22, "sans-serif-medium", 0xFFFFFFFF);
         t.setText(e.title);
         t.setMaxLines(e.portrait ? 2 : 1);
         t.setEllipsize(TextUtils.TruncateAt.END);
         txt.addView(t);
         String sub = !e.subtitle.isEmpty() ? e.subtitle : e.remaining;
         if (!sub.isEmpty() && !e.portrait) {
-            TextView s = a.text(17, "sans-serif", 0xB3FFFFFF);
+            TextView s = a.text(18, "sans-serif", 0xB3FFFFFF);
             s.setText(sub);
             s.setMaxLines(1);
             s.setEllipsize(TextUtils.TruncateAt.END);

@@ -58,6 +58,18 @@ final class AppsPage {
     boolean built() { return scroll != null; }
 
     /** Texte tapé sur le téléphone : il remplit la recherche (la liste se filtre aussitôt). */
+    /**
+     * Texte qui arrive du téléphone : le champ de recherche prend le focus pour que son curseur
+     * clignote à l'écran (sans ouvrir le clavier de la TV), et suit la frappe en direct.
+     */
+    void typeFromPhone(String q) {
+        if (search == null) return;
+        search.setShowSoftInputOnFocus(false);
+        if (!search.isFocused()) search.requestFocus();
+        search.setCursorVisible(true);
+        setQuery(q);
+    }
+
     void setQuery(String q) {
         if (search == null) return;
         search.setText(q);
@@ -149,6 +161,7 @@ final class AppsPage {
                 e.setTextColor(f ? 0xFF111216 : 0xF5FFFFFF);
                 e.setHintTextColor(f ? 0x80111216 : 0x80FFFFFF);
                 if (f) Sounds.get(a).tick();
+                if (!f) e.setShowSoftInputOnFocus(true); // la saisie depuis le téléphone est terminée
             }
         });
         e.addTextChangedListener(new android.text.TextWatcher() {
@@ -219,7 +232,7 @@ final class AppsPage {
     }
 
     private TextView sectionLabel(String s) {
-        TextView t = a.text(21, "sans-serif-medium", 0x99FFFFFF);
+        TextView t = a.text(22, "sans-serif-medium", 0x99FFFFFF);
         t.setText(s.toUpperCase());
         t.setLetterSpacing(0.08f);
         t.setPadding(a.u(112), a.u(34), 0, a.u(2));

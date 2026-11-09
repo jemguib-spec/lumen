@@ -198,6 +198,33 @@ final class Tile extends FrameLayout {
         if (favDot != null) favDot.setVisibility(fav ? VISIBLE : GONE);
     }
 
+    private View usualRing;
+
+    /** Appli habituelle à cette heure : un liseré lumineux qui respire doucement, puis reste discret. */
+    void setUsual(boolean on) {
+        if (!on) { if (usualRing != null) { usualRing.animate().cancel(); card.removeView(usualRing); usualRing = null; } return; }
+        if (usualRing != null) return;
+        usualRing = new View(getContext());
+        GradientDrawable ring = new GradientDrawable();
+        ring.setCornerRadius(radius);
+        ring.setStroke((int) dp(getContext(), 2), 0xCCFFFFFF);
+        usualRing.setBackground(ring);
+        usualRing.setAlpha(0f);
+        card.addView(usualRing, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        breathe(usualRing, 3);
+    }
+
+    private static void breathe(final View v, final int left) {
+        if (v.getParent() == null) return;
+        v.animate().alpha(left > 0 ? 0.9f : 0.32f).setDuration(1100).withEndAction(new Runnable() {
+            @Override public void run() {
+                if (left > 0) v.animate().alpha(0.15f).setDuration(1100).withEndAction(new Runnable() {
+                    @Override public void run() { breathe(v, left - 1); }
+                }).start();
+            }
+        }).start();
+    }
+
     void setMoving(boolean moving) {
         if (moving) {
             GradientDrawable b = new GradientDrawable();
@@ -216,9 +243,11 @@ final class Tile extends FrameLayout {
 
     private void animateFocus(boolean f) {
         float s = f ? focusScale : 1f;
+        // léger rebond à la sélection, retour sans rebond ; l'ombre monte et descend avec
         animate().scaleX(s).scaleY(s).alpha(f ? 1f : restAlpha)
-                .setDuration(240).setInterpolator(new DecelerateInterpolator(2.2f)).start();
-        card.setElevation(f ? dp(getContext(), 16) : 0);
+                .setDuration(f ? 360 : 220)
+                .setInterpolator(f ? new android.view.animation.OvershootInterpolator(1.6f) : new DecelerateInterpolator(2.2f)).start();
+        card.animate().translationZ(f ? dp(getContext(), 18) : 0).setDuration(f ? 360 : 220).start();
         if (banner) { // bannière : liseré blanc au focus (une bannière blanche ne doit pas sembler sélectionnée)
             GradientDrawable ring = new GradientDrawable();
             ring.setCornerRadius(radius);

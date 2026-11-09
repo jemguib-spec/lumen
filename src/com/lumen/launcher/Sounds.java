@@ -17,7 +17,7 @@ import java.io.OutputStream;
 final class Sounds {
     private static Sounds instance;
     private final SoundPool pool;
-    private final int tick, tock;
+    private final int tick, tock, back, open, wake;
     private boolean enabled = true;
     private long lastTick;
 
@@ -32,8 +32,12 @@ final class Sounds {
         pool = new SoundPool.Builder().setMaxStreams(3).setAudioAttributes(new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()).build();
-        tick = pool.load(write(c, "tick.wav", synth(0.014f, 2300f, 3400f, 0.10f, 380f)), 1);
-        tock = pool.load(write(c, "tock.wav", synth(0.06f, 880f, 1320f, 0.16f, 70f)), 1);
+        // une seule famille de timbres, accordée en la majeur, très feutrée (versions « v2 » des fichiers)
+        tick = pool.load(write(c, "tick2.wav", tone(0.03f, 0.002f, 70f, 0.055f, 1760f)), 1);
+        tock = pool.load(write(c, "tock2.wav", tone(0.12f, 0.004f, 30f, 0.10f, 880f, 1320f)), 1);
+        back = pool.load(write(c, "back2.wav", concat(tone(0.07f, 0.004f, 40f, 0.07f, 1108.7f), tone(0.11f, 0.004f, 32f, 0.07f, 880f))), 1);
+        open = pool.load(write(c, "open2.wav", concat(tone(0.07f, 0.004f, 40f, 0.08f, 880f), tone(0.16f, 0.004f, 22f, 0.08f, 1318.5f, 1760f))), 1);
+        wake = pool.load(write(c, "wake2.wav", tone(1.4f, 0.35f, 2.6f, 0.06f, 440f, 554.4f, 659.3f)), 1);
     }
 
     void setEnabled(boolean e) { enabled = e; }
@@ -46,18 +50,33 @@ final class Sounds {
     }
 
     void tock() { if (enabled) pool.play(tock, 0.6f, 0.6f, 0, 0, 1f); }
+    /** Retour : deux notes qui descendent. */
+    void back() { if (enabled) pool.play(back, 0.5f, 0.5f, 0, 0, 1f); }
+    /** Ouverture d'une appli : deux notes qui montent. */
+    void open() { if (enabled) pool.play(open, 0.6f, 0.6f, 0, 0, 1f); }
+    /** Réveil du mode veille : accord qui monte lentement et s'éteint. */
+    void wake() { if (enabled) pool.play(wake, 0.5f, 0.5f, 0, 0, 1f); }
 
-    /** Sinusoïde + harmonique avec attaque douce et décroissance exponentielle. */
-    private static short[] synth(float seconds, float f1, float f2, float amp, float decay) {
+    /** Sons doux : partiels sinusoïdaux (le premier dominant), attaque réglable, décroissance exponentielle. */
+    static short[] tone(float seconds, float attack, float decay, float amp, float... freqs) {
         int rate = 44100, n = (int) (rate * seconds);
         short[] out = new short[n];
         for (int i = 0; i < n; i++) {
             float t = i / (float) rate;
-            float env = (float) Math.exp(-t * decay) * Math.min(1f, t * 2000f);
-            double v = Math.sin(2 * Math.PI * f1 * t) * 0.8 + Math.sin(2 * Math.PI * f2 * t) * 0.2;
-            out[i] = (short) (v * env * amp * 32767);
+            float env = (float) Math.exp(-t * decay) * Math.min(1f, t / attack);
+            env *= Math.min(1f, (n - i) / (rate * 0.004f)); // fin sans clic
+            double v = 0, w = 0;
+            for (int k = 0; k < freqs.length; k++) { double g = k == 0 ? 1 : 0.35 / k; v += Math.sin(2 * Math.PI * freqs[k] * t) * g; w += g; }
+            out[i] = (short) (v / w * env * amp * 32767);
         }
         return out;
+    }
+
+    static short[] concat(short[] a, short[] b) {
+        short[] o = new short[a.length + b.length];
+        System.arraycopy(a, 0, o, 0, a.length);
+        System.arraycopy(b, 0, o, a.length, b.length);
+        return o;
     }
 
     private static String write(Context c, String name, short[] pcm) {

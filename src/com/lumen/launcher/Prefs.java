@@ -95,6 +95,15 @@ final class Prefs {
     }
     void setVeilleSource(int v) { sp.edit().putInt("veille_src", v).apply(); }
 
+    /** Bandeau d'accueil au-dessus des favoris. */
+    boolean greeting() { return sp.getBoolean("greeting", true); }
+    void setGreeting(boolean b) { sp.edit().putBoolean("greeting", b).apply(); }
+
+    /** Écran de nuit du mode veille : heure de début (-1 = jamais), jusqu'à 7 h. */
+    static final int[] NIGHT_HOURS = {22, 23, 0, -1};
+    int nightHour() { return sp.getInt("night_hour", 23); }
+    void setNightHour(int h) { sp.edit().putInt("night_hour", h).apply(); }
+
     static final int[] AMBIENT_MIN = {1, 3, 5, 10, 0}; // 0 = jamais
     int ambientMinutes() { return sp.getInt("ambient_min", 3); }
     void setAmbientMinutes(int m) { sp.edit().putInt("ambient_min", m).apply(); }

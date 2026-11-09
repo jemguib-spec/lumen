@@ -39,7 +39,7 @@ final class PhonePanel {
         FrameLayout o = a.openOverlay(null);
         LinearLayout card = a.glassCard(44);
         card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
-        TextView title = a.text(40, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
         title.setText("Téléphone connecté");
         title.setGravity(Gravity.CENTER);
         title.setPadding(0, 0, 0, a.u(30));

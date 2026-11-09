@@ -80,6 +80,8 @@ final class PhoneServer {
         void onPhoneConnected(boolean connected);
         /** Touche de la télécommande du téléphone ; renvoie la réponse JSON. */
         String phoneKey(String key);
+        /** Le téléphone a changé de nom (page « Plus »). */
+        void onPhoneName(String name);
     }
 
     /** Touches acceptées depuis le téléphone (liste fermée). */
@@ -110,6 +112,10 @@ final class PhoneServer {
     private volatile long lastActivity;
     /** La TV montre-t-elle « téléphone connecté » ? (indépendant des sessions, pour toujours l'éteindre) */
     private volatile boolean shown;
+    private volatile String deviceName = "un téléphone";
+
+    /** Nom du téléphone connecté (« iPhone de Jem », « Pixel 8 »…). */
+    String deviceName() { return deviceName; }
 
     PhoneServer(Context c, Host h) { ctx = c.getApplicationContext(); host = h; }
 
@@ -193,6 +199,11 @@ final class PhoneServer {
         }
     };
 
+    private static String decode(String s) {
+        if (s == null) return null;
+        try { return java.net.URLDecoder.decode(s, "UTF-8"); } catch (Exception e) { return null; }
+    }
+
     private void touch() {
         lastActivity = System.currentTimeMillis();
         main.removeCallbacks(idleStop);
@@ -270,6 +281,7 @@ final class PhoneServer {
         if (post && p.equals("/api/session")) {
             String sid = auth.openSession(r.header("x-lumen-token"));
             if (sid == null) { send(out, 403, "application/json", "{\"ok\":false}".getBytes("UTF-8"), null); return; }
+            deviceName = DeviceName.pick(decode(r.header("x-lumen-device")), r.header("user-agent"));
             String cookie = COOKIE + "=" + sid + "; HttpOnly; SameSite=Strict; Path=/; Max-Age=1800";
             setShown(true);
             send(out, 200, "application/json", "{\"ok\":true}".getBytes("UTF-8"), cookie);
@@ -300,6 +312,14 @@ final class PhoneServer {
         switch (p) {
             case "/api/pin": json(out, 200, pin(HttpRequest.readBody(in, r.contentLength, 16), sid)); return;
             case "/api/ping": json(out, 200, "{\"ok\":true}"); return;
+            case "/api/name": {
+                final String n = DeviceName.clean(new String(HttpRequest.readBody(in, r.contentLength, 4 * DeviceName.MAX), "UTF-8"));
+                if (n == null) { ok(out, false); return; }
+                deviceName = n;
+                main.post(new Runnable() { @Override public void run() { host.onPhoneName(n); } });
+                ok(out, true);
+                return;
+            }
             case "/api/key": {
                 final String k = r.query.get("k");
                 if (k == null || !KEYS.contains(k)) { json(out, 400, "{\"ok\":false}"); return; }
@@ -375,6 +395,7 @@ final class PhoneServer {
                 tv.put("timers", timers);
                 tv.put("pin", pr.hasPin());
                 tv.put("unlocked", pr.hasPin() && auth.isElevated(sid));
+                tv.put("device", deviceName);
                 tv.put("remote", RemoteService.connected());
                 tv.put("dpadOutside", RemoteService.connected() && RemoteService.dpadSupported());
                 o.put("tv", tv);

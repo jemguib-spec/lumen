@@ -91,7 +91,7 @@ final class ResumePanel {
         FrameLayout o = a.openOverlay(new Runnable() { @Override public void run() { a.resumeOpen = false; } });
         final LinearLayout card = a.glassCard(48);
         card.setPadding(a.u(24), a.u(52), a.u(24), a.u(32));
-        TextView title = a.text(48, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
         title.setText("Reprendre");
         title.setPadding(a.u(28), 0, 0, a.u(28));
         card.addView(title);
@@ -114,7 +114,7 @@ final class ResumePanel {
             if (first == null) first = r;
         }
         if (first == null) {
-            TextView none = a.text(26, "sans-serif", 0x99FFFFFF);
+            TextView none = a.text(24, "sans-serif", 0x99FFFFFF);
             none.setText("Rien pour l'instant");
             none.setPadding(a.u(28), a.u(10), 0, 0);
             col.addView(none);
@@ -151,7 +151,7 @@ final class ResumePanel {
         r.addView(ic, new LinearLayout.LayoutParams(a.u(72), a.u(72)));
         LinearLayout txt = new LinearLayout(a);
         txt.setOrientation(LinearLayout.VERTICAL);
-        final TextView name = a.text(30, "sans-serif-medium", 0xF2FFFFFF);
+        final TextView name = a.text(28, "sans-serif-medium", 0xF2FFFFFF);
         name.setText(app.label);
         name.setMaxLines(1);
         name.setEllipsize(TextUtils.TruncateAt.END);

@@ -258,7 +258,8 @@ final class Online {
         }
         if (!VIDEO.equals(theme)) java.util.Collections.shuffle(cands, rnd);
         if (cands.isEmpty()) {
-            setStatus(theme, lastError.isEmpty() ? "Aucun résultat, nouvel essai plus tard" : "Erreur · " + lastError);
+            if (!lastError.isEmpty()) CrashLog.note(ctx, "Téléchargement (" + theme + ") : " + lastError);
+            setStatus(theme, lastError.isEmpty() ? "Aucun résultat, nouvel essai plus tard" : Messages.download(lastError));
             return 0;
         }
 
@@ -289,8 +290,9 @@ final class Online {
             notifyUpdated(theme);
         }
         int total = readIndex(theme).length();
+        if (got == 0 && !lastError.isEmpty()) CrashLog.note(ctx, "Téléchargement (" + theme + ") : " + lastError);
         setStatus(theme, got > 0 ? "À jour · " + total + (VIDEO.equals(theme) ? " vidéos" : " photos")
-                : (lastError.isEmpty() ? "Rien de nouveau pour l'instant" : "Erreur · " + lastError));
+                : Messages.download(lastError));
         return got;
     }
 

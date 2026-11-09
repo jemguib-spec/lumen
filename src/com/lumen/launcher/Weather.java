@@ -88,6 +88,31 @@ final class Weather {
         }, "lumen-weather").start();
     }
 
+    /** « Demain 14° / 6° · Pluie » (prévision du lendemain, en cache 3 h). Vide sans ville. */
+    void tomorrow(final Callback cb) {
+        if (!hasCity()) { cb.onWeather(""); return; }
+        String cached = sp.getString("tomorrow", "");
+        if (!cached.isEmpty() && System.currentTimeMillis() - sp.getLong("tomorrow_t", 0) < 3 * 3600_000L) { cb.onWeather(cached); return; }
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try {
+                    JSONObject r = get(String.format(Locale.US,
+                            "https://api.open-meteo.com/v1/forecast?latitude=%.3f&longitude=%.3f&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=2&timezone=auto",
+                            sp.getFloat("lat", 0), sp.getFloat("lon", 0)));
+                    JSONObject d = r.getJSONObject("daily");
+                    final String line = tomorrowLine(d.getJSONArray("temperature_2m_max").getDouble(1),
+                            d.getJSONArray("temperature_2m_min").getDouble(1), d.getJSONArray("weather_code").getInt(1));
+                    sp.edit().putString("tomorrow", line).putLong("tomorrow_t", System.currentTimeMillis()).apply();
+                    main.post(new Runnable() { @Override public void run() { cb.onWeather(line); } });
+                } catch (Exception ignored) { }
+            }
+        }, "lumen-weather").start();
+    }
+
+    static String tomorrowLine(double max, double min, int code) {
+        return "Demain " + Math.round(max) + "° / " + Math.round(min) + "° · " + describe(code);
+    }
+
     static String describe(int c) {
         if (c == 0) return "Ciel dégagé";
         if (c == 1) return "Peu nuageux";

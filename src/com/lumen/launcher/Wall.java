@@ -36,7 +36,8 @@ final class Wall {
         void onWallShown(WallItem item, Bitmap backdrop);
     }
 
-    private static final long FADE_MS = 2400;
+    private static final long FADE_MS = 2400, VEILLE_FADE_MS = 4500;
+    private long fade() { return veille ? VEILLE_FADE_MS : FADE_MS; }
     private final Context ctx;
     private final Prefs prefs;
     private final Online online;
@@ -312,7 +313,7 @@ final class Wall {
             iv = f;
         }
         boolean still = prefs.intervalSeconds() <= 0;
-        long dur = (still ? 60 : prefs.intervalSeconds()) * 1000L + FADE_MS * 2;
+        long dur = (still ? 60 : prefs.intervalSeconds()) * 1000L + fade() * 2;
         float drift = still ? 0 : (Math.random() < 0.5 ? 1 : -1) * Tile.dp(ctx, 14);
         AnimatorSet kb = new AnimatorSet();
         kb.playTogether(
@@ -416,7 +417,7 @@ final class Wall {
             incoming.bringToFront();
         }
         incoming.setAlpha(0f);
-        incoming.animate().alpha(1f).setDuration(outgoing == null ? 900 : FADE_MS).withEndAction(new Runnable() {
+        incoming.animate().alpha(1f).setDuration(outgoing == null ? 900 : fade()).withEndAction(new Runnable() {
             @Override public void run() {
                 if (outgoing != null) {
                     Object a = outgoing.getTag();

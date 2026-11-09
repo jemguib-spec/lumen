@@ -194,6 +194,22 @@ public class LumenTests {
         check("NASA retiré (photos Espace issues des sélections Commons)", !NetPolicy.allowed("https://images-api.nasa.gov/search?q=x"));
         check("https Commons autorisé", NetPolicy.allowed("https://commons.wikimedia.org/w/api.php"));
         check("https Wikimedia autorisé", NetPolicy.allowed("https://upload.wikimedia.org/a.jpg"));
+        check("bandeau : salutation selon l'heure", Greeting.hello(8).equals("Bonjour") && Greeting.hello(14).equals("Bon après-midi")
+                && Greeting.hello(20).equals("Bonsoir") && Greeting.hello(23).equals("Bonne nuit") && Greeting.hello(3).equals("Bonne nuit"));
+        check("bandeau : ligne complète", Greeting.line(21, "", "12° · Pluie · Paris", "The Bear")
+                .equals("Bonsoir   ·   Pluie 12°   ·   Reprendre The Bear"));
+        check("bandeau : rien d'inventé sans météo ni épisode", Greeting.line(9, "", "", null).equals("Bonjour"));
+        check("bandeau : titre long raccourci", Greeting.resume("Un titre vraiment très très long pour une seule ligne").endsWith("…"));
+        check("écran de nuit : 23 h à 7 h", Greeting.night(23, 23) && Greeting.night(3, 23) && !Greeting.night(7, 23) && !Greeting.night(22, 23));
+        check("écran de nuit : minuit et désactivé", Greeting.night(0, 0) && !Greeting.night(23, 0) && !Greeting.night(2, -1));
+        check("messages : jamais technique", !Messages.download("Hôte non autorisé : thumb.wikimedia.org").contains("Hôte")
+                && Messages.download("java.net.UnknownHostException").startsWith("Pas d'accès"));
+        check("messages : pause demandée (429)", Messages.download("HTTP 429").contains("pause"));
+        check("nom du téléphone : iPhone", DeviceName.from("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)").equals("iPhone"));
+        check("nom du téléphone : modèle Android", DeviceName.from("Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/AP1A) Chrome").equals("Pixel 8"));
+        check("nom du téléphone : modèle masqué par Chrome", DeviceName.from("Mozilla/5.0 (Linux; Android 10; K) Chrome").equals("un téléphone Android"));
+        check("nom du téléphone : nom choisi prioritaire et propre", DeviceName.pick("  iPhone   de Jem ", "x").equals("iPhone de Jem")
+                && DeviceName.pick("a\u0001b", null).equals("un téléphone") && DeviceName.clean("x".repeat(40)) == null);
         check("aperçus Wikimedia (thumb.wikimedia.org) autorisés", NetPolicy.allowed("https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a9/Example.jpg/500px-Example.jpg"));
         check("http refusé", !NetPolicy.allowed("http://images-api.nasa.gov/search"));
         check("hôte inconnu refusé", !NetPolicy.allowed("https://evil.example.com/x"));

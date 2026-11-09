@@ -18,9 +18,9 @@ final class Backup {
 
     static final String[] BOOLS = {"ambiance_sound", "app_glow", "auto_update", "clock", "cosy_wanted", "follow_time", "idle",
             "living_scenes", "seasonal", "shelf_posters", "show_icons", "show_perf", "sounds", "tint_tiles", "top_shelf",
-            "video_4k", "weather_fx", "high_contrast", "habits_on"};
+            "video_4k", "weather_fx", "high_contrast", "habits_on", "greeting"};
     static final String[] INTS = {"ambiance_kind", "ambient_min", "home_cols", "home_rows", "interval", "source", "tile_style",
-            "video_disk_gb", "video_theme", "text_scale", "veille_src"};
+            "video_disk_gb", "video_theme", "text_scale", "veille_src", "night_hour"};
     static final String[] STRINGS = {"favorites", "habits"};
     static final String[] SETS = {"cities", "hidden_apps", "hidden_walls", "video_ok", "locked_apps"};
 
@@ -47,6 +47,7 @@ final class Backup {
             case "video_theme": return v >= 0 && v < 32;
             case "text_scale": return v >= 0 && v <= 2;
             case "veille_src": return v >= -2 && v < 32;
+            case "night_hour": return v >= -1 && v <= 23;
             default: return false;
         }
     }

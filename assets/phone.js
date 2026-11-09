@@ -63,7 +63,8 @@ async function start() {
   const token = location.hash.slice(1);
   history.replaceState(null, '', location.pathname); // le jeton disparaît de l'adresse et de l'historique
   if (token) {
-    const r = await fetch('/api/session', {method: 'POST', credentials: 'same-origin', headers: Object.assign({'X-Lumen-Token': token}, H)});
+    const r = await fetch('/api/session', {method: 'POST', credentials: 'same-origin',
+      headers: Object.assign({'X-Lumen-Token': token, 'X-Lumen-Device': encodeURIComponent(savedName())}, H)});
     if (!r.ok) { lost(); return; }
   }
   await load();
@@ -441,8 +442,19 @@ function upload(f) {
   });
 }
 
+// ---- Nom de ce téléphone (affiché sur la TV : « Contrôlée par … »), gardé sur ce téléphone seulement
+function savedName() { try { return localStorage.getItem('lumen-name') || ''; } catch (e) { return ''; } }
+$('nameForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const n = $('nameIn').value.trim().slice(0, 32);
+  if (!n) return;
+  try { localStorage.setItem('lumen-name', n); } catch (x) { }
+  if (await act('/api/name', n, 'Nom enregistré')) $('nameIn').blur();
+});
+
 // ---- Plus
 function renderOpt() {
+  if (document.activeElement !== $('nameIn')) $('nameIn').value = savedName() || (S.tv || {}).device || '';
   const tv = S.tv || {};
   $('pinBox').hidden = !tv.pin;
   $('pinState').textContent = tv.unlocked ? 'Déverrouillé pour 5 min' : 'Déverrouiller les actions protégées';

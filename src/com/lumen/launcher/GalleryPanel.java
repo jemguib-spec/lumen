@@ -85,16 +85,24 @@ final class GalleryPanel {
                 for (String t : themes) { st = a.online.status(t); if (a.online.isBusy(t)) break; }
                 int visible = 0;
                 for (WallItem w : items) if (!a.prefs.hiddenWalls().contains(w.id)) visible++;
-                String count = items.size() + (items.size() > 1 ? " fonds · " : " fond · ") + visible + " affichés";
-                state.setText(themes.length == 0 ? count : count + (st.isEmpty() ? "" : "   ·   " + st));
-                a.h.postDelayed(this, 1000);
+                String count;
+                if (items.isEmpty()) {
+                    // pas de « 0 fond · 0 affichés » : un message doux, avec des points qui avancent
+                    int dots = (int) (System.currentTimeMillis() / 600 % 4);
+                    count = "Les photos arrivent" + "...".substring(0, dots) + "   ".substring(dots);
+                } else {
+                    count = items.size() + (items.size() > 1 ? " fonds" : " fond")
+                            + (visible == items.size() ? "" : " · " + visible + (visible > 1 ? " affichés" : " affiché"));
+                }
+                state.setText(themes.length == 0 ? count : count + (st.isEmpty() || st.startsWith("À jour") && items.isEmpty() ? "" : "   ·   " + st));
+                a.h.postDelayed(this, items.isEmpty() ? 600 : 1000);
             }
         };
         tick.run();
 
         if (items.isEmpty()) {
             TextView none = a.text(28, "sans-serif", 0xB3FFFFFF);
-            none.setText("Les photos sont en cours de téléchargement.");
+            none.setText("Elles s'afficheront ici dès qu'elles seront prêtes.");
             col.addView(none);
             LinearLayout back = a.listRow("Retour", null, new View.OnClickListener() {
                 @Override public void onClick(View v) { a.closeOverlay(true); }
@@ -149,7 +157,7 @@ final class GalleryPanel {
         final View dim = new View(a);
         dim.setBackgroundColor(0xB3000000);
         card.addView(dim, a.match());
-        final TextView check = a.text(30, "sans-serif-medium", 0xFF111216);
+        final TextView check = a.text(28, "sans-serif-medium", 0xFF111216);
         check.setText("✓");
         check.setGravity(Gravity.CENTER);
         GradientDrawable cb = new GradientDrawable();
@@ -160,7 +168,7 @@ final class GalleryPanel {
         ckl.topMargin = ckl.rightMargin = a.u(14);
         card.addView(check, ckl);
         cell.addView(card, new FrameLayout.LayoutParams(tw, th));
-        TextView name = a.text(21, "sans-serif", 0xB3FFFFFF);
+        TextView name = a.text(22, "sans-serif", 0xB3FFFFFF);
         name.setText(it.title);
         name.setMaxLines(1);
         name.setEllipsize(TextUtils.TruncateAt.END);

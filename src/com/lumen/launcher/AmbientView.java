@@ -36,6 +36,13 @@ final class AmbientView extends FrameLayout {
     private boolean active;
     /** Images propres au mode veille (réglage « Images du mode veille »), sous le voile et la ligne. */
     private final FrameLayout wallLayer;
+    /** Lumière selon l'heure (plus chaude le soir, plus sombre la nuit). */
+    private final View tint;
+    /** Écran de nuit : presque noir, une grande horloge très douce. */
+    private final FrameLayout night;
+    private final TextClock nightClock;
+    private final Prefs prefs;
+    private boolean nightOn;
 
     AmbientView(Context c, float unit, Weather w) {
         super(c);
@@ -43,8 +50,11 @@ final class AmbientView extends FrameLayout {
         this.weatherSrc = w;
         setClipChildren(false);
 
+        prefs = new Prefs(c);
         wallLayer = new FrameLayout(c);
         addView(wallLayer, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        tint = new View(c);
+        addView(tint, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         // voile très léger, juste sous la ligne
         View scrim = new View(c);
@@ -93,9 +103,67 @@ final class AmbientView extends FrameLayout {
         bl.leftMargin = bl.rightMargin = u(112);
         bl.bottomMargin = u(56);
         addView(bar, bl);
+
+        night = new FrameLayout(c);
+        night.setBackgroundColor(0xF5000000);
+        night.setVisibility(GONE);
+        nightClock = new TextClock(c);
+        nightClock.setFormat24Hour("H:mm");
+        nightClock.setFormat12Hour("h:mm");
+        nightClock.setTextSize(TypedValue.COMPLEX_UNIT_PX, 260 * unit);
+        nightClock.setTypeface(Fonts.get("sans-serif-thin", Typeface.NORMAL));
+        nightClock.setTextColor(0x38FFFFFF); // juste lisible dans le noir, sans éclairer la pièce
+        nightClock.setIncludeFontPadding(false);
+        night.addView(nightClock, new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        addView(night, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
     FrameLayout wallLayer() { return wallLayer; }
+
+    /** Voile de couleur selon l'heure : doré le matin, neutre le jour, chaud le soir, sombre la nuit. */
+    static int tintFor(int hour) {
+        if (hour >= 6 && hour < 9) return 0x14FFC880;
+        if (hour >= 9 && hour < 17) return 0x00000000;
+        if (hour >= 17 && hour < 21) return 0x22FF9440;
+        return 0x3A0A0500;
+    }
+
+    /** Écran de nuit actif à cette heure ? (de nightHour jusqu'à 7 h ; -1 = jamais) */
+    static boolean isNight(int hour, int nightHour) { return Greeting.night(hour, nightHour); }
+
+    /** Lumière et écran de nuit selon l'heure (appelé au départ puis chaque minute). */
+    private void updateMood(boolean animate) {
+        int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
+        final int want = tintFor(hour);
+        Object cur = tint.getTag();
+        if (!(cur instanceof Integer) || (Integer) cur != want) {
+            tint.setTag(want);
+            if (animate) {
+                android.animation.ValueAnimator va = android.animation.ValueAnimator.ofArgb(
+                        cur instanceof Integer ? (Integer) cur : 0, want);
+                va.setDuration(20_000);
+                va.addUpdateListener(new android.animation.ValueAnimator.AnimatorUpdateListener() {
+                    @Override public void onAnimationUpdate(android.animation.ValueAnimator a) { tint.setBackgroundColor((Integer) a.getAnimatedValue()); }
+                });
+                va.start();
+            } else tint.setBackgroundColor(want);
+        }
+        boolean n = isNight(hour, prefs.nightHour());
+        if (n != nightOn) {
+            nightOn = n;
+            if (n) {
+                night.setVisibility(VISIBLE);
+                night.setAlpha(0f);
+                night.animate().alpha(1f).setDuration(animate ? 6000 : 0).start();
+                bar.animate().alpha(0f).setDuration(animate ? 3000 : 0).start();
+            } else {
+                night.animate().alpha(0f).setDuration(animate ? 6000 : 0).withEndAction(new Runnable() {
+                    @Override public void run() { if (!nightOn) night.setVisibility(GONE); }
+                }).start();
+                bar.animate().alpha(1f).setDuration(animate ? 3000 : 0).start();
+            }
+        }
+    }
 
     private int u(float px) { return Math.round(px * unit); }
 
@@ -135,6 +203,8 @@ final class AmbientView extends FrameLayout {
 
     void start() {
         active = true;
+        nightOn = !isNight(java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY), prefs.nightHour()); // force la mise en place
+        updateMood(false);
         clock.requestLayout();
         refreshSky();
         refreshWeather();
@@ -159,6 +229,12 @@ final class AmbientView extends FrameLayout {
             @Override public void onWeather(String line) {
                 boolean has = !TextUtils.isEmpty(line);
                 weather.setText(has ? line : "");
+                if (has && java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) >= 18) {
+                    final String today = line;
+                    weatherSrc.tomorrow(new Weather.Callback() {
+                        @Override public void onWeather(String t) { if (!TextUtils.isEmpty(t)) weather.setText(today + "   ·   " + t); }
+                    });
+                }
                 weather.setVisibility(has ? VISIBLE : GONE);
                 sepWeather.setVisibility(has ? VISIBLE : GONE);
             }
@@ -171,6 +247,9 @@ final class AmbientView extends FrameLayout {
         @Override public void run() {
             float dx = (rnd.nextFloat() - 0.5f) * u(40), dy = (rnd.nextFloat() - 0.5f) * u(24);
             bar.animate().translationX(dx).translationY(dy).setDuration(8000).start();
+            // l'horloge de nuit se déplace bien plus largement (protection de l'écran)
+            nightClock.animate().translationX((rnd.nextFloat() - 0.5f) * u(520)).translationY((rnd.nextFloat() - 0.5f) * u(300)).setDuration(20_000).start();
+            updateMood(true);
             if (active) h.postDelayed(this, 60_000);
         }
     };

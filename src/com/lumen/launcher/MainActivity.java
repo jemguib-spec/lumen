@@ -60,6 +60,8 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     LinearLayout captionBox, clockBox, dots;
     private TextView captionTitle, captionCredit, focusLabel, notice;
     private LinearLayout rowsBox, topButtons;
+    private FrameLayout wallLayer;
+    private TextView greet;
     private final List<LinearLayout> rows = new ArrayList<>();
     private final List<HorizontalScrollView> rowScrolls = new ArrayList<>();
     private ImageView appsBg;
@@ -220,6 +222,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     }
 
     @Override public void onBackPressed() {
+        if (overlay != null || appsOpen) Sounds.get(this).back();
         if (movingTile != null) { stopMoving(); return; }
         if (overlay != null && SettingsPanel.back(this)) return; // sous-page des réglages : on remonte d'un niveau
         if (overlay != null) { closeOverlay(true); return; }
@@ -320,7 +323,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     // ------------------------------------------------------------------ météo dans le paysage
 
     private final Runnable weatherTick = new Runnable() {
-        @Override public void run() { updateWeatherFx(); h.postDelayed(this, 30 * 60_000L); }
+        @Override public void run() { updateWeatherFx(); refreshGreeting(); h.postDelayed(this, 30 * 60_000L); }
     };
 
     void updateWeatherFx() {
@@ -370,7 +373,9 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         root.setBackgroundColor(Color.BLACK);
         root.setClipChildren(false);
 
-        FrameLayout wallLayer = new FrameLayout(this);
+        wallLayer = new FrameLayout(this);
+        wallLayer.setScaleX(1.04f); // marge pour l'effet de profondeur (le fond glisse sans montrer ses bords)
+        wallLayer.setScaleY(1.04f);
         root.addView(wallLayer, match());
         wall = new Wall(this, prefs, online, wallLayer);
         wall.setListener(this);
@@ -401,9 +406,17 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         homeLayer.addView(rowsBox, rl);
         shelf = new TopShelf(this);
 
-        focusLabel = text(30, "sans-serif-medium", 0xF2FFFFFF);
+        focusLabel = text(28, "sans-serif-medium", 0xF2FFFFFF);
         focusLabel.setShadowLayer(u(10), 0, 0, 0x66000000);
         focusLabel.setGravity(Gravity.CENTER_HORIZONTAL);
+
+        // bandeau d'accueil (une ligne) au-dessus des favoris
+        greet = text(24, "sans-serif", 0xD9FFFFFF);
+        greet.setShadowLayer(u(10), 0, 0, 0x66000000);
+        greet.setGravity(Gravity.CENTER_HORIZONTAL);
+        greet.setSingleLine(true);
+        greet.setEllipsize(TextUtils.TruncateAt.END);
+        greet.setPadding(u(112), 0, u(112), 0);
 
         // boutons ronds en haut à droite, à gauche de l'horloge
         topButtons = new LinearLayout(this);
@@ -442,7 +455,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         captionTitle.setMaxLines(1);
         captionTitle.setEllipsize(TextUtils.TruncateAt.END);
         captionBox.addView(captionTitle, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        captionCredit = text(17, "sans-serif", 0x8CFFFFFF);
+        captionCredit = text(18, "sans-serif", 0x8CFFFFFF);
         captionCredit.setShadowLayer(u(8), 0, 0, 0x55000000);
         captionCredit.setMaxLines(1);
         captionCredit.setEllipsize(TextUtils.TruncateAt.END);
@@ -536,6 +549,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         root.addView(perf, pl);
 
         setContentView(root);
+        intro();
         // première image affichée : on mesure le démarrage, puis on lance le reste
         root.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
             @Override public boolean onPreDraw() {
@@ -621,6 +635,11 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         rowScrolls.clear();
         if (focusLabel.getParent() != null) ((ViewGroup) focusLabel.getParent()).removeView(focusLabel);
         if (shelf.view.getParent() != null) ((ViewGroup) shelf.view.getParent()).removeView(shelf.view);
+        if (greet.getParent() != null) ((ViewGroup) greet.getParent()).removeView(greet);
+        LinearLayout.LayoutParams gl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        gl.bottomMargin = u(18);
+        rowsBox.addView(greet, gl);
+        refreshGreeting();
         LinearLayout.LayoutParams shl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         shl.bottomMargin = u(6);
         rowsBox.addView(shelf.view, shl); // « Reprendre » au-dessus des applis
@@ -685,6 +704,8 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     private void focusFirst() {
         Tile usual = usualNow();
+        for (LinearLayout r : rows) for (int i = 0; i < r.getChildCount(); i++)
+            if (r.getChildAt(i) instanceof Tile) ((Tile) r.getChildAt(i)).setUsual(r.getChildAt(i) == usual);
         if (usual != null) { usual.requestFocus(); return; }
         if (!rows.isEmpty() && rows.get(0).getChildCount() > 0) rows.get(0).getChildAt(0).requestFocus();
         else if (topButtons.getChildCount() > 0) topButtons.getChildAt(0).requestFocus();
@@ -709,6 +730,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     private final Tile.FocusListener homeFocus = new Tile.FocusListener() {
         @Override public void onTileFocus(final Tile t, boolean focused) {
             if (focused) glowOn(t);
+            if (focused) parallax(t);
             if (focused) shelf.focusApp(!appsOpen && t.tag instanceof AppRepo.App ? (AppRepo.App) t.tag : null);
             if (!focused || !banner()) return;
             final String s = t.title;
@@ -720,6 +742,24 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
             focusLabel.animate().alpha(1f).setDuration(200).start();
         }
     };
+
+    /**
+     * Effet de profondeur : le fond glisse de quelques pixels à l'opposé de la sélection,
+     * comme un paysage vu à travers une vitre.
+     */
+    private void parallax(final View t) {
+        t.post(new Runnable() {
+            @Override public void run() {
+                if (ambientOn || root.getWidth() == 0) return;
+                int[] loc = new int[2];
+                t.getLocationOnScreen(loc);
+                float fx = (loc[0] + t.getWidth() / 2f) / root.getWidth() - 0.5f;
+                float fy = (loc[1] + t.getHeight() / 2f) / root.getHeight() - 0.5f;
+                wallLayer.animate().translationX(-fx * u(34)).translationY(-fy * u(18)).setDuration(1100)
+                        .setInterpolator(new android.view.animation.DecelerateInterpolator(1.8f)).start();
+            }
+        });
+    }
 
     /** Lueur de la couleur de l'appli sous la vignette sélectionnée. */
     private void glowOn(final Tile t) {
@@ -753,7 +793,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     }
 
     private void launchUnlocked(final AppRepo.App app, Tile from) {
-        Sounds.get(this).tock();
+        Sounds.get(this).open();
         if (zoomView != null) { root.removeView(zoomView); zoomView = null; }
         int sw = root.getWidth(), sh = root.getHeight();
         if (from == null || sw == 0) { launch(app); return; }
@@ -823,6 +863,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
             updater.check(false);                // une fois par jour au plus
             shelf.reload();                      // on revient peut-être d'un épisode
             for (String t : Library.themesFor(prefs.source())) online.refreshIfNeeded(t, false);
+            refreshGreeting();
             if (prefs.veilleSource() >= 0) for (String t : Library.themesFor(Library.veilleSource(prefs))) online.refreshIfNeeded(t, false);
             if (CrashLog.safeModeJustStarted) {
                 CrashLog.safeModeJustStarted = false;
@@ -993,6 +1034,39 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         }
     };
 
+    /** Bandeau d'accueil : salutation, météo si une ville est réglée, dernier épisode en cours. */
+    void refreshGreeting() {
+        if (greet == null) return;
+        if (!prefs.greeting()) { greet.setVisibility(View.GONE); return; }
+        greet.setVisibility(View.VISIBLE);
+        weather.current(new Weather.Callback() {
+            @Override public void onWeather(String line) {
+                java.util.Calendar now = java.util.Calendar.getInstance();
+                String time = prefs.showClock() ? "" : android.text.format.DateFormat.format("H:mm", now).toString();
+                WatchNext.Entry e = shelf.latest();
+                String s = Greeting.line(now.get(java.util.Calendar.HOUR_OF_DAY), time, line, e == null ? null : e.title);
+                if (s.contentEquals(greet.getText())) return;
+                greet.setText(s);
+                greet.setAlpha(0f);
+                greet.animate().alpha(1f).setDuration(600).start();
+            }
+        });
+    }
+
+    /** Démarrage en cascade, en moins d'une seconde : l'heure, puis le fond, puis la légende et les applis. */
+    private void intro() {
+        final android.view.animation.DecelerateInterpolator di = new android.view.animation.DecelerateInterpolator(1.6f);
+        clockBox.setAlpha(0f);
+        wallLayer.setAlpha(0f);
+        captionBox.setAlpha(0f);
+        homeLayer.setAlpha(0f);
+        homeLayer.setTranslationY(u(28));
+        clockBox.animate().alpha(1f).setStartDelay(60).setDuration(320).setInterpolator(di).start();
+        wallLayer.animate().alpha(1f).setStartDelay(180).setDuration(520).setInterpolator(di).start();
+        captionBox.animate().alpha(1f).setStartDelay(380).setDuration(420).setInterpolator(di).start();
+        homeLayer.animate().alpha(1f).translationY(0).setStartDelay(420).setDuration(480).setInterpolator(di).start();
+    }
+
     private void wake() {
         h.removeCallbacks(idleRun);
         if (idle) {
@@ -1070,6 +1144,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
 
     private void exitAmbient(boolean animate) {
         ambientOn = false;
+        if (animate) Sounds.get(this).wake(); // léger fondu sonore au réveil
         idle = false;
         ambient.stop();
         if (veilleOwn) {
@@ -1257,7 +1332,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         l.setSingleLine(true);
         l.setEllipsize(TextUtils.TruncateAt.END);
         r.addView(l, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        final TextView v = text(26, "sans-serif", 0x8CFFFFFF);
+        final TextView v = text(24, "sans-serif", 0x8CFFFFFF);
         if (value != null) {
             v.setText(value.get());
             rowRefreshers.add(new Runnable() { @Override public void run() { v.setText(value.get()); } });
@@ -1285,7 +1360,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
     }
 
     TextView section(String s) {
-        TextView t = text(19, "sans-serif-medium", 0x80FFFFFF);
+        TextView t = text(18, "sans-serif-medium", 0x80FFFFFF);
         t.setText(s.toUpperCase());
         t.setLetterSpacing(0.12f);
         t.setPadding(u(32), u(40), 0, u(14));
@@ -1399,7 +1474,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         if (ambiance != null) closeAmbiance();
         closeOverlay(false);
         openApps();
-        appsPage.setQuery(text);
+        appsPage.typeFromPhone(text);
     }
 
     @Override public void phoneAmbiance(int kind) {
@@ -1468,8 +1543,13 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
             pl.topMargin = u(36);
             root.addView(phonePill, root.indexOfChild(notice), pl);
             phonePill.setAlpha(0f);
-            phonePill.animate().alpha(1f).setDuration(300).start();
-            showNotice("Téléphone connecté");
+            phonePill.setScaleX(0.3f);
+            phonePill.setScaleY(0.3f);
+            phonePill.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(420)
+                    .setInterpolator(new android.view.animation.OvershootInterpolator(2.2f)).start();
+            pulse(pl, 0);
+            pulse(pl, 520);
+            showNotice("Contrôlée par " + phone.deviceName());
         } else if (!connected && phonePill != null) {
             final View pp = phonePill;
             phonePill = null;
@@ -1477,6 +1557,25 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
                 @Override public void run() { root.removeView(pp); }
             }).start();
         }
+    }
+
+    @Override public void onPhoneName(String name) { if (phonePill != null) showNotice("Contrôlée par " + name); }
+
+    /** Onde verte qui s'élargit autour de la pastille (connexion du téléphone). */
+    private void pulse(FrameLayout.LayoutParams at, long delay) {
+        final View ring = new View(this);
+        GradientDrawable g = new GradientDrawable();
+        g.setShape(GradientDrawable.OVAL);
+        g.setStroke(Math.max(1, u(2)), 0xFF34C759);
+        ring.setBackground(g);
+        FrameLayout.LayoutParams rl = new FrameLayout.LayoutParams(at.width, at.height, at.gravity);
+        rl.leftMargin = at.leftMargin;
+        rl.topMargin = at.topMargin;
+        root.addView(ring, root.indexOfChild(notice), rl);
+        ring.setAlpha(0.9f);
+        ring.animate().scaleX(3.4f).scaleY(3.4f).alpha(0f).setStartDelay(delay).setDuration(900)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator(1.6f))
+                .withEndAction(new Runnable() { @Override public void run() { root.removeView(ring); } }).start();
     }
 
     @Override public void onSettingsRestored(int count) {

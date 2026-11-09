@@ -101,8 +101,13 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 
     adb shell appops set com.lumen.launcher GET_USAGE_STATS allow
 
+## Accueil
+- **Bandeau d'accueil** : une ligne au-dessus des favoris — salutation selon l'heure, météo (si une ville est réglée) et dernier épisode en cours. Réglages › Accueil et applis › Bandeau d'accueil pour le masquer.
+- L'appli que tu ouvres d'habitude à cette heure est sélectionnée au démarrage et entourée d'un liseré qui respire doucement.
+
 ## Mode veille et économiseur d'écran
 - **Mode veille** : après quelques minutes sans activité (réglable : 1, 3, 5, 10 min ou jamais), les applis disparaissent ; il reste le fond en plein écran et une seule ligne discrète en bas : heure, date, météo, lever et coucher du soleil, phase de la Lune, et à droite la légende de l'image. La ligne se déplace de quelques pixels chaque minute pour protéger l'écran. Un appui sur la télécommande revient à l'accueil. Réglages › Mode veille › Lancer le mode veille pour l'essayer tout de suite.
+- **Écran de nuit** (Réglages › Mode veille) : de 22 h, 23 h (par défaut) ou minuit jusqu'à 7 h, le mode veille devient presque noir avec une grande horloge très douce qui se déplace lentement. Le reste du temps, la lumière des images suit l'heure (dorée le matin, chaude le soir) et, le soir, la ligne du bas donne aussi la météo du lendemain.
 - **Images du mode veille** (Réglages › Mode veille) : par défaut, l'image du fond d'écran, sans vidéo (si le fond est une vidéo, ce sont les paysages Lumen). On peut aussi choisir des images précises : paysages Lumen ou animés, espace, nature, animaux, mélange, mes photos, photo du jour — ou « Comme l'accueil » pour garder les vidéos.
 - **Météo** : Réglages › Mode veille › Météo, puis tape le nom de ta ville. Seul ce nom est envoyé à Open-Meteo (gratuit, sans compte).
 - **Économiseur d'écran de la TV** (le mode veille par-dessus n'importe quelle appli) : Réglages › Mode veille › Économiseur d'écran de la TV. Si Google TV cache ce choix, donne une seule fois l'autorisation depuis un ordinateur, puis appuie à nouveau sur cette ligne : Lumen se règle tout seul.

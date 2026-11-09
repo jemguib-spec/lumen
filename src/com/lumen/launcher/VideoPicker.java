@@ -148,7 +148,7 @@ final class VideoPicker {
             if (name.startsWith("cosy:")) {
                 try { name = Online.COSY_NAMES[Integer.parseInt(name.substring(5))]; } catch (Exception ignored) { }
             }
-            TextView h = a.text(30, "sans-serif-medium", 0xE6FFFFFF);
+            TextView h = a.text(28, "sans-serif-medium", 0xE6FFFFFF);
             h.setText(name);
             h.setPadding(0, a.u(36), 0, a.u(4));
             col.addView(h);
@@ -203,7 +203,7 @@ final class VideoPicker {
         il.leftMargin = a.u(14);
         il.bottomMargin = a.u(10);
         card.addView(info, il);
-        final TextView check = a.text(30, "sans-serif-medium", 0xFF111216);
+        final TextView check = a.text(28, "sans-serif-medium", 0xFF111216);
         check.setGravity(Gravity.CENTER);
         final GradientDrawable cb = new GradientDrawable();
         cb.setShape(GradientDrawable.OVAL);
@@ -212,7 +212,7 @@ final class VideoPicker {
         ckl.topMargin = ckl.rightMargin = a.u(14);
         card.addView(check, ckl);
         cell.addView(card, new FrameLayout.LayoutParams(tw, th));
-        TextView name = a.text(21, "sans-serif", 0xB3FFFFFF);
+        TextView name = a.text(22, "sans-serif", 0xB3FFFFFF);
         name.setText(p.title);
         name.setMaxLines(1);
         name.setEllipsize(TextUtils.TruncateAt.END);

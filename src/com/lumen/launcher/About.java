@@ -133,7 +133,7 @@ final class About {
         bg.setCornerRadius(a.u(24));
         bg.setColor(0x00FFFFFF);
         r.setBackground(bg);
-        final TextView t = a.text(26, "sans-serif", 0xEBFFFFFF);
+        final TextView t = a.text(24, "sans-serif", 0xEBFFFFFF);
         if (title != null) { t.setText(title); r.addView(t); } else t.setVisibility(View.GONE);
         final TextView s = a.text(title == null ? 21 : 22, "sans-serif", 0x8CFFFFFF);
         s.setText(text);

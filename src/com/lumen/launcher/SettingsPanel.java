@@ -196,7 +196,7 @@ final class SettingsPanel {
                     col.addView(rows[i], a.rowLp());
                     if (targets[i] == lastRubric) focus = rows[i];
                 }
-                TextView foot = a.text(19, "sans-serif", 0x66FFFFFF);
+                TextView foot = a.text(18, "sans-serif", 0x66FFFFFF);
                 foot.setText("Lumen " + a.updater.currentVersion() + " · aucune publicité, aucune télémétrie");
                 foot.setPadding(a.u(32), a.u(36), a.u(32), 0);
                 col.addView(foot);
@@ -345,6 +345,11 @@ final class SettingsPanel {
                 break;
             }
             case ACCUEIL: {
+        col.addView(a.listRow("Bandeau d'accueil", new MainActivity.Value() {
+            @Override public String get() { return a.prefs.greeting() ? "Oui" : "Non"; }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.prefs.setGreeting(!a.prefs.greeting()); a.refreshGreeting(); }
+        }), a.rowLp());
         col.addView(a.listRow("Vignettes", new MainActivity.Value() {
             @Override public String get() {
                 int st = a.prefs.tileStyle();
@@ -472,6 +477,18 @@ final class SettingsPanel {
                 int next = Prefs.VEILLE_CHOICES[(idx + 1) % Prefs.VEILLE_CHOICES.length];
                 a.prefs.setVeilleSource(next);
                 if (next >= 0) for (String t : Library.themesFor(Library.veilleSource(a.prefs))) a.online.refreshIfNeeded(t, false);
+            }
+        }), a.rowLp());
+        col.addView(a.listRow("Écran de nuit", new MainActivity.Value() {
+            @Override public String get() {
+                int hh = a.prefs.nightHour();
+                return hh < 0 ? "Désactivé" : (hh == 0 ? "De minuit" : "De " + hh + " h") + " à 7 h";
+            }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                int cur = a.prefs.nightHour(), idx = 0;
+                for (int i = 0; i < Prefs.NIGHT_HOURS.length; i++) if (Prefs.NIGHT_HOURS[i] == cur) idx = i;
+                a.prefs.setNightHour(Prefs.NIGHT_HOURS[(idx + 1) % Prefs.NIGHT_HOURS.length]);
             }
         }), a.rowLp());
         col.addView(a.listRow("Lancer le mode veille", null, new View.OnClickListener() {
@@ -614,7 +631,7 @@ final class SettingsPanel {
             @Override public void onClick(View v) { back(a); }
         });
         col.addView(back, a.rowLp());
-        TextView title = a.text(40, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
         title.setText("Villes");
         title.setPadding(a.u(32), a.u(24), 0, a.u(20));
         col.addView(title);
@@ -650,11 +667,11 @@ final class SettingsPanel {
             @Override public void onClick(View v) { back(a); }
         });
         col.addView(back, a.rowLp());
-        TextView title = a.text(40, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
         title.setText("Applis masquées");
         title.setPadding(a.u(32), a.u(24), 0, a.u(8));
         col.addView(title);
-        TextView hint = a.text(21, "sans-serif", 0x8CFFFFFF);
+        TextView hint = a.text(22, "sans-serif", 0x8CFFFFFF);
         hint.setText("OK pour réafficher l'appli");
         hint.setPadding(a.u(32), 0, 0, a.u(20));
         col.addView(hint);

@@ -152,7 +152,7 @@ final class PinDialog {
     private interface Digit { void press(int d); }
 
     private static TextView key(final MainActivity a, String label, final int value, final Digit digit) {
-        final TextView k = a.text(34, "sans-serif", 0xEBFFFFFF);
+        final TextView k = a.text(36, "sans-serif", 0xEBFFFFFF);
         k.setText(label);
         k.setGravity(Gravity.CENTER);
         k.setFocusable(true);
