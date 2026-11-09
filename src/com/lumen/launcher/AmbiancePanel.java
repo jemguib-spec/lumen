@@ -87,6 +87,14 @@ final class AmbiancePanel {
         black = new View(a);
         black.setBackgroundColor(Color.BLACK);
         black.setAlpha(0f);
+        // en attendant une vidéo : le fond d'écran flouté et assombri plutôt qu'un écran noir
+        if (Glass.backdrop() != null) {
+            android.widget.ImageView back = new android.widget.ImageView(a);
+            back.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+            back.setImageBitmap(Glass.backdrop());
+            back.setAlpha(0.55f);
+            layer.addView(back, MainActivity.match());
+        }
         layer.addView(stage, MainActivity.match());
         layer.addView(wait, wl);
         layer.addView(clock, cl);
@@ -259,7 +267,9 @@ final class AmbiancePanel {
         if (current == null) {
             String st = a.online.status(Online.COSY);
             if (a.prefs.videoOkCount() == 0 && a.online.cosyMine().isEmpty())
-                wait.setText("Aucune vidéo choisie.\nAppuie sur OK pour voir les aperçus et choisir.");
+                wait.setText("Aucune vidéo d'ambiance choisie (feu, pluie, océan…).\n"
+                        + "OK : les choisir sur les aperçus   ·   Retour : quitter\n\n"
+                        + "Le mode veille avec tes images : Réglages › Mode veille › Lancer le mode veille.");
             else wait.setText(a.online.cosyBusy()
                     ? "Téléchargement des vidéos choisies…" + (st.isEmpty() ? "" : "\n" + st)
                     : "Aucune vidéo prête pour l'instant.\nAppuie sur OK pour en choisir d'autres.");

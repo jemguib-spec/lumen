@@ -432,7 +432,7 @@ public class MainActivity extends Activity implements Wall.Listener, Online.List
         topButtons.setClipToPadding(false);
         topButtons.setPadding(u(12), u(12), u(12), u(12));
         int bs = u(84);
-        Tile amb = Tile.button(this, Glyph.MOON, "Ambiances", bs);
+        Tile amb = Tile.button(this, Glyph.SPARK, "Ambiances", bs); // la lune reste celle du mode veille
         amb.setFocusListener(homeFocus);
         amb.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { openAmbiance(); } });
         Tile inputs = Tile.button(this, Glyph.INPUT, "Entrées", bs);
