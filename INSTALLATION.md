@@ -31,6 +31,17 @@ Appuyer ensuite sur Accueil : Lumen s'affiche. Si un choix est proposé, sélect
     adb shell pm enable com.google.android.apps.tv.launcherx
     adb shell pm enable com.google.android.tungsten.setupwraith
 
+## 5. Passer d'un ancien Lumen (com.lumen.launcher) au nouveau (fr.lumen.accueil)
+L'identifiant de l'appli est devenu `fr.lumen.accueil` (enregistrement auprès de Google). Pour Android, c'est une autre appli : la mise à jour automatique d'un ancien Lumen la refuse (« Fichier refusé (autre appli) »), il faut l'installer une fois à la main.
+
+1. Sur le téléphone : Plus › Sauvegarde des réglages, pour les retrouver ensuite (facultatif).
+2. Installer le nouveau, l'ouvrir, puis retirer l'ancien :
+
+       adb install Lumen.apk
+       adb uninstall com.lumen.launcher
+
+3. Redonner les autorisations facultatives (« Reprendre », économiseur d'écran) avec les commandes de ce guide, puis restaurer la sauvegarde depuis le téléphone.
+
 ## Réglages
 Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et applis, Mode veille, Ambiances, Réglages depuis le téléphone, Système. Chaque rubrique tient en dix lignes au plus, le reste est rangé en sous-pages (Paysages Lumen, Avancé ; Vignettes et disposition, Reprendre, Lisibilité ; Installation, Diagnostic). Les réglages à deux états ont un interrupteur ; ceux à plusieurs valeurs se changent avec ◀ ▶ sans quitter la ligne. ◀ ou Retour revient en arrière. Système › Informations : À propos (version, téléviseur, espace utilisé, serveurs contactés) et Licences (police, photos et vidéos avec leurs auteurs, météo, Pexels).
 
@@ -114,7 +125,7 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
   Tout reste sur ton réseau local. Un seul téléphone à la fois ; la connexion survit quand tu ouvres une appli, et se coupe quand la TV s'éteint ou après 15 minutes sans activité.
 - **Reprendre** : sur l'accueil, ◀ depuis la première vignette d'une ligne ouvre le panneau des dernières applis utilisées (▶ ou Retour pour le fermer). Par défaut, il connaît les applis ouvertes depuis Lumen. Pour y inclure aussi celles ouvertes autrement (bouton de la télécommande, Gemini…), autorise une fois :
 
-    adb shell appops set com.lumen.launcher GET_USAGE_STATS allow
+    adb shell appops set fr.lumen.accueil GET_USAGE_STATS allow
 
 ## Accueil
 - **Bandeau d'accueil** : une ligne au-dessus des favoris — salutation selon l'heure, météo (si une ville est réglée) et dernier épisode en cours. Réglages › Accueil et applis › Bandeau d'accueil pour le masquer. Trois conseils sur les gestes s'affichent aux trois premiers démarrages (Réglages › Système › Diagnostic › Revoir les conseils pour les revoir).
@@ -172,7 +183,7 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - **Météo** : Réglages › Mode veille › Météo, puis tape le nom de ta ville. Seul ce nom est envoyé à Open-Meteo (gratuit, sans compte).
 - **Économiseur d'écran de la TV** (le mode veille par-dessus n'importe quelle appli) : Réglages › Mode veille › Économiseur d'écran de la TV. Si Google TV cache ce choix, donne une seule fois l'autorisation depuis un ordinateur, puis appuie à nouveau sur cette ligne : Lumen se règle tout seul.
 
-    adb shell pm grant com.lumen.launcher android.permission.WRITE_SECURE_SETTINGS
+    adb shell pm grant fr.lumen.accueil android.permission.WRITE_SECURE_SETTINGS
 
 ## Sources HDMI
 Les entrées HDMI de la TV apparaissent sur l'accueil (ajoutées une seule fois) et dans la rangée « Sources (HDMI) » de la page Applications. On les déplace, retire ou masque comme une appli (appui long). OK ouvre directement la source.

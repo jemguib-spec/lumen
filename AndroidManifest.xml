@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.lumen.launcher"
+    package="fr.lumen.accueil"
     android:versionCode="82"
     android:versionName="4.22.0">
 
@@ -33,7 +33,7 @@
         android:hardwareAccelerated="true">
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.lumen.launcher.MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:stateNotNeeded="true"
@@ -56,7 +56,7 @@
 
         <!-- Économiseur d'écran système : le mode veille de Lumen par-dessus n'importe quelle appli -->
         <service
-            android:name=".LumenDream"
+            android:name="com.lumen.launcher.LumenDream"
             android:exported="true"
             android:label="Lumen"
             android:permission="android.permission.BIND_DREAM_SERVICE">
@@ -67,7 +67,7 @@
         </service>
         <!-- Facultatif : télécommande du téléphone dans les autres applis (activé par l'utilisateur dans Accessibilité) -->
         <service
-            android:name=".RemoteService"
+            android:name="com.lumen.launcher.RemoteService"
             android:exported="true"
             android:label="@string/remote_name"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
@@ -77,9 +77,9 @@
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/remote_service" />
         </service>
         <!-- Résultat de l'installation d'une mise à jour (interne à Lumen) -->
-        <receiver android:name=".Updater$UpdateReceiver" android:exported="false" />
+        <receiver android:name="com.lumen.launcher.Updater$UpdateReceiver" android:exported="false" />
         <!-- Après une mise à jour de Lumen : retour immédiat sur Lumen (pas sur l'accueil d'origine de la TV) -->
-        <receiver android:name=".Updater$ReplacedReceiver" android:exported="false">
+        <receiver android:name="com.lumen.launcher.Updater$ReplacedReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>

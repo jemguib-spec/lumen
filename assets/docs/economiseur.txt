@@ -4,7 +4,7 @@ Google TV cache souvent le choix de l'économiseur d'écran. Il suffit de donner
 
 2. Sur l'ordinateur, avec ADB installé (Android Platform Tools), remplacer ADRESSE par l'adresse IP de la TV :
 adb connect ADRESSE
-adb shell pm grant com.lumen.launcher android.permission.WRITE_SECURE_SETTINGS
+adb shell pm grant fr.lumen.accueil android.permission.WRITE_SECURE_SETTINGS
 
 3. Revenir dans Réglages › Mode veille › Économiseur d'écran de la TV et appuyer sur OK.
 
