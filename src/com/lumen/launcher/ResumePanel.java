@@ -85,7 +85,7 @@ final class ResumePanel {
         FrameLayout o = a.openOverlay(new Runnable() { @Override public void run() { a.resumeOpen = false; } });
         final LinearLayout card = a.glassCard(48);
         card.setPadding(a.u(24), a.u(52), a.u(24), a.u(32));
-        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText("Reprendre");
         title.setPadding(a.u(28), 0, 0, a.u(28));
         card.addView(title);
@@ -108,8 +108,9 @@ final class ResumePanel {
             if (first == null) first = r;
         }
         if (first == null) {
-            TextView none = a.text(24, "sans-serif", 0x99FFFFFF);
-            none.setText("Rien pour l'instant");
+            TextView none = a.text(24, "sans-serif", Palette.TEXT_2);
+            none.setText("Rien à reprendre pour l'instant.\nOuvre une appli depuis Lumen : elle apparaîtra ici, la plus récente en premier.");
+            none.setLineSpacing(0, 1.25f);
             none.setPadding(a.u(28), a.u(10), 0, 0);
             col.addView(none);
             LinearLayout back = a.listRow("Retour", null, new View.OnClickListener() {
@@ -124,7 +125,7 @@ final class ResumePanel {
         cl.leftMargin = cl.topMargin = cl.bottomMargin = a.u(48);
         o.addView(card, cl);
         card.setTranslationX(-a.u(780));
-        card.animate().translationX(0).setDuration(360).setInterpolator(new DecelerateInterpolator(2.2f)).start();
+        card.animate().translationX(0).setDuration(Motion.MEDIUM).setInterpolator(new DecelerateInterpolator(2.2f)).start();
         first.requestFocus();
     }
 
@@ -145,11 +146,11 @@ final class ResumePanel {
         r.addView(ic, new LinearLayout.LayoutParams(a.u(72), a.u(72)));
         LinearLayout txt = new LinearLayout(a);
         txt.setOrientation(LinearLayout.VERTICAL);
-        final TextView name = a.text(28, "sans-serif-medium", 0xF2FFFFFF);
+        final TextView name = a.text(28, "sans-serif-medium", Palette.TEXT);
         name.setText(app.label);
         name.setMaxLines(1);
         name.setEllipsize(TextUtils.TruncateAt.END);
-        final TextView sub = a.text(22, "sans-serif", 0x8CFFFFFF);
+        final TextView sub = a.text(22, "sans-serif", Palette.TEXT_2);
         sub.setText(when);
         txt.addView(name);
         LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -161,10 +162,10 @@ final class ResumePanel {
         r.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View v, boolean f) {
                 if (f) Sounds.get(a).tick();
-                bg.setColor(f ? 0xFFF5F5F7 : 0x00FFFFFF);
-                name.setTextColor(f ? 0xFF111216 : 0xF2FFFFFF);
-                sub.setTextColor(f ? 0x99111216 : 0x8CFFFFFF);
-                r.animate().scaleX(f ? 1.03f : 1f).scaleY(f ? 1.03f : 1f).setDuration(180).start();
+                bg.setColor(f ? Palette.SELECTED : 0x00FFFFFF);
+                name.setTextColor(f ? Palette.ON_SELECTED : Palette.TEXT);
+                sub.setTextColor(f ? Palette.ON_SELECTED_2 : Palette.TEXT_2);
+                r.animate().scaleX(f ? 1.03f : 1f).scaleY(f ? 1.03f : 1f).setDuration(Motion.FAST).start();
             }
         });
         r.setOnClickListener(new View.OnClickListener() {

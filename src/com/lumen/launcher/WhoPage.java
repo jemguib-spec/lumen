@@ -86,7 +86,7 @@ final class WhoPage {
         col.setGravity(Gravity.CENTER_HORIZONTAL);
         col.setClipChildren(false);
         col.setClipToPadding(false);
-        TextView title = a.text(60, "sans-serif-thin", 0xF5FFFFFF);
+        TextView title = a.text(60, "sans-serif-thin", Palette.TEXT);
         title.setText("Qui regarde ?");
         title.setLetterSpacing(0.02f);
         col.addView(title, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -114,12 +114,12 @@ final class WhoPage {
             // entrée en douceur, l'une après l'autre
             card.setAlpha(0f);
             card.setTranslationY(a.u(24));
-            card.animate().alpha(1f).translationY(0).setStartDelay(120 + i * 70L).setDuration(500)
+            card.animate().alpha(1f).translationY(0).setStartDelay(120 + i * 70L).setDuration(Motion.MEDIUM)
                     .setInterpolator(new DecelerateInterpolator(2f)).start();
         }
 
         if (withManage) {
-            TextView manage = a.text(22, "sans-serif-medium", 0x99FFFFFF);
+            TextView manage = a.text(22, "sans-serif-medium", Palette.TEXT_2);
             manage.setText("Gérer les profils");
             manage.setPadding(a.u(28), a.u(14), a.u(28), a.u(14));
             manage.setFocusable(true);
@@ -130,8 +130,8 @@ final class WhoPage {
             manage.setBackground(mb);
             manage.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override public void onFocusChange(View v, boolean f) {
-                    mb.setColor(f ? 0xFFF5F5F7 : 0x00FFFFFF);
-                    ((TextView) v).setTextColor(f ? 0xFF111216 : 0x99FFFFFF);
+                    mb.setColor(f ? Palette.SELECTED : 0x00FFFFFF);
+                    ((TextView) v).setTextColor(f ? Palette.ON_SELECTED : Palette.TEXT_2);
                     if (f) Sounds.get(a).tick();
                 }
             });
@@ -145,7 +145,7 @@ final class WhoPage {
 
         o.addView(col, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         title.setAlpha(0f);
-        title.animate().alpha(1f).setDuration(600).start();
+        title.animate().alpha(1f).setDuration(Motion.SLOW).start();
         if (focus != null) focus.requestFocus();
     }
 
@@ -168,7 +168,7 @@ final class WhoPage {
         final int size = a.u(176);
         // monochrome comme le reste de Lumen : pastille de verre, initiale blanche ; sélectionnée,
         // elle devient blanche avec l'initiale foncée (comme les boutons de l'accueil)
-        final TextView disc = a.text(68, "sans-serif-light", 0xF2FFFFFF);
+        final TextView disc = a.text(68, "sans-serif-light", Palette.TEXT);
         disc.setText(initial(p.name));
         disc.setGravity(Gravity.CENTER);
         final GradientDrawable bg = new GradientDrawable();
@@ -178,7 +178,7 @@ final class WhoPage {
         disc.setBackground(bg);
         box.addView(disc, new LinearLayout.LayoutParams(size, size));
 
-        final TextView name = a.text(28, "sans-serif", 0x99FFFFFF);
+        final TextView name = a.text(28, "sans-serif", Palette.TEXT_2);
         name.setText(p.name);
         name.setSingleLine(true);
         name.setGravity(Gravity.CENTER);
@@ -189,13 +189,13 @@ final class WhoPage {
         box.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View v, boolean f) {
                 if (f) Sounds.get(a).tick();
-                disc.animate().scaleX(f ? 1.12f : 1f).scaleY(f ? 1.12f : 1f).setDuration(240)
+                disc.animate().scaleX(f ? 1.12f : 1f).scaleY(f ? 1.12f : 1f).setDuration(Motion.FAST)
                         .setInterpolator(new DecelerateInterpolator(2f)).start();
-                bg.setColor(f ? 0xFFF5F5F7 : 0x1FFFFFFF);
-                bg.setStroke(Math.max(1, a.u(2)), f ? 0xFFF5F5F7 : 0x40FFFFFF);
-                disc.setTextColor(f ? 0xFF111216 : 0xF2FFFFFF);
+                bg.setColor(f ? Palette.SELECTED : 0x1FFFFFFF);
+                bg.setStroke(Math.max(1, a.u(2)), f ? Palette.SELECTED : 0x40FFFFFF);
+                disc.setTextColor(f ? Palette.ON_SELECTED : Palette.TEXT);
                 disc.setElevation(f ? a.u(20) : 0);
-                name.setTextColor(f ? 0xFFFFFFFF : 0x99FFFFFF);
+                name.setTextColor(f ? 0xFFFFFFFF : Palette.TEXT_2);
             }
         });
         box.setOnClickListener(new View.OnClickListener() {
@@ -209,7 +209,7 @@ final class WhoPage {
         // plus de choix possible pendant le message
         page.setFocusable(false);
         o.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
-        page.animate().alpha(0f).scaleX(0.96f).scaleY(0.96f).setDuration(320).start();
+        page.animate().alpha(0f).scaleX(0.96f).scaleY(0.96f).setDuration(Motion.MEDIUM).start();
 
         final TextView hello = a.text(84, "sans-serif-thin", 0xFFFFFFFF);
         hello.setText(Greeting.hello(java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)) + " " + p.name);
@@ -219,7 +219,7 @@ final class WhoPage {
         hello.setScaleX(0.94f);
         hello.setScaleY(0.94f);
         o.addView(hello, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
-        hello.animate().alpha(1f).scaleX(1f).scaleY(1f).setStartDelay(220).setDuration(700)
+        hello.animate().alpha(1f).scaleX(1f).scaleY(1f).setStartDelay(220).setDuration(Motion.SLOW)
                 .setInterpolator(new DecelerateInterpolator(2f)).start();
 
         // le profil change derrière le message ; si l'écran doit être reconstruit, à la fin seulement

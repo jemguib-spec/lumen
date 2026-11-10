@@ -32,20 +32,20 @@ Appuyer ensuite sur Accueil : Lumen s'affiche. Si un choix est proposé, sélect
     adb shell pm enable com.google.android.tungsten.setupwraith
 
 ## Réglages
-Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et applis, Mode veille, Ambiances, Réglages depuis le téléphone, Système. Chaque rubrique s'ouvre dans le même panneau ; ◀ ou Retour revient en arrière. Système › Informations : À propos (version, téléviseur, espace utilisé, serveurs contactés) et Licences (police, photos et vidéos avec leurs auteurs, météo, Pexels).
+Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et applis, Mode veille, Ambiances, Réglages depuis le téléphone, Système. Chaque rubrique tient en dix lignes au plus, le reste est rangé en sous-pages (Paysages Lumen, Avancé ; Vignettes et disposition, Reprendre, Lisibilité ; Installation, Diagnostic). Les réglages à deux états ont un interrupteur ; ceux à plusieurs valeurs se changent avec ◀ ▶ sans quitter la ligne. ◀ ou Retour revient en arrière. Système › Informations : À propos (version, téléviseur, espace utilisé, serveurs contactés) et Licences (police, photos et vidéos avec leurs auteurs, météo, Pexels).
 
 ## Utilisation
 - **Accueil** : tes favoris en vignettes de verre, centrés. Les boutons Entrées, Toutes les applications et Réglages sont en haut à droite, à côté de l'horloge.
-- **Disposition** (Réglages › Applications) : nombre d'applis par ligne (3 à 7) et nombre de lignes (1 à 3).
+- **Disposition** (Réglages › Accueil et applis › Vignettes et disposition) : nombre d'applis par ligne (3 à 7) et nombre de lignes (1 à 3).
 - **Gestes** : ▼ depuis l'accueil → toutes les applis. ▲ depuis la première ligne des applis → retour à l'accueil. Retour fonctionne aussi.
 - **Appui long sur OK** sur une appli : Déplacer (accueil), Ajouter/Retirer des favoris, Masquer l'appli, Infos, Désinstaller.
 - **Nouvelle appli installée** : elle apparaît tout de suite dans « Toutes les applications » (une notification le signale).
-- **Style des vignettes** (Réglages › Applications) : verre ou bannières officielles ; icônes affichées ou non ; verre neutre ou teinté de la couleur dominante de l'icône.
+- **Style des vignettes** (Réglages › Accueil et applis › Vignettes et disposition) : verre ou bannières officielles ; icônes affichées ou non ; verre neutre ou teinté de la couleur dominante de l'icône.
 - **Touche Menu** de la télécommande : réglages.
 - Après 45 s sans toucher la télécommande, l'interface s'efface pour ne laisser que le fond.
 
 ## Fonds d'écran (Réglages › Fond d'écran)
-- **Paysages Lumen** : crêtes, horizon, lac — l'ambiance suit le vrai lever et coucher du soleil de ta ville (aube, jour, soir, nuit), calculés sur la TV sans Internet. Ils sont animés : nuages qui dérivent, halo du soleil, scintillement sur l'eau, brume, étoiles et étoiles filantes la nuit (Réglages › Fond d'écran › Paysages Lumen animés).
+- **Paysages Lumen** : crêtes, horizon, lac — l'ambiance suit le vrai lever et coucher du soleil de ta ville (aube, jour, soir, nuit), calculés sur la TV sans Internet. Ils sont animés : nuages qui dérivent, halo du soleil, scintillement sur l'eau, brume, étoiles et étoiles filantes la nuit (Réglages › Fond d'écran › Paysages Lumen).
 - **Paysages animés** : crêtes qui défilent lentement, brume qui glisse, étoiles qui scintillent la nuit.
 - **Espace**, **Nature** et **Animaux** (photos primées — « Featured pictures » — de Wikimedia Commons, jusqu'à 4K ; vues d'artiste et schémas écartés), **Vidéos 4K** (à choisir sur aperçus : Réglages › Fond d'écran › Fonds vidéo ; rien n'est téléchargé sans être coché, décocher efface la vidéo ; une liste fermée de vraies prises de vue choisies une par une sur Wikimedia Commons : vues de drone de Paris, New York, Hong Kong, Chicago, San Francisco et Stockholm, paysages filmés, la Terre filmée depuis la Station spatiale ; ni conférences, ni simulations ; thème au choix (Tout, Villes, Nature, Espace et Terre) ; Réglages › Villes pour choisir les villes ; Espace pour les vidéos : 3, 6, 10 ou 20 Go ; qualité 4K ou HD au choix), **Mélange de photos**, **Photo du jour** (la photo choisie chaque jour par Wikimedia Commons, avec sa légende en français ; les 10 derniers jours, la plus récente en premier).
 - Les photos se téléchargent en arrière-plan la première fois (quelques minutes) ; en attendant, les paysages Lumen s'affichent. Le cache se renouvelle chaque jour.
@@ -73,12 +73,12 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - ▼ depuis l'accueil. Une recherche en haut (sans accents ni majuscules ; Retour efface la recherche), puis des rangées : Favoris, Vidéo et TV, Musique et radio, Jeux, Outils et autres. Les applis se rangent seules (catégorie déclarée par l'appli, sinon reconnue d'après son nom) ; chaque rangée défile horizontalement.
 
 ## Vignettes
-- Réglages › Accueil et applis › Vignettes : « Nom de l'appli » (par défaut : le nom en grand ; sélectionnée, la vignette devient blanche et le nom prend la couleur de l'appli), « Icône et nom », ou « Bannières officielles » (liseré blanc autour de la vignette sélectionnée).
+- Réglages › Accueil et applis › Vignettes et disposition : « Nom de l'appli » (par défaut : le nom en grand ; sélectionnée, la vignette devient blanche et le nom prend la couleur de l'appli), « Icône et nom », ou « Bannières officielles » (liseré blanc autour de la vignette sélectionnée).
 
 ## Reprendre au-dessus des applis
 - Sélectionne une appli de l'accueil (Netflix, Prime Video, Plex…) : ses films et épisodes en cours apparaissent juste au-dessus, avec l'affiche, l'épisode et la barre de progression. ▲ pour y aller, OK pour reprendre la lecture.
-- Au premier lancement, Android demande l'autorisation d'accéder aux « programmes TV » : accepte-la. Sinon : Réglages › Accueil et applis › Reprendre au-dessus des applis.
-- Chaque appli décide de publier ou non ses « en cours » sur Android TV : selon les applis et la version de Google TV, certaines n'apparaîtront pas. Réglages › Accueil et applis › Affiches des épisodes : Non pour n'afficher que la couleur de l'appli.
+- Au premier lancement, Android demande l'autorisation d'accéder aux « programmes TV » : accepte-la. Sinon : Réglages › Accueil et applis › Reprendre.
+- Chaque appli décide de publier ou non ses « en cours » sur Android TV : selon les applis et la version de Google TV, certaines n'apparaîtront pas. Réglages › Accueil et applis › Reprendre › Affiches des épisodes : Non pour n'afficher que la couleur de l'appli.
 
 ## Ambiances et minuterie de sommeil
 - Bouton rond **Ambiances** (lune) en haut de l'accueil : de vraies vidéos filmées en plein écran, avec leur propre son : **Cheminée**, **Pluie**, **Aquarium**, **Nuit étoilée**, **Vagues**, **Neige**.
@@ -112,7 +112,7 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
     adb shell appops set com.lumen.launcher GET_USAGE_STATS allow
 
 ## Accueil
-- **Bandeau d'accueil** : une ligne au-dessus des favoris — salutation selon l'heure, météo (si une ville est réglée) et dernier épisode en cours. Réglages › Accueil et applis › Bandeau d'accueil pour le masquer.
+- **Bandeau d'accueil** : une ligne au-dessus des favoris — salutation selon l'heure, météo (si une ville est réglée) et dernier épisode en cours. Réglages › Accueil et applis › Bandeau d'accueil pour le masquer. Trois conseils sur les gestes s'affichent aux trois premiers démarrages (Réglages › Système › Diagnostic › Revoir les conseils pour les revoir).
 - L'appli que tu ouvres d'habitude à cette heure est sélectionnée au démarrage et entourée d'un liseré qui respire doucement.
 
 ## À l'affiche
@@ -196,7 +196,7 @@ Page du téléphone › Plus › Télécharger la sauvegarde (un petit fichier .
 - Réglages › Système : ouvrir la page lance la recherche ; « Rechercher une mise à jour » pour vérifier ou installer ; « Mises à jour automatiques » pour couper.
 
 ## Mesures et journal d'erreurs
-- Réglages › Système › Mesures : affiche en haut à gauche le temps de démarrage, les images par seconde, la mémoire et le processeur utilisés par Lumen, et le type de fond. Utile pour repérer ce qui ralentit la TV.
+- Réglages › Système › Diagnostic › Mesures : affiche en haut à gauche le temps de démarrage, les images par seconde, la mémoire et le processeur utilisés par Lumen, et le type de fond. Utile pour repérer ce qui ralentit la TV.
 - Journal d'erreurs : si Lumen plante, l'erreur est notée sur la TV (jamais envoyée). Elle est visible depuis le téléphone (onglet Plus) et s'efface dans Réglages › Système. Après deux plantages de suite au démarrage, Lumen repart en mode sans échec (paysages fixes, sans vidéo).
 - Les vidéos sont en HD par défaut (plus légères pour la TV) ; la 4K reste disponible dans Réglages › Fond d'écran.
 

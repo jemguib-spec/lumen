@@ -46,11 +46,11 @@ final class HomePanel {
         o.addView(card, new FrameLayout.LayoutParams(a.u(760), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         a.rowRefreshers.clear();
 
-        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText("Maison");
         title.setGravity(Gravity.CENTER);
         col.addView(title, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        final TextView status = a.text(22, "sans-serif", 0x99FFFFFF);
+        final TextView status = a.text(22, "sans-serif", Palette.TEXT_2);
         status.setGravity(Gravity.CENTER);
         status.setPadding(0, a.u(10), 0, a.u(24));
         col.addView(status, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));

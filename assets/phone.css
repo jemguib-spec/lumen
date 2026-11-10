@@ -1,7 +1,25 @@
-:root{--bg:#0b0c10;--card:rgba(255,255,255,.065);--line:rgba(255,255,255,.1);--txt:#f5f5f7;--dim:rgba(245,245,247,.55);--r:18px}
+:root{--bg:#0b0c10;--card:rgba(255,255,255,.065);--line:rgba(255,255,255,.1);--txt:#f5f5f7;--dim:rgba(245,245,247,.62);--r:18px;
+  --glow:#262238;--panel:#16171d;--hi:#f5f5f7;--onhi:#111;--press:rgba(255,255,255,.12);color-scheme:dark}
+/* thème clair : suit le réglage du téléphone (usage de jour) */
+@media (prefers-color-scheme:light){
+  :root{--bg:#f2f2f6;--card:rgba(0,0,0,.045);--line:rgba(0,0,0,.09);--txt:#15161b;--dim:rgba(21,22,27,.58);--glow:#dcd8ea;--panel:#ffffff;--hi:#15161b;--onhi:#fff;--press:rgba(0,0,0,.08);color-scheme:light}
+  .go,.chip.on,.card.on,.k.okk,.ib.add,.ib.on,.seg button.on,.btn,.toast,.row.ha.on .ck,.row.ha .hm.on,.pick.on .ring,.app .lk,.bar i{background:var(--hi);color:var(--onhi)}
+  .go svg{stroke:var(--onhi)}
+  .card.on span{color:rgba(255,255,255,.7)}
+  .row.ha.on .ck::after{border-color:var(--onhi)}
+  .k.okk:active{background:#000}
+  .tabs{background:rgba(255,255,255,.78)}
+  .tabs button.on{background:rgba(0,0,0,.06)}
+  .thumb .d,.tile .x,.tile .v,.tile .a,.wall .eye{background:rgba(0,0,0,.6);color:#fff}
+  .app img,.app .ph,.sc img,.sc .ph,.row img,.thumb,.tile,.wall{background:#e3e3ea}
+  select option{background:#fff;color:#15161b}
+  .tg::after{background:#fff}
+  .pick.on .thumb{outline-color:var(--hi)}
+  .state i.on{box-shadow:none}
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0}
 html{background:var(--bg)}
-body{background:radial-gradient(130% 70% at 85% -15%,#262238 0%,var(--bg) 60%) fixed;color:var(--txt);
+body{background:radial-gradient(130% 70% at 85% -15%,var(--glow) 0%,var(--bg) 60%) fixed;color:var(--txt);
   font:16px/1.4 Inter,-apple-system,BlinkMacSystemFont,"SF Pro Text",Roboto,"Segoe UI",sans-serif;min-height:100vh;
   padding:env(safe-area-inset-top) 0 calc(96px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased}
 button,input,select{font:inherit;color:inherit}
@@ -61,7 +79,7 @@ select option{background:#16171d;color:#f5f5f7}
 .pad{position:relative;width:min(72vw,270px);aspect-ratio:1;margin:0 auto;border-radius:50%;background:var(--card);border:1px solid var(--line);
   display:grid;grid-template:1fr 1.15fr 1fr/1fr 1.15fr 1fr;overflow:hidden}
 .k{border:0;background:none;position:relative;transition:background .12s}
-.k:active{background:rgba(255,255,255,.12)}
+.k:active{background:var(--press)}
 .k.up{grid-area:1/2}.k.left{grid-area:2/1}.k.right{grid-area:2/3}.k.down{grid-area:3/2}
 .k.up::after,.k.down::after,.k.left::after,.k.right::after{content:"";position:absolute;left:50%;top:50%;width:12px;height:12px;
   border:solid var(--txt);border-width:2.5px 2.5px 0 0;opacity:.8}
@@ -187,7 +205,7 @@ select option{background:#16171d;color:#f5f5f7}
 /* feuille du code PIN */
 .sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .sheet[hidden]{display:none}
-.panel{width:100%;padding:24px 20px calc(24px + env(safe-area-inset-bottom));border-radius:26px 26px 0 0;background:#16171d;border-top:1px solid var(--line);animation:up .25s ease}
+.panel{width:100%;padding:24px 20px calc(24px + env(safe-area-inset-bottom));border-radius:26px 26px 0 0;background:var(--panel);border-top:1px solid var(--line);animation:up .25s ease}
 @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
 .panel h3{font-weight:500;font-size:20px}
 .panel input{text-align:center;font-size:28px;letter-spacing:.6em;margin-bottom:16px}

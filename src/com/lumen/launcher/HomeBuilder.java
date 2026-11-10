@@ -62,8 +62,8 @@ final class HomeBuilder {
         a.homeLayer.addView(a.rowsBox, rl);
         a.shelf = new TopShelf(a);
 
-        a.focusLabel = a.text(28, "sans-serif-medium", 0xF2FFFFFF);
-        a.focusLabel.setShadowLayer(a.u(10), 0, 0, 0x66000000);
+        a.focusLabel = a.text(28, "sans-serif-medium", Palette.TEXT);
+        a.focusLabel.setShadowLayer(a.u(10), 0, 0, Palette.SHADOW);
         a.focusLabel.setGravity(Gravity.CENTER_HORIZONTAL);
 
         // boutons ronds en haut à droite, à gauche de l'horloge
@@ -109,13 +109,13 @@ final class HomeBuilder {
         // ---- légende du fond, en haut à gauche
         a.captionBox = new LinearLayout(a);
         a.captionBox.setOrientation(LinearLayout.VERTICAL);
-        a.captionTitle = a.text(22, "sans-serif-medium", 0xC8FFFFFF);
-        a.captionTitle.setShadowLayer(a.u(8), 0, 0, 0x55000000);
+        a.captionTitle = a.text(20, "sans-serif-medium", Palette.TEXT_2);
+        a.captionTitle.setShadowLayer(a.u(8), 0, 0, Palette.SHADOW);
         a.captionTitle.setMaxLines(1);
         a.captionTitle.setEllipsize(TextUtils.TruncateAt.END);
         a.captionBox.addView(a.captionTitle, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        a.captionCredit = a.text(18, "sans-serif", 0x8CFFFFFF);
-        a.captionCredit.setShadowLayer(a.u(8), 0, 0, 0x55000000);
+        a.captionCredit = a.text(18, "sans-serif", Palette.TEXT_3);
+        a.captionCredit.setShadowLayer(a.u(8), 0, 0, Palette.SHADOW);
         a.captionCredit.setMaxLines(1);
         a.captionCredit.setEllipsize(TextUtils.TruncateAt.END);
         LinearLayout.LayoutParams cl2 = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -127,8 +127,8 @@ final class HomeBuilder {
         dl.topMargin = a.u(14);
         a.captionBox.addView(a.dots, dl);
         // bandeau d'accueil (« Bonsoir · Pluie 12° · Reprendre … ») : sous le nom de la photo
-        a.greet = a.text(22, "sans-serif", 0xD9FFFFFF);
-        a.greet.setShadowLayer(a.u(8), 0, 0, 0x55000000);
+        a.greet = a.text(26, "sans-serif-medium", Palette.TEXT);
+        a.greet.setShadowLayer(a.u(8), 0, 0, Palette.SHADOW);
         a.greet.setSingleLine(true);
         a.greet.setEllipsize(TextUtils.TruncateAt.END);
         LinearLayout.LayoutParams gl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -148,16 +148,16 @@ final class HomeBuilder {
         time.setFormat12Hour("h:mm");
         time.setTextSize(TypedValue.COMPLEX_UNIT_PX, 56 * a.unit);
         time.setTypeface(Fonts.get("sans-serif-light", Typeface.NORMAL));
-        time.setTextColor(0xF5FFFFFF);
+        time.setTextColor(Palette.TEXT);
         time.setIncludeFontPadding(false);
-        time.setShadowLayer(a.u(12), 0, 0, 0x55000000);
+        time.setShadowLayer(a.u(12), 0, 0, Palette.SHADOW);
         TextClock date = new TextClock(a);
         date.setFormat24Hour("EEEE d MMMM");
         date.setFormat12Hour("EEEE d MMMM");
         date.setTextSize(TypedValue.COMPLEX_UNIT_PX, 22 * a.unit);
         date.setTypeface(Fonts.get("sans-serif", Typeface.NORMAL));
         date.setTextColor(0xB3FFFFFF);
-        date.setShadowLayer(a.u(8), 0, 0, 0x55000000);
+        date.setShadowLayer(a.u(8), 0, 0, Palette.SHADOW);
         a.clockBox.addView(time);
         LinearLayout.LayoutParams dtl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         dtl.topMargin = a.u(8);
@@ -196,7 +196,7 @@ final class HomeBuilder {
         });
 
         // ---- notification flottante
-        a.notice = a.text(24, "sans-serif-medium", 0xFF111216);
+        a.notice = a.text(24, "sans-serif-medium", Palette.ON_SELECTED);
         GradientDrawable nb = new GradientDrawable();
         nb.setColor(0xF5F5F5F7);
         nb.setCornerRadius(a.u(40));
@@ -254,23 +254,23 @@ final class HomeBuilder {
             col.setGravity(Gravity.CENTER_HORIZONTAL);
             col.addView(word, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             word.setAlpha(1f); // il était déjà à l'écran juste avant l'arrêt
-            TextView sub = a.text(24, "sans-serif-light", 0x99FFFFFF);
+            TextView sub = a.text(24, "sans-serif-light", Palette.TEXT_2);
             sub.setText("REDÉMARRAGE");
             sub.setLetterSpacing(0.3f);
             LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             sl.topMargin = a.u(18);
             col.addView(sub, sl);
-            sub.animate().alpha(0f).setStartDelay(700).setDuration(500).start();
+            sub.animate().alpha(0f).setStartDelay(700).setDuration(Motion.MEDIUM).start();
             splash.addView(col, MainActivity.wrap(Gravity.CENTER));
             a.h.postDelayed(new Runnable() { @Override public void run() { a.showNotice("Lumen a redémarré"); } }, 2200);
         } else splash.addView(word, MainActivity.wrap(Gravity.CENTER));
         a.root.addView(splash, MainActivity.match());
         word.setScaleX(0.96f);
         word.setScaleY(0.96f);
-        word.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(900).setInterpolator(new DecelerateInterpolator()).withEndAction(new Runnable() {
+        word.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(Motion.SLOW).setInterpolator(new DecelerateInterpolator()).withEndAction(new Runnable() {
             @Override public void run() {
-                word.animate().alpha(0f).setStartDelay(500).setDuration(600).start();
-                splash.animate().alpha(0f).setStartDelay(800).setDuration(900).withEndAction(new Runnable() {
+                word.animate().alpha(0f).setStartDelay(500).setDuration(Motion.SLOW).start();
+                splash.animate().alpha(0f).setStartDelay(800).setDuration(Motion.SLOW).withEndAction(new Runnable() {
                     @Override public void run() {
                         a.root.removeView(splash);
                         a.splashing = false;

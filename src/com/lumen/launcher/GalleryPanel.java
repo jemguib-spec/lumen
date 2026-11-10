@@ -59,10 +59,10 @@ final class GalleryPanel {
         sv.addView(col);
         o.addView(sv, MainActivity.match());
 
-        TextView title = a.text(52, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(52, "sans-serif-light", Palette.TEXT);
         title.setText("Fonds · " + Prefs.SRC_NAMES[a.prefs.source()]);
         col.addView(title);
-        final TextView state = a.text(24, "sans-serif", 0x99FFFFFF);
+        final TextView state = a.text(24, "sans-serif", Palette.TEXT_2);
         state.setPadding(0, a.u(12), 0, a.u(36));
         col.addView(state);
         final String[] themes = Library.themesFor(a.prefs.source());

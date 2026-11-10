@@ -47,7 +47,7 @@ final class TopShelf {
         view.setClipToPadding(false);
         view.setVisibility(View.GONE);
         label = a.text(22, "sans-serif-medium", 0xB3FFFFFF);
-        label.setShadowLayer(a.u(8), 0, 0, 0x66000000);
+        label.setShadowLayer(a.u(8), 0, 0, Palette.SHADOW);
         label.setLetterSpacing(0.06f);
         label.setGravity(Gravity.CENTER_HORIZONTAL);
         view.addView(label, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -127,7 +127,7 @@ final class TopShelf {
             view.setAlpha(0f);
             view.setTranslationY(a.u(16));
         }
-        view.animate().alpha(1f).translationY(0).setDuration(240).setInterpolator(new DecelerateInterpolator(2f)).start();
+        view.animate().alpha(1f).translationY(0).setDuration(Motion.FAST).setInterpolator(new DecelerateInterpolator(2f)).start();
     }
 
     void hide() {
@@ -185,7 +185,7 @@ final class TopShelf {
             bar.setBackground(track);
             View fill = new View(a);
             GradientDrawable fd = new GradientDrawable();
-            fd.setColor(0xFFF5F5F7);
+            fd.setColor(Palette.SELECTED);
             fd.setCornerRadius(a.u(3));
             fill.setBackground(fd);
             int bw = w - a.u(32);
@@ -200,7 +200,7 @@ final class TopShelf {
         cell.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View v, boolean f) {
                 if (f) Sounds.get(a).tick();
-                cell.animate().scaleX(f ? 1.07f : 1f).scaleY(f ? 1.07f : 1f).setDuration(220)
+                cell.animate().scaleX(f ? 1.07f : 1f).scaleY(f ? 1.07f : 1f).setDuration(Motion.FAST)
                         .setInterpolator(new DecelerateInterpolator(2f)).start();
                 card.setElevation(f ? a.u(30) : 0);
                 card.setForeground(f ? CheckCell.ring(a, radius) : null);

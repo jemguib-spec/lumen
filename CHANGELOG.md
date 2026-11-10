@@ -9,6 +9,10 @@ Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte
 - Lecteur d'écran (TalkBack) : vignettes, boutons et réglages annoncés.
 - Mises à jour téléchargées depuis les GitHub Releases ; les nouveautés de chaque version se lisent sur la TV.
 - Compilation et tests sur un émulateur Android TV à chaque envoi, avec captures d'écran.
+- Réglages redessinés : interrupteurs pour les réglages à deux états, ◀ ▶ pour les choix multiples, pages courtes avec sous-pages (Paysages Lumen, Avancé, Vignettes et disposition, Reprendre, Lisibilité, Diagnostic), phrases d'aide.
+- Interface plus homogène : couleurs et durées d'animation unifiées, textes secondaires plus lisibles sur un fond clair, titres de section plus grands, bandeau d'accueil mis en avant.
+- États vides qui disent quoi faire (Reprendre, À l'affiche, recherche) ; trois conseils sur les gestes aux premiers démarrages.
+- Page du téléphone : thème clair quand le téléphone est en mode clair.
 
 ## 4.19.3
 

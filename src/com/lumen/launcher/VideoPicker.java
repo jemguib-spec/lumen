@@ -70,10 +70,10 @@ final class VideoPicker {
         sv.addView(col);
         o.addView(sv, MainActivity.match());
 
-        TextView title = a.text(52, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(52, "sans-serif-light", Palette.TEXT);
         title.setText(cosy ? "Vidéos des ambiances" : "Fonds vidéo");
         col.addView(title);
-        final TextView state = a.text(24, "sans-serif", 0x99FFFFFF);
+        final TextView state = a.text(24, "sans-serif", Palette.TEXT_2);
         state.setPadding(0, a.u(12), 0, a.u(30));
         state.setText("Chargement des aperçus…");
         stateView = state;
@@ -182,7 +182,7 @@ final class VideoPicker {
         shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, new int[]{0x99000000, 0x00000000}));
         card.addView(shade, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, th / 2, Gravity.BOTTOM));
         // durée · définition · source, en bas de l'aperçu
-        TextView info = a.text(18, "sans-serif-medium", 0xF2FFFFFF);
+        TextView info = a.text(18, "sans-serif-medium", Palette.TEXT);
         info.setText(describe(p));
         info.setShadowLayer(a.u(6), 0, 0, 0xCC000000);
         FrameLayout.LayoutParams il = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
@@ -194,8 +194,8 @@ final class VideoPicker {
                 // cochée : pastille blanche avec ✓ ; pas cochée : simple cercle, l'aperçu reste bien visible
                 boolean on = a.prefs.videoOk(p.key);
                 c.check.setText(on ? "✓" : "");
-                c.checkBg.setColor(on ? 0xFFF5F5F7 : 0x33000000);
-                c.checkBg.setStroke(Math.max(1, a.u(3)), on ? 0xFFF5F5F7 : 0xE6FFFFFF);
+                c.checkBg.setColor(on ? Palette.SELECTED : 0x33000000);
+                c.checkBg.setStroke(Math.max(1, a.u(3)), on ? Palette.SELECTED : 0xE6FFFFFF);
             }
         };
         paint.run();

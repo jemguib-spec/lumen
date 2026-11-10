@@ -69,7 +69,7 @@ final class PhonePanel {
         LinearLayout card = a.glassCard(48);
         card.setGravity(Gravity.CENTER_HORIZONTAL);
         card.setPadding(a.u(64), a.u(56), a.u(64), a.u(48));
-        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText("Téléphone");
         card.addView(title);
         ImageView qr = new ImageView(a);
@@ -82,7 +82,7 @@ final class PhonePanel {
         });
         qr.setClipToOutline(true);
         card.addView(qr, ql);
-        TextView addr = a.text(24, "sans-serif", 0x99FFFFFF);
+        TextView addr = a.text(24, "sans-serif", Palette.TEXT_2);
         addr.setText(url.replaceFirst("#.*$", ""));
         card.addView(addr);
         LinearLayout ok = a.listRow("OK", null, new View.OnClickListener() {
@@ -100,10 +100,10 @@ final class PhonePanel {
         int quiet = 3, n = q.size + quiet * 2;
         int scale = Math.max(1, px / n);
         Bitmap b = Bitmap.createBitmap(n * scale, n * scale, Bitmap.Config.ARGB_8888);
-        b.eraseColor(0xFFF5F5F7);
+        b.eraseColor(Palette.SELECTED);
         android.graphics.Canvas c = new android.graphics.Canvas(b);
         android.graphics.Paint p = new android.graphics.Paint();
-        p.setColor(0xFF111216);
+        p.setColor(Palette.ON_SELECTED);
         for (int y = 0; y < q.size; y++) for (int x = 0; x < q.size; x++)
             if (q.get(x, y)) c.drawRect((x + quiet) * scale, (y + quiet) * scale, (x + quiet + 1) * scale, (y + quiet + 1) * scale, p);
         return b;

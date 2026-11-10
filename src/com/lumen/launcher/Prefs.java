@@ -171,6 +171,9 @@ final class Prefs {
     void setLastUpdateCheck(long t) { sp.edit().putLong("update_check", t).apply(); }
     String updateReadyVersion() { return sp.getString("update_ready", ""); }
     void setUpdateReadyVersion(String v) { sp.edit().putString("update_ready", v).apply(); }
+    /** Conseils déjà montrés au démarrage (un par démarrage). */
+    int tipStep() { return sp.getInt("tip_step", 0); }
+    void setTipStep(int n) { sp.edit().putInt("tip_step", n).apply(); }
     /** Assistant d'installation déjà proposé au démarrage (ou refusé). */
     boolean installHelpShown() { return sp.getBoolean("install_help_shown", false); }
     void setInstallHelpShown(boolean b) { sp.edit().putBoolean("install_help_shown", b).apply(); }

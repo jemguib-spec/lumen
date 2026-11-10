@@ -36,10 +36,10 @@ final class KeyPanel {
         FrameLayout o = a.openOverlay(null);
         LinearLayout card = a.glassCard(44);
         card.setPadding(a.u(40), a.u(44), a.u(40), a.u(32));
-        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText(tmdb ? "Films du moment" : "Vidéos Pexels");
         card.addView(title);
-        TextView hint = a.text(22, "sans-serif", 0x8CFFFFFF);
+        TextView hint = a.text(22, "sans-serif", Palette.TEXT_2);
         hint.setText(tmdb
                 ? "Clé gratuite sur themoviedb.org › Compte › Paramètres › API : la « Clé API » (32 caractères) ou le « Jeton d'accès en lecture ». Sans clé, Lumen ne contacte jamais TMDB."
                 : "Clé gratuite sur pexels.com/api. Sans clé, Lumen ne contacte jamais Pexels.");
@@ -51,13 +51,13 @@ final class KeyPanel {
         in.setHint(has ? "Nouvelle clé (une clé est déjà enregistrée)" : "Colle ou tape la clé");
         in.setTextSize(TypedValue.COMPLEX_UNIT_PX, 28 * a.unit);
         in.setTypeface(Fonts.get("sans-serif", android.graphics.Typeface.NORMAL));
-        in.setTextColor(0xFF111216);
-        in.setHintTextColor(0x80111216);
+        in.setTextColor(Palette.ON_SELECTED);
+        in.setHintTextColor(Palette.ON_SELECTED_2);
         in.setPadding(a.u(28), a.u(20), a.u(28), a.u(20));
         in.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
                 | android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
         GradientDrawable ib = new GradientDrawable();
-        ib.setColor(0xFFF5F5F7);
+        ib.setColor(Palette.SELECTED);
         ib.setCornerRadius(a.u(22));
         in.setBackground(ib);
         in.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE | android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);

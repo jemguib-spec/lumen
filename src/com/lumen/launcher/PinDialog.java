@@ -72,12 +72,12 @@ final class PinDialog {
         card.setGravity(Gravity.CENTER_HORIZONTAL);
         card.setPadding(a.u(40), a.u(44), a.u(40), a.u(40));
 
-        TextView t = a.text(36, "sans-serif-light", 0xF5FFFFFF);
+        TextView t = a.text(36, "sans-serif-light", Palette.TEXT);
         t.setText(title);
         t.setGravity(Gravity.CENTER);
         card.addView(t, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        final TextView msg = a.text(22, "sans-serif", 0xA6FFFFFF);
+        final TextView msg = a.text(22, "sans-serif", Palette.TEXT_2);
         msg.setGravity(Gravity.CENTER);
         msg.setText("Flèches et OK, ou touches chiffrées");
         LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -105,7 +105,7 @@ final class PinDialog {
         final StringBuilder typed = new StringBuilder();
         final Runnable paint = new Runnable() {
             @Override public void run() {
-                for (int i = 0; i < Pin.LENGTH; i++) dot[i].setColor(i < typed.length() ? 0xFFF5F5F7 : 0x00000000);
+                for (int i = 0; i < Pin.LENGTH; i++) dot[i].setColor(i < typed.length() ? Palette.SELECTED : 0x00000000);
             }
         };
         paint.run();
@@ -152,7 +152,7 @@ final class PinDialog {
     private interface Digit { void press(int d); }
 
     private static TextView key(final MainActivity a, String label, final int value, final Digit digit) {
-        final TextView k = a.text(36, "sans-serif", 0xEBFFFFFF);
+        final TextView k = a.text(36, "sans-serif", Palette.TEXT);
         k.setText(label);
         k.setGravity(Gravity.CENTER);
         k.setFocusable(true);
@@ -165,8 +165,8 @@ final class PinDialog {
         k.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View v, boolean f) {
                 if (f) Sounds.get(a).tick();
-                bg.setColor(f ? 0xFFF5F5F7 : 0x1FFFFFFF);
-                k.setTextColor(f ? 0xFF111216 : 0xEBFFFFFF);
+                bg.setColor(f ? Palette.SELECTED : 0x1FFFFFFF);
+                k.setTextColor(f ? Palette.ON_SELECTED : Palette.TEXT);
             }
         });
         k.setOnClickListener(new View.OnClickListener() {

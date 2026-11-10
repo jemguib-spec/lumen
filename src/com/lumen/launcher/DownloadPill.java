@@ -25,7 +25,7 @@ final class DownloadPill {
         @Override public void run() {
             String s = a.online == null ? "" : a.online.activity();
             if (dlPill == null) {
-                dlPill = a.text(18, "sans-serif-medium", 0xD9FFFFFF);
+                dlPill = a.text(18, "sans-serif-medium", Palette.TEXT);
                 dlPill.setSingleLine(true);
                 dlPill.setPadding(a.u(22), a.u(10), a.u(22), a.u(10));
                 GradientDrawable bg = new GradientDrawable();
@@ -44,7 +44,7 @@ final class DownloadPill {
             float want = show ? 1f : 0f;
             if (dlPill.getAlpha() != want && dlPill.getTag() != (Object) Boolean.valueOf(show)) {
                 dlPill.setTag(show);
-                dlPill.animate().alpha(want).setStartDelay(0).setDuration(400).start();
+                dlPill.animate().alpha(want).setStartDelay(0).setDuration(Motion.MEDIUM).start();
             }
             if (a.resumedNow) a.h.postDelayed(this, 1000);
         }

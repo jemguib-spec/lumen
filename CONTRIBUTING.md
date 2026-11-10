@@ -23,6 +23,8 @@ Sur une TV (ou un émulateur Android TV) branchée en adb :
 - **Aucune dépendance** : pas de bibliothèque tierce, pas de Gradle imposé. Ça se compile avec `javac` et les outils Android de la distribution.
 - **Textes à l'écran** calmes et sans jargon ; le détail technique va dans le journal d'erreurs (`Messages`).
 - **Accessibilité** : tout élément sélectionnable a une `contentDescription` (les briques `Tile`, `GlassUi.listRow`, `About.info` le font déjà).
+- **Couleurs et mouvement** : pas de couleur hexadécimale ni de durée en dur dans l'interface ; `Palette` (texte, surfaces, accent, danger) et `Motion` (rapide, moyen, lent, une seule courbe). Les dessins (paysages, météo) gardent leurs couleurs.
+- **Réglages** : un réglage à deux états est un `toggleRow`, à plusieurs valeurs un `choiceRow` ; une page de réglages ne dépasse pas dix lignes, au-delà on crée une sous-page.
 
 ## Proposer un changement
 
@@ -33,7 +35,7 @@ Sur une TV (ou un émulateur Android TV) branchée en adb :
 
 ## Signaler un problème, proposer une idée
 
-Utilise les modèles d'issue (bogue, idée). Pour un bogue, Réglages › Système › Journal d'erreurs sur la TV, ou Plus › Journal depuis le téléphone, donne le détail à coller.
+Utilise les modèles d'issue (bogue, idée). Pour un bogue, Réglages › Système › Diagnostic › Journal d'erreurs sur la TV, ou Plus › Journal depuis le téléphone, donne le détail à coller.
 
 ## Publier (mainteneur)
 

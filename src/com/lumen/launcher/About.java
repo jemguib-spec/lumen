@@ -63,10 +63,10 @@ final class About {
         android.widget.FrameLayout o = a.openOverlay(null);
         LinearLayout card = a.glassCard(48);
         card.setPadding(a.u(56), a.u(48), a.u(56), a.u(40));
-        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText("Nouveautés · Lumen " + version);
         card.addView(title);
-        TextView body = a.text(26, "sans-serif", 0xD9FFFFFF);
+        TextView body = a.text(26, "sans-serif", Palette.TEXT);
         body.setText(notes);
         body.setLineSpacing(0, 1.3f);
         body.setPadding(0, a.u(24), 0, a.u(8));
@@ -98,7 +98,7 @@ final class About {
 
     /** Tous les fonds téléchargés, avec leur auteur et leur licence. */
     static void fillCredits(final MainActivity a, final LinearLayout col) {
-        final TextView wait = a.text(24, "sans-serif", 0x99FFFFFF);
+        final TextView wait = a.text(24, "sans-serif", Palette.TEXT_2);
         wait.setText("Chargement…");
         wait.setPadding(a.u(32), a.u(10), 0, 0);
         col.addView(wait);
@@ -156,9 +156,9 @@ final class About {
         bg.setCornerRadius(a.u(24));
         bg.setColor(0x00FFFFFF);
         r.setBackground(bg);
-        final TextView t = a.text(24, "sans-serif", 0xEBFFFFFF);
+        final TextView t = a.text(24, "sans-serif", Palette.TEXT);
         if (title != null) { t.setText(title); r.addView(t); } else t.setVisibility(View.GONE);
-        final TextView s = a.text(title == null ? 21 : 22, "sans-serif", 0x8CFFFFFF);
+        final TextView s = a.text(title == null ? 21 : 22, "sans-serif", Palette.TEXT_2);
         s.setText(text);
         s.setLineSpacing(0, 1.2f);
         if (title != null) s.setPadding(0, a.u(6), 0, 0);

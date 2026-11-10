@@ -46,10 +46,10 @@ final class CheckCell {
         img = new ImageView(a);
         img.setScaleType(ImageView.ScaleType.CENTER_CROP);
         card.addView(img, MainActivity.match());
-        check = a.text(28, "sans-serif-medium", 0xFF111216);
+        check = a.text(28, "sans-serif-medium", Palette.ON_SELECTED);
         check.setGravity(Gravity.CENTER);
         checkBg.setShape(GradientDrawable.OVAL);
-        checkBg.setColor(0xFFF5F5F7);
+        checkBg.setColor(Palette.SELECTED);
         check.setBackground(checkBg);
     }
 
@@ -70,7 +70,7 @@ final class CheckCell {
         cell.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View v, boolean f) {
                 if (f) Sounds.get(a).tick();
-                cell.animate().scaleX(f ? 1.08f : 1f).scaleY(f ? 1.08f : 1f).setDuration(220)
+                cell.animate().scaleX(f ? 1.08f : 1f).scaleY(f ? 1.08f : 1f).setDuration(Motion.FAST)
                         .setInterpolator(new DecelerateInterpolator(2f)).start();
                 card.setElevation(f ? a.u(30) : 0);
                 card.setForeground(f ? ring(a, radius) : null);
@@ -89,7 +89,7 @@ final class CheckCell {
     static GradientDrawable ring(MainActivity a, float radius) {
         GradientDrawable g = new GradientDrawable();
         g.setCornerRadius(radius);
-        g.setStroke(a.u(4), 0xFFF5F5F7);
+        g.setStroke(a.u(4), Palette.SELECTED);
         return g;
     }
 }

@@ -125,6 +125,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         prefs = new Prefs(this);
         textScale = Prefs.TEXT_SCALES[prefs.textScale()];
         highContrast = prefs.highContrast();
+        Palette.apply(highContrast);
         repo = new AppRepo(this);
         repo.reload();
         online = new Online(this, prefs);
@@ -159,7 +160,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
 
     /** Taille du texte ou contraste changés : on reconstruit l'interface, puis on revient dans les réglages. */
     void restyle() {
-        SettingsPanel.reopenPage = SettingsPanel.ACCUEIL;
+        SettingsPanel.reopenPage = SettingsPanel.LISIBILITE;
         recreate();
     }
 
@@ -313,13 +314,13 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     }
 
     private void updateCaption(final WallItem item) {
-        captionBox.animate().alpha(0f).setDuration(300).withEndAction(new Runnable() {
+        captionBox.animate().alpha(0f).setDuration(Motion.MEDIUM).withEndAction(new Runnable() {
             @Override public void run() {
                 captionTitle.setText(item.title);
                 captionCredit.setText(item.credit);
                 captionCredit.setVisibility(TextUtils.isEmpty(item.credit) ? View.GONE : View.VISIBLE);
                 updateDots();
-                captionBox.animate().alpha(appsOpen || ambientOn ? 0f : 1f).setDuration(600).start();
+                captionBox.animate().alpha(appsOpen || ambientOn ? 0f : 1f).setDuration(Motion.SLOW).start();
             }
         }).start();
     }
@@ -384,7 +385,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         TextView t = new TextView(this);
         t.setTextSize(TypedValue.COMPLEX_UNIT_PX, px * unit * textScale);
         // contraste renforcé : les textes secondaires (gris translucides) deviennent presque opaques
-        if (highContrast && (color >>> 24) < 0xE0 && (color & 0xFFFFFF) == 0xFFFFFF) color = 0xF2FFFFFF;
+        if (highContrast && (color >>> 24) < 0xE0 && (color & 0xFFFFFF) == 0xFFFFFF) color = Palette.TEXT;
         t.setTypeface(Fonts.get(family, Typeface.NORMAL));
         t.setTextColor(color);
         t.setIncludeFontPadding(false);
@@ -544,7 +545,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
             focusLabel.animate().cancel();
             focusLabel.setText(s);
             focusLabel.setAlpha(0.35f);
-            focusLabel.animate().alpha(1f).setDuration(200).start();
+            focusLabel.animate().alpha(1f).setDuration(Motion.FAST).start();
         }
     };
 
@@ -617,6 +618,8 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
                 CrashLog.safeModeJustStarted = false;
                 showNotice("Lumen a redémarré en mode sans échec après des erreurs");
             }
+            // trois conseils, un par démarrage, puis plus rien
+            h.postDelayed(new Runnable() { @Override public void run() { if (!isFinishing() && overlay == null) Tips.showNext(MainActivity.this); } }, 4000);
             // premier démarrage sans être l'écran d'accueil : l'assistant d'installation s'ouvre (une fois)
             h.postDelayed(new Runnable() { @Override public void run() { if (!isFinishing()) Install.maybeShowAtStart(MainActivity.this); } }, 1500);
         }
@@ -661,12 +664,15 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         if (code == REQ_WATCH_NEXT) shelf.reload();
     }
 
-    void showNotice(String s) {
+    void showNotice(String s) { showNotice(s, 2200); }
+
+    /** Message en bas de l'écran ; holdMs = temps de lecture avant qu'il s'efface. */
+    void showNotice(String s, final long holdMs) {
         notice.setText(s);
         notice.animate().cancel();
         notice.setTranslationY(u(20));
-        notice.animate().alpha(1f).translationY(0).setStartDelay(0).setDuration(240).withEndAction(new Runnable() {
-            @Override public void run() { notice.animate().alpha(0f).setStartDelay(2200).setDuration(400).start(); }
+        notice.animate().alpha(1f).translationY(0).setStartDelay(0).setDuration(Motion.FAST).setInterpolator(Motion.EASE).withEndAction(new Runnable() {
+            @Override public void run() { notice.animate().alpha(0f).setStartDelay(holdMs).setDuration(Motion.MEDIUM).start(); }
         }).start();
     }
 
@@ -765,7 +771,8 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         }
         // ◀ dans une sous-page des réglages : retour à la page précédente
         if (down && code == KeyEvent.KEYCODE_DPAD_LEFT && overlay != null && e.getRepeatCount() == 0
-                && SettingsPanel.inSubPage() && !(getCurrentFocus() instanceof android.widget.EditText)) { SettingsPanel.back(this); return true; }
+                && SettingsPanel.inSubPage() && !(getCurrentFocus() instanceof android.widget.EditText)
+                && !(getCurrentFocus() != null && "choice".equals(getCurrentFocus().getTag()))) { SettingsPanel.back(this); return true; }
         if (!down && code == KeyEvent.KEYCODE_MENU && overlay == null) { SettingsPanel.openSettings(MainActivity.this); return true; }
         // micro de la télécommande : recherche vocale (si Android laisse la touche arriver jusqu'à Lumen)
         if (!down && (code == KeyEvent.KEYCODE_SEARCH || code == KeyEvent.KEYCODE_VOICE_ASSIST || code == KeyEvent.KEYCODE_ASSIST)
@@ -801,7 +808,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         sceneBar.setGravity(Gravity.CENTER);
         sceneBar.setClipChildren(false);
         for (final String[] sc : scenes) {
-            final TextView pill = text(22, "sans-serif-medium", 0xEBFFFFFF);
+            final TextView pill = text(22, "sans-serif-medium", Palette.TEXT);
             pill.setText("✦  " + sc[1]);
             pill.setSingleLine(true);
             pill.setFocusable(true);
@@ -816,9 +823,9 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
             pill.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override public void onFocusChange(View v, boolean f) {
                     if (f) Sounds.get(MainActivity.this).tick();
-                    bg.setColor(f ? 0xFFF5F5F7 : 0x33FFFFFF);
-                    pill.setTextColor(f ? 0xFF111216 : 0xEBFFFFFF);
-                    pill.animate().scaleX(f ? 1.06f : 1f).scaleY(f ? 1.06f : 1f).setStartDelay(0).setDuration(200).start();
+                    bg.setColor(f ? Palette.SELECTED : 0x33FFFFFF);
+                    pill.setTextColor(f ? Palette.ON_SELECTED : Palette.TEXT);
+                    pill.animate().scaleX(f ? 1.06f : 1f).scaleY(f ? 1.06f : 1f).setStartDelay(0).setDuration(Motion.FAST).start();
                 }
             });
             pill.setOnClickListener(new View.OnClickListener() {
@@ -852,7 +859,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
                 if (s.contentEquals(greet.getText())) return;
                 greet.setText(s);
                 greet.setAlpha(0f);
-                greet.animate().alpha(1f).setDuration(600).start();
+                greet.animate().alpha(1f).setDuration(Motion.SLOW).start();
             }
         });
     }
@@ -967,7 +974,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
             if (gone) showNotice(app.label + " désinstallée");
         }
         if (!animate) { root.removeView(v); return; }
-        v.animate().alpha(0f).setDuration(400).withEndAction(new Runnable() {
+        v.animate().alpha(0f).setDuration(Motion.MEDIUM).withEndAction(new Runnable() {
             @Override public void run() { root.removeView(v); }
         }).start();
     }
@@ -990,10 +997,10 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         captionBox.setAlpha(0f);
         homeLayer.setAlpha(0f);
         homeLayer.setTranslationY(u(28));
-        clockBox.animate().alpha(1f).setStartDelay(60).setDuration(320).setInterpolator(di).withEndAction(noDelay(clockBox)).start();
-        wallLayer.animate().alpha(1f).setStartDelay(180).setDuration(520).setInterpolator(di).withEndAction(noDelay(wallLayer)).start();
-        captionBox.animate().alpha(1f).setStartDelay(380).setDuration(420).setInterpolator(di).withEndAction(noDelay(captionBox)).start();
-        homeLayer.animate().alpha(1f).translationY(0).setStartDelay(420).setDuration(480).setInterpolator(di).withEndAction(noDelay(homeLayer)).start();
+        clockBox.animate().alpha(1f).setStartDelay(60).setDuration(Motion.MEDIUM).setInterpolator(di).withEndAction(noDelay(clockBox)).start();
+        wallLayer.animate().alpha(1f).setStartDelay(180).setDuration(Motion.MEDIUM).setInterpolator(di).withEndAction(noDelay(wallLayer)).start();
+        captionBox.animate().alpha(1f).setStartDelay(380).setDuration(Motion.MEDIUM).setInterpolator(di).withEndAction(noDelay(captionBox)).start();
+        homeLayer.animate().alpha(1f).translationY(0).setStartDelay(420).setDuration(Motion.MEDIUM).setInterpolator(di).withEndAction(noDelay(homeLayer)).start();
     }
 
     /** Le délai d'une animation reste attaché à la vue : on le remet à zéro (sinon tout s'ouvrirait en retard). */
@@ -1105,17 +1112,17 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         DecelerateInterpolator soft = new DecelerateInterpolator(2f);
         homeLayer.animate().translationY(-u(36)).scaleX(0.97f).scaleY(0.97f).alpha(0f).setStartDelay(0).setDuration(260).setInterpolator(soft).start();
         glow.fade();
-        captionBox.animate().alpha(0f).setStartDelay(0).setDuration(200).start();
-        clockBox.animate().alpha(0f).setStartDelay(0).setDuration(200).start(); // l'horloge de l'accueil ne doit pas chevaucher la recherche
-        wallLayer.animate().scaleX(1.08f).scaleY(1.08f).setStartDelay(0).setDuration(700).setInterpolator(soft).start();
+        captionBox.animate().alpha(0f).setStartDelay(0).setDuration(Motion.FAST).start();
+        clockBox.animate().alpha(0f).setStartDelay(0).setDuration(Motion.FAST).start(); // l'horloge de l'accueil ne doit pas chevaucher la recherche
+        wallLayer.animate().scaleX(1.08f).scaleY(1.08f).setStartDelay(0).setDuration(Motion.SLOW).setInterpolator(soft).start();
         appsLayer.animate().cancel();
         appsLayer.setVisibility(View.VISIBLE);
         appsLayer.setAlpha(1f);
         appsLayer.setTranslationY(0);
         appsBg.setAlpha(0f);
         appsTint.setAlpha(0f);
-        appsBg.animate().alpha(1f).setStartDelay(0).setDuration(420).setInterpolator(soft).start();
-        appsTint.animate().alpha(1f).setStartDelay(0).setDuration(420).setInterpolator(soft).start();
+        appsBg.animate().alpha(1f).setStartDelay(0).setDuration(Motion.MEDIUM).setInterpolator(soft).start();
+        appsTint.animate().alpha(1f).setStartDelay(0).setDuration(Motion.MEDIUM).setInterpolator(soft).start();
         appsPage.animateIn();
         focusFirstApp();
     }
@@ -1133,8 +1140,8 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         DecelerateInterpolator soft = new DecelerateInterpolator(2f);
         homeLayer.animate().translationY(0).scaleX(1f).scaleY(1f).alpha(1f).setStartDelay(animate ? 90 : 0)
                 .setDuration(animate ? 380 : 0).setInterpolator(soft).start();
-        captionBox.animate().alpha(1f).setStartDelay(0).setDuration(300).start();
-        clockBox.animate().alpha(1f).setStartDelay(0).setDuration(300).start();
+        captionBox.animate().alpha(1f).setStartDelay(0).setDuration(Motion.MEDIUM).start();
+        clockBox.animate().alpha(1f).setStartDelay(0).setDuration(Motion.MEDIUM).start();
         wallLayer.animate().scaleX(1.04f).scaleY(1.04f).setStartDelay(0).setDuration(animate ? 600 : 0).setInterpolator(soft).start();
         appsLayer.animate().alpha(0f).translationY(u(40)).setStartDelay(0).setDuration(animate ? 280 : 0).setInterpolator(soft)
                 .withEndAction(new Runnable() {
@@ -1173,11 +1180,11 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         FrameLayout o = new FrameLayout(this);
         o.setClipChildren(false);
         View dim = new View(this);
-        dim.setBackgroundColor(highContrast ? 0xB304040A : 0x6604040A);
+        dim.setBackgroundColor(Palette.DIM);
         o.addView(dim, match());
         o.setAlpha(0f);
         root.addView(o, root.indexOfChild(notice), match());
-        o.animate().alpha(1f).setDuration(220).start();
+        o.animate().alpha(1f).setDuration(Motion.FAST).start();
         growFrom(o, focusBeforeOverlay);
         homeLayer.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
         appsLayer.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
@@ -1248,10 +1255,10 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
             // le panneau rapetisse vers son bouton en s'effaçant
             if (o.getChildCount() >= 2) {
                 View card = o.getChildAt(o.getChildCount() - 1);
-                card.animate().scaleX(0.86f).scaleY(0.86f).setStartDelay(0).setDuration(200)
+                card.animate().scaleX(0.86f).scaleY(0.86f).setStartDelay(0).setDuration(Motion.FAST)
                         .setInterpolator(new android.view.animation.AccelerateInterpolator(1.4f)).start();
             }
-            o.animate().alpha(0f).setDuration(200).withEndAction(new Runnable() {
+            o.animate().alpha(0f).setDuration(Motion.FAST).withEndAction(new Runnable() {
                 @Override public void run() { root.removeView(o); }
             }).start();
         } else {

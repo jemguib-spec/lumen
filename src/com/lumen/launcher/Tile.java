@@ -37,7 +37,7 @@ final class Tile extends FrameLayout {
     private View favDot;
     private FocusListener focusListener;
     private float focusScale = 1.1f;
-    private int focusText = 0xFF111216;
+    private int focusText = Palette.ON_SELECTED;
     private boolean banner;
 
     /**
@@ -46,7 +46,7 @@ final class Tile extends FrameLayout {
     static int readable(int c) {
         float[] hsv = new float[3];
         Color.colorToHSV(c, hsv);
-        if (hsv[1] < 0.25f) return 0xFF111216;           // pas de vraie couleur : texte sombre
+        if (hsv[1] < 0.25f) return Palette.ON_SELECTED;           // pas de vraie couleur : texte sombre
         hsv[2] = Math.min(hsv[2], hsv[1] > 0.6f ? 0.82f : 0.62f); // assez sombre pour le contraste
         hsv[1] = Math.max(hsv[1], 0.55f);
         return Color.HSVToColor(hsv);
@@ -91,7 +91,7 @@ final class Tile extends FrameLayout {
             t.focusText = readable(a.color(c.getPackageManager()));
             t.label = new TextView(c);
             t.label.setText(a.label);
-            t.label.setTextColor(0xF2FFFFFF);
+            t.label.setTextColor(Palette.TEXT);
             t.label.setTextSize(TypedValue.COMPLEX_UNIT_PX, h * (a.label.length() > 12 ? 0.15f : 0.19f));
             t.label.setTypeface(Fonts.get("sans-serif", Typeface.BOLD));
             t.label.setLetterSpacing(-0.01f);
@@ -127,7 +127,7 @@ final class Tile extends FrameLayout {
             }
             t.label = new TextView(c);
             t.label.setText(a.label);
-            t.label.setTextColor(0xF2FFFFFF);
+            t.label.setTextColor(Palette.TEXT);
             t.label.setTextSize(TypedValue.COMPLEX_UNIT_PX, h * (icon ? 0.13f : 0.175f));
             t.label.setTypeface(Fonts.get("sans-serif-medium", Typeface.NORMAL));
             t.label.setSingleLine(true);
@@ -150,7 +150,7 @@ final class Tile extends FrameLayout {
         t.focusScale = 1.12f;
         t.glass = new Glass.Surface(t.card, size / 2f, 0x1FFFFFFF);
         t.card.setBackground(t.glass);
-        t.glyph = new Glyph(glyphType, 0xF2FFFFFF);
+        t.glyph = new Glyph(glyphType, Palette.TEXT);
         ImageView iv = new ImageView(c);
         iv.setImageDrawable(t.glyph);
         int g = (int) (size * 0.42f);
@@ -190,7 +190,7 @@ final class Tile extends FrameLayout {
             GradientDrawable d = new GradientDrawable();
             d.setShape(GradientDrawable.OVAL);
             d.setColor(Color.WHITE);
-            d.setStroke((int) dp(getContext(), 1), 0x55000000);
+            d.setStroke((int) dp(getContext(), 1), Palette.SHADOW);
             favDot.setBackground(d);
             int s = (int) dp(getContext(), 6);
             LayoutParams lp = new LayoutParams(s, s, Gravity.TOP | Gravity.END);
@@ -246,10 +246,10 @@ final class Tile extends FrameLayout {
             b.setCornerRadius(radius);
             b.setStroke((int) dp(getContext(), 2), Color.WHITE);
             card.setForeground(b);
-            animate().translationY(-dp(getContext(), 8)).setDuration(180).start();
+            animate().translationY(-dp(getContext(), 8)).setDuration(Motion.FAST).start();
         } else {
             card.setForeground(null);
-            animate().translationY(0).setDuration(180).start();
+            animate().translationY(0).setDuration(Motion.FAST).start();
         }
     }
 
@@ -271,8 +271,8 @@ final class Tile extends FrameLayout {
         }
         if (glass != null) {
             glass.setSolid(f);
-            if (label != null) label.setTextColor(f ? focusText : 0xF2FFFFFF);
-            if (glyph != null) glyph.setColor(f ? 0xFF111216 : 0xF2FFFFFF);
+            if (label != null) label.setTextColor(f ? focusText : Palette.TEXT);
+            if (glyph != null) glyph.setColor(f ? Palette.ON_SELECTED : Palette.TEXT);
         }
         if (f) {
             sheen();
@@ -295,7 +295,7 @@ final class Tile extends FrameLayout {
         s.setRotation(18);
         s.setTranslationX(-sw * 1.2f);
         card.addView(s, lp);
-        s.animate().translationX(w + sw * 0.2f).setStartDelay(60).setDuration(700)
+        s.animate().translationX(w + sw * 0.2f).setStartDelay(60).setDuration(Motion.SLOW)
                 .setInterpolator(new DecelerateInterpolator(1.4f)).withEndAction(new Runnable() {
                     @Override public void run() { card.removeView(s); }
                 }).start();

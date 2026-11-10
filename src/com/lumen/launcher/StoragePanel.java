@@ -18,11 +18,11 @@ final class StoragePanel {
         final LinearLayout card = a.glassCard(44);
         card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
         a.rowRefreshers.clear();
-        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText("Stockage");
         title.setGravity(Gravity.CENTER);
         card.addView(title, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        final TextView free = a.text(22, "sans-serif", 0x99FFFFFF);
+        final TextView free = a.text(22, "sans-serif", Palette.TEXT_2);
         free.setGravity(Gravity.CENTER);
         free.setPadding(0, a.u(10), 0, a.u(26));
         card.addView(free, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));

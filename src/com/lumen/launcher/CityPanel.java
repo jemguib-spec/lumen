@@ -23,10 +23,10 @@ final class CityPanel {
         FrameLayout o = a.openOverlay(null);
         LinearLayout card = a.glassCard(44);
         card.setPadding(a.u(40), a.u(44), a.u(40), a.u(32));
-        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText("Ville pour la météo");
         card.addView(title);
-        TextView hint = a.text(22, "sans-serif", 0x8CFFFFFF);
+        TextView hint = a.text(22, "sans-serif", Palette.TEXT_2);
         hint.setText("Seul le nom de la ville est envoyé à Open-Meteo, service météo gratuit et sans compte.");
         hint.setPadding(0, a.u(12), 0, a.u(28));
         card.addView(hint);
@@ -35,11 +35,11 @@ final class CityPanel {
         in.setHint("Ex. Paris");
         in.setText(a.weather.city());
         in.setTextSize(TypedValue.COMPLEX_UNIT_PX, 32 * a.unit);
-        in.setTextColor(0xFF111216);
-        in.setHintTextColor(0x80111216);
+        in.setTextColor(Palette.ON_SELECTED);
+        in.setHintTextColor(Palette.ON_SELECTED_2);
         in.setPadding(a.u(28), a.u(20), a.u(28), a.u(20));
         GradientDrawable ib = new GradientDrawable();
-        ib.setColor(0xFFF5F5F7);
+        ib.setColor(Palette.SELECTED);
         ib.setCornerRadius(a.u(22));
         in.setBackground(ib);
         in.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);

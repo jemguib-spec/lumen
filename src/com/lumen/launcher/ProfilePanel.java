@@ -106,7 +106,7 @@ final class ProfilePanel {
         FrameLayout o = a.openOverlay(null);
         LinearLayout card = a.glassCard(44);
         card.setPadding(a.u(40), a.u(44), a.u(40), a.u(32));
-        TextView t = a.text(44, "sans-serif-light", 0xF5FFFFFF);
+        TextView t = a.text(44, "sans-serif-light", Palette.TEXT);
         t.setText(title);
         t.setPadding(0, 0, 0, a.u(28));
         card.addView(t);
@@ -118,12 +118,12 @@ final class ProfilePanel {
         in.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(Profiles.MAX_NAME)});
         in.setTextSize(TypedValue.COMPLEX_UNIT_PX, 30 * a.unit);
         in.setTypeface(Fonts.get("sans-serif", android.graphics.Typeface.NORMAL));
-        in.setTextColor(0xFF111216);
-        in.setHintTextColor(0x80111216);
+        in.setTextColor(Palette.ON_SELECTED);
+        in.setHintTextColor(Palette.ON_SELECTED_2);
         in.setPadding(a.u(28), a.u(20), a.u(28), a.u(20));
         in.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS);
         GradientDrawable ib = new GradientDrawable();
-        ib.setColor(0xFFF5F5F7);
+        ib.setColor(Palette.SELECTED);
         ib.setCornerRadius(a.u(22));
         in.setBackground(ib);
         in.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE | android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);

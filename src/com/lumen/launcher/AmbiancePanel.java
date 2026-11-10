@@ -62,12 +62,12 @@ final class AmbiancePanel {
         clock.setFormat12Hour("h:mm");
         clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, 40 * a.unit);
         clock.setTypeface(Fonts.get("sans-serif-light", Typeface.NORMAL));
-        clock.setTextColor(0x99FFFFFF);
+        clock.setTextColor(Palette.TEXT_2);
         clock.setShadowLayer(a.u(10), 0, 0, 0x88000000);
         FrameLayout.LayoutParams cl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
         cl.topMargin = a.u(56);
         cl.rightMargin = a.u(80);
-        status = a.text(22, "sans-serif", 0x80FFFFFF);
+        status = a.text(22, "sans-serif", Palette.TEXT_3);
         status.setShadowLayer(a.u(10), 0, 0, 0x88000000);
         FrameLayout.LayoutParams sl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
         sl.topMargin = a.u(110);
@@ -108,7 +108,7 @@ final class AmbiancePanel {
         AmbiancePanel p = new AmbiancePanel(a);
         a.root.addView(p.layer, MainActivity.match());
         p.layer.setAlpha(0f);
-        p.layer.animate().alpha(1f).setDuration(600).start();
+        p.layer.animate().alpha(1f).setDuration(Motion.SLOW).start();
         a.prefs.setCosyWanted(true);
         a.online.refreshCosy();
         p.showKind(p.kind, 1);
@@ -126,7 +126,7 @@ final class AmbiancePanel {
         view = null;
         a.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         final FrameLayout l = layer;
-        l.animate().alpha(0f).setDuration(300).withEndAction(new Runnable() {
+        l.animate().alpha(0f).setDuration(Motion.MEDIUM).withEndAction(new Runnable() {
             @Override public void run() { a.root.removeView(l); }
         }).start();
     }
@@ -460,7 +460,7 @@ final class AmbiancePanel {
         final View m = menu;
         menu = null;
         a.rowRefreshers.clear();
-        m.animate().alpha(0f).setDuration(200).withEndAction(new Runnable() {
+        m.animate().alpha(0f).setDuration(Motion.FAST).withEndAction(new Runnable() {
             @Override public void run() { layer.removeView(m); }
         }).start();
     }

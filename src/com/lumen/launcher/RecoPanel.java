@@ -47,7 +47,7 @@ final class RecoPanel {
         LinearLayout head = new LinearLayout(a);
         head.setOrientation(LinearLayout.HORIZONTAL);
         head.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText("À l'affiche");
         title.setPadding(a.u(28), 0, 0, a.u(6));
         head.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
@@ -64,7 +64,7 @@ final class RecoPanel {
         final LinearLayout modes = new LinearLayout(a);
         modes.setPadding(a.u(24), a.u(4), a.u(24), a.u(6));
         card.addView(modes);
-        final TextView sub = a.text(18, "sans-serif-medium", 0x80FFFFFF);
+        final TextView sub = a.text(18, "sans-serif-medium", Palette.TEXT_3);
         sub.setLetterSpacing(0.12f);
         sub.setPadding(a.u(28), 0, 0, a.u(20));
         card.addView(sub);
@@ -133,7 +133,7 @@ final class RecoPanel {
         final String[] current = {f0};
         final List<TextView> chipViews = new ArrayList<>();
         for (final String[] f : filters) {
-            final TextView c = a.text(22, "sans-serif-medium", 0xEBFFFFFF);
+            final TextView c = a.text(22, "sans-serif-medium", Palette.TEXT);
             c.setText(f[1]);
             c.setSingleLine(true);
             c.setFocusable(true);
@@ -170,7 +170,7 @@ final class RecoPanel {
         final String[][] modeList = {{Tmdb.POPULAR, "Populaire"}, {Tmdb.NEW, "Nouveautés"}, {Tmdb.TOP, "Mieux notés"}, {Tmdb.FOR_YOU, "Pour toi"}};
         final List<TextView> modeViews = new ArrayList<>();
         for (final String[] md : modeList) {
-            final TextView mv = a.text(22, "sans-serif-medium", 0x80FFFFFF);
+            final TextView mv = a.text(22, "sans-serif-medium", Palette.TEXT_3);
             mv.setText(md[1]);
             mv.setSingleLine(true);
             mv.setFocusable(true);
@@ -238,10 +238,10 @@ final class RecoPanel {
     private static String type = "", mode = Tmdb.POPULAR;
 
     private static void styleMode(MainActivity a, TextView v, boolean selected, boolean focused) {
-        v.setTextColor(focused ? 0xFF111216 : selected ? 0xFFFFFFFF : 0x80FFFFFF);
+        v.setTextColor(focused ? Palette.ON_SELECTED : selected ? 0xFFFFFFFF : Palette.TEXT_3);
         GradientDrawable bg = new GradientDrawable();
         bg.setCornerRadius(a.u(20));
-        bg.setColor(focused ? 0xFFF5F5F7 : 0x00FFFFFF);
+        bg.setColor(focused ? Palette.SELECTED : 0x00FFFFFF);
         // trait fin sous le mode choisi
         android.graphics.drawable.LayerDrawable ld = new android.graphics.drawable.LayerDrawable(new android.graphics.drawable.Drawable[]{bg, line(a, selected && !focused)});
         ld.setLayerInset(1, a.u(14), 0, a.u(14), 0);
@@ -267,15 +267,15 @@ final class RecoPanel {
     private static final String KEY_REFUSED = "Clé TMDB refusée : elle est peut-être incomplète ou désactivée.";
 
     private static void styleSeg(TextView s, boolean selected, boolean focused) {
-        ((GradientDrawable) s.getBackground()).setColor(focused ? 0xFFF5F5F7 : selected ? 0x40FFFFFF : 0x00FFFFFF);
-        s.setTextColor(focused ? 0xFF111216 : selected ? 0xFFFFFFFF : 0x99FFFFFF);
+        ((GradientDrawable) s.getBackground()).setColor(focused ? Palette.SELECTED : selected ? 0x40FFFFFF : 0x00FFFFFF);
+        s.setTextColor(focused ? Palette.ON_SELECTED : selected ? 0xFFFFFFFF : Palette.TEXT_2);
     }
 
     private static void styleChip(MainActivity a, TextView c, boolean selected, boolean focused) {
         GradientDrawable bg = (GradientDrawable) c.getBackground();
-        bg.setColor(focused ? 0xFFF5F5F7 : selected ? 0x40FFFFFF : 0x14FFFFFF);
-        bg.setStroke(Math.max(1, a.u(1.5f)), selected && !focused ? 0x80FFFFFF : 0x1FFFFFFF);
-        c.setTextColor(focused ? 0xFF111216 : selected ? 0xFFFFFFFF : 0xB3FFFFFF);
+        bg.setColor(focused ? Palette.SELECTED : selected ? 0x40FFFFFF : 0x14FFFFFF);
+        bg.setStroke(Math.max(1, a.u(1.5f)), selected && !focused ? Palette.TEXT_3 : 0x1FFFFFFF);
+        c.setTextColor(focused ? Palette.ON_SELECTED : selected ? 0xFFFFFFFF : 0xB3FFFFFF);
     }
 
     private static Set<String> visiblePackages(MainActivity a) {
@@ -295,7 +295,7 @@ final class RecoPanel {
                 : Tmdb.NEW.equals(md) ? "LES NOUVEAUTÉS " + where
                 : Tmdb.TOP.equals(md) ? "LES MIEUX NOTÉS " + where
                 : filter[0].isEmpty() ? "LES PLUS REGARDÉS CETTE SEMAINE" : "LES PLUS POPULAIRES " + where));
-        final TextView wait = a.text(24, "sans-serif", 0x99FFFFFF);
+        final TextView wait = a.text(24, "sans-serif", Palette.TEXT_2);
         wait.setText("Chargement…");
         wait.setPadding(a.u(28), a.u(16), 0, 0);
         list.addView(wait);
@@ -330,7 +330,7 @@ final class RecoPanel {
                         if (!card.isAttachedToWindow() || lastFilter != filter || !ty.equals(type) || !md.equals(mode)) return; // filtre changé entre-temps
                         list.removeAllViews();
                         if (titles == null || titles.isEmpty()) {
-                            wait.setText(error != null ? error : "Rien pour l'instant");
+                            wait.setText(error != null ? error : "Rien à afficher avec ce filtre · essaie « Partout » ou un autre type");
                             list.addView(wait);
                             if (KEY_REFUSED.equals(error)) {
                                 LinearLayout fix = a.iconRow(Glyph.UNLOCK, "Changer la clé", null, new View.OnClickListener() {
@@ -379,7 +379,7 @@ final class RecoPanel {
         r.setBackground(bg);
 
         // classement (1 à 10) en chiffres fins, à la manière d'un « top 10 »
-        final TextView num = a.text(40, "sans-serif-thin", 0x80FFFFFF);
+        final TextView num = a.text(40, "sans-serif-thin", Palette.TEXT_3);
         num.setText(rank <= 10 ? String.valueOf(rank) : "");
         num.setGravity(Gravity.CENTER);
         num.setIncludeFontPadding(false);
@@ -387,7 +387,7 @@ final class RecoPanel {
 
         final ImageView poster = new ImageView(a);
         poster.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        poster.setBackgroundColor(0x1AFFFFFF);
+        poster.setBackgroundColor(Palette.LINE);
         poster.setOutlineProvider(new android.view.ViewOutlineProvider() {
             @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), a.u(12)); }
         });
@@ -402,13 +402,13 @@ final class RecoPanel {
 
         LinearLayout txt = new LinearLayout(a);
         txt.setOrientation(LinearLayout.VERTICAL);
-        final TextView name = a.text(24, "sans-serif-medium", 0xF2FFFFFF);
+        final TextView name = a.text(24, "sans-serif-medium", Palette.TEXT);
         name.setText(t.name);
         name.setMaxLines(1);
         name.setEllipsize(TextUtils.TruncateAt.END);
         txt.addView(name);
         final String meta = metaShort(t);
-        final TextView m = a.text(18, "sans-serif", 0x99FFFFFF);
+        final TextView m = a.text(18, "sans-serif", Palette.TEXT_2);
         m.setText(meta);
         LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         ml.topMargin = a.u(6);
@@ -436,11 +436,11 @@ final class RecoPanel {
         r.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View v, boolean f) {
                 if (f) Sounds.get(a).tick();
-                bg.setColor(f ? 0xFFF5F5F7 : 0x00FFFFFF);
-                name.setTextColor(f ? 0xFF111216 : 0xF2FFFFFF);
-                m.setTextColor(f ? 0x99111216 : 0x99FFFFFF);
-                num.setTextColor(f ? 0xFFFFFFFF : 0x80FFFFFF);
-                r.animate().scaleX(f ? 1.02f : 1f).scaleY(f ? 1.02f : 1f).setStartDelay(0).setDuration(180).start();
+                bg.setColor(f ? Palette.SELECTED : 0x00FFFFFF);
+                name.setTextColor(f ? Palette.ON_SELECTED : Palette.TEXT);
+                m.setTextColor(f ? Palette.ON_SELECTED_2 : Palette.TEXT_2);
+                num.setTextColor(f ? 0xFFFFFFFF : Palette.TEXT_3);
+                r.animate().scaleX(f ? 1.02f : 1f).scaleY(f ? 1.02f : 1f).setStartDelay(0).setDuration(Motion.FAST).start();
                 if (f && hero != null) hero.show(t);
             }
         });
@@ -505,10 +505,10 @@ final class RecoPanel {
 
             text = new LinearLayout(a);
             text.setOrientation(LinearLayout.VERTICAL);
-            title = a.text(56, "sans-serif-light", 0xF5FFFFFF);
+            title = a.text(56, "sans-serif-light", Palette.TEXT);
             title.setMaxLines(2);
             title.setEllipsize(TextUtils.TruncateAt.END);
-            title.setShadowLayer(a.u(12), 0, 0, 0x66000000);
+            title.setShadowLayer(a.u(12), 0, 0, Palette.SHADOW);
             text.addView(title);
             // logo officiel du titre (s'il existe) à la place du texte, comme sur les grandes plateformes
             logo = new ImageView(a);
@@ -560,7 +560,7 @@ final class RecoPanel {
                     overview.setText(t.overview);
                     overview.setVisibility(t.overview == null || t.overview.isEmpty() ? View.GONE : View.VISIBLE);
                     text.setTranslationY(a.u(10));
-                    text.animate().alpha(1f).translationY(0).setDuration(420).setInterpolator(new DecelerateInterpolator(2f)).start();
+                    text.animate().alpha(1f).translationY(0).setDuration(Motion.MEDIUM).setInterpolator(new DecelerateInterpolator(2f)).start();
                 }
             }).start();
             RecoPanel.img.execute(new Runnable() {
@@ -583,7 +583,7 @@ final class RecoPanel {
                             logo.setAlpha(0f);
                             logo.setVisibility(View.VISIBLE);
                             title.setVisibility(View.GONE);
-                            logo.animate().alpha(1f).setDuration(500).start();
+                            logo.animate().alpha(1f).setDuration(Motion.MEDIUM).start();
                         }
                     });
                     a.h.post(new Runnable() {
@@ -596,7 +596,7 @@ final class RecoPanel {
                             in.setScaleY(1.06f);
                             // fondu croisé entre les deux images (voiles et texte restent toujours devant)
                             in.setAlpha(0f);
-                            in.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(900).setInterpolator(new DecelerateInterpolator(1.6f))
+                            in.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(Motion.SLOW).setInterpolator(new DecelerateInterpolator(1.6f))
                                     .withEndAction(new Runnable() {
                                         @Override public void run() {
                                             // lent mouvement de caméra tant que le titre reste sélectionné
@@ -605,7 +605,7 @@ final class RecoPanel {
                                         }
                                     }).start();
                             in.setTranslationX(0);
-                            out.animate().alpha(0f).setDuration(900).start();
+                            out.animate().alpha(0f).setDuration(Motion.SLOW).start();
                         }
                     });
                 }
@@ -643,11 +643,11 @@ final class RecoPanel {
                 detailsBack = previous;
             }
         };
-        TextView name = a.text(32, "sans-serif-light", 0xF5FFFFFF);
+        TextView name = a.text(32, "sans-serif-light", Palette.TEXT);
         name.setText(t.name);
         name.setPadding(a.u(28), a.u(8), a.u(20), 0);
         list.addView(name);
-        TextView meta = a.text(18, "sans-serif-medium", 0x80FFFFFF);
+        TextView meta = a.text(18, "sans-serif-medium", Palette.TEXT_3);
         meta.setText(meta(t).toUpperCase(Locale.FRANCE));
         meta.setLetterSpacing(0.06f);
         meta.setPadding(a.u(28), a.u(8), a.u(20), a.u(22));
@@ -656,7 +656,7 @@ final class RecoPanel {
         final LinearLayout actions = new LinearLayout(a);
         actions.setOrientation(LinearLayout.VERTICAL);
         list.addView(actions);
-        final TextView wait = a.text(22, "sans-serif", 0x80FFFFFF);
+        final TextView wait = a.text(22, "sans-serif", Palette.TEXT_3);
         wait.setText("Recherche des applis qui le proposent…");
         wait.setPadding(a.u(28), 0, 0, a.u(12));
         actions.addView(wait);
@@ -699,7 +699,7 @@ final class RecoPanel {
                             if (first == null) first = r;
                         }
                         if (first == null) {
-                            TextView none = a.text(22, "sans-serif", 0x80FFFFFF);
+                            TextView none = a.text(22, "sans-serif", Palette.TEXT_3);
                             boolean elsewhere = !provs.isEmpty();
                             none.setText(elsewhere ? "Pas sur tes applis : disponible sur " + names(provs) : "Pas disponible en abonnement en France pour l'instant");
                             none.setPadding(a.u(28), 0, a.u(20), a.u(14));
@@ -740,7 +740,7 @@ final class RecoPanel {
             }
         };
         list.removeAllViews();
-        final TextView head = a.text(18, "sans-serif-medium", 0x80FFFFFF);
+        final TextView head = a.text(18, "sans-serif-medium", Palette.TEXT_3);
         head.setText(("Dans le même esprit que " + t.name).toUpperCase(Locale.FRANCE));
         head.setLetterSpacing(0.06f);
         head.setPadding(a.u(28), a.u(8), a.u(20), a.u(16));
@@ -762,7 +762,7 @@ final class RecoPanel {
                             lp.bottomMargin = a.u(6);
                             list.addView(r, lp);
                             r.setAlpha(0f);
-                            r.animate().alpha(1f).setStartDelay(Math.min(n++, 8) * 45L).setDuration(360).start();
+                            r.animate().alpha(1f).setStartDelay(Math.min(n++, 8) * 45L).setDuration(Motion.MEDIUM).start();
                             if (first == null) first = r;
                         }
                         if (first != null) first.requestFocus();

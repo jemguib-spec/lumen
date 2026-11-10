@@ -112,7 +112,7 @@ final class Install {
                 saver ? "Le mode veille de Lumen s'affiche par-dessus n'importe quelle appli." : "Facultatif : Réglages › Mode veille › Économiseur d'écran de la TV."));
 
         col.addView(a.section(ok ? "Pour revenir à l'accueil d'origine" : "Depuis un ordinateur"));
-        TextView how = a.text(22, "sans-serif", 0x8CFFFFFF);
+        TextView how = a.text(22, "sans-serif", Palette.TEXT_2);
         how.setText(ok ? "Si un jour tu veux retrouver l'accueil Google, avec les « Android SDK Platform-Tools » (adb) :"
                 : "1. Paramètres de la TV › Système › À propos : appuie 7 fois sur « Build », puis Options pour les développeurs › Débogage USB.\n"
                 + "2. Sur un ordinateur du même Wi-Fi, avec les « Android SDK Platform-Tools » (adb), tape ces lignes et accepte la demande sur la TV :");
@@ -122,7 +122,7 @@ final class Install {
         List<String> cmds = ok ? undoCommands(stock, wraith) : commands(ip == null ? null : ip.getHostAddress(), stock, wraith);
         col.addView(code(a, cmds));
         if (!ok) {
-            TextView then = a.text(22, "sans-serif", 0x8CFFFFFF);
+            TextView then = a.text(22, "sans-serif", Palette.TEXT_2);
             then.setText("3. Appuie sur Accueil : Lumen s'affiche. Si la TV propose un choix, prends Lumen puis « Toujours ».\n"
                     + "Sans ordinateur : l'appli « Send Files to TV » permet d'installer Lumen, mais pas de désactiver l'accueil Google.");
             then.setLineSpacing(0, 1.25f);
@@ -145,7 +145,7 @@ final class Install {
         LinearLayout.LayoutParams ql = new LinearLayout.LayoutParams(a.u(200), a.u(200));
         ql.rightMargin = a.u(28);
         guide.addView(qr, ql);
-        TextView g = a.text(22, "sans-serif", 0x8CFFFFFF);
+        TextView g = a.text(22, "sans-serif", Palette.TEXT_2);
         g.setText("Scanne ce code avec le téléphone pour lire le guide pas à pas (installation, accueil, retour en arrière, télécommande).\n" + GUIDE.replace("https://", ""));
         g.setLineSpacing(0, 1.25f);
         guide.addView(g, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
@@ -171,7 +171,7 @@ final class Install {
         box.setFocusable(true);
         android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
         bg.setCornerRadius(a.u(20));
-        bg.setColor(0x66000000);
+        bg.setColor(Palette.SHADOW);
         box.setBackground(bg);
         box.setPadding(a.u(28), a.u(20), a.u(28), a.u(20));
         StringBuilder all = new StringBuilder();
@@ -179,7 +179,7 @@ final class Install {
             TextView t = new TextView(a);
             t.setTypeface(Typeface.MONOSPACE);
             t.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, 23 * a.unit * a.textScale);
-            t.setTextColor(0xF2FFFFFF);
+            t.setTextColor(Palette.TEXT);
             t.setText(l);
             t.setPadding(0, a.u(4), 0, a.u(4));
             box.addView(t);

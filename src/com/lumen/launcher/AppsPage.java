@@ -155,7 +155,7 @@ final class AppsPage {
         head.setOrientation(LinearLayout.HORIZONTAL);
         head.setGravity(Gravity.CENTER_VERTICAL);
         head.setPadding(a.u(112), 0, a.u(112), a.u(8));
-        TextView title = a.text(52, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(52, "sans-serif-light", Palette.TEXT);
         title.setText("Applications");
         head.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         String keep = search != null ? search.getText().toString() : "";
@@ -190,8 +190,8 @@ final class AppsPage {
         e.setSingleLine(true);
         e.setHint("Appli, film, réglage, lumière…");
         e.setContentDescription("Recherche");
-        e.setHintTextColor(0x80FFFFFF);
-        e.setTextColor(0xF5FFFFFF);
+        e.setHintTextColor(Palette.TEXT_3);
+        e.setTextColor(Palette.TEXT);
         e.setTextSize(TypedValue.COMPLEX_UNIT_PX, 26 * a.unit);
         e.setTypeface(Fonts.get("sans-serif", Typeface.NORMAL));
         e.setPadding(a.u(30), 0, a.u(30), 0);
@@ -205,9 +205,9 @@ final class AppsPage {
         e.setBackground(bg);
         e.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View v, boolean f) {
-                bg.setColor(f ? 0xFFF5F5F7 : 0x26FFFFFF);
-                e.setTextColor(f ? 0xFF111216 : 0xF5FFFFFF);
-                e.setHintTextColor(f ? 0x80111216 : 0x80FFFFFF);
+                bg.setColor(f ? Palette.SELECTED : 0x26FFFFFF);
+                e.setTextColor(f ? Palette.ON_SELECTED : Palette.TEXT);
+                e.setHintTextColor(f ? Palette.ON_SELECTED_2 : Palette.TEXT_3);
                 if (f) Sounds.get(a).tick();
                 if (!f) e.setShowSoftInputOnFocus(true); // la saisie depuis le téléphone est terminée
             }
@@ -437,7 +437,7 @@ final class AppsPage {
             List<Integer> moods = ambianceMatches(q);
             boolean none = at == null && found.isEmpty() && shows.isEmpty() && sets.isEmpty() && house.isEmpty() && moods.isEmpty();
             if (!found.isEmpty() || none)
-                sections.addView(sectionLabel(none ? "Rien ne correspond · essaie « Chercher dans… » ci-dessous" : found.size() + (found.size() > 1 ? " applis" : " appli")));
+                sections.addView(sectionLabel(none ? "Rien ne correspond à « " + q.trim() + " » · un autre mot, ou « Chercher dans… » ci-dessous pour chercher dans une appli" : found.size() + (found.size() > 1 ? " applis" : " appli")));
             LinearLayout line = null;
             for (int i = 0; i < found.size(); i++) {
                 if (i % cols == 0) { line = appsLine(); sections.addView(line); }
@@ -527,7 +527,7 @@ final class AppsPage {
     }
 
     private TextView sectionLabel(String s) {
-        TextView t = a.text(22, "sans-serif-medium", 0x99FFFFFF);
+        TextView t = a.text(22, "sans-serif-medium", Palette.TEXT_2);
         t.setText(s.toUpperCase());
         t.setLetterSpacing(0.08f);
         t.setPadding(a.u(112), a.u(34), 0, a.u(2));
@@ -580,7 +580,7 @@ final class AppsPage {
         });
         cell.addView(t);
         if (bn) {
-            final TextView name = a.text(22, "sans-serif", 0x99FFFFFF);
+            final TextView name = a.text(22, "sans-serif", Palette.TEXT_2);
             name.setText(app.label);
             name.setSingleLine(true);
             name.setEllipsize(TextUtils.TruncateAt.END);
@@ -590,8 +590,8 @@ final class AppsPage {
             cell.addView(name, nl);
             t.setFocusListener(new Tile.FocusListener() {
                 @Override public void onTileFocus(Tile tile, boolean f) {
-                    name.setTextColor(f ? 0xFFFFFFFF : 0x99FFFFFF);
-                    name.animate().translationY(f ? a.u(12) : 0).setDuration(200).start();
+                    name.setTextColor(f ? 0xFFFFFFFF : Palette.TEXT_2);
+                    name.animate().translationY(f ? a.u(12) : 0).setDuration(Motion.FAST).start();
                 }
             });
         }

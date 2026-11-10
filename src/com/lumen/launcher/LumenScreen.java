@@ -27,7 +27,7 @@ final class LumenScreen {
         word.setText("lumen");
         word.setLetterSpacing(0.35f);
         col.addView(word, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        TextView sub = a.text(24, "sans-serif-light", 0x99FFFFFF);
+        TextView sub = a.text(24, "sans-serif-light", Palette.TEXT_2);
         sub.setText(line.toUpperCase(java.util.Locale.FRANCE));
         sub.setLetterSpacing(0.3f);
         LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -51,7 +51,7 @@ final class LumenScreen {
         z.addView(col, MainActivity.wrap(Gravity.CENTER));
         z.setAlpha(0f);
         a.root.addView(z, MainActivity.match());
-        z.animate().alpha(1f).setStartDelay(0).setDuration(400).start();
+        z.animate().alpha(1f).setStartDelay(0).setDuration(Motion.MEDIUM).start();
         return z;
     }
 }

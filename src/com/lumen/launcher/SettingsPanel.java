@@ -82,10 +82,13 @@ final class SettingsPanel {
 
     // numéros repris dans SettingsIndex (recherche) : à garder identiques
     static final int ROOT = 0, FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5,
-            ABOUT = 6, LICENCES = 7, CREDITS = 8, LICENCE_INTER = 9, CITIES = 10, HIDDEN = 11, SCREENSAVER = 12, LICENCE_GPL = 13, INSTALL = 14;
+            ABOUT = 6, LICENCES = 7, CREDITS = 8, LICENCE_INTER = 9, CITIES = 10, HIDDEN = 11, SCREENSAVER = 12, LICENCE_GPL = 13, INSTALL = 14,
+            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20;
     private static final String[] TITLES = {"Réglages", "Fond d'écran", "Accueil et applis", "Mode veille", "Ambiances",
-            "Système", "À propos", "Licences", "Crédits des fonds", "Police Inter", "Villes", "Applis masquées", "Économiseur d'écran", "Licence de Lumen", "Installation"};
-    private static final int[] PARENT = {ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, SYSTEME, SYSTEME, LICENCES, LICENCES, FOND, ACCUEIL, VEILLE, LICENCES, SYSTEME};
+            "Système", "À propos", "Licences", "Crédits des fonds", "Police Inter", "Villes", "Applis masquées", "Économiseur d'écran", "Licence de Lumen", "Installation",
+            "Paysages Lumen", "Avancé", "Vignettes et disposition", "Reprendre", "Lisibilité", "Diagnostic"};
+    private static final int[] PARENT = {ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, SYSTEME, SYSTEME, LICENCES, LICENCES, FOND, ACCUEIL, VEILLE, LICENCES, SYSTEME,
+            FOND, FOND, ACCUEIL, ACCUEIL, ACCUEIL, SYSTEME};
     private static boolean[] citiesChanged;
     private static int page = ROOT, lastRubric = -1;
     private static LinearLayout openCard;
@@ -124,7 +127,7 @@ final class SettingsPanel {
         card.removeAllViews();
         a.rowRefreshers.clear();
         LinearLayout col = scrollColumn(a, card, 44);
-        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText(which == ROOT ? TITLES[ROOT] : "‹  " + TITLES[which]);
         title.setPadding(a.u(32), 0, 0, a.u(18));
         col.addView(title);
@@ -132,7 +135,7 @@ final class SettingsPanel {
         boolean deeper = which != ROOT && (from == ROOT || PARENT[which] == from);
         col.setTranslationX(a.u(deeper ? 48 : -48));
         col.setAlpha(0f);
-        col.animate().translationX(0).alpha(1f).setDuration(200).setInterpolator(new DecelerateInterpolator(2f)).start();
+        col.animate().translationX(0).alpha(1f).setDuration(Motion.FAST).setInterpolator(new DecelerateInterpolator(2f)).start();
         return col;
     }
 
@@ -159,11 +162,33 @@ final class SettingsPanel {
         row.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View v, boolean f) {
                 if (old != null) old.onFocusChange(v, f);
-                g.setColor(f ? 0xFF111216 : 0xE6FFFFFF);
+                g.setColor(f ? Palette.ON_SELECTED : 0xE6FFFFFF);
                 bg.setColor(f ? 0x14000000 : 0x24FFFFFF);
             }
         });
         return row;
+    }
+
+    /** Ligne à interrupteur : get lit l'état, toggle le change (puis les lignes se rafraîchissent). */
+    private static LinearLayout toggle(final MainActivity a, String label, GlassUi.Bool get, final Runnable toggle) {
+        return a.ui.toggleRow(label, get, new View.OnClickListener() {
+            @Override public void onClick(View v) { toggle.run(); }
+        });
+    }
+
+    /** Position d'une valeur dans un tableau de choix (0 si absente). */
+    private static int indexOf(int[] values, int v) {
+        for (int i = 0; i < values.length; i++) if (values[i] == v) return i;
+        return 0;
+    }
+
+    /** Phrase d'aide discrète en bas d'une page. */
+    private static void hint(MainActivity a, LinearLayout col, String text) {
+        TextView t = a.text(21, "sans-serif", Palette.TEXT_3);
+        t.setText(text);
+        t.setLineSpacing(0, 1.25f);
+        t.setPadding(a.u(32), a.u(28), a.u(32), 0);
+        col.addView(t);
     }
 
     /** Ligne de rubrique : nom, état actuel, et « › ». */
@@ -215,434 +240,455 @@ final class SettingsPanel {
                     col.addView(rows[i], a.rowLp());
                     if (targets[i] == lastRubric) focus = rows[i];
                 }
-                TextView foot = a.text(18, "sans-serif", 0x66FFFFFF);
+                TextView foot = a.text(18, "sans-serif", Palette.TEXT_3);
                 foot.setText("Lumen " + a.updater.currentVersion() + " · aucune publicité, aucune télémétrie");
                 foot.setPadding(a.u(32), a.u(36), a.u(32), 0);
                 col.addView(foot);
                 break;
             }
             case FOND: {
-        col.addView(a.listRow("Source", new MainActivity.Value() {
-            @Override public String get() { return Prefs.SRC_NAMES[a.prefs.source()]; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setSource((a.prefs.source() + 1) % Prefs.SRC_NAMES.length); applyWallChange(a); }
-        }), a.rowLp());
-        col.addView(a.listRow("Suivre l'heure de la journée", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.followTime() ? "Oui" : "Non"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setFollowTime(!a.prefs.followTime()); applyWallChange(a); }
-        }), a.rowLp());
-        col.addView(a.listRow("Changer de fond", new MainActivity.Value() {
-            @Override public String get() {
-                int s = a.prefs.intervalSeconds();
-                if (s <= 0) return "Jamais";
-                return s < 60 ? "Toutes les " + s + " s" : "Toutes les " + (s / 60) + " min";
+                col.addView(a.ui.choiceRow("Source", Prefs.SRC_NAMES, new GlassUi.IntValue() {
+                    @Override public int get() { return a.prefs.source(); }
+                }, new GlassUi.IntSetter() {
+                    @Override public void set(int i) { a.prefs.setSource(i); applyWallChange(a); }
+                }), a.rowLp());
+                col.addView(toggle(a, "Suivre l'heure de la journée", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.followTime(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setFollowTime(!a.prefs.followTime()); applyWallChange(a); }
+                }), a.rowLp());
+                final String[] intervalNames = new String[Prefs.INTERVALS.length];
+                for (int i = 0; i < intervalNames.length; i++) {
+                    int sec = Prefs.INTERVALS[i];
+                    intervalNames[i] = sec <= 0 ? "Jamais" : sec < 60 ? "Toutes les " + sec + " s" : "Toutes les " + (sec / 60) + " min";
+                }
+                col.addView(a.ui.choiceRow("Changer de fond", intervalNames, new GlassUi.IntValue() {
+                    @Override public int get() { return indexOf(Prefs.INTERVALS, a.prefs.intervalSeconds()); }
+                }, new GlassUi.IntSetter() {
+                    @Override public void set(int i) { a.prefs.setIntervalSeconds(Prefs.INTERVALS[i]); applyWallChange(a); }
+                }), a.rowLp());
+                col.addView(rubric(a, card, Glyph.IMAGE, "Paysages Lumen", new MainActivity.Value() {
+                    @Override public String get() { return a.prefs.livingScenes() ? "Animés" : "Fixes"; }
+                }, PAYSAGES), a.rowLp());
+                col.addView(a.section("Choisir"));
+                col.addView(a.listRow("Choisir les fonds", new MainActivity.Value() {
+                    @Override public String get() { return "Galerie"; }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) {
+                        // fonds vidéo : on choisit sur aperçus avant tout téléchargement
+                        if (a.prefs.source() == Prefs.SRC_VIDEO) VideoPicker.open(a, Online.SCOPE_FONDS, null);
+                        else GalleryPanel.openGallery(a);
+                    }
+                }), a.rowLp());
+                col.addView(a.listRow("Fonds vidéo", new MainActivity.Value() {
+                    @Override public String get() { return "Aperçus"; }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) { VideoPicker.open(a, Online.SCOPE_FONDS, null); }
+                }), a.rowLp());
+                col.addView(a.listRow("Fond suivant", null, new View.OnClickListener() {
+                    @Override public void onClick(View v) { a.wall.next(); a.showNotice("Fond suivant"); }
+                }), a.rowLp());
+                col.addView(a.listRow("Masquer ce fond", null, new View.OnClickListener() {
+                    @Override public void onClick(View v) {
+                        WallItem c = a.wall.current();
+                        if (c == null) return;
+                        a.wall.hideCurrent();
+                        a.showNotice("« " + c.title + " » ne s'affichera plus");
+                    }
+                }), a.rowLp());
+                col.addView(a.listRow("Fonds masqués", new MainActivity.Value() {
+                    @Override public String get() {
+                        int n = a.prefs.hiddenWalls().size();
+                        return n == 0 ? "Aucun" : n + " · Tout réafficher";
+                    }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) {
+                        if (a.prefs.hiddenWalls().isEmpty()) return;
+                        a.prefs.unhideAllWalls();
+                        a.wall.refreshList();
+                        a.showNotice("Tous les fonds sont de nouveau affichés");
+                    }
+                }), a.rowLp());
+                col.addView(a.section("Plus"));
+                col.addView(rubric(a, card, Glyph.GEAR, "Avancé", new MainActivity.Value() {
+                    @Override public String get() { return (a.prefs.video4k() ? "4K" : "HD") + " · " + a.prefs.videoDiskGb() + " Go"; }
+                }, FOND_AVANCE), a.rowLp());
+                break;
             }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                int cur = a.prefs.intervalSeconds(), idx = 0;
-                for (int i = 0; i < Prefs.INTERVALS.length; i++) if (Prefs.INTERVALS[i] == cur) idx = i;
-                a.prefs.setIntervalSeconds(Prefs.INTERVALS[(idx + 1) % Prefs.INTERVALS.length]);
-                applyWallChange(a);
+            case PAYSAGES: {
+                col.addView(toggle(a, "Paysages Lumen animés", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.livingScenes(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setLivingScenes(!a.prefs.livingScenes()); a.wall.restart(); }
+                }), a.rowLp());
+                if (a.weather.hasCity()) {
+                    col.addView(toggle(a, "Météo dans le paysage", new GlassUi.Bool() {
+                        @Override public boolean get() { return a.prefs.weatherFx(); }
+                    }, new Runnable() {
+                        @Override public void run() { a.prefs.setWeatherFx(!a.prefs.weatherFx()); a.updateWeatherFx(); }
+                    }), a.rowLp());
+                } else {
+                    col.addView(a.listRow("Météo dans le paysage", new MainActivity.Value() {
+                        @Override public String get() { return "Choisir une ville d'abord"; }
+                    }, new View.OnClickListener() {
+                        @Override public void onClick(View v) { CityPanel.openCityInput(a); }
+                    }), a.rowLp());
+                }
+                col.addView(toggle(a, "Décors de saison", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.seasonal(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setSeasonal(!a.prefs.seasonal()); }
+                }), a.rowLp());
+                hint(a, col, "Les paysages suivent le vrai lever et coucher du soleil de ta ville, calculés sur la TV. Animés : nuages, halo du soleil, scintillement de l'eau, étoiles filantes la nuit.");
+                break;
             }
-        }), a.rowLp());
-        col.addView(a.listRow("Paysages Lumen animés", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.livingScenes() ? "Oui" : "Non"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setLivingScenes(!a.prefs.livingScenes()); a.wall.restart(); }
-        }), a.rowLp());
-        col.addView(a.listRow("Météo dans le paysage", new MainActivity.Value() {
-            @Override public String get() {
-                if (!a.weather.hasCity()) return "Choisir une ville d'abord";
-                return a.prefs.weatherFx() ? "Oui" : "Non";
-            }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { if (a.weather.hasCity()) a.prefs.setWeatherFx(!a.prefs.weatherFx()); else CityPanel.openCityInput(a); }
-        }), a.rowLp());
-        col.addView(a.listRow("Décors de saison", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.seasonal() ? "Oui" : "Non"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setSeasonal(!a.prefs.seasonal()); }
-        }), a.rowLp());
-        col.addView(a.section("Choisir"));
-        col.addView(a.listRow("Choisir les fonds", new MainActivity.Value() {
-            @Override public String get() { return "Galerie"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                // fonds vidéo : on choisit sur aperçus avant tout téléchargement
-                if (a.prefs.source() == Prefs.SRC_VIDEO) VideoPicker.open(a, Online.SCOPE_FONDS, null);
-                else GalleryPanel.openGallery(a);
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Fonds vidéo", new MainActivity.Value() {
-            @Override public String get() { return "Aperçus"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { VideoPicker.open(a, Online.SCOPE_FONDS, null); }
-        }), a.rowLp());
-        col.addView(a.listRow("Villes", new MainActivity.Value() {
-            @Override public String get() {
-                int n = a.prefs.cities().size();
-                return n == Online.CITIES.length ? "Toutes" : n + " sur " + Online.CITIES.length;
-            }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { fillCities(a, card); }
-        }), a.rowLp());
-        col.addView(a.listRow("Thème des vidéos", new MainActivity.Value() {
-            @Override public String get() { return Prefs.VT_NAMES[a.prefs.videoTheme()]; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                a.prefs.setVideoTheme((a.prefs.videoTheme() + 1) % Prefs.VT_NAMES.length);
-                a.online.refreshIfNeeded(Online.VIDEO, true);
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Fond suivant", null, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.wall.next(); a.showNotice("Fond suivant"); }
-        }), a.rowLp());
-        col.addView(a.listRow("Masquer ce fond", null, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                WallItem c = a.wall.current();
-                if (c == null) return;
-                a.wall.hideCurrent();
-                a.showNotice("« " + c.title + " » ne s'affichera plus");
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Fonds masqués", new MainActivity.Value() {
-            @Override public String get() {
-                int n = a.prefs.hiddenWalls().size();
-                return n == 0 ? "Aucun" : n + " · Tout réafficher";
-            }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                if (a.prefs.hiddenWalls().isEmpty()) return;
-                a.prefs.unhideAllWalls();
-                a.wall.refreshList();
-                a.showNotice("Tous les fonds sont de nouveau affichés");
-            }
-        }), a.rowLp());
-        col.addView(a.section("Avancé"));
-        col.addView(a.listRow("Qualité des vidéos", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.video4k() ? "4K" : "HD"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setVideo4k(!a.prefs.video4k()); }
-        }), a.rowLp());
-        col.addView(a.listRow("Espace pour les vidéos", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.videoDiskGb() + " Go"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                int cur = a.prefs.videoDiskGb(), idx = 0;
-                for (int i = 0; i < Prefs.DISK_GB.length; i++) if (Prefs.DISK_GB[i] == cur) idx = i;
-                a.prefs.setVideoDiskGb(Prefs.DISK_GB[(idx + 1) % Prefs.DISK_GB.length]);
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Télécharger de nouveaux fonds", new MainActivity.Value() {
-            @Override public String get() {
-                String[] th = Library.themesFor(a.prefs.source());
-                if (th.length == 0) return "—";
-                for (String t : th) if (a.online.isBusy(t)) return a.online.status(t);
-                return a.online.status(th[0]);
-            }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                String[] th = Library.themesFor(a.prefs.source());
-                if (th.length == 0) { a.showNotice("Uniquement pour les sources photo"); return; }
-                for (String t : th) a.online.refreshIfNeeded(t, true);
-                a.showNotice("Téléchargement lancé");
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Pexels", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.pexelsKey().isEmpty() ? "Désactivé · ajouter une clé" : "Activé"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { KeyPanel.open(a, KeyPanel.PEXELS); }
-        }), a.rowLp());
+            case FOND_AVANCE: {
+                col.addView(toggle(a, "Vidéos en 4K", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.video4k(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setVideo4k(!a.prefs.video4k()); }
+                }), a.rowLp());
+                final String[] diskNames = new String[Prefs.DISK_GB.length];
+                for (int i = 0; i < diskNames.length; i++) diskNames[i] = Prefs.DISK_GB[i] + " Go";
+                col.addView(a.ui.choiceRow("Espace pour les vidéos", diskNames, new GlassUi.IntValue() {
+                    @Override public int get() { return indexOf(Prefs.DISK_GB, a.prefs.videoDiskGb()); }
+                }, new GlassUi.IntSetter() {
+                    @Override public void set(int i) { a.prefs.setVideoDiskGb(Prefs.DISK_GB[i]); }
+                }), a.rowLp());
+                col.addView(a.ui.choiceRow("Thème des vidéos", Prefs.VT_NAMES, new GlassUi.IntValue() {
+                    @Override public int get() { return a.prefs.videoTheme(); }
+                }, new GlassUi.IntSetter() {
+                    @Override public void set(int i) { a.prefs.setVideoTheme(i); a.online.refreshIfNeeded(Online.VIDEO, true); }
+                }), a.rowLp());
+                col.addView(a.listRow("Villes", new MainActivity.Value() {
+                    @Override public String get() {
+                        int n = a.prefs.cities().size();
+                        return n == Online.CITIES.length ? "Toutes" : n + " sur " + Online.CITIES.length;
+                    }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) { fillCities(a, card); }
+                }), a.rowLp());
+                col.addView(a.listRow("Télécharger de nouveaux fonds", new MainActivity.Value() {
+                    @Override public String get() {
+                        String[] th = Library.themesFor(a.prefs.source());
+                        if (th.length == 0) return "—";
+                        for (String t : th) if (a.online.isBusy(t)) return a.online.status(t);
+                        return a.online.status(th[0]);
+                    }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) {
+                        String[] th = Library.themesFor(a.prefs.source());
+                        if (th.length == 0) { a.showNotice("Uniquement pour les sources photo"); return; }
+                        for (String t : th) a.online.refreshIfNeeded(t, true);
+                        a.showNotice("Téléchargement lancé");
+                    }
+                }), a.rowLp());
+                col.addView(a.listRow("Pexels", new MainActivity.Value() {
+                    @Override public String get() { return a.prefs.pexelsKey().isEmpty() ? "Désactivé · ajouter une clé" : "Activé"; }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) { KeyPanel.open(a, KeyPanel.PEXELS); }
+                }), a.rowLp());
                 break;
             }
             case ACCUEIL: {
-        col.addView(a.listRow("Bouton Maison (Home Assistant)", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.haButton() ? "Affiché" : "Masqué"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                boolean on = !a.prefs.haButton();
-                a.setHouseButton(on);
-                if (on && !a.prefs.haConfigured()) a.showNotice("À relier depuis le téléphone : Plus › Home Assistant");
+                col.addView(toggle(a, "Bandeau d'accueil", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.greeting(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setGreeting(!a.prefs.greeting()); a.refreshGreeting(); }
+                }), a.rowLp());
+                col.addView(toggle(a, "Horloge", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.showClock(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setShowClock(!a.prefs.showClock()); }
+                }), a.rowLp());
+                col.addView(toggle(a, "Estomper l'interface au repos", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.idleFade(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setIdleFade(!a.prefs.idleFade()); }
+                }), a.rowLp());
+                col.addView(toggle(a, "Applis selon l'heure", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.habitsOn(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setHabitsOn(!a.prefs.habitsOn()); a.markAppsDirty(); }
+                }), a.rowLp());
+                col.addView(a.section("Rubriques"));
+                col.addView(rubric(a, card, Glyph.GRID, "Vignettes et disposition", new MainActivity.Value() {
+                    @Override public String get() { return a.prefs.homeCols() + " × " + a.prefs.homeRows(); }
+                }, VIGNETTES), a.rowLp());
+                col.addView(rubric(a, card, Glyph.RESTART, "Reprendre", new MainActivity.Value() {
+                    @Override public String get() { return a.prefs.topShelf() ? "Activé" : "Désactivé"; }
+                }, REPRENDRE), a.rowLp());
+                col.addView(rubric(a, card, Glyph.DOC, "Lisibilité", new MainActivity.Value() {
+                    @Override public String get() { return Prefs.TEXT_SCALE_NAMES[a.prefs.textScale()] + (a.prefs.highContrast() ? " · contraste" : ""); }
+                }, LISIBILITE), a.rowLp());
+                col.addView(a.section("Services"));
+                col.addView(toggle(a, "Bouton Maison (Home Assistant)", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.haButton(); }
+                }, new Runnable() {
+                    @Override public void run() {
+                        boolean on = !a.prefs.haButton();
+                        a.setHouseButton(on);
+                        if (on && !a.prefs.haConfigured()) a.showNotice("À relier depuis le téléphone : Plus › Home Assistant");
+                    }
+                }), a.rowLp());
+                col.addView(a.listRow("Films du moment (TMDB)", new MainActivity.Value() {
+                    @Override public String get() { return a.prefs.tmdbKey().isEmpty() ? "Ajouter une clé" : "Activé"; }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) { KeyPanel.open(a, KeyPanel.TMDB); }
+                }), a.rowLp());
+                col.addView(a.listRow("Applis masquées", new MainActivity.Value() {
+                    @Override public String get() { int n = a.prefs.hiddenApps().size(); return n == 0 ? "Aucune" : String.valueOf(n); }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) { if (!a.prefs.hiddenApps().isEmpty()) fillHiddenApps(a, card); }
+                }), a.rowLp());
+                break;
             }
-        }), a.rowLp());
-        col.addView(a.listRow("Films du moment (TMDB)", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.tmdbKey().isEmpty() ? "Ajouter une clé" : "Activé"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { KeyPanel.open(a, KeyPanel.TMDB); }
-        }), a.rowLp());
-        col.addView(a.listRow("Bandeau d'accueil", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.greeting() ? "Oui" : "Non"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setGreeting(!a.prefs.greeting()); a.refreshGreeting(); }
-        }), a.rowLp());
-        col.addView(a.listRow("Vignettes", new MainActivity.Value() {
-            @Override public String get() {
-                int st = a.prefs.tileStyle();
-                return st == Prefs.TILE_WORD ? "Nom de l'appli" : st == Prefs.TILE_BANNER ? "Bannières officielles" : "Icône et nom";
+            case VIGNETTES: {
+                final int[] styles = {Prefs.TILE_WORD, Prefs.TILE_MONO, Prefs.TILE_BANNER};
+                col.addView(a.ui.choiceRow("Vignettes", new String[]{"Nom de l'appli", "Icône et nom", "Bannières officielles"}, new GlassUi.IntValue() {
+                    @Override public int get() { return indexOf(styles, a.prefs.tileStyle()); }
+                }, new GlassUi.IntSetter() {
+                    @Override public void set(int i) { a.prefs.setTileStyle(styles[i]); }
+                }), a.rowLp());
+                col.addView(a.ui.choiceRow("Applis par ligne", new String[]{"3", "4", "5", "6", "7"}, new GlassUi.IntValue() {
+                    @Override public int get() { return a.prefs.homeCols() - 3; }
+                }, new GlassUi.IntSetter() {
+                    @Override public void set(int i) { a.prefs.setHomeCols(i + 3); a.dirtyRow = true; }
+                }), a.rowLp());
+                col.addView(a.ui.choiceRow("Nombre de lignes", new String[]{"1", "2", "3"}, new GlassUi.IntValue() {
+                    @Override public int get() { return a.prefs.homeRows() - 1; }
+                }, new GlassUi.IntSetter() {
+                    @Override public void set(int i) { a.prefs.setHomeRows(i + 1); a.dirtyRow = true; }
+                }), a.rowLp());
+                col.addView(toggle(a, "Icônes des applis", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.showIcons(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setShowIcons(!a.prefs.showIcons()); }
+                }), a.rowLp());
+                col.addView(toggle(a, "Verre teinté de la couleur de l'appli", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.tintTiles(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setTintTiles(!a.prefs.tintTiles()); }
+                }), a.rowLp());
+                col.addView(toggle(a, "Lueur sous l'appli sélectionnée", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.appGlow(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setAppGlow(!a.prefs.appGlow()); }
+                }), a.rowLp());
+                hint(a, col, "Les changements s'appliquent en refermant les réglages.");
+                break;
             }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                int st = a.prefs.tileStyle();
-                a.prefs.setTileStyle(st == Prefs.TILE_WORD ? Prefs.TILE_MONO : st == Prefs.TILE_MONO ? Prefs.TILE_BANNER : Prefs.TILE_WORD);
+            case REPRENDRE: {
+                col.addView(toggle(a, "Reprendre au-dessus des applis", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.topShelf(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setTopShelf(!a.prefs.topShelf()); a.shelf.reload(); }
+                }), a.rowLp());
+                if (a.prefs.topShelf() && !WatchNext.granted(a)) {
+                    col.addView(a.listRow("Autorisation « programmes TV »", new MainActivity.Value() {
+                        @Override public String get() { return "À donner · OK"; }
+                    }, new View.OnClickListener() {
+                        @Override public void onClick(View v) { a.requestWatchNext(); }
+                    }), a.rowLp());
+                }
+                col.addView(toggle(a, "Affiches des épisodes", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.shelfPosters(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setShelfPosters(!a.prefs.shelfPosters()); a.shelf.reload(); }
+                }), a.rowLp());
+                col.addView(a.listRow("Historique complet pour Reprendre", new MainActivity.Value() {
+                    @Override public String get() { return ResumePanel.usageAllowed(a) ? "Autorisé" : "Non autorisé · OK pour autoriser"; }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) {
+                        if (ResumePanel.usageAllowed(a)) return;
+                        try {
+                            Intent i = new Intent("android.settings.USAGE_ACCESS_SETTINGS");
+                            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            a.startActivity(i);
+                        } catch (Exception e) { a.showNotice("À autoriser par ADB : Réglages › Système › Installation"); }
+                    }
+                }), a.rowLp());
+                hint(a, col, "Sélectionne une appli de l'accueil : ses épisodes en cours apparaissent au-dessus. ◀ depuis la première vignette ouvre les dernières applis utilisées.");
+                break;
             }
-        }), a.rowLp());
-        col.addView(a.listRow("Applis par ligne", new MainActivity.Value() {
-            @Override public String get() { return String.valueOf(a.prefs.homeCols()); }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                int n = a.prefs.homeCols() + 1;
-                a.prefs.setHomeCols(n > 7 ? 3 : n);
-                a.dirtyRow = true;
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Nombre de lignes", new MainActivity.Value() {
-            @Override public String get() { return String.valueOf(a.prefs.homeRows()); }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                int n = a.prefs.homeRows() + 1;
-                a.prefs.setHomeRows(n > 3 ? 1 : n);
-                a.dirtyRow = true;
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Icônes des applis", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.showIcons() ? "Affichées" : "Masquées"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setShowIcons(!a.prefs.showIcons()); }
-        }), a.rowLp());
-        col.addView(a.listRow("Couleur des vignettes", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.tintTiles() ? "Couleur de l'appli" : "Verre neutre"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setTintTiles(!a.prefs.tintTiles()); }
-        }), a.rowLp());
-        col.addView(a.listRow("Lueur de l'appli sélectionnée", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.appGlow() ? "Oui" : "Non"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setAppGlow(!a.prefs.appGlow()); }
-        }), a.rowLp());
-        col.addView(a.listRow("Horloge", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.showClock() ? "Affichée" : "Masquée"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setShowClock(!a.prefs.showClock()); }
-        }), a.rowLp());
-        col.addView(a.listRow("Estomper l'interface au repos", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.idleFade() ? "Oui" : "Non"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setIdleFade(!a.prefs.idleFade()); }
-        }), a.rowLp());
-        col.addView(a.section("Reprendre"));
-        col.addView(a.listRow("Reprendre au-dessus des applis", new MainActivity.Value() {
-            @Override public String get() {
-                if (!a.prefs.topShelf()) return "Non";
-                return WatchNext.granted(a) ? "Oui" : "Oui · autorisation à donner";
-            }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                if (a.prefs.topShelf() && !WatchNext.granted(a)) { a.requestWatchNext(); return; }
-                a.prefs.setTopShelf(!a.prefs.topShelf());
-                a.shelf.reload();
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Affiches des épisodes", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.shelfPosters() ? "Oui" : "Non"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setShelfPosters(!a.prefs.shelfPosters()); a.shelf.reload(); }
-        }), a.rowLp());
-        col.addView(a.listRow("Historique complet pour Reprendre", new MainActivity.Value() {
-            @Override public String get() { return ResumePanel.usageAllowed(a) ? "Autorisé" : "Non autorisé"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                if (ResumePanel.usageAllowed(a)) return;
-                try {
-                    Intent i = new Intent("android.settings.USAGE_ACCESS_SETTINGS");
-                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    a.startActivity(i);
-                } catch (Exception e) { a.showNotice("À autoriser par ADB, voir le guide"); }
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Applis selon l'heure", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.habitsOn() ? "Oui · calculé sur la TV" : "Non"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setHabitsOn(!a.prefs.habitsOn()); a.markAppsDirty(); }
-        }), a.rowLp());
-        col.addView(a.section("Lisibilité"));
-        col.addView(a.listRow("Taille du texte", new MainActivity.Value() {
-            @Override public String get() { return Prefs.TEXT_SCALE_NAMES[a.prefs.textScale()]; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setTextScale((a.prefs.textScale() + 1) % Prefs.TEXT_SCALES.length); a.restyle(); }
-        }), a.rowLp());
-        col.addView(a.listRow("Contraste renforcé", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.highContrast() ? "Oui" : "Non"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setHighContrast(!a.prefs.highContrast()); a.restyle(); }
-        }), a.rowLp());
-        col.addView(a.section("Masquées"));
-        col.addView(a.listRow("Applis masquées", new MainActivity.Value() {
-            @Override public String get() { int n = a.prefs.hiddenApps().size(); return n == 0 ? "Aucune" : String.valueOf(n); }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { if (!a.prefs.hiddenApps().isEmpty()) fillHiddenApps(a, card); }
-        }), a.rowLp());
+            case LISIBILITE: {
+                col.addView(a.ui.choiceRow("Taille du texte", Prefs.TEXT_SCALE_NAMES, new GlassUi.IntValue() {
+                    @Override public int get() { return a.prefs.textScale(); }
+                }, new GlassUi.IntSetter() {
+                    @Override public void set(int i) { a.prefs.setTextScale(i); a.restyle(); }
+                }), a.rowLp());
+                col.addView(toggle(a, "Contraste renforcé", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.highContrast(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setHighContrast(!a.prefs.highContrast()); a.restyle(); }
+                }), a.rowLp());
+                col.addView(toggle(a, "Sons de l'interface", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.sounds(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setSounds(!a.prefs.sounds()); Sounds.get(a).setEnabled(a.prefs.sounds()); }
+                }), a.rowLp());
+                hint(a, col, "Avec TalkBack (Paramètres de la TV › Accessibilité), chaque élément est annoncé avec sa valeur.");
                 break;
             }
             case VEILLE: {
-        col.addView(a.listRow("Activer après", new MainActivity.Value() {
-            @Override public String get() { int m = a.prefs.ambientMinutes(); return m <= 0 ? "Jamais" : m + " min sans activité"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                int cur = a.prefs.ambientMinutes(), idx = 0;
-                for (int i = 0; i < Prefs.AMBIENT_MIN.length; i++) if (Prefs.AMBIENT_MIN[i] == cur) idx = i;
-                a.prefs.setAmbientMinutes(Prefs.AMBIENT_MIN[(idx + 1) % Prefs.AMBIENT_MIN.length]);
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Images du mode veille", new MainActivity.Value() {
-            @Override public String get() { return Prefs.veilleName(a.prefs.veilleSource()); }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                int cur = a.prefs.veilleSource(), idx = 0;
-                for (int i = 0; i < Prefs.VEILLE_CHOICES.length; i++) if (Prefs.VEILLE_CHOICES[i] == cur) idx = i;
-                int next = Prefs.VEILLE_CHOICES[(idx + 1) % Prefs.VEILLE_CHOICES.length];
-                a.prefs.setVeilleSource(next);
-                if (next >= 0) for (String t : Library.themesFor(Library.veilleSource(a.prefs))) a.online.refreshIfNeeded(t, false);
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Écran de nuit", new MainActivity.Value() {
-            @Override public String get() {
-                int hh = a.prefs.nightHour();
-                return hh < 0 ? "Désactivé" : (hh == 0 ? "De minuit" : "De " + hh + " h") + " à 7 h";
-            }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                int cur = a.prefs.nightHour(), idx = 0;
-                for (int i = 0; i < Prefs.NIGHT_HOURS.length; i++) if (Prefs.NIGHT_HOURS[i] == cur) idx = i;
-                a.prefs.setNightHour(Prefs.NIGHT_HOURS[(idx + 1) % Prefs.NIGHT_HOURS.length]);
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Lancer le mode veille", null, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.closeOverlay(false); a.enterAmbient(); }
-        }), a.rowLp());
-        col.addView(a.listRow("Météo", new MainActivity.Value() {
-            @Override public String get() { return a.weather.hasCity() ? a.weather.city() : "Choisir une ville"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { CityPanel.openCityInput(a); }
-        }), a.rowLp());
-        col.addView(a.listRow("Économiseur d'écran de la TV", new MainActivity.Value() {
-            @Override public String get() { return ScreenSaver.state(a); }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                if (ScreenSaver.isLumen(a)) { a.showNotice("Lumen est déjà l'économiseur d'écran"); return; }
-                if (ScreenSaver.setLumen(a)) { a.showNotice("Lumen est maintenant l'économiseur d'écran"); return; }
-                if (ScreenSaver.openSystemScreen(a)) { a.closeOverlay(false); a.showNotice("Choisissez « Lumen » dans la liste"); return; }
-                page(a, card, SCREENSAVER); // Google TV cache ce choix : marche à suivre
-            }
-        }), a.rowLp());
+                final String[] afterNames = new String[Prefs.AMBIENT_MIN.length];
+                for (int i = 0; i < afterNames.length; i++) afterNames[i] = Prefs.AMBIENT_MIN[i] <= 0 ? "Jamais" : Prefs.AMBIENT_MIN[i] + " min sans activité";
+                col.addView(a.ui.choiceRow("Activer après", afterNames, new GlassUi.IntValue() {
+                    @Override public int get() { return indexOf(Prefs.AMBIENT_MIN, a.prefs.ambientMinutes()); }
+                }, new GlassUi.IntSetter() {
+                    @Override public void set(int i) { a.prefs.setAmbientMinutes(Prefs.AMBIENT_MIN[i]); }
+                }), a.rowLp());
+                final String[] veilleNames = new String[Prefs.VEILLE_CHOICES.length];
+                for (int i = 0; i < veilleNames.length; i++) veilleNames[i] = Prefs.veilleName(Prefs.VEILLE_CHOICES[i]);
+                col.addView(a.ui.choiceRow("Images du mode veille", veilleNames, new GlassUi.IntValue() {
+                    @Override public int get() { return indexOf(Prefs.VEILLE_CHOICES, a.prefs.veilleSource()); }
+                }, new GlassUi.IntSetter() {
+                    @Override public void set(int i) {
+                        int next = Prefs.VEILLE_CHOICES[i];
+                        a.prefs.setVeilleSource(next);
+                        if (next >= 0) for (String t : Library.themesFor(Library.veilleSource(a.prefs))) a.online.refreshIfNeeded(t, false);
+                    }
+                }), a.rowLp());
+                final String[] nightNames = new String[Prefs.NIGHT_HOURS.length];
+                for (int i = 0; i < nightNames.length; i++) {
+                    int hh = Prefs.NIGHT_HOURS[i];
+                    nightNames[i] = hh < 0 ? "Désactivé" : (hh == 0 ? "De minuit" : "De " + hh + " h") + " à 7 h";
+                }
+                col.addView(a.ui.choiceRow("Écran de nuit", nightNames, new GlassUi.IntValue() {
+                    @Override public int get() { return indexOf(Prefs.NIGHT_HOURS, a.prefs.nightHour()); }
+                }, new GlassUi.IntSetter() {
+                    @Override public void set(int i) { a.prefs.setNightHour(Prefs.NIGHT_HOURS[i]); }
+                }), a.rowLp());
+                col.addView(a.listRow("Lancer le mode veille", null, new View.OnClickListener() {
+                    @Override public void onClick(View v) { a.closeOverlay(false); a.enterAmbient(); }
+                }), a.rowLp());
+                col.addView(a.listRow("Météo", new MainActivity.Value() {
+                    @Override public String get() { return a.weather.hasCity() ? a.weather.city() : "Choisir une ville"; }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) { CityPanel.openCityInput(a); }
+                }), a.rowLp());
+                col.addView(a.listRow("Économiseur d'écran de la TV", new MainActivity.Value() {
+                    @Override public String get() { return ScreenSaver.state(a); }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) {
+                        if (ScreenSaver.isLumen(a)) { a.showNotice("Lumen est déjà l'économiseur d'écran"); return; }
+                        if (ScreenSaver.setLumen(a)) { a.showNotice("Lumen est maintenant l'économiseur d'écran"); return; }
+                        if (ScreenSaver.openSystemScreen(a)) { a.closeOverlay(false); a.showNotice("Choisissez « Lumen » dans la liste"); return; }
+                        page(a, card, SCREENSAVER); // Google TV cache ce choix : marche à suivre
+                    }
+                }), a.rowLp());
                 break;
             }
             case AMBIANCES: {
                 col.addView(a.listRow("Ouvrir les ambiances", null, new View.OnClickListener() {
                     @Override public void onClick(View v) { a.closeOverlay(false); a.openAmbiance(); }
                 }), a.rowLp());
-        col.addView(a.listRow("Vidéos des ambiances", new MainActivity.Value() {
-            @Override public String get() { return "Aperçus"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { VideoPicker.open(a, Online.SCOPE_COSY, null); }
-        }), a.rowLp());
-                col.addView(a.listRow("Son de la vidéo", new MainActivity.Value() {
-                    @Override public String get() { return a.prefs.ambianceSound() ? "Activé" : "Coupé"; }
+                col.addView(a.listRow("Vidéos des ambiances", new MainActivity.Value() {
+                    @Override public String get() { return "Aperçus"; }
                 }, new View.OnClickListener() {
-                    @Override public void onClick(View v) { a.prefs.setAmbianceSound(!a.prefs.ambianceSound()); }
+                    @Override public void onClick(View v) { VideoPicker.open(a, Online.SCOPE_COSY, null); }
                 }), a.rowLp());
+                col.addView(toggle(a, "Son de la vidéo", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.ambianceSound(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setAmbianceSound(!a.prefs.ambianceSound()); }
+                }), a.rowLp());
+                hint(a, col, "Cheminée, pluie, aquarium, nuit étoilée, vagues, neige : de vraies vidéos en plein écran, avec minuterie de sommeil.");
                 break;
             }
             case SYSTEME: {
                 a.updater.checkSoon(); // une nouvelle version se voit dès qu'on ouvre cette page
-        col.addView(a.listRow("Redémarrer Lumen", null, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.restartLumenNicely(); }
-        }), a.rowLp());
-        col.addView(a.listRow("Stockage", new MainActivity.Value() {
-            @Override public String get() { long[] s = a.online.storage(); return Online.human(s[0] + s[1] + s[2] + s[3]) + " utilisés"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { StoragePanel.open(a); }
-        }), a.rowLp());
-        col.addView(a.listRow("Rechercher une mise à jour", new MainActivity.Value() {
-            @Override public String get() { return a.updater.state(); }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                if (a.updater.ready() != null) { a.closeOverlay(false); a.installUpdate(); } else a.updater.check(true);
-            }
-        }), a.rowLp());
-        final String notesFor = a.updater.ready() != null ? a.updater.readyVersion() : a.updater.currentVersion();
-        final String notes = a.prefs.updateNotes(notesFor);
-        if (!notes.isEmpty()) {
-            col.addView(a.listRow("Nouveautés", new MainActivity.Value() {
-                @Override public String get() { return notesFor; }
-            }, new View.OnClickListener() {
-                @Override public void onClick(View v) { About.showNotes(a, notesFor, notes); }
-            }), a.rowLp());
-        }
-        col.addView(a.listRow("Mises à jour automatiques", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.autoUpdate() ? "Oui" : "Non"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setAutoUpdate(!a.prefs.autoUpdate()); }
-        }), a.rowLp());
-        col.addView(a.listRow("Sons de l'interface", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.sounds() ? "Oui" : "Non"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                a.prefs.setSounds(!a.prefs.sounds());
-                Sounds.get(a).setEnabled(a.prefs.sounds());
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Paramètres de la TV", null, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                try {
-                    Intent i = new Intent(Settings.ACTION_SETTINGS);
-                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    a.startActivity(i);
-                } catch (Exception e) { a.showNotice("Paramètres indisponibles"); }
-            }
-        }), a.rowLp());
-        col.addView(a.section("Sécurité"));
-        col.addView(a.listRow("Code PIN", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.hasPin() ? "Activé · OK pour le retirer" : "Désactivé"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                if (a.prefs.hasPin()) {
-                    // les réglages viennent d'être ouverts avec le code : on le redemande quand même pour le retirer
-                    PinDialog.ask(a, "Code actuel", new Runnable() {
-                        @Override public void run() { a.prefs.setPin(null); a.showNotice("Code PIN retiré"); }
-                    });
-                } else {
-                    PinDialog.create(a, new Runnable() {
-                        @Override public void run() { a.showNotice("Code PIN activé · réglages et désinstallation protégés"); }
-                    });
+                col.addView(a.listRow("Rechercher une mise à jour", new MainActivity.Value() {
+                    @Override public String get() { return a.updater.state(); }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) {
+                        if (a.updater.ready() != null) { a.closeOverlay(false); a.installUpdate(); } else a.updater.check(true);
+                    }
+                }), a.rowLp());
+                final String notesFor = a.updater.ready() != null ? a.updater.readyVersion() : a.updater.currentVersion();
+                final String notes = a.prefs.updateNotes(notesFor);
+                if (!notes.isEmpty()) {
+                    col.addView(a.listRow("Nouveautés", new MainActivity.Value() {
+                        @Override public String get() { return notesFor; }
+                    }, new View.OnClickListener() {
+                        @Override public void onClick(View v) { About.showNotes(a, notesFor, notes); }
+                    }), a.rowLp());
                 }
-            }
-        }), a.rowLp());
-        col.addView(a.listRow("Sauvegarde des réglages", new MainActivity.Value() {
-            @Override public String get() { return "Téléphone › Plus"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { PhonePanel.openPhonePanel(a); }
-        }), a.rowLp());
-        col.addView(a.section("Diagnostic"));
-        col.addView(a.listRow("Mesures", new MainActivity.Value() {
-            @Override public String get() { return a.prefs.showPerf() ? "Affichées" : "Masquées"; }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { a.prefs.setShowPerf(!a.prefs.showPerf()); a.perf.setOn(a.prefs.showPerf()); }
-        }), a.rowLp());
-        col.addView(a.listRow("Journal d'erreurs", new MainActivity.Value() {
-            @Override public String get() {
-                int n = CrashLog.count(a);
-                return n == 0 ? "Aucune erreur" : n + (n > 1 ? " erreurs" : " erreur") + " · OK pour effacer";
-            }
-        }, new View.OnClickListener() {
-            @Override public void onClick(View v) { CrashLog.clear(a); a.showNotice("Journal effacé"); }
-        }), a.rowLp());
+                col.addView(toggle(a, "Mises à jour automatiques", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.autoUpdate(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setAutoUpdate(!a.prefs.autoUpdate()); }
+                }), a.rowLp());
+                col.addView(a.listRow("Stockage", new MainActivity.Value() {
+                    @Override public String get() { long[] s = a.online.storage(); return Online.human(s[0] + s[1] + s[2] + s[3]) + " utilisés"; }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) { StoragePanel.open(a); }
+                }), a.rowLp());
+                col.addView(a.section("Sécurité"));
+                col.addView(a.listRow("Code PIN", new MainActivity.Value() {
+                    @Override public String get() { return a.prefs.hasPin() ? "Activé · OK pour le retirer" : "Désactivé"; }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) {
+                        if (a.prefs.hasPin()) {
+                            // les réglages viennent d'être ouverts avec le code : on le redemande quand même pour le retirer
+                            PinDialog.ask(a, "Code actuel", new Runnable() {
+                                @Override public void run() { a.prefs.setPin(null); a.showNotice("Code PIN retiré"); }
+                            });
+                        } else {
+                            PinDialog.create(a, new Runnable() {
+                                @Override public void run() { a.showNotice("Code PIN activé · réglages et désinstallation protégés"); }
+                            });
+                        }
+                    }
+                }), a.rowLp());
+                col.addView(a.listRow("Sauvegarde des réglages", new MainActivity.Value() {
+                    @Override public String get() { return "Téléphone › Plus"; }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) { PhonePanel.openPhonePanel(a); }
+                }), a.rowLp());
                 col.addView(a.section("Informations"));
                 col.addView(rubric(a, card, Glyph.HOME, "Installation", new MainActivity.Value() {
                     @Override public String get() { return Install.isHome(a) ? "Terminée" : "À finir"; }
                 }, INSTALL), a.rowLp());
+                col.addView(rubric(a, card, Glyph.GEAR, "Diagnostic", new MainActivity.Value() {
+                    @Override public String get() { int n = CrashLog.count(a); return n == 0 ? "Aucune erreur" : n + (n > 1 ? " erreurs" : " erreur"); }
+                }, DIAG), a.rowLp());
                 col.addView(rubric(a, card, Glyph.INFO, "À propos", null, ABOUT), a.rowLp());
                 col.addView(rubric(a, card, Glyph.DOC, "Licences", null, LICENCES), a.rowLp());
+                break;
+            }
+            case DIAG: {
+                col.addView(a.listRow("Redémarrer Lumen", null, new View.OnClickListener() {
+                    @Override public void onClick(View v) { a.restartLumenNicely(); }
+                }), a.rowLp());
+                col.addView(a.listRow("Paramètres de la TV", null, new View.OnClickListener() {
+                    @Override public void onClick(View v) {
+                        try {
+                            Intent i = new Intent(Settings.ACTION_SETTINGS);
+                            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            a.startActivity(i);
+                        } catch (Exception e) { a.showNotice("Paramètres indisponibles"); }
+                    }
+                }), a.rowLp());
+                col.addView(toggle(a, "Mesures à l'écran", new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.showPerf(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setShowPerf(!a.prefs.showPerf()); a.perf.setOn(a.prefs.showPerf()); }
+                }), a.rowLp());
+                col.addView(a.listRow("Journal d'erreurs", new MainActivity.Value() {
+                    @Override public String get() {
+                        int n = CrashLog.count(a);
+                        return n == 0 ? "Aucune erreur" : n + (n > 1 ? " erreurs" : " erreur") + " · OK pour effacer";
+                    }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) { CrashLog.clear(a); a.showNotice("Journal effacé"); }
+                }), a.rowLp());
+                col.addView(a.listRow("Revoir les conseils", new MainActivity.Value() {
+                    @Override public String get() { return a.prefs.tipStep() >= Tips.ALL.length ? "Tous vus" : "En cours"; }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) { Tips.reset(a); a.showNotice("Les conseils reviendront aux prochains démarrages"); }
+                }), a.rowLp());
+                hint(a, col, "Mesures : temps de démarrage, images par seconde, mémoire et processeur, en haut à gauche. Tout reste sur la TV.");
                 break;
             }
             case ABOUT: About.fillAbout(a, col); break;
@@ -669,7 +715,7 @@ final class SettingsPanel {
             @Override public void onClick(View v) { back(a); }
         });
         col.addView(back, a.rowLp());
-        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText("Villes");
         title.setPadding(a.u(32), a.u(24), 0, a.u(20));
         col.addView(title);
@@ -695,11 +741,11 @@ final class SettingsPanel {
             @Override public void onClick(View v) { back(a); }
         });
         col.addView(back, a.rowLp());
-        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
+        TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText("Applis masquées");
         title.setPadding(a.u(32), a.u(24), 0, a.u(8));
         col.addView(title);
-        TextView hint = a.text(22, "sans-serif", 0x8CFFFFFF);
+        TextView hint = a.text(22, "sans-serif", Palette.TEXT_2);
         hint.setText("OK pour réafficher l'appli");
         hint.setPadding(a.u(32), 0, 0, a.u(20));
         col.addView(hint);

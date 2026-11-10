@@ -23,7 +23,7 @@ final class GlassUi {
         LinearLayout card = new LinearLayout(a);
         card.setOrientation(LinearLayout.VERTICAL);
         final float radius = a.u(radiusPx);
-        card.setBackground(new Glass.Surface(card, radius, a.highContrast ? 0xD90C0D12 : 0x2E14161E));
+        card.setBackground(new Glass.Surface(card, radius, a.highContrast ? Palette.SURFACE_SOLID : Palette.SURFACE));
         card.setElevation(a.u(40));
         // le contenu (listes qui défilent) reste dans les bords arrondis
         card.setOutlineProvider(new android.view.ViewOutlineProvider() {
@@ -48,12 +48,12 @@ final class GlassUi {
         bg.setCornerRadius(a.u(24));
         bg.setColor(0x00FFFFFF);
         r.setBackground(bg);
-        final TextView l = a.text(28, "sans-serif", 0xEBFFFFFF);
+        final TextView l = a.text(28, "sans-serif", Palette.TEXT);
         l.setText(label);
         l.setSingleLine(true);
         l.setEllipsize(TextUtils.TruncateAt.END);
         r.addView(l, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        final TextView v = a.text(24, "sans-serif", 0x8CFFFFFF);
+        final TextView v = a.text(24, "sans-serif", Palette.TEXT_2);
         // lecteur d'écran : « Horloge, Oui » plutôt que deux textes séparés
         r.setContentDescription(label);
         if (value != null) {
@@ -69,9 +69,9 @@ final class GlassUi {
         r.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View view, boolean f) {
                 if (f) Sounds.get(a).tick();
-                bg.setColor(f ? 0xFFF5F5F7 : 0x00FFFFFF);
-                l.setTextColor(f ? 0xFF111216 : 0xEBFFFFFF);
-                v.setTextColor(f ? 0x99111216 : 0x8CFFFFFF);
+                bg.setColor(f ? Palette.SELECTED : 0x00FFFFFF);
+                l.setTextColor(f ? Palette.ON_SELECTED : Palette.TEXT);
+                v.setTextColor(f ? Palette.ON_SELECTED_2 : Palette.TEXT_2);
                 // ni agrandissement ni ombre : dans un panneau arrondi, ils seraient coupés aux bords
             }
         });
@@ -85,29 +85,124 @@ final class GlassUi {
         return r;
     }
 
+    interface Bool { boolean get(); }
+    interface IntValue { int get(); }
+    interface IntSetter { void set(int i); }
+
+    /**
+     * Ligne de réglage à deux états, avec un vrai interrupteur dessiné à droite (lisible de loin,
+     * sans lire « Oui / Non »). OK bascule ; l'appelant change le réglage dans click.
+     */
+    LinearLayout toggleRow(String label, final Bool get, final View.OnClickListener click) {
+        final LinearLayout r = listRow(label, null, click);
+        final Toggle t = new Toggle(a);
+        t.setOn(get.get(), false);
+        LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(a.u(72), a.u(40));
+        tl.leftMargin = a.u(20);
+        r.addView(t, tl);
+        r.setContentDescription(label + ", " + (get.get() ? "activé" : "désactivé"));
+        a.rowRefreshers.add(new Runnable() {
+            @Override public void run() { t.setOn(get.get(), true); r.setContentDescription(r.getChildAt(0) == null ? "" : ((TextView) r.getChildAt(0)).getText() + ", " + (get.get() ? "activé" : "désactivé")); }
+        });
+        final View.OnFocusChangeListener base = r.getOnFocusChangeListener();
+        r.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override public void onFocusChange(View v, boolean f) { if (base != null) base.onFocusChange(v, f); t.setFocused(f); }
+        });
+        return r;
+    }
+
+    /**
+     * Ligne de réglage à plusieurs valeurs : « ‹  valeur  › ». ◀ et ▶ changent la valeur sans
+     * quitter la ligne, OK passe à la suivante. Fini le choix en boucle à l'aveugle.
+     */
+    LinearLayout choiceRow(String label, final String[] names, final IntValue get, final IntSetter set) {
+        final MainActivity.Value v = new MainActivity.Value() {
+            @Override public String get() { int i = get.get(); return "‹   " + names[Math.max(0, Math.min(names.length - 1, i))] + "   ›"; }
+        };
+        final LinearLayout r = listRow(label, v, new View.OnClickListener() {
+            @Override public void onClick(View view) { set.set((get.get() + 1) % names.length); }
+        });
+        r.setTag("choice"); // MainActivity : ◀ ne revient pas en arrière sur cette ligne
+        r.setOnKeyListener(new View.OnKeyListener() {
+            @Override public boolean onKey(View view, int code, android.view.KeyEvent e) {
+                if (e.getAction() != android.view.KeyEvent.ACTION_DOWN) return false;
+                int n = names.length;
+                if (code == android.view.KeyEvent.KEYCODE_DPAD_LEFT) set.set((get.get() + n - 1) % n);
+                else if (code == android.view.KeyEvent.KEYCODE_DPAD_RIGHT) set.set((get.get() + 1) % n);
+                else return false;
+                Sounds.get(a).tick();
+                for (Runnable rr : new ArrayList<>(a.rowRefreshers)) rr.run();
+                return true;
+            }
+        });
+        return r;
+    }
+
+    /** Interrupteur : rail arrondi et bouton rond qui glisse ; vert d'accent quand il est allumé. */
+    static final class Toggle extends View {
+        private final android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private float pos;          // 0 = éteint, 1 = allumé
+        private boolean on, focused;
+        private android.animation.ValueAnimator anim;
+
+        Toggle(android.content.Context c) { super(c); }
+
+        void setFocused(boolean f) { focused = f; invalidate(); }
+
+        void setOn(boolean value, boolean animate) {
+            if (on == value && (animate || pos == (value ? 1f : 0f))) return;
+            on = value;
+            if (anim != null) anim.cancel();
+            if (!animate) { pos = on ? 1f : 0f; invalidate(); return; }
+            anim = android.animation.ValueAnimator.ofFloat(pos, on ? 1f : 0f);
+            anim.setDuration(Motion.FAST);
+            anim.setInterpolator(Motion.EASE);
+            anim.addUpdateListener(new android.animation.ValueAnimator.AnimatorUpdateListener() {
+                @Override public void onAnimationUpdate(android.animation.ValueAnimator va) { pos = (Float) va.getAnimatedValue(); invalidate(); }
+            });
+            anim.start();
+        }
+
+        @Override protected void onDraw(android.graphics.Canvas c) {
+            float w = getWidth(), h = getHeight(), r = h / 2f;
+            int offTrack = focused ? 0x26000000 : 0x38FFFFFF;
+            p.setColor(blend(offTrack, Palette.ACCENT, pos));
+            c.drawRoundRect(0, 0, w, h, r, r, p);
+            float kr = r - h * 0.14f, kx = r + pos * (w - 2 * r);
+            p.setColor(focused && pos < 0.5f ? Palette.ON_SELECTED : 0xFFFFFFFF);
+            c.drawCircle(kx, r, kr, p);
+        }
+
+        private static int blend(int a, int b, float t) {
+            int aa = (int) (((a >>> 24) & 255) * (1 - t) + ((b >>> 24) & 255) * t), rr = (int) (((a >> 16) & 255) * (1 - t) + ((b >> 16) & 255) * t),
+                    gg = (int) (((a >> 8) & 255) * (1 - t) + ((b >> 8) & 255) * t), bb = (int) ((a & 255) * (1 - t) + (b & 255) * t);
+            return (aa << 24) | (rr << 16) | (gg << 8) | bb;
+        }
+    }
+
     /**
      * Ligne de menu avec pictogramme au trait. danger = action qui retire quelque chose
      * (texte rouge doux, fond rouge à la sélection).
      */
     LinearLayout iconRow(int glyphType, String label, MainActivity.Value value, View.OnClickListener click, final boolean danger) {
         final LinearLayout r = listRow(label, value, click);
-        final Glyph g = new Glyph(glyphType, danger ? 0xFFFF8A80 : 0xD9FFFFFF);
+        final Glyph g = new Glyph(glyphType, danger ? Palette.DANGER : Palette.TEXT);
         ImageView iv = new ImageView(a);
         iv.setImageDrawable(g);
         LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(a.u(34), a.u(34));
         il.rightMargin = a.u(22);
         r.addView(iv, 0, il);
         final TextView l = (TextView) r.getChildAt(1);
-        if (danger) l.setTextColor(0xFFFF8A80);
+        if (danger) l.setTextColor(Palette.DANGER);
         final View.OnFocusChangeListener base = r.getOnFocusChangeListener();
         r.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View v, boolean f) {
                 if (base != null) base.onFocusChange(v, f);
                 if (danger) {
-                    ((GradientDrawable) r.getBackground()).setColor(f ? 0xFFFF6B5E : 0x00FFFFFF);
-                    l.setTextColor(f ? 0xFFFFFFFF : 0xFFFF8A80);
-                    g.setColor(f ? 0xFFFFFFFF : 0xFFFF8A80);
-                } else g.setColor(f ? 0xFF111216 : 0xD9FFFFFF);
+                    ((GradientDrawable) r.getBackground()).setColor(f ? Palette.DANGER_SELECTED : 0x00FFFFFF);
+                    l.setTextColor(f ? 0xFFFFFFFF : Palette.DANGER);
+                    g.setColor(f ? 0xFFFFFFFF : Palette.DANGER);
+                } else g.setColor(f ? Palette.ON_SELECTED : Palette.TEXT);
             }
         });
         return r;
@@ -136,14 +231,14 @@ final class GlassUi {
             al.bottomMargin = a.u(22);
             h.addView(iv, al);
         }
-        TextView t = a.text(36, "sans-serif-light", 0xF5FFFFFF);
+        TextView t = a.text(36, "sans-serif-light", Palette.TEXT);
         t.setText(title);
         t.setGravity(Gravity.CENTER);
         t.setSingleLine(true);
         t.setEllipsize(TextUtils.TruncateAt.END);
         h.addView(t, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         if (sub != null && !sub.isEmpty()) {
-            TextView st = a.text(18, "sans-serif-medium", 0x80FFFFFF);
+            TextView st = a.text(18, "sans-serif-medium", Palette.TEXT_3);
             st.setText(sub.toUpperCase(java.util.Locale.FRANCE));
             st.setLetterSpacing(0.14f);
             st.setGravity(Gravity.CENTER);
@@ -157,7 +252,7 @@ final class GlassUi {
     /** Fine séparation entre groupes d'actions d'un menu. */
     View menuDivider() {
         View d = new View(a);
-        d.setBackgroundColor(0x1AFFFFFF);
+        d.setBackgroundColor(Palette.LINE);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, a.u(1.5f)));
         lp.setMargins(a.u(32), a.u(10), a.u(32), a.u(16));
         d.setLayoutParams(lp);
@@ -165,9 +260,9 @@ final class GlassUi {
     }
 
     TextView section(String s) {
-        TextView t = a.text(18, "sans-serif-medium", 0x80FFFFFF);
-        t.setText(s.toUpperCase());
-        t.setLetterSpacing(0.12f);
+        TextView t = a.text(20, "sans-serif-medium", Palette.TEXT_2);
+        t.setText(s.toUpperCase(java.util.Locale.FRANCE));
+        t.setLetterSpacing(0.1f);
         t.setPadding(a.u(32), a.u(40), 0, a.u(14));
         return t;
     }
