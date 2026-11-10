@@ -158,11 +158,14 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - Lumen ne remplit jamais la TV : il garde au moins 2 Go libres avant de télécharger une vidéo, et 500 Mo avant une photo. S'il manque de place, il réduit ses vidéos, met les téléchargements en pause et le dit à l'écran (détail dans Réglages › Système › Stockage). Les téléchargements interrompus sont effacés au démarrage.
 
 ## Maison (Home Assistant)
-- Bouton **Maison** en haut de l'accueil, à côté de « Toutes les applications » (masqué par défaut : Réglages › Accueil et applis › Bouton Maison ; il apparaît aussi tout seul dès que Home Assistant est relié) : tes lumières, prises, scènes, volets et lecteurs Home Assistant. OK pour allumer, éteindre ou lancer une scène ; l'état se met à jour tout seul.
+- Bouton **Maison** en haut de l'accueil, à côté de « Toutes les applications » (masqué par défaut : Réglages › Accueil et applis › Bouton Maison ; il apparaît aussi tout seul dès que Home Assistant est relié) : tes lumières, prises, scènes, volets et lecteurs Home Assistant, en plein écran. Chaque appareil est une tuile de verre : allumée, une lumière éclaire sa tuile dans sa vraie couleur (ambrée, blanche, colorée) et une jauge montre son intensité ; les scènes sont des pastilles en haut. OK pour allumer, éteindre ou lancer une scène ; l'état se met à jour tout seul.
+- **Régler** : OK maintenu sur une lumière à intensité variable, un volet ou un ventilateur, puis ◀ ▶ pour l'intensité, la position ou la vitesse (par pas de 10 %) ; OK ou Retour pour terminer.
+- **Pièces** : si tes appareils sont rangés par pièce dans Home Assistant, un onglet par pièce apparaît en haut (Toute la maison, Salon, Cuisine…) ; se poser dessus l'ouvre.
+- **Bouton Maison vivant** : le nombre de lumières allumées s'affiche sur le bouton rond de l'accueil, qui s'éclaire légèrement (relu chaque minute).
 - Pour relier Lumen : dans Home Assistant, Profil › Sécurité › Jetons d'accès longue durée › Créer un jeton. Puis sur le téléphone connecté à la TV : Plus › Home Assistant, colle l'adresse (ex. `192.168.1.20:8123` ou `homeassistant.local:8123`, ou ton adresse `https://…` à distance) et le jeton.
 - Toujours sur le téléphone, coche les appareils à garder sur la TV (aucun coché : tous, 60 au plus).
 - Serrures et alarmes ne sont jamais pilotables depuis la TV.
-- **Scènes sur l'accueil** : sur le téléphone, ✦ Accueil à côté d'une scène ou d'un script : elle apparaît en raccourci sous le bandeau d'accueil (4 au plus), OK pour la lancer.
+- **Scènes sur l'accueil** : sur le téléphone, ✦ Accueil à côté d'une scène ou d'un script : elle apparaît en pastille de verre sous le bandeau d'accueil (4 au plus), OK pour la lancer : une onde lumineuse part de la pastille, et la dernière scène lancée garde son étincelle colorée jusqu'à ce qu'un appareil change.
 - **Cinéma** : sur le téléphone, Plus › Home Assistant › Cinéma, choisis la scène « film » (ex. lumières tamisées) et, si tu veux, la scène « pause ». Quand un film démarre dans une appli cochée (Netflix, Plex…), ouverte depuis Lumen, la scène se lance ; après 15 s de pause ou au retour sur l'accueil, la seconde. Lumen sait seulement si un son de type film est en cours : il ne lit rien d'autre.
 
 ## Mode veille et économiseur d'écran

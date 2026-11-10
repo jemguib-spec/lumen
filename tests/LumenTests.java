@@ -391,6 +391,29 @@ public class LumenTests {
         check("HA : actions et états lisibles", "toggle".equals(HomeAssistant.service(lamp)) && "Allumée · 60 %".equals(HomeAssistant.label(lamp))
                 && "turn_on".equals(HomeAssistant.service(new HomeAssistant.Entity("scene.film", "Film", "scening", -1)))
                 && "Fermé".equals(HomeAssistant.label(new HomeAssistant.Entity("cover.volet", "Volet", "closed", -1))));
+        // ---- Maison : niveau réglable, couleur, pièces
+        HomeAssistant.Entity dimLamp = new HomeAssistant.Entity("light.salon", "Salon", "on", 60, 0xFFFF8800, "Salon", true);
+        HomeAssistant.Entity plainLamp = new HomeAssistant.Entity("light.cave", "Cave", "on", -1, 0, "", false);
+        HomeAssistant.Entity blind = new HomeAssistant.Entity("cover.volet", "Volet", "open", 40, 0, "Chambre", false);
+        check("maison : seuls les appareils à niveau se règlent", HomeAssistant.adjustable(dimLamp) && !HomeAssistant.adjustable(plainLamp)
+                && HomeAssistant.adjustable(blind) && !HomeAssistant.adjustable(new HomeAssistant.Entity("switch.prise", "Prise", "on", -1))
+                && !HomeAssistant.adjustable(new HomeAssistant.Entity("light.x", "X", "unavailable", 50, 0, "", true)));
+        String[] lr = HomeAssistant.levelRequest(dimLamp, 30), l0 = HomeAssistant.levelRequest(dimLamp, 0), cr = HomeAssistant.levelRequest(blind, 250);
+        check("maison : réglage d'une lumière (0 = éteindre) et d'un volet (borné à 100)",
+                "/api/services/light/turn_on".equals(lr[0]) && "{\"entity_id\":\"light.salon\",\"brightness_pct\":30}".equals(lr[1])
+                && "/api/services/light/turn_off".equals(l0[0]) && "{\"entity_id\":\"light.salon\"}".equals(l0[1])
+                && "/api/services/cover/set_cover_position".equals(cr[0]) && cr[1].endsWith("\"position\":100}"));
+        check("maison : pas de réglage pour une prise ni pour un identifiant douteux",
+                HomeAssistant.levelRequest(new HomeAssistant.Entity("switch.prise", "Prise", "on", -1), 50) == null);
+        check("maison : blanc chaud ambré, blanc froid bleuté", ((HomeAssistant.kelvinColor(2200) >> 16) & 255) > (HomeAssistant.kelvinColor(2200) & 255) + 80
+                && (HomeAssistant.kelvinColor(6500) & 255) > ((HomeAssistant.kelvinColor(6500) >> 16) & 255)
+                && HomeAssistant.kelvinColor(100) == HomeAssistant.kelvinColor(2000));
+        java.util.Map<String, String> areas = HomeAssistant.parseAreas("light.salon|Salon\nscene.film|\nlock.porte|Entrée\npas une ligne\ncover.volet|None\nswitch.prise| Cuisine \n");
+        check("maison : pièces lues, appareils sans pièce ou non pilotables écartés", areas.size() == 2
+                && "Salon".equals(areas.get("light.salon")) && "Cuisine".equals(areas.get("switch.prise")));
+        check("maison : la demande des pièces est un JSON à une ligne, sans saut de ligne brut",
+                HomeAssistant.AREA_BODY.startsWith("{\"template\":\"") && HomeAssistant.AREA_BODY.endsWith("\"}")
+                && !HomeAssistant.AREA_BODY.contains("\n") && HomeAssistant.AREA_BODY.contains("\\n"));
         java.util.List<HomeAssistant.Entity> ents = java.util.Arrays.asList(lamp, new HomeAssistant.Entity("switch.prise", "Prise", "off", -1));
         check("HA : appareils choisis, sinon tous", HomeAssistant.shown(ents, new java.util.HashSet<String>(), 10).size() == 2
                 && HomeAssistant.shown(ents, new java.util.HashSet<>(java.util.Arrays.asList("switch.prise")), 10).size() == 1);

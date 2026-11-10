@@ -19,7 +19,7 @@
 - Les redirections sont suivies à la main et chaque destination est revérifiée.
 - Certificats validés par le magasin système d'Android ; les certificats ajoutés par l'utilisateur ne sont pas acceptés (cible Android 29). Le trafic en clair est interdit (`usesCleartextTraffic=false`).
 - Réponses et fichiers plafonnés en taille.
-- Home Assistant (facultatif) : seule exception à la liste blanche, l'adresse de TON Home Assistant, réglée depuis le téléphone (action protégée par le code PIN s'il existe). En HTTP, l'adresse doit être sur le réseau local, et elle est revérifiée après résolution : le jeton ne part jamais en clair sur Internet. En HTTPS, tout hôte est permis (accès à distance). Aucune redirection n'est suivie. Le jeton reste sur la TV : il n'est jamais renvoyé au téléphone et n'est pas dans la sauvegarde. Actions en liste fermée (allumer/éteindre, scène, script, bouton, volet, lecture) ; serrures et alarmes exclues.
+- Home Assistant (facultatif) : seule exception à la liste blanche, l'adresse de TON Home Assistant, réglée depuis le téléphone (action protégée par le code PIN s'il existe). En HTTP, l'adresse doit être sur le réseau local, et elle est revérifiée après résolution : le jeton ne part jamais en clair sur Internet. En HTTPS, tout hôte est permis (accès à distance). Aucune redirection n'est suivie. Le jeton reste sur la TV : il n'est jamais renvoyé au téléphone et n'est pas dans la sauvegarde. Actions en liste fermée (allumer/éteindre, scène, script, bouton, volet, lecture, et le niveau d'une lumière, d'un volet ou d'un ventilateur, borné de 0 à 100) ; serrures et alarmes exclues. Lumen lit aussi la pièce de chaque appareil pilotable, par une demande fixe au moteur de modèles de Home Assistant : rien de ce que l'on tape n'y entre.
 - « À l'affiche » (facultatif) : `api.themoviedb.org` et `image.tmdb.org` ne sont joignables que si l'utilisateur a réglé sa propre clé TMDB (depuis le téléphone ou la TV, code PIN demandé s'il existe) **ou accepté, une fois, la clé partagée du projet** (`dist/services.json`, lue avec `latest.json` ; la clé personnelle passe avant). La clé personnelle n'est jamais renvoyée au téléphone ni sauvegardée dans la sauvegarde. Seules des listes publiques de films sont demandées : rien sur ce que tu regardes n'est envoyé.
 
 ## Contenus légaux uniquement
@@ -117,7 +117,7 @@
 | `Signer`, `WsFrames`, `RateLimit` | Signature HMAC des échanges, connexion permanente (WebSocket), limite de débit |
 | `PhoneRemote`, `RemoteService` | Touches de la télécommande du téléphone, dans Lumen puis dans les autres applis (service d'accessibilité facultatif) |
 | `DeviceName` | Nom du téléphone affiché sur la TV |
-| `HomeAssistant`, `HaStates`, `HomePanel`, `Cinema` | Home Assistant : appareils et scènes, panneau « Maison », mode cinéma |
+| `HomeAssistant`, `HaStates`, `HomePanel`, `HaTile`, `Cinema` | Home Assistant : appareils et scènes, page « Maison » (tuiles, pièces, réglage du niveau), mode cinéma |
 | `Tmdb`, `TmdbPolicy`, `RecoPanel` | « À l'affiche » : films et séries du moment (clé TMDB personnelle) |
 | `KeyPanel` | Saisie des clés TMDB et Pexels directement sur la TV |
 | `Pin`, `PinDialog` | Code PIN |

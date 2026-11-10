@@ -71,6 +71,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     void setHouseButton(boolean on) {
         prefs.setHaButton(on);
         if (houseButton != null) houseButton.setVisibility(on ? View.VISIBLE : View.GONE);
+        refreshHouse();
     }
     TextView greet;
     TvStatus status;
@@ -208,6 +209,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         super.onPause();
         if (status != null) status.stop();
         resumedNow = false;
+        h.removeCallbacks(houseTick);
         immersive.clear(false);
         h.removeCallbacks(afterShown);
         perf.setOn(false);
@@ -633,6 +635,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
                 if (low != null) { lowSpaceSaid = true; showNotice(low); }
             }
             refreshGreeting();
+            refreshHouse();
             if (status != null) status.start();
             if (prefs.veilleSource() >= 0) for (String t : Library.themesFor(Library.veilleSource(prefs))) online.refreshIfNeeded(t, false);
             if (CrashLog.safeModeJustStarted) {
@@ -820,6 +823,39 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         }
     };
 
+    private final java.util.Map<String, GlassUi.Pill> scenePills = new java.util.HashMap<>();
+
+    /** La dernière scène lancée garde son étincelle colorée sur l'accueil (aucune si un appareil a changé depuis). */
+    void markScenes() {
+        String last = prefs.haLastScene();
+        for (java.util.Map.Entry<String, GlassUi.Pill> p : scenePills.entrySet()) p.getValue().setActive(p.getKey().equals(last));
+    }
+
+    /**
+     * Bouton Maison « vivant » : le nombre de lumières allumées (parmi les appareils choisis) s'affiche
+     * dessus et son verre s'éclaire. Relu à l'arrivée sur l'accueil puis chaque minute, seulement si
+     * Home Assistant est relié et le bouton affiché.
+     */
+    void refreshHouse() {
+        h.removeCallbacks(houseTick);
+        if (houseButton == null) return;
+        if (!prefs.haConfigured() || houseButton.getVisibility() != View.VISIBLE) { houseButton.setBadge(0); return; }
+        if (!resumedNow) return;
+        HaStates.refresh(prefs.haUrl(), prefs.haToken(), new Runnable() {
+            @Override public void run() {
+                List<HomeAssistant.Entity> all = HaStates.cached();
+                int n = 0;
+                if (all != null) for (HomeAssistant.Entity e : HomeAssistant.shown(all, prefs.haPinned(), 500))
+                    if ("light".equals(e.domain) && e.on()) n++;
+                final int on = n;
+                h.post(new Runnable() { @Override public void run() { if (houseButton != null) houseButton.setBadge(on); } });
+            }
+        });
+        h.postDelayed(houseTick, 60_000L);
+    }
+
+    private final Runnable houseTick = new Runnable() { @Override public void run() { refreshHouse(); } };
+
     /** Raccourcis de scènes Home Assistant (choisies sur le téléphone), sous le bandeau d'accueil. */
     private void buildSceneBar() {
         if (sceneBar != null && sceneBar.getParent() != null) ((ViewGroup) sceneBar.getParent()).removeView(sceneBar);
@@ -829,35 +865,20 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         sceneBar.setOrientation(LinearLayout.HORIZONTAL);
         sceneBar.setGravity(Gravity.CENTER);
         sceneBar.setClipChildren(false);
+        scenePills.clear();
+        String last = prefs.haLastScene();
         for (final String[] sc : scenes) {
-            final TextView pill = text(22, "sans-serif-medium", Palette.TEXT);
-            pill.setText("✦  " + sc[1]);
-            pill.setSingleLine(true);
-            pill.setFocusable(true);
-            pill.setClickable(true);
-            pill.setSoundEffectsEnabled(false);
-            pill.setPadding(u(30), u(14), u(30), u(14));
-            final GradientDrawable bg = new GradientDrawable();
-            bg.setCornerRadius(u(40));
-            bg.setColor(0x33FFFFFF);
-            bg.setStroke(Math.max(1, u(1.5f)), 0x26FFFFFF);
-            pill.setBackground(bg);
-            pill.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                @Override public void onFocusChange(View v, boolean f) {
-                    if (f) Sounds.get(MainActivity.this).tick();
-                    bg.setColor(f ? Palette.SELECTED : 0x33FFFFFF);
-                    pill.setTextColor(f ? Palette.ON_SELECTED : Palette.TEXT);
-                    pill.animate().scaleX(f ? 1.06f : 1f).scaleY(f ? 1.06f : 1f).setStartDelay(0).setDuration(Motion.FAST).start();
-                }
-            });
-            pill.setOnClickListener(new View.OnClickListener() {
+            GlassUi.Pill pill = new GlassUi.Pill(this, sc[1], sc[0].equals(last), new View.OnClickListener() {
                 @Override public void onClick(View v) {
-                    Sounds.get(MainActivity.this).tock();
                     if (cinema == null) cinema = new Cinema(MainActivity.this, prefs);
                     cinema.run(sc[0]);
+                    if (sc[0].startsWith("scene.")) { prefs.setHaLastScene(sc[0]); markScenes(); }
+                    Ripple.play(MainActivity.this, v);
                     showNotice(sc[1]);
+                    h.postDelayed(houseTick, 1500); // la scène a changé des lumières : le bouton Maison suit
                 }
             });
+            scenePills.put(sc[0], pill);
             LinearLayout.LayoutParams pl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             pl.leftMargin = pl.rightMargin = u(10);
             sceneBar.addView(pill, pl);

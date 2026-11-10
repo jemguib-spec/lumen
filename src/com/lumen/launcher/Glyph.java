@@ -13,7 +13,8 @@ import android.graphics.drawable.Drawable;
 /** Pictogrammes dessinés en vectoriel : boutons de l'accueil et rubriques des réglages. */
 final class Glyph extends Drawable {
     static final int GRID = 0, SLIDERS = 1, INPUT = 2, MOON = 3, IMAGE = 4, HOME = 5, PHONE = 6, GEAR = 7, INFO = 8, DOC = 9, SPARK = 10,
-            MOVE = 11, STAR = 12, STAR_OFF = 13, HIDE = 14, LOCK = 15, TRASH = 16, UNLOCK = 17, CLOSE = 18, RESTART = 19, SEARCH = 20, PERSON = 21, MIC = 22, WIFI_OFF = 23, BATTERY_LOW = 24, UPDATE = 25;
+            MOVE = 11, STAR = 12, STAR_OFF = 13, HIDE = 14, LOCK = 15, TRASH = 16, UNLOCK = 17, CLOSE = 18, RESTART = 19, SEARCH = 20, PERSON = 21, MIC = 22, WIFI_OFF = 23, BATTERY_LOW = 24, UPDATE = 25,
+            BULB = 26, PLUG = 27, BLIND = 28, FAN = 29, PLAY = 30, SWITCH = 31;
     private final int type;
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -204,6 +205,51 @@ final class Glyph extends Drawable {
                 c.drawLine(cx - s * .34f, cy + s * .20f, cx - s * .34f, cy + s * .34f, p);
                 c.drawLine(cx - s * .34f, cy + s * .34f, cx + s * .34f, cy + s * .34f, p);
                 c.drawLine(cx + s * .34f, cy + s * .34f, cx + s * .34f, cy + s * .20f, p);
+                break;
+            }
+            case BULB: { // ampoule : lumière
+                c.drawArc(new RectF(cx - s * .24f, cy - s * .36f, cx + s * .24f, cy + s * .12f), 125, 290, false, p);
+                c.drawLine(cx - s * .13f, cy + s * .08f, cx - s * .10f, cy + s * .22f, p);
+                c.drawLine(cx + s * .13f, cy + s * .08f, cx + s * .10f, cy + s * .22f, p);
+                c.drawLine(cx - s * .10f, cy + s * .22f, cx + s * .10f, cy + s * .22f, p);
+                c.drawLine(cx - s * .06f, cy + s * .34f, cx + s * .06f, cy + s * .34f, p);
+                break;
+            }
+            case PLUG: { // fiche électrique : prise
+                c.drawLine(cx - s * .10f, cy - s * .36f, cx - s * .10f, cy - s * .12f, p);
+                c.drawLine(cx + s * .10f, cy - s * .36f, cx + s * .10f, cy - s * .12f, p);
+                c.drawRoundRect(new RectF(cx - s * .22f, cy - s * .12f, cx + s * .22f, cy + s * .16f), s * .08f, s * .08f, p);
+                c.drawLine(cx, cy + s * .16f, cx, cy + s * .38f, p);
+                break;
+            }
+            case BLIND: { // store à lamelles : volet
+                c.drawLine(cx - s * .34f, cy - s * .32f, cx + s * .34f, cy - s * .32f, p);
+                for (int i = 0; i < 3; i++) c.drawLine(cx - s * .28f, cy - s * .16f + i * s * .15f, cx + s * .28f, cy - s * .16f + i * s * .15f, p);
+                c.drawLine(cx, cy + s * .14f, cx, cy + s * .30f, p);
+                c.drawCircle(cx, cy + s * .34f, s * .03f, p);
+                break;
+            }
+            case FAN: { // hélice à trois pales : ventilateur
+                for (int i = 0; i < 3; i++) {
+                    double ang = -Math.PI / 2 + i * 2 * Math.PI / 3;
+                    q.moveTo(cx + (float) Math.cos(ang) * s * .09f, cy + (float) Math.sin(ang) * s * .09f);
+                    q.quadTo(cx + (float) Math.cos(ang + 0.9) * s * .30f, cy + (float) Math.sin(ang + 0.9) * s * .30f,
+                            cx + (float) Math.cos(ang + 0.2) * s * .38f, cy + (float) Math.sin(ang + 0.2) * s * .38f);
+                    q.quadTo(cx + (float) Math.cos(ang - 0.25) * s * .28f, cy + (float) Math.sin(ang - 0.25) * s * .28f,
+                            cx + (float) Math.cos(ang) * s * .09f, cy + (float) Math.sin(ang) * s * .09f);
+                }
+                c.drawPath(q, p);
+                break;
+            }
+            case PLAY: { // triangle : lecteur
+                q.moveTo(cx - s * .16f, cy - s * .28f); q.lineTo(cx + s * .28f, cy); q.lineTo(cx - s * .16f, cy + s * .28f); q.close();
+                c.drawPath(q, p);
+                break;
+            }
+            case SWITCH: { // interrupteur à glissière : commutateur
+                c.drawRoundRect(new RectF(cx - s * .36f, cy - s * .18f, cx + s * .36f, cy + s * .18f), s * .18f, s * .18f, p);
+                p.setStyle(Paint.Style.FILL);
+                c.drawCircle(cx + s * .17f, cy, s * .07f, p);
                 break;
             }
             case MIC: { // micro : recherche vocale

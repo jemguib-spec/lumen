@@ -106,18 +106,88 @@ final class HomeAssistant {
 
     static final class Entity {
         final String id, domain, name, state;
-        final int brightness; // 0..100, -1 si inconnu
+        final int brightness; // lumière : 0..100, -1 si inconnu
+        /** Niveau réglable, 0..100 (-1 si inconnu) : intensité d'une lumière, position d'un volet, vitesse d'un ventilateur. */
+        final int level;
+        /** Couleur d'une lumière allumée (opaque), 0 si elle n'en annonce pas. */
+        final int color;
+        /** Pièce où Home Assistant range l'appareil (« » si aucune). */
+        final String area;
+        /** Lumière dont l'intensité se règle (pas seulement allumée ou éteinte). */
+        final boolean dim;
 
-        Entity(String id, String name, String state, int brightness) {
+        Entity(String id, String name, String state, int brightness) { this(id, name, state, brightness, 0, "", brightness >= 0); }
+
+        Entity(String id, String name, String state, int level, int color, String area, boolean dim) {
             this.id = id;
             this.domain = id.substring(0, id.indexOf('.'));
             this.name = name;
             this.state = state;
-            this.brightness = brightness;
+            this.level = level;
+            this.brightness = "light".equals(domain) ? level : -1;
+            this.color = color;
+            this.area = area == null ? "" : area;
+            this.dim = dim;
         }
+
+        /** Scène, script ou bouton : on le lance, il n'a pas d'état allumé ou éteint. */
+        boolean trigger() { return "scene".equals(domain) || "script".equals(domain) || "button".equals(domain); }
 
         boolean on() { return "on".equals(state) || "open".equals(state) || "playing".equals(state); }
         boolean available() { return !"unavailable".equals(state) && !"unknown".equals(state) || "scene".equals(domain) || "script".equals(domain) || "button".equals(domain); }
+    }
+
+    /** Le niveau de cet appareil se règle-t-il depuis la TV (intensité, position, vitesse) ? */
+    static boolean adjustable(Entity e) {
+        if (!e.available() || "unavailable".equals(e.state)) return false;
+        if ("light".equals(e.domain)) return e.dim;
+        return ("cover".equals(e.domain) || "fan".equals(e.domain)) && e.level >= 0;
+    }
+
+    /** { chemin du service, corps JSON } pour amener l'appareil au niveau pct (0 à 100) ; null s'il ne se règle pas. */
+    static String[] levelRequest(Entity e, int pct) {
+        if (!validEntityId(e.id)) return null;
+        pct = Math.max(0, Math.min(100, pct));
+        String id = "{\"entity_id\":\"" + e.id + "\"";
+        switch (e.domain) {
+            case "light": return pct == 0 ? new String[]{"/api/services/light/turn_off", id + "}"}
+                    : new String[]{"/api/services/light/turn_on", id + ",\"brightness_pct\":" + pct + "}"};
+            case "cover": return new String[]{"/api/services/cover/set_cover_position", id + ",\"position\":" + pct + "}"};
+            case "fan": return pct == 0 ? new String[]{"/api/services/fan/turn_off", id + "}"}
+                    : new String[]{"/api/services/fan/set_percentage", id + ",\"percentage\":" + pct + "}"};
+            default: return null;
+        }
+    }
+
+    static void setLevel(String base, String token, Entity e, int pct) throws Exception {
+        String[] r = levelRequest(e, pct);
+        if (r == null) throw new IOException("Appareil refusé");
+        request(base, token, "POST", r[0], r[1]);
+    }
+
+    /** Couleur à l'écran d'un blanc donné en kelvins : ambré (2000 K), blanc chaud, puis bleuté (6500 K). */
+    static int kelvinColor(int k) {
+        k = Math.max(2000, Math.min(6500, k));
+        return k < 4000 ? Palette.mix(0xFFFFB066, 0xFFFFF1DC, (k - 2000) / 2000f) : Palette.mix(0xFFFFF1DC, 0xFFDCE8FF, (k - 4000) / 2500f);
+    }
+
+    /**
+     * Demande à Home Assistant la pièce de chaque appareil pilotable (son moteur de modèles sait la
+     * donner ; la liste des états ne la contient pas). Réponse : une ligne « appareil|pièce ».
+     */
+    static final String AREA_BODY = "{\"template\":\"{% for d in ['scene','light','switch','fan','cover','media_player','script','input_boolean','button'] %}"
+            + "{% for s in states[d] %}{{ s.entity_id }}|{{ area_name(s.entity_id) or '' }}\\n{% endfor %}{% endfor %}\"}";
+
+    static java.util.Map<String, String> parseAreas(String text) {
+        java.util.Map<String, String> out = new java.util.HashMap<>();
+        if (text == null) return out;
+        for (String line : text.split("\n")) {
+            int bar = line.indexOf('|');
+            if (bar <= 0 || out.size() >= 5000) continue;
+            String id = line.substring(0, bar).trim(), area = clean(line.substring(bar + 1), 30);
+            if (validEntityId(id) && !area.isEmpty() && !"None".equals(area)) out.put(id, area);
+        }
+        return out;
     }
 
     /** Appareils à montrer sur la TV : ceux choisis, sinon tout (borné). */

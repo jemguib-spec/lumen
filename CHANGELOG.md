@@ -2,6 +2,14 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.23.0
+
+- Page Maison redessinée, en plein écran : chaque appareil Home Assistant est une tuile de verre avec son pictogramme ; une lumière allumée éclaire sa tuile dans sa vraie couleur et une jauge montre son intensité.
+- Régler depuis la TV : OK maintenu sur une lumière, un volet ou un ventilateur, puis ◀ ▶ pour l'intensité, la position ou la vitesse.
+- Un onglet par pièce (si tes appareils sont rangés par pièce dans Home Assistant) ; les scènes en pastilles en haut.
+- Bouton Maison vivant : le nombre de lumières allumées s'affiche dessus et son verre s'éclaire.
+- Scènes sur l'accueil : pastilles de verre, onde lumineuse au lancement, la dernière scène lancée reste marquée.
+
 ## 4.22.0
 
 - Fond immersif : reste une seconde sur une appli qui a un épisode en cours, le paysage laisse place à l'image de cet épisode (adoucie, assombrie), avec son titre en haut à gauche ; le paysage revient dès que tu bouges. Réglages › Accueil et applis › Reprendre › Fond de l'épisode en cours.

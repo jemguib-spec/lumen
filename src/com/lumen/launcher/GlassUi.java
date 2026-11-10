@@ -128,6 +128,72 @@ final class GlassUi {
         return r;
     }
 
+    /**
+     * Pastille de scène Home Assistant (accueil et page Maison) : verre, étincelle et nom. La
+     * dernière scène lancée garde son étincelle dans la couleur d'accent ; sélectionnée, la pastille
+     * devient claire en fondu, comme une vignette.
+     */
+    static final class Pill extends LinearLayout {
+        private final Glass.Surface glass;
+        private final Glyph glyph;
+        private final TextView label;
+        private boolean active;
+        private float level;
+        private android.animation.ValueAnimator anim;
+
+        Pill(final MainActivity a, String name, boolean active, final View.OnClickListener click) {
+            super(a);
+            this.active = active;
+            setOrientation(HORIZONTAL);
+            setGravity(Gravity.CENTER_VERTICAL);
+            setFocusable(true);
+            setClickable(true);
+            setSoundEffectsEnabled(false);
+            setPadding(a.u(26), a.u(14), a.u(30), a.u(14));
+            glass = new Glass.Surface(this, a.u(40), 0x33FFFFFF);
+            setBackground(glass);
+            glyph = new Glyph(Glyph.SPARK, Palette.TEXT);
+            ImageView iv = new ImageView(a);
+            iv.setImageDrawable(glyph);
+            LayoutParams il = new LayoutParams(a.u(22), a.u(22));
+            il.rightMargin = a.u(12);
+            addView(iv, il);
+            label = a.text(22, "sans-serif-medium", Palette.TEXT);
+            label.setText(name);
+            label.setSingleLine(true);
+            label.setEllipsize(TextUtils.TruncateAt.END);
+            label.setMaxWidth(a.u(360));
+            addView(label);
+            setContentDescription(name);
+            setOnFocusChangeListener(new OnFocusChangeListener() {
+                @Override public void onFocusChange(View v, boolean f) {
+                    if (f) Sounds.get(a).tick();
+                    animate().scaleX(f ? 1.06f : 1f).scaleY(f ? 1.06f : 1f).setStartDelay(0).setDuration(Motion.FAST).setInterpolator(Motion.EASE).start();
+                    if (anim != null) anim.cancel();
+                    anim = android.animation.ValueAnimator.ofFloat(level, f ? 1f : 0f);
+                    anim.setDuration(Motion.FOCUS);
+                    anim.setInterpolator(Motion.EASE);
+                    anim.addUpdateListener(new android.animation.ValueAnimator.AnimatorUpdateListener() {
+                        @Override public void onAnimationUpdate(android.animation.ValueAnimator va) { level = (Float) va.getAnimatedValue(); paint(); }
+                    });
+                    anim.start();
+                }
+            });
+            setOnClickListener(new OnClickListener() {
+                @Override public void onClick(View v) { Sounds.get(a).tock(); click.onClick(v); }
+            });
+            paint();
+        }
+
+        void setActive(boolean on) { if (on != active) { active = on; paint(); } }
+
+        private void paint() {
+            glass.setSolidLevel(level);
+            label.setTextColor(Palette.mix(Palette.TEXT, Palette.ON_SELECTED, level));
+            glyph.setColor(Palette.mix(active ? Palette.ACCENT : Palette.TEXT, Palette.ON_SELECTED, level));
+        }
+    }
+
     interface Bool { boolean get(); }
     interface IntValue { int get(); }
     interface IntSetter { void set(int i); }

@@ -287,6 +287,10 @@ final class Prefs {
     Set<String> haPinned() { return set("ha_pinned"); }
     void setHaPinned(String id, boolean on) { Set<String> s = haPinned(); if (on) s.add(id); else s.remove(id); put("ha_pinned", s); }
 
+    /** Dernière scène lancée depuis Lumen (marquée sur l'accueil et dans le panneau), « » si un appareil a changé depuis. */
+    String haLastScene() { return sp.getString("ha_last_scene", ""); }
+    void setHaLastScene(String id) { sp.edit().putString("ha_last_scene", id == null ? "" : id).apply(); }
+
     /** Scènes Home Assistant en raccourci sur l'accueil : « id\tnom », 4 au plus. */
     List<String[]> haHome() {
         List<String[]> out = new ArrayList<>();

@@ -130,6 +130,8 @@ final class Glass {
             invalidateSelf();
         }
         void setRadius(float rad) { radius = rad; invalidateSelf(); }
+        /** Change le voile posé sur le verre (tuile d'un appareil allumé, dans sa couleur). */
+        void setVeil(int color) { if (color != veilColor) { veilColor = color; invalidateSelf(); } }
 
         /**
          * Contour d'écrêtage et filet, refaits seulement quand la taille ou le rayon changent (rien

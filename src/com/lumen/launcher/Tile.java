@@ -200,6 +200,38 @@ final class Tile extends FrameLayout {
         if (favDot != null) favDot.setVisibility(fav ? VISIBLE : GONE);
     }
 
+    private TextView badge;
+
+    /**
+     * Bouton rond « vivant » : n > 0 affiche le nombre en petit et éclaire légèrement le verre
+     * (lumières allumées dans la maison) ; 0 le remet au repos.
+     */
+    void setBadge(int n) {
+        if (glass != null) glass.setVeil(n > 0 ? 0x4DFFD9A0 : 0x1FFFFFFF);
+        if (n <= 0) { if (badge != null) badge.setVisibility(GONE); return; }
+        int size = card.getLayoutParams().width;
+        if (badge == null) {
+            badge = new TextView(getContext());
+            badge.setTypeface(Fonts.get("sans-serif-medium", Typeface.BOLD));
+            badge.setTextSize(TypedValue.COMPLEX_UNIT_PX, size * 0.19f);
+            badge.setTextColor(Palette.ON_SELECTED);
+            badge.setGravity(Gravity.CENTER);
+            badge.setIncludeFontPadding(false);
+            GradientDrawable d = new GradientDrawable();
+            d.setCornerRadius(size);
+            d.setColor(Palette.SELECTED_NEUTRAL);
+            badge.setBackground(d);
+            int h = Math.round(size * 0.32f);
+            badge.setMinWidth(h);
+            badge.setPadding(h / 4, 0, h / 4, 0);
+            badge.setElevation(dp(getContext(), 20));
+            badge.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
+            addView(badge, new LayoutParams(LayoutParams.WRAP_CONTENT, h, Gravity.TOP | Gravity.END));
+        }
+        badge.setText(String.valueOf(Math.min(n, 99)));
+        badge.setVisibility(VISIBLE);
+    }
+
     private View usualRing;
 
     /** Appli habituelle à cette heure : un liseré lumineux qui respire doucement, puis reste discret. */
