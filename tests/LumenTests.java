@@ -287,13 +287,13 @@ public class LumenTests {
         check("coffre : valeur en clair reconnue comme non chiffrée", !VaultCrypto.sealed("abcd1234") && VaultCrypto.open(vk, "abcd1234") == null);
         check("coffre : mal formé refusé", VaultCrypto.open(vk, "K1.zz.yy") == null && VaultCrypto.open(vk, null) == null);
         // assistant d'installation
-        check("installation : Lumen est l'accueil", InstallPolicy.isHome("com.lumen.launcher"));
+        check("installation : Lumen est l'accueil", InstallPolicy.isHome("fr.lumen.accueil"));
         check("installation : choix non fait (android) ≠ accueil", !InstallPolicy.isHome("android") && !InstallPolicy.isHome(null));
         java.util.List<String> cmd = InstallPolicy.commands("192.168.1.42", "com.google.android.apps.tv.launcherx", true);
         check("installation : adb connect avec l'adresse de la TV", cmd.get(0).equals("adb connect 192.168.1.42:5555"));
         check("installation : accueil Google désactivé pour l'utilisateur 0", cmd.get(1).equals("adb shell pm disable-user --user 0 com.google.android.apps.tv.launcherx"));
         check("installation : assistant Google désactivé", cmd.get(2).contains("com.google.android.tungsten.setupwraith"));
-        check("installation : historique pour Reprendre", cmd.get(3).equals("adb shell appops set com.lumen.launcher GET_USAGE_STATS allow"));
+        check("installation : historique pour Reprendre", cmd.get(3).equals("adb shell appops set fr.lumen.accueil GET_USAGE_STATS allow"));
         check("installation : adresse inconnue → marque-place", InstallPolicy.commands(null, null, false).get(0).contains("ADRESSE-IP-DE-LA-TV"));
         check("installation : Android TV ancien modèle", InstallPolicy.commands(null, "com.google.android.tvlauncher", false).get(1).endsWith("com.google.android.tvlauncher"));
         check("installation : sans assistant Google, 3 commandes", InstallPolicy.commands(null, null, false).size() == 3);

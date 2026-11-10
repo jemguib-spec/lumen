@@ -6,7 +6,7 @@
 set -e
 APK=${1:-build/Lumen.apk}
 OUT=${2:-captures}
-PKG=com.lumen.launcher
+PKG=fr.lumen.accueil
 mkdir -p "$OUT"
 key() { adb shell input keyevent "KEYCODE_$1"; sleep "${2:-0.8}"; }
 shot() { adb exec-out screencap -p > "$OUT/$1.png"; echo "capture : $OUT/$1.png"; }
@@ -16,7 +16,7 @@ adb wait-for-device
 adb shell settings put global window_animation_scale 1 >/dev/null 2>&1 || true
 adb install -r -g "$APK"
 adb logcat -c
-adb shell am start -W -n $PKG/.MainActivity >/dev/null
+adb shell am start -W -n $PKG/com.lumen.launcher.MainActivity >/dev/null
 sleep 8
 alive || { echo "ÉCHEC : Lumen ne tourne plus après le démarrage"; adb logcat -d | tail -80; exit 1; }
 shot 01-accueil

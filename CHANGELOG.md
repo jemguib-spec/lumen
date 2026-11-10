@@ -2,13 +2,17 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
-## 4.23.0
+## 4.24.0
 
 - Page Maison redessinée, en plein écran : chaque appareil Home Assistant est une tuile de verre avec son pictogramme ; une lumière allumée éclaire sa tuile dans sa vraie couleur et une jauge montre son intensité.
 - Régler depuis la TV : OK maintenu sur une lumière, un volet ou un ventilateur, puis ◀ ▶ pour l'intensité, la position ou la vitesse.
 - Un onglet par pièce (si tes appareils sont rangés par pièce dans Home Assistant) ; les scènes en pastilles en haut.
 - Bouton Maison vivant : le nombre de lumières allumées s'affiche dessus et son verre s'éclaire.
 - Scènes sur l'accueil : pastilles de verre, onde lumineuse au lancement, la dernière scène lancée reste marquée.
+
+## 4.23.0
+
+- Nouvel identifiant de l'appli : fr.lumen.accueil (au lieu de com.lumen.launcher), enregistré auprès de Google pour la vérification des développeurs Android. Pour Android, c'est une nouvelle appli : à installer une fois à la main, puis désinstaller l'ancien Lumen (voir INSTALLATION.md, section 5).
 
 ## 4.22.0
 

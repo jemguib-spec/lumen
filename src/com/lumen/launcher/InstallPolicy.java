@@ -9,7 +9,7 @@ import java.util.List;
 final class InstallPolicy {
     private InstallPolicy() { }
 
-    static final String OWN = "com.lumen.launcher";
+    static final String OWN = "fr.lumen.accueil";
     /** Accueils d'origine connus, du plus récent (Google TV) au plus ancien (Android TV). */
     static final String[] STOCK_LAUNCHERS = {"com.google.android.apps.tv.launcherx", "com.google.android.tvlauncher"};
     /** Assistant de configuration de Google TV : il relance l'accueil Google s'il reste actif. */
