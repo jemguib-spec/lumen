@@ -38,6 +38,8 @@ final class HomeBuilder {
         a.fx = new WeatherFx(a, a.unit);
         a.fx.setAlpha(0f);
         a.root.addView(a.fx, MainActivity.match());
+        a.immersive = new Immersive(a);
+        a.root.addView(a.immersive.view, MainActivity.match());
         a.glow = new Glow(a);
         a.root.addView(a.glow, MainActivity.match());
 

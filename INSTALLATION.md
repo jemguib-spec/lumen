@@ -55,6 +55,7 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 
 ## Effets
 - **Météo dans le paysage** : avec une ville réglée, les paysages Lumen montrent le temps réel — pluie, bruine, neige, brume, ciel couvert, orage avec éclairs (Réglages › Fond d'écran › Météo dans le paysage).
+- **Couleurs accordées au fond** : la vignette sélectionnée et les interrupteurs prennent une nuance du fond affiché (blanc chaud à l'aube, bleuté la nuit) ; neutres sur un fond gris ou avec « Contraste renforcé ». Réglages › Accueil et applis › Vignettes et disposition pour revenir au blanc et au vert fixes.
 - **Lueur de l'appli** : une lueur de la couleur de l'appli monte sous la vignette sélectionnée et la suit (Réglages › Accueil et applis).
 - **Ouverture animée** : la vignette s'agrandit jusqu'à remplir l'écran avant d'ouvrir l'appli.
 - **Sons de l'interface** : clics très discrets, désactivables (Réglages › Accueil et applis).
@@ -81,6 +82,7 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 ## Reprendre au-dessus des applis
 - Sélectionne une appli de l'accueil (Netflix, Prime Video, Plex…) : ses films et épisodes en cours apparaissent juste au-dessus, avec l'affiche, l'épisode et la barre de progression. ▲ pour y aller, OK pour reprendre la lecture.
 - Au premier lancement, Android demande l'autorisation d'accéder aux « programmes TV » : accepte-la. Sinon : Réglages › Accueil et applis › Reprendre.
+- **Fond immersif** : reste une seconde sur une appli qui a un épisode en cours, le fond de l'accueil devient l'image de cet épisode, adoucie et assombrie, avec son titre en haut à gauche ; le paysage revient dès que tu passes à une autre appli. Mêmes images que « Reprendre », rien de plus n'est téléchargé. Réglages › Accueil et applis › Reprendre › Fond de l'épisode en cours pour le désactiver.
 - Chaque appli décide de publier ou non ses « en cours » sur Android TV : selon les applis et la version de Google TV, certaines n'apparaîtront pas. Réglages › Accueil et applis › Reprendre › Affiches des épisodes : Non pour n'afficher que la couleur de l'appli.
 
 ## Ambiances et minuterie de sommeil

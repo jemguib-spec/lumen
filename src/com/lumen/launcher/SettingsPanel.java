@@ -36,6 +36,8 @@ final class SettingsPanel {
                 a.clockBox.setVisibility(a.prefs.showClock() ? View.VISIBLE : View.GONE);
                 Sounds.get(a).setEnabled(a.prefs.sounds());
                 if (!a.prefs.appGlow()) a.glow.fade();
+                if (!a.prefs.immersive()) a.immersive.clear(true);
+                a.backdropChanged(); // « Couleurs accordées au fond » a pu changer
                 a.rowRefreshers.clear();
                 if (before[3] != a.prefs.tileStyle() || before[4] != (a.prefs.showIcons() ? 1 : 0)
                         || before[5] != (a.prefs.tintTiles() ? 1 : 0)) { a.dirtyRow = true; a.markAppsDirty(); }
@@ -532,6 +534,11 @@ final class SettingsPanel {
                 }, new Runnable() {
                     @Override public void run() { a.prefs.setAppGlow(!a.prefs.appGlow()); }
                 }), a.rowLp());
+                col.addView(toggle(a, L.t("Couleurs accordées au fond"), new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.tintUi(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setTintUi(!a.prefs.tintUi()); }
+                }), a.rowLp());
                 hint(a, col, L.t("Les changements s'appliquent en refermant les réglages."));
                 break;
             }
@@ -552,6 +559,11 @@ final class SettingsPanel {
                     @Override public boolean get() { return a.prefs.shelfPosters(); }
                 }, new Runnable() {
                     @Override public void run() { a.prefs.setShelfPosters(!a.prefs.shelfPosters()); a.shelf.reload(); }
+                }), a.rowLp());
+                col.addView(toggle(a, L.t("Fond de l'épisode en cours"), new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.immersive(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setImmersive(!a.prefs.immersive()); }
                 }), a.rowLp());
                 col.addView(a.listRow(L.t("Historique complet pour Reprendre"), new MainActivity.Value() {
                     @Override public String get() { return ResumePanel.usageAllowed(a) ? "Autorisé" : "Non autorisé · OK pour autoriser"; }

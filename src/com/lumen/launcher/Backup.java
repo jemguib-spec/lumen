@@ -16,7 +16,7 @@ final class Backup {
     static final int NONE = 0, BOOL = 1, INT = 2, STRING = 3, SET = 4;
     static final int MAX_STRING = 8000, MAX_SET = 500, MAX_ITEM = 300;
 
-    static final String[] BOOLS = {"ambiance_sound", "app_glow", "auto_update", "clock", "cosy_wanted", "follow_time", "idle",
+    static final String[] BOOLS = {"ambiance_sound", "app_glow", "auto_update", "clock", "cosy_wanted", "follow_time", "idle", "immersive",
             "living_scenes", "seasonal", "shelf_posters", "show_icons", "show_perf", "sounds", "tint_tiles", "top_shelf",
             "video_4k", "weather_fx", "high_contrast", "habits_on", "greeting", "ha_button", "ha_cine_open"};
     static final String[] INTS = {"ambiance_kind", "ambient_min", "home_cols", "home_rows", "interval", "source", "tile_style",

@@ -88,6 +88,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     View scrim;
     WeatherFx fx;
     Glow glow;
+    Immersive immersive;
     FrameLayout zoomView;
     PhoneServer phone;
     /** Ce que la TV fait à la demande du téléphone. */
@@ -207,6 +208,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         super.onPause();
         if (status != null) status.stop();
         resumedNow = false;
+        immersive.clear(false);
         h.removeCallbacks(afterShown);
         perf.setOn(false);
         wall.stop();
@@ -285,10 +287,23 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
 
     @Override public void onWallShown(WallItem item, Bitmap backdrop) {
         Glass.setSource(backdrop);
-        refreshGlass(root);
-        if (appsBg != null && Glass.backdrop() != null) appsBg.setImageBitmap(Glass.backdrop());
-        updateCaption(item);
         if (ambientOn) ambient.setCaption(item);
+        if (immersive.keepOver()) return; // l'image d'un épisode couvre le fond : il s'appliquera à son départ
+        backdropChanged();
+        setCaption(item.title, item.credit, true);
+    }
+
+    /** Le fond visible a changé (diaporama, fond immersif) : couleurs accordées, verre, voile du bas. */
+    void backdropChanged() {
+        Bitmap b = Glass.backdrop();
+        int[] px = null;
+        if (b != null && !b.isRecycled() && prefs.tintUi() && !highContrast) {
+            px = new int[b.getWidth() * b.getHeight()];
+            b.getPixels(px, 0, b.getWidth(), 0, 0, b.getWidth(), b.getHeight());
+        }
+        Palette.tint(px);
+        refreshGlass(root);
+        if (appsBg != null && b != null) appsBg.setImageBitmap(b);
         adaptScrim();
     }
 
@@ -316,13 +331,14 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         if (wasFallback && !wall.usingFallback()) showNotice(L.t("Nouvelles photos prêtes"));
     }
 
-    private void updateCaption(final WallItem item) {
+    /** Légende en haut à gauche : le fond du diaporama (avec ses points), ou l'épisode du fond immersif. */
+    void setCaption(final String title, final String credit, final boolean showDots) {
         captionBox.animate().alpha(0f).setDuration(Motion.MEDIUM).withEndAction(new Runnable() {
             @Override public void run() {
-                captionTitle.setText(item.title);
-                captionCredit.setText(item.credit);
-                captionCredit.setVisibility(TextUtils.isEmpty(item.credit) ? View.GONE : View.VISIBLE);
-                updateDots();
+                captionTitle.setText(title);
+                captionCredit.setText(credit);
+                captionCredit.setVisibility(TextUtils.isEmpty(credit) ? View.GONE : View.VISIBLE);
+                if (showDots) updateDots(); else dots.removeAllViews();
                 captionBox.animate().alpha(appsOpen || ambientOn ? 0f : 1f).setDuration(Motion.SLOW).start();
             }
         }).start();
@@ -541,6 +557,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
             if (focused) glowOn(t);
             if (focused) parallax(t);
             if (focused) shelf.focusApp(!appsOpen && t.tag instanceof AppRepo.App ? (AppRepo.App) t.tag : null);
+            if (focused) immersive.focusApp(!appsOpen && t.tag instanceof AppRepo.App ? (AppRepo.App) t.tag : null);
             if (!focused || !banner()) return;
             final String s = t.title;
             if (TextUtils.equals(focusLabel.getText(), s)) return;
@@ -796,6 +813,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         @Override public void run() {
             if (overlay != null || movingTile != null || appsOpen || ambiance != null || !prefs.idleFade()) return;
             idle = true;
+            immersive.clear(true); // l'interface s'efface : le paysage revient
             homeLayer.animate().alpha(0f).setDuration(1800).start();
             clockBox.animate().alpha(0.6f).setDuration(1800).start();
             glow.fade();
@@ -1058,7 +1076,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
 
     // ------------------------------------------------------------------ mode veille (voir Veille)
 
-    void enterAmbient() { veille.enterAmbient(); }
+    void enterAmbient() { immersive.clear(false); veille.enterAmbient(); }
     void exitAmbient(boolean animate) { veille.exitAmbient(animate); }
 
     private final Runnable ambientRun = new Runnable() {
@@ -1103,6 +1121,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     void openApps() {
         if (appsOpen) return;
         appsOpen = true;
+        immersive.clear(true);
         focusBeforeApps = getCurrentFocus();
         h.removeCallbacks(prebuildApps);
         if (Glass.backdrop() != null) appsBg.setImageBitmap(Glass.backdrop());

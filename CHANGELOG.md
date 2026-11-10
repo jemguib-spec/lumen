@@ -4,6 +4,8 @@ Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte
 
 ## Prochaine version
 
+- Fond immersif : reste une seconde sur une appli qui a un épisode en cours, le paysage laisse place à l'image de cet épisode (adoucie, assombrie), avec son titre en haut à gauche ; le paysage revient dès que tu bouges. Réglages › Accueil et applis › Reprendre › Fond de l'épisode en cours.
+- Couleurs accordées au fond : la sélection et les interrupteurs prennent une nuance du fond affiché (blanc chaud à l'aube, bleuté la nuit). Réglages › Accueil et applis › Vignettes et disposition › Couleurs accordées au fond.
 - Les applis s'ouvrent plus vite : l'écran « lumen » ne retient plus le lancement que 0,4 s (0,9 s avant).
 - Sélection fondue : une vignette ou une ligne de panneau qui prend le focus passe au blanc en douceur (fond, texte, pictogramme, interrupteur) au lieu de basculer d'un coup.
 - Verre éclairé d'en haut : arête supérieure lumineuse, flancs discrets, sur les vignettes, les boutons et les panneaux.

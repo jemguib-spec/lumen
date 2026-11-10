@@ -223,6 +223,13 @@ final class Prefs {
     boolean watchNextAsked() { return sp.getBoolean("watch_next_asked", false); }
     void setWatchNextAsked(boolean b) { sp.edit().putBoolean("watch_next_asked", b).apply(); }
 
+    /** Fond immersif : l'image de l'épisode en cours derrière l'appli sélectionnée. */
+    boolean immersive() { return sp.getBoolean("immersive", true); }
+    void setImmersive(boolean b) { sp.edit().putBoolean("immersive", b).apply(); }
+    /** Sélection et accent accordés aux couleurs du fond d'écran. */
+    boolean tintUi() { return sp.getBoolean("tint_ui", true); }
+    void setTintUi(boolean b) { sp.edit().putBoolean("tint_ui", b).apply(); }
+
     boolean appGlow() { return sp.getBoolean("app_glow", true); }
     void setAppGlow(boolean b) { sp.edit().putBoolean("app_glow", b).apply(); }
 

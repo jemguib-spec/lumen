@@ -22,6 +22,8 @@ final class Glass {
 
     static void setScreen(int w, int h) { if (w > 0 && h > 0) { screenW = w; screenH = h; } }
     static Bitmap backdrop() { return backdrop; }
+    /** Remet un fond de verre déjà préparé (retour du fond immersif au paysage). */
+    static void setBackdrop(Bitmap b) { if (b != null && !b.isRecycled()) backdrop = b; }
 
     /** Floute une image (réduction + flou en boîte) et la mémorise comme fond du verre. */
     static void setSource(Bitmap src) {
@@ -48,10 +50,12 @@ final class Glass {
     }
 
     /** Version très floue d'une image (transition entre deux fonds). Peut renvoyer null. */
-    static Bitmap soft(Bitmap src) {
+    static Bitmap soft(Bitmap src) { return soft(src, 160, 90); }
+
+    /** Même adoucissement à une taille choisie (plus grande = moins flou une fois en plein écran). */
+    static Bitmap soft(Bitmap src, int w, int h) {
         if (src == null || src.isRecycled()) return null;
         try {
-            int w = 160, h = 90;
             Bitmap small = Bitmap.createScaledBitmap(src, w, h, true);
             int[] px = new int[w * h];
             small.getPixels(px, 0, w, 0, 0, w, h);
@@ -95,7 +99,6 @@ final class Glass {
         private float radius;
         private int veilColor;
         private float solidLevel;                // 0 = verre, 1 = surface pleine (sélection)
-        private int solidColor = 0xFFF5F5F7;
         private int rimColor = 0x29FFFFFF;
         private final android.graphics.Path clip = new android.graphics.Path();
         private float shapeW = -1, shapeH = -1, shapeR = -1;
@@ -149,7 +152,7 @@ final class Glass {
             Rect b = getBounds();
             r.set(b);
             if (solidLevel >= 1f) {
-                veil.setColor(solidColor);
+                veil.setColor(Palette.SELECTED);
                 c.drawRoundRect(r, radius, radius, veil);
                 return;
             }
@@ -178,7 +181,7 @@ final class Glass {
             c.drawRoundRect(r, radius, radius, rim);
             if (solidLevel > 0f) { // la sélection arrive en fondu par-dessus le verre
                 r.set(b);
-                veil.setColor(Palette.mix(solidColor & 0x00FFFFFF, solidColor, solidLevel));
+                veil.setColor(Palette.mix(Palette.SELECTED & 0x00FFFFFF, Palette.SELECTED, solidLevel));
                 c.drawRoundRect(r, radius, radius, veil);
             }
         }

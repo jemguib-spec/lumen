@@ -31,7 +31,7 @@ final class Profiles {
     /** Réglages propres à chaque personne. */
     static final Set<String> PERSONAL = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             "favorites", "hidden_apps", "hidden_walls", "source", "follow_time", "interval",
-            "tile_style", "tile_word_v1", "show_icons", "tint_tiles", "app_glow",
+            "tile_style", "tile_word_v1", "show_icons", "tint_tiles", "app_glow", "tint_ui", "immersive",
             "veille_src", "greeting", "night_hour", "ambient_min", "idle", "clock", "seasonal",
             "weather_fx", "living_scenes", "sounds", "text_scale", "high_contrast", "home_cols", "home_rows",
             "recents", "searches", "habits", "habits_on", "ambiance_kind", "ambiance_sound",

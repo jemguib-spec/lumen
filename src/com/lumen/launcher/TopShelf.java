@@ -97,6 +97,14 @@ final class TopShelf {
         return best;
     }
 
+    /** Le programme en cours le plus récent d'une appli qui a une image (pour le fond immersif), ou null. */
+    WatchNext.Entry firstWithArt(String pkg) {
+        List<WatchNext.Entry> l = data.get(pkg);
+        if (l == null) return null;
+        for (WatchNext.Entry e : l) if (e.poster != null && !e.poster.isEmpty()) return e;
+        return null;
+    }
+
     /** Une vignette de l'accueil vient d'être sélectionnée (null = aucune appli). */
     void focusApp(AppRepo.App app) {
         wanted = app;

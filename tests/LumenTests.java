@@ -471,6 +471,26 @@ public class LumenTests {
         // ---- fondu de sélection : mélange de couleurs
         check("fondu : extrémités exactes", Palette.mix(0x00F5F5F7, 0xFFF5F5F7, 0f) == 0x00F5F5F7 && Palette.mix(0x00F5F5F7, 0xFFF5F5F7, 1f) == 0xFFF5F5F7
                 && Palette.mix(0x12345678, 0xFFFFFFFF, -1f) == 0x12345678 && Palette.mix(0x12345678, 0xFFFFFFFF, 2f) == 0xFFFFFFFF);
+        // ---- couleurs accordées au fond
+        int[] grey = new int[200], orange = new int[200], blue = new int[200], red = new int[200], mixed = new int[200];
+        for (int i = 0; i < 200; i++) {
+            grey[i] = 0xFF303030; orange[i] = 0xFF5A3A14; blue[i] = 0xFF101E4A; red[i] = 0xFF5A1010;
+            mixed[i] = i % 2 == 0 ? 0xFF5A1010 : 0xFF105A5A; // deux teintes opposées : pas de dominante
+        }
+        check("teinte : image grise ou sans dominante → couleurs neutres", Palette.tintFor(grey) == null && Palette.tintFor(mixed) == null
+                && Palette.tintFor(new int[]{0xFF000000}) == null);
+        int[] to = Palette.tintFor(orange), tb = Palette.tintFor(blue), tr = Palette.tintFor(red);
+        check("teinte : fond chaud → blanc chaud, fond bleu → blanc bleuté, toujours presque blanc", to != null && tb != null
+                && ((to[0] >> 16) & 255) > (to[0] & 255) && (tb[0] & 255) > ((tb[0] >> 16) & 255)
+                && (to[0] >>> 24) == 255 && (to[0] & 255) >= 220 && ((tb[0] >> 16) & 255) >= 220);
+        check("teinte : l'accent n'est jamais rouge (réservé aux actions qui retirent)", tr != null
+                && ((tr[1] >> 8) & 255) - (tr[1] & 255) >= 30);
+        Palette.tint(orange);
+        boolean tinted = Palette.SELECTED == to[0] && Palette.ACCENT == to[1];
+        Palette.tint(null);
+        check("teinte : appliquée puis remise au neutre", tinted && Palette.SELECTED == Palette.SELECTED_NEUTRAL && Palette.ACCENT == Palette.ACCENT_NEUTRAL);
+        check("teinte : hsv", Palette.hsv(0, 1, 1) == 0xFFFF0000 && Palette.hsv(120, 1, 1) == 0xFF00FF00 && Palette.hsv(240, 1, 1) == 0xFF0000FF
+                && Palette.hsv(200, 0, 1) == 0xFFFFFFFF);
         check("fondu : milieu, transparence comprise", Palette.mix(0x00000000, 0xFF204060, 0.5f) == 0x80102030
                 && Palette.mix(0xFFFFFFFF, 0xFF111216, 0.5f) == 0xFF88898B);
         check("bandeau : titre long raccourci", Greeting.resume("Un titre vraiment très très long pour une seule ligne").endsWith("…"));

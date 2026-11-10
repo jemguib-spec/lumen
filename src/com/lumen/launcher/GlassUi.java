@@ -67,12 +67,12 @@ final class GlassUi {
     }
 
     Row listRow(String label, MainActivity.Value value, View.OnClickListener click) {
-        return row(label, value, click, Palette.TEXT, Palette.SELECTED, Palette.ON_SELECTED);
+        return row(label, value, click, false);
     }
 
-    /** restText : couleur du texte au repos ; selBg et selText : fond et texte de la ligne sélectionnée. */
-    private Row row(final String label, final MainActivity.Value value, final View.OnClickListener click,
-                    final int restText, final int selBg, final int selText) {
+    /** danger : action qui retire quelque chose (texte rouge doux, fond rouge et texte blanc à la sélection). */
+    private Row row(final String label, final MainActivity.Value value, final View.OnClickListener click, final boolean danger) {
+        final int restText = danger ? Palette.DANGER : Palette.TEXT, selText = danger ? 0xFFFFFFFF : Palette.ON_SELECTED;
         final Row r = new Row(a);
         r.setOrientation(LinearLayout.HORIZONTAL);
         r.setGravity(Gravity.CENTER_VERTICAL);
@@ -105,6 +105,7 @@ final class GlassUi {
         r.addView(v, vl);
         r.follow(new Row.Tint() {
             @Override public void at(float t) {
+                int selBg = danger ? Palette.DANGER_SELECTED : Palette.SELECTED; // lue ici : elle suit le fond d'écran
                 bg.setColor(Palette.mix(selBg & 0x00FFFFFF, selBg, t));
                 l.setTextColor(Palette.mix(restText, selText, t));
                 v.setTextColor(Palette.mix(Palette.TEXT_2, Palette.ON_SELECTED_2, t));
@@ -221,7 +222,7 @@ final class GlassUi {
      * (texte rouge doux, fond rouge à la sélection).
      */
     LinearLayout iconRow(int glyphType, String label, MainActivity.Value value, View.OnClickListener click, final boolean danger) {
-        final Row r = danger ? row(label, value, click, Palette.DANGER, Palette.DANGER_SELECTED, 0xFFFFFFFF) : listRow(label, value, click);
+        final Row r = row(label, value, click, danger);
         final Glyph g = new Glyph(glyphType, danger ? Palette.DANGER : Palette.TEXT);
         ImageView iv = new ImageView(a);
         iv.setImageDrawable(g);
