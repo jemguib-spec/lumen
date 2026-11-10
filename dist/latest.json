@@ -1,7 +1,7 @@
 {
-  "version": "4.23.0",
-  "size": 4048384,
-  "sha256": "c64292713473ed31a16e9f589b1a24d463a42c085ce656a566381902ed712eed",
-  "file": "Lumen-4.23.0.apk",
-  "notes": "- Nouvel identifiant de l'appli : fr.lumen.accueil (au lieu de com.lumen.launcher), enregistré auprès de Google pour la vérification des développeurs Android. Pour Android, c'est une nouvelle appli : à installer une fois à la main, puis désinstaller l'ancien Lumen (voir INSTALLATION.md, section 5)."
+  "version": "4.24.0",
+  "size": 4060672,
+  "sha256": "09a28ec719b0486cc974a38e81b49a5a60b3b70a988eeb16a812b3a49ac6c9b3",
+  "file": "Lumen-4.24.0.apk",
+  "notes": "- Page Maison redessinée, en plein écran : chaque appareil Home Assistant est une tuile de verre avec son pictogramme ; une lumière allumée éclaire sa tuile dans sa vraie couleur et une jauge montre son intensité.\n- Régler depuis la TV : OK maintenu sur une lumière, un volet ou un ventilateur, puis ◀ ▶ pour l'intensité, la position ou la vitesse.\n- Un onglet par pièce (si tes appareils sont rangés par pièce dans Home Assistant) ; les scènes en pastilles en haut.\n- Bouton Maison vivant : le nombre de lumières allumées s'affiche dessus et son verre s'éclaire.\n- Scènes sur l'accueil : pastilles de verre, onde lumineuse au lancement, la dernière scène lancée reste marquée."
 }
