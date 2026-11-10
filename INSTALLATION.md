@@ -67,7 +67,7 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - Touche **Recherche** ou **Assistant** (micro) de la télécommande, ou le bouton micro à côté de la recherche de la page Applications : la fenêtre de reconnaissance vocale d'Android s'ouvre, et ce que tu dis arrive dans la recherche de Lumen (appli, film, réglage, lumière…). Lumen n'écoute rien lui-même : c'est le service vocal de la TV qui reconnaît la phrase, comme pour n'importe quelle appli. Sur certaines TV, Android garde la touche micro pour son propre assistant ; le bouton micro à l'écran marche toujours.
 
 ## Langue
-- Réglages › Accueil et applis › Lisibilité › Langue : Système (français si la TV est en français, sinon anglais), Français ou English. Réglage par profil. La page du téléphone reste en français pour l'instant.
+- Réglages › Accueil et applis › Lisibilité › Langue : Système (français si la TV est en français, sinon anglais), Français ou English. Réglage par profil. La page du téléphone suit la langue de la TV.
 
 ## Lecteur d'écran
 - Avec TalkBack (Paramètres de la TV › Accessibilité), vignettes, boutons et lignes de réglage sont annoncés avec leur nom et leur valeur.

@@ -24,8 +24,20 @@ keys.update(m.group(1) for m in re.finditer(r'new Entry\("([^"]+)",', idx))
 m = re.search(r'String F = "([^"]+)", A = "([^"]+)", V = "([^"]+)", AM = "([^"]+)", S = "([^"]+)"', idx)
 if m: keys.update(m.groups())
 keys.update(['Réglages', 'Home Assistant', 'Films et séries du moment'])
+# page du téléphone : t('…') dans phone.js, textes et attributs de phone.html
+pjs = open(os.path.join(root, 'assets', 'phone.js'), encoding='utf-8').read()
+phone = set()
+for m in re.finditer(r"(?<![A-Za-z_.$])t\('((?:[^'\\]|\\.)*)'\)|(?<![A-Za-z_.$])t\(\"((?:[^\"\\]|\\.)*)\"\)", pjs):
+    phone.add((m.group(1) or m.group(2) or '').replace("\\'", "'"))
+phtml = open(os.path.join(root, 'assets', 'phone.html'), encoding='utf-8').read()
+for m in re.finditer(r'>([^<>{}]*[A-Za-zÀ-ÿ][^<>{}]*)<', phtml):
+    s_ = m.group(1).strip()
+    if s_ and not re.fullmatch(r'[a-z0-9_\-]+', s_) and s_ not in ('Lumen', 'TV', 'OK', 'Home Assistant', 'iPhone de Jem'): phone.add(s_)
+for m in re.finditer(r'(?:placeholder|aria-label|title)="([^"]+)"', phtml):
+    if m.group(1) not in ('iPhone de Jem', 'OK', 'Volume'): phone.add(m.group(1))
 bad = 0
 for tsv in glob.glob(os.path.join(root, 'assets', 'lang', '*.tsv')):
+    expected = phone if os.path.basename(tsv).startswith('phone-') else keys
     d = {}
     for n, line in enumerate(open(tsv, encoding='utf-8'), 1):
         line = line.rstrip('\n')
@@ -36,10 +48,10 @@ for tsv in glob.glob(os.path.join(root, 'assets', 'lang', '*.tsv')):
         if not v.strip(): print(f'{tsv}:{n}: traduction vide pour « {k} »'); bad += 1
         if k in d: print(f'{tsv}:{n}: doublon « {k} »'); bad += 1
         d[k] = v
-    missing = sorted(keys - set(d))
-    orphan = sorted(set(d) - keys)
+    missing = sorted(expected - set(d))
+    orphan = sorted(set(d) - expected)
     for k in missing: print(f'{os.path.basename(tsv)} : manque « {k.replace(chr(10), "\\n")} »')
     for k in orphan: print(f'{os.path.basename(tsv)} : orphelin « {k.replace(chr(10), "\\n")} »')
     bad += len(missing) + len(orphan)
-    print(f'{os.path.basename(tsv)} : {len(d)} textes, {len(keys)} attendus')
+    print(f'{os.path.basename(tsv)} : {len(d)} textes, {len(expected)} attendus')
 sys.exit(1 if bad else 0)

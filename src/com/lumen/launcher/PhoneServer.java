@@ -430,6 +430,11 @@ final class PhoneServer {
         if (!post && (p.equals("/") || p.equals("/index.html"))) { send(out, 200, "text/html; charset=utf-8", asset("phone.html"), null); return; }
         if (!post && p.equals("/app.js")) { send(out, 200, "application/javascript; charset=utf-8", asset("phone.js"), null); return; }
         if (!post && p.equals("/app.css")) { send(out, 200, "text/css; charset=utf-8", asset("phone.css"), null); return; }
+        if (!post && p.equals("/app.lang")) { // dictionnaire de la page (anglais) : fichier fixe, liste fermée de langues
+            String l = r.query.get("l");
+            byte[] d = "en".equals(l) ? asset("lang/phone-en.tsv") : new byte[0];
+            send(out, 200, "text/tab-separated-values; charset=utf-8", d, null); return;
+        }
 
         // toute requête d'API exige l'en-tête X-Lumen (une page d'un autre site ne peut pas l'ajouter sans autorisation)
         // connexion permanente de la télécommande (WebSocket) : chaque appui part aussitôt
@@ -670,6 +675,7 @@ final class PhoneServer {
                 tv.put("remote", RemoteService.connected());
                 tv.put("dpadOutside", RemoteService.connected() && RemoteService.dpadSupported());
                 o.put("tv", tv);
+                o.put("lang", L.lang());
                 return null;
             }
         });

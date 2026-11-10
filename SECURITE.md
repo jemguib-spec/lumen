@@ -101,7 +101,7 @@
 | `GlassUi`, `Palette`, `Motion` | Briques des panneaux en verre (carte, lignes, interrupteurs, choix, en-têtes) ; couleurs et durées nommées de l'interface |
 | `Tips` | Trois conseils sur les gestes, un par démarrage |
 | `TvStatus` | État de la TV sous l'horloge (réseau, pile de la télécommande, mise à jour) : lecture locale, rien d'envoyé |
-| `L`, `Lang` | Textes de l'interface et dictionnaires `assets/lang/*.tsv` (anglais) ; couverture vérifiée par `tools/i18n_check.py` |
+| `L`, `Lang` | Textes de l'interface et dictionnaires `assets/lang/*.tsv` (anglais, TV et page du téléphone ; `/app.lang` sert le dictionnaire de la page, fichier fixe) ; couverture vérifiée par `tools/i18n_check.py` |
 | `HomeBuilder`, `AppLauncher` | Construction de l'écran d'accueil ; ouverture et fermeture des applis, redémarrage |
 | `SettingsPanel`, `GalleryPanel`, `ResumePanel`, `PhonePanel`, `InputsPanel`, `CityPanel` | Un panneau par fonction |
 | `Tile`, `Glass`, `Glyph`, `Glow`, `AnimatedScene`, `WeatherFx`, `AmbientView` | Composants visuels |

@@ -1,0 +1,204 @@
+# Lumen phone page — English. French (as in phone.html / phone.js) <tab> English.
+ (vidéo)	 (video)
+ : fermeture…	: closing…
+ ajoutée	 added
+ déverrouillée	 unlocked
+ retirée de l’accueil	 removed from the home screen
+ réglages restaurés sur la TV	 settings restored on the TV
+ sur l’accueil	 on the home screen
+ verrouillée	 locked
+ vidéo gardée	 video kept
+ vidéos gardées	 videos kept
+ · aucune clé enregistrée	 · no key saved
+ · la décocher l’efface de la TV	 · unticking deletes it from the TV
+ · refusé	 · refused
+ · touche un fond pour le retirer de la rotation (ou le remettre).	 · tap a background to take it out of the rotation (or put it back).
+ » ajouté	” added
+ » et ses réglages ?	” and its settings?
+ à 7 h	 to 7 am
+) ne sont jamais effacées ici : onglet Envois.	) are never deleted here: Uploads tab.
+192.168.1.20:8123 ou homeassistant.local:8123	192.168.1.20:8123 or homeassistant.local:8123
+Accepte ce téléphone sur la TV (OK sur « Autoriser »)	Accept this phone on the TV (OK on “Allow”)
+Accueil	Home
+Accueil Lumen	Lumen home
+Active « Lumen télécommande » sur la TV : Paramètres › Accessibilité	Turn on “Lumen remote” on the TV: Settings › Accessibility
+Activer après	Start after
+Activé · toucher pour quitter	On · tap to leave
+Ajouter	Add
+Ajouter un profil (prénom)	Add a profile (first name)
+Ambiance	Ambience
+Ambiance · 	Ambience · 
+Ambiances	Ambiences
+Annuler	Cancel
+Applis concernées	Apps concerned
+Arrêter	Stop
+Aucun appareil	No device
+Aucun favori	No favourites
+Aucun fond à gérer pour cette source (paysages animés ou photos pas encore téléchargées).	No background to manage for this source (animated landscapes, or photos not downloaded yet).
+Aucune	None
+Aucune appli	No app
+Aucune appli ouverte depuis Lumen	No app opened from Lumen
+Aucune erreur	No errors
+Avec ta clé gratuite (pexels.com/api), Lumen propose aussi des vidéos Pexels. Sans clé, Lumen ne contacte jamais Pexels.	With your free key (pexels.com/api), Lumen also offers Pexels videos. Without a key, Lumen never contacts Pexels.
+Baisser le volume	Volume down
+Bandeau d’accueil	Welcome line
+Bas	Down
+Bouton Maison	Home button
+Ce téléphone	This phone
+Chacun a ses favoris, ses fonds et son affichage. Clés API, Maison et code PIN restent communs.	Everyone has their own favourites, backgrounds and display. API keys, Home and PIN are shared.
+Changement	Change
+Chargement du catalogue…	Loading the catalogue…
+Cinéma	Cinema
+Clé API TMDB	TMDB API key
+Clé Pexels	Pexels key
+Clé enregistrée	Key saved
+Clé refusée	Key refused
+Clé retirée	Key removed
+Coche les appareils à afficher sur la TV (aucun coché : tous). ✦ sur une scène : raccourci sur l’accueil.	Tick the devices to show on the TV (none ticked: all). ✦ on a scene: shortcut on the home screen.
+Code PIN	PIN code
+Code PIN de la TV	TV PIN code
+Code incorrect	Wrong code
+Code incorrect · réessaie dans 	Wrong code · try again in 
+Connecté	Connected
+Connecté · accueil Lumen	Connected · Lumen home
+Connecté · une appli est ouverte	Connected · an app is open
+Connexion…	Connecting…
+Couper le son	Mute
+Dans les autres applis : Retour, Accueil, volume, lecture, texte et raccourcis (flèches à partir d’Android 13).	In other apps: Back, Home, volume, play, text and shortcuts (arrows from Android 13).
+De 	From 
+De minuit	From midnight
+Destination	Destination
+Droite	Right
+Dès l’ouverture de l’appli	As soon as the app opens
+Déconnecter ce téléphone	Disconnect this phone
+Déconnecté	Disconnected
+Déconnecté · rescanne le QR code sur la TV	Disconnected · scan the QR code on the TV again
+Délier	Unlink
+Désactivé	Off
+Déverrouiller	Unlock
+Déverrouiller les actions protégées	Unlock protected actions
+Déverrouillé pour 5 min	Unlocked for 5 min
+Effacer le journal	Clear the log
+Effets météo	Weather effects
+En pause ou au retour sur l’accueil	On pause or back on the home screen
+Enregistrer	Save
+Envois	Uploads
+Fermer l’appli	Close the app
+Films du moment	Films right now
+Flèches hors de Lumen : Android 13 minimum sur la TV	Arrows outside Lumen: Android 13 or newer on the TV
+Fond : 	Background: 
+Fond fixe	Fixed background
+Fond remis	Background put back
+Fond retiré de la rotation	Background taken out of the rotation
+Fond suivant	Next background
+Fonds d'écran	Backgrounds
+Fonds d’écran	Backgrounds
+Fonds vidéo	Video backgrounds
+Gauche	Left
+Haut	Up
+Home Assistant délié	Home Assistant unlinked
+Home Assistant injoignable	Home Assistant unreachable
+Horloge	Clock
+Icônes monochromes ici	Monochrome icons here
+Images	Pictures
+Impossible	Not possible
+Jamais	Never
+Jeton d’accès longue durée	Long-lived access token
+Journal effacé	Log cleared
+La TV affiche « Contrôlée par … » à la connexion.	The TV shows “Controlled by …” on connection.
+Le texte s’écrit en direct dans la recherche à l’écran. Pour dicter, touche le micro du clavier.	Text is typed live into the on-screen search. To dictate, tap the keyboard microphone.
+Lecture ou pause	Play or pause
+Libre sur la TV : 	Free on the TV: 
+Minuterie : 	Timer: 
+Minuterie désactivée	Timer off
+Mode cinéma désactivé	Cinema mode off
+Mode veille	Sleep mode
+Monter le volume	Volume up
+Ni le code PIN ni la clé Pexels ne sont dans la sauvegarde.	Neither the PIN code nor the Pexels key is in the backup.
+Nom enregistré	Name saved
+Nouveau jeton (facultatif)	New token (optional)
+Nécessaire pour cette action.	Needed for this action.
+Ouvre d’abord la recherche de l’appli sur la TV	Open the app's search on the TV first
+Ouvrir	Open
+Paysages animés	Animated landscapes
+Paysages selon l’heure	Landscapes by time of day
+Pexels	Pexels
+Pilote tes lumières, prises, scènes et volets depuis le bouton « Maison » de la TV (il apparaît une fois Home Assistant relié ; Réglages › Accueil et applis pour le masquer). Dans Home Assistant : Profil › Sécurité › Jetons d’accès longue durée › Créer un jeton.	Control your lights, plugs, scenes and blinds from the TV's “Home” button (it appears once Home Assistant is linked; Settings › Home and apps to hide it). In Home Assistant: Profile › Security › Long-lived access tokens › Create token.
+Place libérée	Space freed
+Plus	More
+Pour piloter les autres applis : sur la TV, Réglages › Réglages depuis le téléphone › Télécommande dans les autres applis.	To control other apps: on the TV, Settings › Settings from the phone › Remote in other apps.
+Profil	Profile
+Profil : 	Profile: 
+Profil renommé	Profile renamed
+Profil supprimé	Profile deleted
+Profil « 	Profile “
+Quand un film démarre	When a film starts
+Quand un film démarre dans une de ces applis (ouverte depuis Lumen), la TV lance ta scène ; en pause d’au moins 15 s ou au retour sur l’accueil, la seconde.	When a film starts in one of these apps (opened from Lumen), the TV runs your scene; on a pause of 15 s or more, or back on the home screen, the second one.
+Rechercher	Search
+Rechercher un appareil	Search a device
+Rechercher une appli	Search an app
+Redémarrer Lumen sur la TV	Restart Lumen on the TV
+Relier	Link
+Relié · 	Linked · 
+Remplacer la clé enregistrée	Replace the saved key
+Renommer	Rename
+Restaurer…	Restore…
+Retirer	Remove
+Retiré	Removed
+Retour	Back
+Revenir à l’accueil	Back to the home screen
+Rien pour l’instant	Nothing for now
+Sans minuterie	No timer
+Sauvegarde	Backup
+Scène « film » enregistrée	“Film” scene saved
+Scène « pause » enregistrée	“Pause” scene saved
+Si elle ne répond plus	If it stops responding
+Sons de l’interface	Interface sounds
+Source	Source
+Source du fond	Background source
+Stockage de la TV	TV storage
+Supprimer	Delete
+Supprimer le profil « 	Delete the profile “
+Supprimé	Deleted
+Sur la TV	On the TV
+TV injoignable	TV unreachable
+Tes photos et vidéos envoyées (	Your uploaded photos and videos (
+Touche un fond pour le retirer de la rotation (ou le remettre).	Tap a background to take it out of the rotation (or put it back).
+Touche une vidéo pour la garder sur la TV. La décocher l’efface.	Tap a video to keep it on the TV. Unticking deletes it.
+Tout vider (sauf mes envois)	Clear everything (except my uploads)
+Télécharger les réglages	Download the settings
+Valider	Confirm
+Veille : Android 9 minimum sur la TV	Sleep: Android 9 or newer on the TV
+Verrouiller	Lock
+Verrouillée	Locked
+Vider les photos téléchargées	Clear downloaded photos
+Vider les vidéos de fond	Clear background videos
+Vider les vidéos des ambiances	Clear ambience videos
+Vidéo	Video
+Vidéos	Videos
+Volume	Volume
+« À l'affiche » sur la TV (flèche droite depuis la dernière appli de l'accueil) : les films et séries les plus regardés, partout ou sur tes applis. Crée une clé gratuite sur themoviedb.org (Compte › Paramètres › API) et colle-la ici. Sans clé, Lumen ne contacte jamais ce service.	“Now showing” on the TV (right arrow from the last app on the home screen): the most watched films and series, everywhere or on your apps. Create a free key at themoviedb.org (Account › Settings › API) and paste it here. Without a key, Lumen never contacts this service.
+Écran	Screen
+Écran de nuit	Night screen
+Écrire ou dicter sur la TV	Type or dictate on the TV
+Éteindre l'écran de la TV	Turn the TV screen off
+✓ Clé enregistrée	✓ Key saved
+✦ Accueil	✦ Home
+＋ Photos ou vidéos	＋ Photos or videos
+Adresse de Home Assistant ?	Home Assistant address?
+Connexion à Home Assistant…	Connecting to Home Assistant…
+Connexion à revalider · rescanne le QR code sur la TV	Connection to renew · scan the QR code on the TV again
+Doucement…	Easy…
+Désactivé sur la TV : accès « télécommande seulement »	Disabled on the TV: “remote only” access
+Fichier trop gros	File too big
+Home Assistant relié	Home Assistant linked
+Journal d'erreurs	Error log
+La TV affiche une autre appli · reviens sur l’accueil Lumen	The TV shows another app · go back to the Lumen home
+Lumen redémarre… reconnecte-toi avec le QR code ensuite	Lumen is restarting… reconnect with the QR code afterwards
+Recherche envoyée	Search sent
+Regarde la TV : accepte ce téléphone	Look at the TV: accept this phone
+Sauvegarde téléchargée	Backup downloaded
+Touche encore pour confirmer	Tap again to confirm
+Touche encore pour redémarrer Lumen	Tap again to restart Lumen
+Touche encore pour éteindre l’écran de la TV	Tap again to turn the TV screen off
+Échec, réessaie	Failed, try again

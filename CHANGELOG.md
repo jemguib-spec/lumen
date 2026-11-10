@@ -2,6 +2,10 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.21.1
+
+- La page du téléphone suit la langue de la TV : anglais complet, en plus du français.
+
 ## 4.21.0
 
 - Profil enfant : seules ses applis favorites existent ; quitter le profil, régler, masquer ou désinstaller demandent le code PIN de la maison.
