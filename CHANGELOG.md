@@ -2,6 +2,14 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.21.0
+
+- Profil enfant : seules ses applis favorites existent ; quitter le profil, régler, masquer ou désinstaller demandent le code PIN de la maison.
+- État de la TV sous l'horloge : pas de réseau, pile de la télécommande faible, mise à jour prête.
+- « À l'affiche » sans clé personnelle : clé partagée du projet, acceptée une fois (ta propre clé passe avant).
+- Interface en anglais : Réglages › Accueil et applis › Lisibilité › Langue (système, français, English).
+- Réglages « À l'affiche » : ma clé, clé partagée, tout désactiver.
+
 ## 4.20.1
 
 - Les secrets de la TV (jeton Home Assistant, clés TMDB et Pexels) sont maintenant chiffrés avec une clé de l'Android Keystore ; ceux déjà enregistrés sont chiffrés automatiquement.

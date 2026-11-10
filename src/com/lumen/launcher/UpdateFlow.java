@@ -15,9 +15,10 @@ final class UpdateFlow {
     /** Une mise à jour vérifiée est prête : on le dit, puis Android demande confirmation (une fois par version). */
     void updateStateChanged() {
         for (Runnable r : new ArrayList<>(a.rowRefreshers)) r.run();
+        if (a.status != null) a.status.refresh();
         final String v = a.updater.readyVersion();
         if (v.isEmpty() || v.equals(a.prefs.updatePrompted())) return;
-        a.showNotice("Mise à jour " + v + " prête");
+        a.showNotice(L.t("Mise à jour ") + v + L.t(" prête"));
         a.h.postDelayed(new Runnable() {
             @Override public void run() {
                 if (a.overlay != null || a.ambientOn || a.ambiance != null || !a.hasWindowFocus()) return; // on redemandera au prochain retour
@@ -33,7 +34,7 @@ final class UpdateFlow {
      */
     void restartLumenNicely() {
         a.closeOverlay(false);
-        a.lumenScreen("Redémarrage");
+        a.lumenScreen(L.t("Redémarrage"));
         a.prefs.setRestarting(true);
         a.h.postDelayed(new Runnable() { @Override public void run() { a.restartLumen(); } }, 1400);
     }
@@ -47,11 +48,11 @@ final class UpdateFlow {
     void installUpdate() {
         String v = a.updater.readyVersion();
         a.prefs.setUpdatePending(a.updater.currentVersion());
-        FrameLayout z = a.lumenScreen("Mise à jour" + (v.isEmpty() ? "" : " · " + v));
+        FrameLayout z = a.lumenScreen(L.t("Mise à jour") + (v.isEmpty() ? "" : " · " + v));
         a.systemVeil = z; // repart tout seul si la mise à jour est annulée (Lumen reprend la main)
         a.veilApp = null;
         final View veil = z;
-        if (!a.updater.install()) { a.prefs.setUpdatePending(""); a.hideSystemVeil(true); a.showNotice("Installation impossible"); return; }
+        if (!a.updater.install()) { a.prefs.setUpdatePending(""); a.hideSystemVeil(true); a.showNotice(L.t("Installation impossible")); return; }
         // filet de sécurité : si aucune fenêtre d'Android ne s'est ouverte, on rend la main
         a.h.postDelayed(new Runnable() {
             @Override public void run() {
@@ -68,7 +69,7 @@ final class UpdateFlow {
         if (!from.equals(now)) {
             a.prefs.setUpdatePending("");
             String notes = a.prefs.updateNotes(now);
-            a.showNotice("Lumen est à jour · " + now + (notes.isEmpty() ? "" : " · Réglages › Système › Nouveautés"));
+            a.showNotice(L.t("Lumen est à jour · ") + now + (notes.isEmpty() ? "" : L.t(" · Réglages › Système › Nouveautés")));
         } else if (!hasUpdateVeil()) {
             a.prefs.setUpdatePending(""); // installation annulée
         }

@@ -23,7 +23,7 @@ final class ProfilePanel {
     /** Gestion des profils : code PIN d'abord, s'il existe. */
     static void openManage(final MainActivity a) {
         Runnable go = new Runnable() { @Override public void run() { manage(a); } };
-        if (a.prefs.hasPin()) PinDialog.ask(a, "Code pour gérer les profils", go); else go.run();
+        if (a.prefs.hasPin()) PinDialog.ask(a, L.t("Code pour gérer les profils"), go); else go.run();
     }
 
     /** Gestion des profils, déjà déverrouillée (depuis les réglages). */
@@ -31,8 +31,8 @@ final class ProfilePanel {
         FrameLayout o = a.openOverlay(null);
         LinearLayout card = a.glassCard(44);
         card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
-        card.addView(a.menuHeader(null, false, "Profils",
-                "Chacun a ses favoris, ses fonds et son affichage. Clés, Maison et code PIN restent communs."));
+        card.addView(a.menuHeader(null, false, L.t("Profils"),
+                L.t("Chacun a ses favoris, ses fonds et son affichage. Clés, Maison et code PIN restent communs.")));
         LinearLayout first = null;
         for (final Profiles.Profile p : a.prefs.profiles()) {
             LinearLayout row = a.iconRow(Glyph.PERSON, p.name, new MainActivity.Value() {
@@ -43,22 +43,22 @@ final class ProfilePanel {
             card.addView(row, a.rowLp());
             if (first == null) first = row;
         }
-        card.addView(a.iconRow(Glyph.PERSON, "Au démarrage", new MainActivity.Value() {
+        card.addView(a.iconRow(Glyph.PERSON, L.t("Au démarrage"), new MainActivity.Value() {
             @Override public String get() { return a.prefs.askProfileAtStart() ? "Demander qui regarde" : "Reprendre le dernier profil"; }
         }, new View.OnClickListener() {
             @Override public void onClick(View v) { a.prefs.setAskProfileAtStart(!a.prefs.askProfileAtStart()); }
         }, false), a.rowLp());
         if (a.prefs.profiles().size() < Profiles.MAX) {
             card.addView(a.menuDivider());
-            card.addView(a.iconRow(Glyph.STAR, "Ajouter un profil", null, new View.OnClickListener() {
+            card.addView(a.iconRow(Glyph.STAR, L.t("Ajouter un profil"), null, new View.OnClickListener() {
                 @Override public void onClick(View v) {
                     a.closeOverlay(false);
-                    askName(a, "Nouveau profil", "", new Name() {
+                    askName(a, L.t("Nouveau profil"), "", new Name() {
                         @Override public boolean take(String n) {
                             int id = a.prefs.addProfile(n);
                             if (id < 0) return false;
                             a.updateProfileButton();
-                            a.showNotice("Profil « " + Profiles.cleanName(n) + " » ajouté");
+                            a.showNotice(L.t("Profil « ") + Profiles.cleanName(n) + L.t(" » ajouté"));
                             return true;
                         }
                     });
@@ -73,22 +73,44 @@ final class ProfilePanel {
         FrameLayout o = a.openOverlay(null);
         LinearLayout card = a.glassCard(44);
         card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
-        card.addView(a.menuHeader(null, false, p.name, p.id == Profiles.MAIN ? "Profil principal" : null));
-        LinearLayout use = a.iconRow(Glyph.PERSON, "Utiliser ce profil", null, new View.OnClickListener() {
+        card.addView(a.menuHeader(null, false, p.name, p.id == Profiles.MAIN ? L.t("Profil principal") : p.kid ? L.t("Profil enfant") : null));
+        LinearLayout use = a.iconRow(Glyph.PERSON, L.t("Utiliser ce profil"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { a.closeOverlay(true); switchTo(a, p.id); }
         }, false);
         card.addView(use, a.rowLp());
-        card.addView(a.iconRow(Glyph.DOC, "Renommer", null, new View.OnClickListener() {
+        if (p.id != Profiles.MAIN) {
+            card.addView(a.iconRow(p.kid ? Glyph.UNLOCK : Glyph.LOCK, L.t("Profil enfant"), new MainActivity.Value() {
+                @Override public String get() { return a.prefs.isKidProfile(p.id) ? "Oui · seulement ses favoris" : "Non"; }
+            }, new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    final boolean on = !a.prefs.isKidProfile(p.id);
+                    final Runnable apply = new Runnable() {
+                        @Override public void run() {
+                            a.prefs.setProfileKid(p.id, on);
+                            a.updateProfileButton();
+                            if (p.id == a.prefs.activeProfile()) { a.dirtyRow = true; a.markAppsDirty(); }
+                            a.showNotice(on ? L.t("Profil enfant : seules ses applis favorites sont visibles · code PIN pour le reste")
+                                    : L.t("Profil enfant désactivé"));
+                            for (Runnable r : new java.util.ArrayList<>(a.rowRefreshers)) r.run();
+                        }
+                    };
+                    // un profil enfant n'a de sens qu'avec un code PIN : on le crée d'abord s'il manque
+                    if (on && !a.prefs.hasPin()) { a.closeOverlay(false); PinDialog.create(a, apply); }
+                    else apply.run();
+                }
+            }, false), a.rowLp());
+        }
+        card.addView(a.iconRow(Glyph.DOC, L.t("Renommer"), null, new View.OnClickListener() {
             @Override public void onClick(View v) {
                 a.closeOverlay(false);
-                askName(a, "Renommer", p.name, new Name() {
+                askName(a, L.t("Renommer"), p.name, new Name() {
                     @Override public boolean take(String n) { return a.prefs.renameProfile(p.id, n); }
                 });
             }
         }, false), a.rowLp());
         if (p.id != Profiles.MAIN) {
             card.addView(a.menuDivider());
-            card.addView(a.iconRow(Glyph.TRASH, "Supprimer ce profil et ses réglages", null, new View.OnClickListener() {
+            card.addView(a.iconRow(Glyph.TRASH, L.t("Supprimer ce profil et ses réglages"), null, new View.OnClickListener() {
                 @Override public void onClick(View v) {
                     if (!remove(a, p.id)) return;
                     a.closeOverlay(true);
@@ -114,7 +136,7 @@ final class ProfilePanel {
         in.setSingleLine(true);
         in.setText(initial);
         in.setSelection(in.length());
-        in.setHint("Prénom");
+        in.setHint(L.t("Prénom"));
         in.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(Profiles.MAX_NAME)});
         in.setTextSize(TypedValue.COMPLEX_UNIT_PX, 30 * a.unit);
         in.setTypeface(Fonts.get("sans-serif", android.graphics.Typeface.NORMAL));
@@ -130,7 +152,7 @@ final class ProfilePanel {
         final Runnable save = new Runnable() {
             @Override public void run() {
                 if (done.take(in.getText().toString())) { a.closeOverlay(true); manage(a); }
-                else a.showNotice("Prénom vide ou déjà pris");
+                else a.showNotice(L.t("Prénom vide ou déjà pris"));
             }
         };
         in.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -138,7 +160,7 @@ final class ProfilePanel {
         });
         card.addView(in, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         card.addView(new View(a), new LinearLayout.LayoutParams(1, a.u(20)));
-        card.addView(a.iconRow(Glyph.UNLOCK, "Enregistrer", null, new View.OnClickListener() {
+        card.addView(a.iconRow(Glyph.UNLOCK, L.t("Enregistrer"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { save.run(); }
         }, false), a.rowLp());
         o.addView(card, new FrameLayout.LayoutParams(a.u(760), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
@@ -152,7 +174,7 @@ final class ProfilePanel {
         float scale = a.textScale;
         boolean contrast = a.highContrast;
         if (p == null || !a.prefs.removeProfile(id)) return false;
-        a.showNotice("Profil « " + p.name + " » supprimé");
+        a.showNotice(L.t("Profil « ") + p.name + L.t(" » supprimé"));
         if (wasActive) reload(a, scale, contrast); else a.updateProfileButton();
         return true;
     }
@@ -160,13 +182,20 @@ final class ProfilePanel {
     /** Passe au profil « id » et réaffiche tout avec ses réglages. */
     static boolean switchTo(MainActivity a, int id) { return switchTo(a, id, false); }
 
+    /** Quitter un profil enfant demande le code PIN ; sinon changement direct. */
+    static void switchGuarded(final MainActivity a, final int id, final Runnable then) {
+        if (a.prefs.isKidProfile() && id != a.prefs.activeProfile() && a.prefs.hasPin()) {
+            PinDialog.ask(a, L.t("Code pour quitter le profil enfant"), then);
+        } else then.run();
+    }
+
     /** quiet : sans le message « Profil : … » (la page « Qui regarde ? » dit déjà bonjour). */
     static boolean switchTo(MainActivity a, int id, boolean quiet) {
         if (id == a.prefs.activeProfile()) return true;
         float scale = a.textScale;
         boolean contrast = a.highContrast;
         if (!a.prefs.switchProfile(id)) return false;
-        if (!quiet) a.showNotice("Profil : " + a.prefs.activeProfileName());
+        if (!quiet) a.showNotice(L.t("Profil : ") + a.prefs.activeProfileName());
         reload(a, scale, contrast);
         return true;
     }
@@ -183,7 +212,9 @@ final class ProfilePanel {
      * téléphone connecté le reste).
      */
     private static void reload(MainActivity a, float oldScale, boolean oldContrast) {
-        if (Prefs.TEXT_SCALES[a.prefs.textScale()] != oldScale || a.prefs.highContrast() != oldContrast) {
+        String before = L.lang();
+        Lang.init(a, a.prefs.lang());
+        if (Prefs.TEXT_SCALES[a.prefs.textScale()] != oldScale || a.prefs.highContrast() != oldContrast || !before.equals(L.lang())) {
             a.recreate();
             return;
         }

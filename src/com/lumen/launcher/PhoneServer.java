@@ -642,7 +642,7 @@ final class PhoneServer {
                     j.put("label", a.label);
                     if (!a.isInput()) j.put("pkg", a.pkg);
                     if (a.isInput()) j.put("input", true);
-                    if (hidden.contains(a.key)) j.put("hidden", true);
+                    if (!pr.appAllowed(a.key)) j.put("hidden", true);
                     if (pr.isLocked(a.key)) j.put("locked", true);
                     apps.put(j);
                 }
@@ -945,7 +945,7 @@ final class PhoneServer {
         return onMain(new Callable<String>() {
             @Override public String call() {
                 AppRepo.App a = host.repo().get(key);
-                if (a == null || host.prefs().hiddenApps().contains(key)) return "{\"ok\":false}";
+                if (a == null || !host.prefs().appAllowed(key)) return "{\"ok\":false}";
                 if (host.prefs().isLocked(key) && pinNeeded) return "{\"ok\":false,\"pin\":true}";
                 // autre appli à l'écran : possible seulement avec « Lumen télécommande » (Android le permet alors)
                 if (!host.onTvHome() && !RemoteService.connected()) return "{\"ok\":false,\"busy\":true}";

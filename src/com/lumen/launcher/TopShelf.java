@@ -112,7 +112,7 @@ final class TopShelf {
         if (list == null || list.isEmpty()) { hide(); return; }
         if (app == shown && view.getVisibility() == View.VISIBLE) return;
         shown = app;
-        label.setText("Reprendre · " + app.label);
+        label.setText(L.t("Reprendre · ") + app.label);
         row.removeAllViews();
         int h = a.u(212);
         for (int i = 0; i < list.size(); i++) {

@@ -1,0 +1,4 @@
+{
+  "_": "Services partagés par le projet Lumen, lus par les TV toutes les 6 heures. tmdb : clé d'API TMDB (themoviedb.org) du projet, utilisée par « À l'affiche » chez les personnes qui l'acceptent et n'ont pas leur propre clé ; vide = pas de clé partagée.",
+  "tmdb": ""
+}

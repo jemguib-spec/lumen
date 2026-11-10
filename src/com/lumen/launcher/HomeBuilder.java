@@ -73,25 +73,25 @@ final class HomeBuilder {
         a.topButtons.setClipToPadding(false);
         a.topButtons.setPadding(a.u(12), a.u(12), a.u(12), a.u(12));
         int bs = a.u(84);
-        Tile amb = Tile.button(a, Glyph.SPARK, "Ambiances", bs); // la lune reste celle du mode veille
+        Tile amb = Tile.button(a, Glyph.SPARK, L.t("Ambiances"), bs); // la lune reste celle du mode veille
         amb.setFocusListener(a.homeFocus);
         amb.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { a.openAmbiance(); } });
-        Tile inputs = Tile.button(a, Glyph.INPUT, "Entrées", bs);
+        Tile inputs = Tile.button(a, Glyph.INPUT, L.t("Entrées"), bs);
         inputs.setFocusListener(a.homeFocus);
         inputs.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { InputsPanel.openInputs(a); } });
-        Tile find = Tile.button(a, Glyph.SEARCH, "Rechercher", bs);
+        Tile find = Tile.button(a, Glyph.SEARCH, L.t("Rechercher"), bs);
         find.setFocusListener(a.homeFocus);
         find.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { a.openSearch(); } });
-        Tile house = a.houseButton = Tile.button(a, Glyph.HOME, "Maison", bs);
+        Tile house = a.houseButton = Tile.button(a, Glyph.HOME, L.t("Maison"), bs);
         house.setFocusListener(a.homeFocus);
         house.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { HomePanel.open(a); } });
-        Tile who = a.profileButton = Tile.button(a, Glyph.PERSON, "Profils", bs);
+        Tile who = a.profileButton = Tile.button(a, Glyph.PERSON, L.t("Profils"), bs);
         who.setFocusListener(a.homeFocus);
         who.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { WhoPage.show(a, true); } });
-        Tile all = Tile.button(a, Glyph.GRID, "Toutes les applications", bs);
+        Tile all = Tile.button(a, Glyph.GRID, L.t("Toutes les applications"), bs);
         all.setFocusListener(a.homeFocus);
         all.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { a.openApps(); } });
-        Tile set = Tile.button(a, Glyph.SLIDERS, "Réglages", bs);
+        Tile set = Tile.button(a, Glyph.SLIDERS, L.t("Réglages"), bs);
         set.setFocusListener(a.homeFocus);
         set.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { SettingsPanel.openSettings(a); } });
         for (Tile b : new Tile[]{find, amb, inputs, house, who, all, set}) {
@@ -162,6 +162,11 @@ final class HomeBuilder {
         LinearLayout.LayoutParams dtl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         dtl.topMargin = a.u(8);
         a.clockBox.addView(date, dtl);
+        // état de la TV (réseau, pile de la télécommande, mise à jour) : sous la date, seulement si besoin
+        a.status = new TvStatus(a);
+        LinearLayout.LayoutParams stl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        stl.topMargin = a.u(12);
+        a.clockBox.addView(a.status, stl);
         FrameLayout.LayoutParams ckl = MainActivity.wrap(Gravity.TOP | Gravity.END);
         ckl.topMargin = a.u(64);
         ckl.rightMargin = a.u(112);
@@ -255,7 +260,7 @@ final class HomeBuilder {
             col.addView(word, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             word.setAlpha(1f); // il était déjà à l'écran juste avant l'arrêt
             TextView sub = a.text(24, "sans-serif-light", Palette.TEXT_2);
-            sub.setText("REDÉMARRAGE");
+            sub.setText(L.t("REDÉMARRAGE"));
             sub.setLetterSpacing(0.3f);
             LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             sl.topMargin = a.u(18);

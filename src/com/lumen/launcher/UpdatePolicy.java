@@ -16,6 +16,8 @@ final class UpdatePolicy {
     static final String REPO = "jemguib-spec/lumen";
     static final String BASE = "https://raw.githubusercontent.com/" + REPO + "/main/dist/";
     static final String LATEST = BASE + "latest.json";
+    /** Services partagés par le projet (clé TMDB commune, facultative) : lu avec latest.json. */
+    static final String SERVICES = BASE + "services.json";
     static final String APK = BASE + "Lumen.apk";
     /** Fichiers des GitHub Releases du dépôt (la Release « v4.20.0 » porte « Lumen-4.20.0.apk »). */
     static final String RELEASES = "https://github.com/" + REPO + "/releases/download/";

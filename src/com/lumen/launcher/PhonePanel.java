@@ -28,33 +28,33 @@ final class PhonePanel {
         FrameLayout o = a.openOverlay(null);
         LinearLayout card = a.glassCard(44);
         card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
-        card.addView(a.menuHeader(null, false, "Téléphone connecté", a.phone.deviceName()));
-        card.addView(a.iconRow(Glyph.PHONE, "Connecter un autre téléphone", null, new View.OnClickListener() {
+        card.addView(a.menuHeader(null, false, L.t("Téléphone connecté"), a.phone.deviceName()));
+        card.addView(a.iconRow(Glyph.PHONE, L.t("Connecter un autre téléphone"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { a.closeOverlay(false); showQr(a); }
         }, false), a.rowLp());
-        card.addView(a.iconRow(Glyph.SLIDERS, "Télécommande dans les autres applis", new MainActivity.Value() {
+        card.addView(a.iconRow(Glyph.SLIDERS, L.t("Télécommande dans les autres applis"), new MainActivity.Value() {
             @Override public String get() { return RemoteService.connected() ? "Activée" : "À activer"; }
         }, new View.OnClickListener() {
             @Override public void onClick(View v) {
                 try {
                     a.startActivity(new android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)
                             .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
-                    a.showNotice("Choisis « Lumen télécommande » et active-le");
-                } catch (Exception e) { a.showNotice("Paramètres › Accessibilité › Lumen télécommande"); }
+                    a.showNotice(L.t("Choisis « Lumen télécommande » et active-le"));
+                } catch (Exception e) { a.showNotice(L.t("Paramètres › Accessibilité › Lumen télécommande")); }
             }
         }, false), a.rowLp());
-        card.addView(a.iconRow(Glyph.LOCK, "Accès du téléphone", new MainActivity.Value() {
+        card.addView(a.iconRow(Glyph.LOCK, L.t("Accès du téléphone"), new MainActivity.Value() {
             @Override public String get() { return a.prefs.phoneRemoteOnly() ? "Télécommande seulement" : "Complet"; }
         }, new View.OnClickListener() {
             @Override public void onClick(View v) { a.prefs.setPhoneRemoteOnly(!a.prefs.phoneRemoteOnly()); }
         }, false), a.rowLp());
-        card.addView(a.iconRow(Glyph.TRASH, "Oublier les téléphones mémorisés", new MainActivity.Value() {
+        card.addView(a.iconRow(Glyph.TRASH, L.t("Oublier les téléphones mémorisés"), new MainActivity.Value() {
             @Override public String get() { int n = a.prefs.trustedPhones().size(); return n == 0 ? "Aucun" : String.valueOf(n); }
         }, new View.OnClickListener() {
             @Override public void onClick(View v) { a.prefs.forgetPhones(); a.showNotice("Chaque téléphone devra de nouveau être accepté sur la TV"); }
         }, false), a.rowLp());
         card.addView(a.menuDivider());
-        LinearLayout off = a.iconRow(Glyph.TRASH, "Déconnecter le téléphone", null, new View.OnClickListener() {
+        LinearLayout off = a.iconRow(Glyph.TRASH, L.t("Déconnecter le téléphone"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { a.closeOverlay(true); a.phone.disconnect(); a.showNotice("Téléphone déconnecté"); }
         }, true);
         card.addView(off, a.rowLp());
@@ -64,13 +64,13 @@ final class PhonePanel {
 
     private static void showQr(final MainActivity a) {
         final String url = a.phone.start();
-        if (url == null) { a.showNotice("Pas de connexion réseau"); return; }
+        if (url == null) { a.showNotice(L.t("Pas de connexion réseau")); return; }
         FrameLayout o = a.openOverlay(null);
         LinearLayout card = a.glassCard(48);
         card.setGravity(Gravity.CENTER_HORIZONTAL);
         card.setPadding(a.u(64), a.u(56), a.u(64), a.u(48));
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
-        title.setText("Téléphone");
+        title.setText(L.t("Téléphone"));
         card.addView(title);
         ImageView qr = new ImageView(a);
         qr.setImageBitmap(qrBitmap(a, url, a.u(440)));

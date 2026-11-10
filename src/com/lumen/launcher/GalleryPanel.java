@@ -60,7 +60,7 @@ final class GalleryPanel {
         o.addView(sv, MainActivity.match());
 
         TextView title = a.text(52, "sans-serif-light", Palette.TEXT);
-        title.setText("Fonds · " + Prefs.SRC_NAMES[a.prefs.source()]);
+        title.setText(L.t("Fonds · ") + L.t(Prefs.SRC_NAMES[a.prefs.source()]));
         col.addView(title);
         final TextView state = a.text(24, "sans-serif", Palette.TEXT_2);
         state.setPadding(0, a.u(12), 0, a.u(36));
@@ -77,10 +77,10 @@ final class GalleryPanel {
                 if (items.isEmpty()) {
                     // pas de « 0 fond · 0 affichés » : un message doux, avec des points qui avancent
                     int dots = (int) (System.currentTimeMillis() / 600 % 4);
-                    count = "Les photos arrivent" + "...".substring(0, dots) + "   ".substring(dots);
+                    count = L.t("Les photos arrivent") + "...".substring(0, dots) + "   ".substring(dots);
                 } else {
-                    count = items.size() + (items.size() > 1 ? " fonds" : " fond")
-                            + (visible == items.size() ? "" : " · " + visible + (visible > 1 ? " affichés" : " affiché"));
+                    count = items.size() + (items.size() > 1 ? L.t(" fonds") : L.t(" fond"))
+                            + (visible == items.size() ? "" : " · " + visible + (visible > 1 ? L.t(" affichés") : L.t(" affiché")));
                 }
                 state.setText(themes.length == 0 ? count : count + (st.isEmpty() || st.startsWith("À jour") && items.isEmpty() ? "" : "   ·   " + st));
                 a.h.postDelayed(this, items.isEmpty() ? 600 : 1000);
@@ -90,9 +90,9 @@ final class GalleryPanel {
 
         if (items.isEmpty()) {
             TextView none = a.text(28, "sans-serif", 0xB3FFFFFF);
-            none.setText("Elles s'afficheront ici dès qu'elles seront prêtes.");
+            none.setText(L.t("Elles s'afficheront ici dès qu'elles seront prêtes."));
             col.addView(none);
-            LinearLayout back = a.listRow("Retour", null, new View.OnClickListener() {
+            LinearLayout back = a.listRow(L.t("Retour"), null, new View.OnClickListener() {
                 @Override public void onClick(View v) { a.closeOverlay(true); }
             });
             LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(a.u(400), a.u(88));

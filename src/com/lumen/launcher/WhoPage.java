@@ -87,7 +87,7 @@ final class WhoPage {
         col.setClipChildren(false);
         col.setClipToPadding(false);
         TextView title = a.text(60, "sans-serif-thin", Palette.TEXT);
-        title.setText("Qui regarde ?");
+        title.setText(L.t("Qui regarde ?"));
         title.setLetterSpacing(0.02f);
         col.addView(title, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -105,7 +105,11 @@ final class WhoPage {
         for (int i = 0; i < list.size(); i++) {
             final Profiles.Profile p = list.get(i);
             View card = person(a, p, new Runnable() {
-                @Override public void run() { chosen(a, o, col, p); }
+                @Override public void run() {
+                    ProfilePanel.switchGuarded(a, p.id, new Runnable() {
+                        @Override public void run() { if (showing == o) chosen(a, o, col, p); else { a.closeOverlay(false); ProfilePanel.switchTo(a, p.id); } }
+                    });
+                }
             });
             LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             if (i > 0) cl.leftMargin = a.u(8);
@@ -120,7 +124,7 @@ final class WhoPage {
 
         if (withManage) {
             TextView manage = a.text(22, "sans-serif-medium", Palette.TEXT_2);
-            manage.setText("Gérer les profils");
+            manage.setText(L.t("Gérer les profils"));
             manage.setPadding(a.u(28), a.u(14), a.u(28), a.u(14));
             manage.setFocusable(true);
             manage.setClickable(true);

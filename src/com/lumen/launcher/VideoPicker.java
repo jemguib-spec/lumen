@@ -71,16 +71,16 @@ final class VideoPicker {
         o.addView(sv, MainActivity.match());
 
         TextView title = a.text(52, "sans-serif-light", Palette.TEXT);
-        title.setText(cosy ? "Vidéos des ambiances" : "Fonds vidéo");
+        title.setText(cosy ? L.t("Vidéos des ambiances") : L.t("Fonds vidéo"));
         col.addView(title);
         final TextView state = a.text(24, "sans-serif", Palette.TEXT_2);
         state.setPadding(0, a.u(12), 0, a.u(30));
-        state.setText("Chargement des aperçus…");
+        state.setText(L.t("Chargement des aperçus…"));
         stateView = state;
         lastWhy = "";
         col.addView(state);
 
-        final LinearLayout back = a.listRow("Terminé", null, new View.OnClickListener() {
+        final LinearLayout back = a.listRow(L.t("Terminé"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { a.closeOverlay(true); }
         });
         LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(a.u(400), a.u(88));
@@ -100,7 +100,7 @@ final class VideoPicker {
                     @Override public void run() {
                         if (col.getParent() == null || !col.isAttachedToWindow()) return;
                         if (list.isEmpty()) {
-                            state.setText(error == null ? "Aucune vidéo proposée pour l'instant." : "Connexion impossible · réessaie plus tard");
+                            state.setText(error == null ? L.t("Aucune vidéo proposée pour l'instant.") : L.t("Connexion impossible · réessaie plus tard"));
                             return;
                         }
                         fill(a, col, state, list, cosy, changed);
@@ -131,9 +131,9 @@ final class VideoPicker {
             @Override public void run() {
                 int n = 0;
                 for (Online.Pick p : a.online.lastPicks()) if (a.prefs.videoOk(p.key)) n++;
-                state.setText((n == 0 ? "Coche les vidéos à garder : seules celles-ci seront téléchargées."
-                        : n + (n > 1 ? " vidéos cochées" : " vidéo cochée") + " · décocher efface la vidéo de la TV")
-                        + (lastWhy.isEmpty() ? "" : "\nAperçus indisponibles : " + lastWhy));
+                state.setText((n == 0 ? L.t("Coche les vidéos à garder : seules celles-ci seront téléchargées.")
+                        : n + (n > 1 ? L.t(" vidéos cochées") : L.t(" vidéo cochée")) + L.t(" · décocher efface la vidéo de la TV"))
+                        + (lastWhy.isEmpty() ? "" : L.t("\nAperçus indisponibles : ") + lastWhy));
             }
         };
         a.online.rememberPicks(picks);
@@ -275,10 +275,10 @@ final class VideoPicker {
     static String describe(Online.Pick p) {
         StringBuilder b = new StringBuilder();
         int s = (int) Math.round(p.duration);
-        if (s > 0) b.append(s >= 60 ? (s / 60) + " min" + (s % 60 > 0 ? " " + (s % 60 < 10 ? "0" : "") + (s % 60) : "") : s + " s");
+        if (s > 0) b.append(s >= 60 ? (s / 60) + L.t(" min") + (s % 60 > 0 ? " " + (s % 60 < 10 ? "0" : "") + (s % 60) : "") : s + L.t(" s"));
         String def = p.height >= 2000 ? "4K" : p.height >= 1400 ? "1440p" : p.height >= 1000 ? "HD" : p.height > 0 ? p.height + "p" : "";
         if (!def.isEmpty()) b.append(b.length() > 0 ? " · " : "").append(def);
-        if (p.pexels) b.append(b.length() > 0 ? " · " : "").append("Pexels");
+        if (p.pexels) b.append(b.length() > 0 ? " · " : "").append(L.t("Pexels"));
         return b.toString();
     }
 }

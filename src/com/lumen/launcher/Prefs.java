@@ -39,6 +39,22 @@ final class Prefs {
     boolean askProfileAtStart() { return sp.getBoolean("profile_ask", true); }
     void setAskProfileAtStart(boolean b) { sp.edit().putBoolean("profile_ask", b).apply(); }
 
+    /** Profil actif « enfant » : seules ses applis favorites existent, le reste demande le code PIN. */
+    boolean isKidProfile() { Profiles.Profile p = Profiles.find(profiles(), activeProfile()); return p != null && p.kid; }
+    boolean isKidProfile(int id) { Profiles.Profile p = Profiles.find(profiles(), id); return p != null && p.kid; }
+    boolean setProfileKid(int id, boolean kid) {
+        List<Profiles.Profile> l = Profiles.setKid(profiles(), id, kid);
+        if (l == null) return false;
+        sp.raw().edit().putString(Profiles.LIST_KEY, Profiles.serialize(l)).commit();
+        return true;
+    }
+
+    /** L'appli existe-t-elle pour le profil actif ? (ni masquée ; dans un profil enfant, seulement ses favoris) */
+    boolean appAllowed(String key) {
+        if (key == null || hiddenApps().contains(key)) return false;
+        return !isKidProfile() || favorites().contains(key);
+    }
+
     /** Change de profil (l'interface doit ensuite être reconstruite). */
     boolean switchProfile(int id) {
         if (Profiles.find(profiles(), id) == null) return false;
@@ -130,9 +146,9 @@ final class Prefs {
     static final int[] VEILLE_CHOICES = {VEILLE_HOME, SRC_LUMEN, SRC_ANIM, SRC_SPACE, SRC_NATURE, SRC_ANIMALS, SRC_MIX,
             SRC_MINE, SRC_POTD, VEILLE_LIVE};
     static String veilleName(int v) {
-        if (v == VEILLE_HOME) return "Fond d'écran (sans vidéo)";
-        if (v == VEILLE_LIVE) return "Comme l'accueil (vidéos comprises)";
-        return v >= 0 && v < SRC_NAMES.length ? SRC_NAMES[v] : "Fond d'écran (sans vidéo)";
+        if (v == VEILLE_HOME) return L.t("Fond d'écran (sans vidéo)");
+        if (v == VEILLE_LIVE) return L.t("Comme l'accueil (vidéos comprises)");
+        return v >= 0 && v < SRC_NAMES.length ? L.t(SRC_NAMES[v]) : L.t("Fond d'écran (sans vidéo)");
     }
     int veilleSource() {
         int v = sp.getInt("veille_src", VEILLE_HOME);
@@ -171,6 +187,9 @@ final class Prefs {
     void setLastUpdateCheck(long t) { sp.edit().putLong("update_check", t).apply(); }
     String updateReadyVersion() { return sp.getString("update_ready", ""); }
     void setUpdateReadyVersion(String v) { sp.edit().putString("update_ready", v).apply(); }
+    /** Langue de l'interface : "" = celle de la TV, sinon "fr" ou "en" (réglage personnel). */
+    String lang() { return sp.getString("lang", ""); }
+    void setLang(String l) { sp.edit().putString("lang", l == null ? "" : l).apply(); }
     /** Conseils déjà montrés au démarrage (un par démarrage). */
     int tipStep() { return sp.getInt("tip_step", 0); }
     void setTipStep(int n) { sp.edit().putInt("tip_step", n).apply(); }
@@ -286,12 +305,34 @@ final class Prefs {
                 .putStringSet("ha_cine_apps", new HashSet<>(apps)).apply();
     }
 
-    /** Clé TMDB personnelle (vide = « À l'affiche » désactivé) ; jamais renvoyée au téléphone. */
-    String tmdbKey() { return secret("tmdb_key"); }
+    /**
+     * Clé TMDB utilisée par « À l'affiche » : la clé personnelle si elle existe, sinon la clé
+     * partagée du projet (dist/services.json) si l'utilisateur l'a acceptée. Vide = désactivé,
+     * TMDB jamais contacté. Jamais renvoyée au téléphone.
+     */
+    String tmdbKey() {
+        String own = tmdbOwnKey();
+        if (!own.isEmpty()) return own;
+        String shared = tmdbSharedKey();
+        return tmdbSharedOk() && TmdbPolicy.validKey(shared) ? shared : "";
+    }
+    String tmdbOwnKey() { return secret("tmdb_key"); }
     void setTmdbKey(String k) {
         String v = TmdbPolicy.validKey(k) ? k : "";
         sp.edit().putString("tmdb_key", Vault.seal(v)).apply();
-        NetPolicy.setTmdbEnabled(!v.isEmpty());
+        NetPolicy.setTmdbEnabled(!tmdbKey().isEmpty());
+    }
+    /** Clé partagée publiée par le projet (publique, lue toutes les 6 heures avec la mise à jour). */
+    String tmdbSharedKey() { return sp.getString("tmdb_shared", ""); }
+    void setTmdbSharedKey(String k) {
+        sp.edit().putString("tmdb_shared", TmdbPolicy.validKey(k) ? k : "").apply();
+        NetPolicy.setTmdbEnabled(!tmdbKey().isEmpty());
+    }
+    /** L'utilisateur a accepté, une fois, d'utiliser la clé partagée (commun à la maison). */
+    boolean tmdbSharedOk() { return sp.getBoolean("tmdb_shared_ok", false); }
+    void setTmdbSharedOk(boolean b) {
+        sp.edit().putBoolean("tmdb_shared_ok", b).apply();
+        NetPolicy.setTmdbEnabled(!tmdbKey().isEmpty());
     }
     /** Filtre de « À l'affiche » : "" = partout, "mine" = mes applis, sinon un paquet. */
     String recoFilter() { return sp.getString("reco_filter", "mine"); }

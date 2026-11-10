@@ -1,0 +1,523 @@
+# Lumen — English interface. One line per text: French (as written in the code) <tab> English. « \n » = line break.
+\nAperçus indisponibles : 	\nPreviews unavailable: 
+\nOK : choisir d'autres vidéos ou réessayer	\nOK: pick other videos or try again
+\nPhotos : oui   ·   vidéos en pause (Lumen garde 	\nPhotos: yes   ·   videos paused (Lumen keeps 
+\nTéléchargements en pause : libère de la place dans les Paramètres de la TV	\nDownloads paused: free up space in the TV settings
+   ·   Lumen garde toujours 	   ·   Lumen always keeps 
+  ·  arrêt dans 	  ·  stops in 
+  ·  elle reste sur la TV, jamais réaffichée en entier	  ·  it stays on the TV, never shown in full again
+ (désactivé)	 (off)
+ Go	 GB
+ affiché	 shown
+ affichés	 shown
+ ajoutée aux favoris	 added to favourites
+ appareils · choisis ceux à garder ici depuis le téléphone	 devices · pick the ones to keep here from the phone
+ appli	 app
+ applis	 apps
+ désinstallée	 uninstalled
+ déverrouillée	 unlocked
+ en cours de publication · nouvel essai dans 10 min	 being published · retry in 10 min
+ erreur	 error
+ erreurs	 errors
+ fermée	 closed
+ fermée · elle redémarrera proprement	 closed · it will restart cleanly
+ fond	 background
+ fonds	 backgrounds
+ h	 h
+ installée	 installed
+ libres	 free
+ libres pour elles)	 free for them)
+ libres) · Réglages › Système › Stockage	 free) · Settings › System › Storage
+ mal décrite	 badly described
+ masquée	 hidden
+ min	 min
+ min sans activité	 min idle
+ n'a pas pu être désinstallée	 could not be uninstalled
+ prête	 ready
+ prête · OK pour installer	 ready · OK to install
+ retirée des favoris	 removed from favourites
+ réglages restaurés	 settings restored
+ s	 s
+ sur 	 of 
+ verrouillée par code	 locked with a code
+ vidéo cochée	 video selected
+ vidéos cochées	 videos selected
+ · Android 	 · Android 
+ · OK pour changer	 · OK to change
+ · OK pour effacer	 · OK to clear
+ · Réglages › Système › Nouveautés	 · Settings › System › What's new
+ · Tout réafficher	 · Show all again
+ · aucune publicité, aucune télémétrie	 · no ads, no telemetry
+ · décocher efface la vidéo de la TV	 · unticking deletes the video from the TV
+ · écran 	 · screen 
+ » : désactive-le avec les commandes ci-dessous.	”: disable it with the commands below.
+ » ajouté	” added
+ » dans 	” in 
+ » dans…	” in…
+ » n'est sur aucune de tes applis	” is not on any of your apps
+ » ne s'affichera plus	” will not be shown again
+ » supprimé	” deleted
+ » · un autre mot, ou « Chercher dans… » ci-dessous pour chercher dans une appli	” · try another word, or “Search in…” below to search inside an app
+ × 	 × 
+ à 7 h	 to 7 am
+1. Paramètres de la TV › Système › À propos : appuie 7 fois sur « Build », puis Options pour les développeurs › Débogage USB.\n	1. TV settings › System › About: press “Build” 7 times, then Developer options › USB debugging.\n
+2. Sur un ordinateur du même Wi-Fi, avec les « Android SDK Platform-Tools » (adb), tape ces lignes et accepte la demande sur la TV :	2. On a computer on the same Wi-Fi, with the “Android SDK Platform-Tools” (adb), type these lines and accept the prompt on the TV:
+3. Appuie sur Accueil : Lumen s'affiche. Si la TV propose un choix, prends Lumen puis « Toujours ».\n	3. Press Home: Lumen appears. If the TV offers a choice, pick Lumen then “Always”.\n
+Accueil d'origine (	Original home (
+Accueil et applis	Home and apps
+Accès du téléphone	Phone access
+Activer après	Start after
+Affiches des épisodes	Episode posters
+Ajouter aux favoris	Add to favourites
+Ajouter un profil	Add a profile
+Ambiance	Ambience
+Ambiances	Ambiences
+Animaux	Animals
+Appli, film, réglage, lumière…	App, film, setting, light…
+Applications	Apps
+Applis masquées	Hidden apps
+Applis par ligne	Apps per row
+Applis selon l'heure	Apps by time of day
+Appui long sur une appli : déplacer, favoris, masquer, infos	Long-press an app: move, favourites, hide, info
+Aquarium	Aquarium
+Assistant de configuration Google	Google setup assistant
+Au démarrage	At start-up
+Au départ	Defaults
+Aucun	None
+Aucun appareil pilotable trouvé (lumières, prises, scènes, volets…).	No controllable device found (lights, plugs, scenes, blinds…).
+Aucun compte, aucune statistique, aucun identifiant envoyé.	No account, no statistics, no identifier sent.
+Aucun fond téléchargé	No background downloaded
+Aucune entrée trouvée · ouvrir les paramètres	No input found · open settings
+Aucune erreur	No errors
+Aucune publicité, aucune télémétrie	No ads, no telemetry
+Aucune vidéo d'ambiance choisie (feu, pluie, océan…).\n	No ambience video chosen (fire, rain, ocean…).\n
+Aucune vidéo proposée pour l'instant.	No video on offer for now.
+Aucune vidéo prête pour l'instant.	No video ready for now.
+Aucune · OK pour en saisir une	None · OK to enter one
+Autorisation impossible à demander sur cette TV	Permission cannot be requested on this TV
+Autorisation « programmes TV »	“TV listings” permission
+Autoriser	Allow
+Autoriser et se souvenir de ce téléphone	Allow and remember this phone
+Autorisé : les applis ouvertes autrement que depuis Lumen apparaissent aussi.	Granted: apps opened outside Lumen appear too.
+Avancé	Advanced
+Avec TalkBack (Paramètres de la TV › Accessibilité), chaque élément est annoncé avec sa valeur.	With TalkBack (TV settings › Accessibility), every item is announced with its value.
+Bande-annonce	Trailer
+Bandeau d'accueil	Welcome line
+Bannières	Banners
+Bannières officielles	Official banners
+Bon après-midi	Good afternoon
+Bonjour	Good morning
+Bonne nuit	Good night
+Bonsoir	Good evening
+Bouton Maison (Home Assistant)	Home button (Home Assistant)
+Bouton Maison ajouté à l'accueil	Home button added to the home screen
+Calculés sur la TV (algorithme d'almanach), sans service extérieur.	Computed on the TV (almanac algorithm), no external service.
+Calcul…	Working…
+Cette appli ne peut pas être désinstallée	This app cannot be uninstalled
+Chacun a ses favoris, ses fonds et son affichage. Clés, Maison et code PIN restent communs.	Everyone has their own favourites, backgrounds and display. Keys, Home and PIN are shared.
+Changement de fond	Background change
+Changer de fond	Change background
+Changer la clé	Change the key
+Chargement des aperçus…	Loading previews…
+Chargement…	Loading…
+Chaînes TV	TV channels
+Cheminée	Fireplace
+Cheminée, pluie, aquarium, nuit étoilée, vagues, neige : de vraies vidéos en plein écran, avec minuterie de sommeil.	Fireplace, rain, aquarium, starry night, waves, snow: real full-screen videos, with a sleep timer.
+Cherche « 	Search “
+Chercher dans l'appli	Search in the app
+Chercher sur la TV	Search on the TV
+Chercher « 	Search “
+Choisir	Choose
+Choisir les fonds	Choose backgrounds
+Choisir les vidéos	Choose videos
+Choisis « Lumen télécommande » et active-le	Pick “Lumen remote” and turn it on
+Choisissez « Lumen » dans la liste	Choose “Lumen” in the list
+Clé Pexels	Pexels key
+Clé Pexels enregistrée	Pexels key saved
+Clé TMDB (films du moment)	TMDB key (films right now)
+Clé actuelle : ····	Current key: ····
+Clé enregistrée · « À l'affiche » est prêt	Key saved · “Now showing” is ready
+Clé gratuite sur pexels.com/api. Sans clé, Lumen ne contacte jamais Pexels.	Free key at pexels.com/api. Without a key, Lumen never contacts Pexels.
+Clé gratuite sur themoviedb.org › Compte › Paramètres › API : la « Clé API » (32 caractères) ou le « Jeton d'accès en lecture ». Sans clé, Lumen ne contacte jamais TMDB.	Free key at themoviedb.org › Account › Settings › API: the “API Key” (32 characters) or the “Read Access Token”. Without a key, Lumen never contacts TMDB.
+Clé non reconnue · vérifie qu'elle est complète	Key not recognised · check it is complete
+Clé partagée du projet Lumen	Lumen project shared key
+Coche les vidéos à garder : seules celles-ci seront téléchargées.	Tick the videos to keep: only those will be downloaded.
+Code PIN	PIN code
+Code actuel	Current code
+Code incorrect	Wrong code
+Code incorrect · attendez 	Wrong code · wait 
+Code pour 	Code for 
+Code pour désinstaller 	Code to uninstall 
+Code pour gérer les profils	Code to manage profiles
+Code pour les réglages	Code for settings
+Code pour masquer 	Code to hide 
+Code pour quitter le profil enfant	Code to leave the child profile
+Code source	Source code
+Colle ou tape la clé	Paste or type the key
+Commandes : 	Commands: 
+Comme l'accueil (vidéos comprises)	Like the home screen (videos included)
+Connecter un autre téléphone	Connect another phone
+Connexion impossible · réessaie plus tard	Cannot connect · try again later
+Connexion à Home Assistant…	Connecting to Home Assistant…
+Contraste renforcé	High contrast
+Contrôlée par 	Controlled by 
+Crédits des fonds	Background credits
+Créés par Lumen (tools/scenes.py), animations dessinées sur la TV.	Made by Lumen (tools/scenes.py), animations drawn on the TV.
+D'APRÈS CE QUE TU AS OUVERT	BASED ON WHAT YOU OPENED
+Dans le même esprit que 	In the same spirit as 
+De 	From 
+De minuit	From midnight
+Depuis un ordinateur	From a computer
+Diagnostic	Diagnostics
+Données Open-Meteo.com, licence CC BY 4.0.	Open-Meteo.com data, CC BY 4.0 licence.
+Déconnecter le téléphone	Disconnect the phone
+Décors de saison	Seasonal touches
+Déplacer	Move
+Désactiver la météo	Turn weather off
+Désactivé	Off
+Désactivé.	Off.
+Désactivé. Lumen est seul à répondre à la touche Accueil.	Disabled. Lumen alone answers the Home key.
+Désactivées.	Off.
+Désinstaller	Uninstall
+Effacer l'historique	Clear history
+Elles s'afficheront ici dès qu'elles seront prêtes.	They will appear here as soon as they are ready.
+En cours	In progress
+Encore actif : il peut relancer l'accueil Google au démarrage.	Still active: it may bring the Google home back at start-up.
+Encore actif : il reprendra la main tant qu'il n'est pas désactivé (réversible).	Still active: it will take over until it is disabled (reversible).
+Enregistrer	Save
+Entrée de la TV	TV input
+Entrées	Inputs
+Envoyées depuis ton téléphone ; elles restent sur la TV.	Sent from your phone; they stay on the TV.
+Espace	Space
+Espace et Terre	Space and Earth
+Espace pour les vidéos	Space for videos
+Espace utilisé par Lumen	Space used by Lumen
+Estomper l'interface au repos	Fade the interface when idle
+Ex. Paris	e.g. London
+FILMS ET SÉRIES DU MOMENT	FILMS AND SERIES RIGHT NOW
+Facultatif : Réglages › Mode veille › Économiseur d'écran de la TV.	Optional: Settings › Sleep mode › TV screen saver.
+Facultatif. Sans lui, « Reprendre » ne connaît que les applis ouvertes depuis Lumen.	Optional. Without it, “Resume” only knows apps opened from Lumen.
+Favoris	Favourites
+Favoris mis à jour	Favourites updated
+Fermer l'appli	Close the app
+Fichier illisible	Unreadable file
+Fichier refusé (appli illisible)	File refused (unreadable app)
+Fichier refusé (autre appli)	File refused (another app)
+Fichier refusé (ce n'est pas une appli)	File refused (not an app)
+Film	Film
+Films	Films
+Films du moment	Films right now
+Films du moment désactivés	Films right now disabled
+Films et séries	Films and series
+Films et séries de toutes les applis	Films and series from every app
+Films et séries du moment	Films and series right now
+Films et séries du moment, avec affiches, notes et bandes-annonces, filtrés sur les applis installées. Active la clé partagée du projet, ou saisis ta propre clé gratuite (themoviedb.org › Compte › Paramètres › API). Sans l'un ni l'autre, Lumen ne contacte jamais TMDB.	Films and series right now, with posters, ratings and trailers, filtered on the installed apps. Turn on the project's shared key, or enter your own free key (themoviedb.org › Account › Settings › API). Without either, Lumen never contacts TMDB.
+Flèches et OK, ou touches chiffrées	Arrows and OK, or number keys
+Fond d'écran	Background
+Fond d'écran (sans vidéo)	Background (no video)
+Fond suivant	Next background
+Fonds masqués	Hidden backgrounds
+Fonds vidéo	Video backgrounds
+Fonds · 	Backgrounds · 
+GNU GPL version 3 ou ultérieure : vous pouvez utiliser, étudier, modifier et redistribuer Lumen, à condition de garder la même licence.	GNU GPL version 3 or later: you may use, study, modify and redistribute Lumen, as long as you keep the same licence.
+Galerie des fonds	Background gallery
+Grande	Large
+Guide complet	Full guide
+Gérer les profils	Manage profiles
+Historique complet pour Reprendre	Full history for Resume
+Historique complet pour « Reprendre »	Full history for “Resume”
+Historique « Pour toi »	“For you” history
+Home Assistant	Home Assistant
+Horloge	Clock
+Horloge de l'accueil	Home screen clock
+Icône et nom	Icon and name
+Icônes des applis	App icons
+Il pourra piloter la TV, ouvrir des applis et écrire du texte. Accepte seulement si c'est le tien.	It will be able to control the TV, open apps and type text. Accept only if it is yours.
+Images du mode veille	Sleep mode images
+Impossible d'ouvrir 	Cannot open 
+Impossible d'ouvrir cette entrée	Cannot open this input
+Impossible de fermer 	Cannot close 
+Impossible de reprendre ce programme	Cannot resume this programme
+Informations	Information
+Infos indisponibles	Info unavailable
+Infos sur l'appli	App info
+Installation	Installation
+Installation impossible	Installation failed
+Installe YouTube pour voir les bandes-annonces	Install YouTube to watch trailers
+Jamais	Never
+Je n'ai pas compris	I did not catch that
+Jeux	Games
+Journal d'erreurs	Error log
+Journal d'erreurs et mesures	Error log and measurements
+LES MIEUX NOTÉS 	TOP RATED 
+LES NOUVEAUTÉS 	NEW RELEASES 
+LES PLUS POPULAIRES 	MOST POPULAR 
+LES PLUS REGARDÉS CETTE SEMAINE	MOST WATCHED THIS WEEK
+La TV demande encore quel accueil utiliser : appuie sur Accueil, choisis Lumen puis « Toujours ».	The TV still asks which home to use: press Home, choose Lumen then “Always”.
+La coller depuis le téléphone	Paste it from the phone
+La touche Accueil ouvre encore « 	The Home key still opens “
+Lancer le mode veille	Start sleep mode
+Langue	Language
+Le mode veille avec tes images : Réglages › Mode veille › Lancer le mode veille.	Sleep mode with your pictures: Settings › Sleep mode › Start sleep mode.
+Le mode veille de Lumen s'affiche par-dessus n'importe quelle appli.	Lumen's sleep mode shows over any app.
+Le plus simple : utiliser la clé partagée du projet Lumen. Ou ta propre clé gratuite (themoviedb.org › Compte › Paramètres › API), saisie ici ou collée depuis le téléphone.	Simplest: use the Lumen project's shared key. Or your own free key (themoviedb.org › Account › Settings › API), entered here or pasted from the phone.
+Le projet ne fournit pas de clé pour l'instant : « À l'affiche » reste fermé sans clé personnelle.	The project provides no key for now: “Now showing” stays off without a personal key.
+Le projet ne fournit pas de clé pour l'instant · utilise ta propre clé	The project provides no key for now · use your own key
+Les changements s'appliquent en refermant les réglages.	Changes apply when you close the settings.
+Les deux codes diffèrent · recommencez	The two codes differ · start again
+Les films et séries les plus regardés en ce moment, sur toutes les plateformes ou seulement sur tes applis. 	The most watched films and series right now, on every platform or only on your apps. 
+Les listes viennent de TMDB (themoviedb.org) : Lumen ne lui envoie jamais ce que tu regardes.\n\n	Lists come from TMDB (themoviedb.org): Lumen never sends it what you watch.\n\n
+Les paysages Lumen n'ont pas d'auteur extérieur.	Lumen landscapes have no external author.
+Les paysages suivent le vrai lever et coucher du soleil de ta ville, calculés sur la TV. Animés : nuages, halo du soleil, scintillement de l'eau, étoiles filantes la nuit.	Landscapes follow the real sunrise and sunset of your city, computed on the TV. Animated: clouds, sun halo, shimmering water, shooting stars at night.
+Les photos arrivent	Photos are on their way
+Les photos arrivent un peu plus tard · nouvel essai bientôt	Photos will come a little later · retrying soon
+Les titres ouverts depuis « À l'affiche » nourrissent « Pour toi ». Ils restent sur la TV : seules des listes publiques sont demandées à TMDB, jamais ce que tu regardes.	Titles opened from “Now showing” feed “For you”. They stay on the TV: only public lists are requested from TMDB, never what you watch.
+Les épisodes en cours demandent Android 8 ou plus récent	Continue-watching needs Android 8 or newer
+Libre sur la TV : 	Free on the TV: 
+Licence	Licence
+Licence Pexels : utilisation gratuite ; le nom de l'auteur est affiché sur chaque vidéo.	Pexels licence: free to use; the author's name is shown on every video.
+Licence de Lumen	Lumen licence
+Licences	Licences
+Licences libres (CC0, CC BY, CC BY-SA, domaine public) · auteur et licence de chaque fond	Free licences (CC0, CC BY, CC BY-SA, public domain) · author and licence of every background
+Lisibilité	Readability
+Logiciel libre · GNU GPL version 3 ou ultérieure · code source : 	Free software · GNU GPL version 3 or later · source code: 
+Lueur sous l'appli sélectionnée	Glow under the selected app
+Lumen 	Lumen 
+Lumen a redémarré en mode sans échec après des erreurs	Lumen restarted in safe mode after errors
+Lumen est déjà l'économiseur d'écran	Lumen is already the screen saver
+Lumen est maintenant l'économiseur d'écran	Lumen is now the screen saver
+Lumen est à jour (	Lumen is up to date (
+Lumen est à jour · 	Lumen is up to date · 
+Lumen s'ouvre quand tu appuies sur Accueil.	Lumen opens when you press Home.
+Ma clé TMDB	My TMDB key
+Maison	Home
+Masquer ce fond	Hide this background
+Masquer l'appli	Hide the app
+Meilleur résultat	Best match
+Mes applis	My apps
+Mes photos et vidéos	My photos and videos
+Mesures : temps de démarrage, images par seconde, mémoire et processeur, en haut à gauche. Tout reste sur la TV.	Measurements: start-up time, frames per second, memory and CPU, top left. Everything stays on the TV.
+Mesures à l'écran	On-screen measurements
+Mieux notés	Top rated
+Minuterie de sommeil	Sleep timer
+Mise à jour	Update
+Mise à jour 	Update 
+Mise à jour prête	Update ready
+Mise à jour refusée : signature différente	Update refused: different signature
+Mises à jour automatiques	Automatic updates
+Mode veille	Sleep mode
+Modifier (code PIN)	Edit (PIN code)
+Musique et radio	Music and radio
+Mélange de photos	Photo mix
+Météo	Weather
+Météo : 	Weather: 
+Météo dans le paysage	Weather in the landscape
+Météo et ville	Weather and city
+Nature	Nature
+Ne plus demander le code	Stop asking for the code
+Ne plus montrer cette vidéo	Don't show this video again
+Neige	Snow
+Nom de l'appli	App name
+Nombre de lignes	Number of rows
+Normale	Normal
+Nouveau code à 4 chiffres	New 4-digit code
+Nouveau profil	New profile
+Nouveau téléphone	New phone
+Nouveautés	What's new
+Nouveautés de la version	What's new in this version
+Nouveautés · Lumen 	What's new · Lumen 
+Nouvelle clé (une clé est déjà enregistrée)	New key (a key is already saved)
+Nouvelles photos prêtes	New photos ready
+Nuit étoilée	Starry night
+OK : les choisir sur les aperçus   ·   Retour : quitter\n\n	OK: pick them from previews   ·   Back: leave\n\n
+OK pour réafficher l'appli	OK to show the app again
+Options	Options
+Oublier les téléphones mémorisés	Forget remembered phones
+Outils et autres	Tools and others
+Ouvre quelques films ou séries depuis « À l'affiche » : Lumen te proposera ensuite des titres à ton goût (calculé sur la TV).	Open a few films or series from “Now showing”: Lumen will then suggest titles to your taste (computed on the TV).
+Ouvrir les ambiances	Open ambiences
+Ouvrir les réglages du téléphone	Open phone settings
+Ouvrir À l'affiche	Open Now showing
+Où en est la TV	Where the TV stands
+Paramètres de la TV	TV settings
+Paramètres des entrées	Input settings
+Paramètres indisponibles	Settings unavailable
+Paramètres › Accessibilité › Lumen télécommande	Settings › Accessibility › Lumen remote
+Partout	Everywhere
+Pas d'accès à Internet pour l'instant · nouvel essai plus tard	No Internet access for now · retrying later
+Pas d'« À l'affiche » dans un profil enfant	No “Now showing” in a child profile
+Pas de connexion réseau	No network connection
+Pas de reconnaissance vocale sur cette TV	No voice recognition on this TV
+Pas de réseau	No network
+Pas disponible en abonnement en France pour l'instant	Not available by subscription here for now
+Pas sur tes applis : disponible sur 	Not on your apps: available on 
+Paysages Lumen	Lumen landscapes
+Paysages Lumen animés	Animated Lumen landscapes
+Paysages Lumen animés et météo	Animated Lumen landscapes and weather
+Paysages animés	Animated landscapes
+Pexels	Pexels
+Pexels désactivé	Pexels disabled
+Photo du jour	Picture of the day
+Photos et vidéos Wikimedia Commons	Wikimedia Commons photos and videos
+Photos téléchargées	Photos downloaded
+Pile de la télécommande	Remote battery
+Place libérée	Space freed
+Plateformes	Platforms
+Pluie	Rain
+Plus	More
+Plus assez de place sur la TV (	Not enough space left on the TV (
+Plutôt depuis le téléphone (pour coller)	Rather from the phone (to paste)
+Police Inter	Inter typeface
+Populaire	Popular
+Pour revenir à l'accueil d'origine	To go back to the original home
+Pour toi	For you
+Profil : 	Profile: 
+Profil enfant	Child profile
+Profil enfant : seules ses applis favorites sont visibles · code PIN pour le reste	Child profile: only its favourite apps are visible · PIN code for the rest
+Profil enfant désactivé	Child profile turned off
+Profil principal	Main profile
+Profil « 	Profile “
+Profils	Profiles
+Proposer cette page au démarrage	Offer this page at start-up
+Prénom	First name
+Prénom vide ou déjà pris	Name empty or already taken
+QR code vers le guide d'installation	QR code to the installation guide
+Qualité et espace des vidéos	Video quality and space
+Qui regarde ?	Who's watching?
+Quitter	Leave
+REDÉMARRAGE	RESTARTING
+Recherche	Search
+Recherche de la TV	TV search
+Recherche de la clé partagée…	Looking for the shared key…
+Recherche de « 	Searching for “
+Recherche des applis qui le proposent…	Looking for apps that offer it…
+Recherche indisponible	Search unavailable
+Recherche vocale	Voice search
+Rechercher	Search
+Rechercher une mise à jour	Check for updates
+Recherches récentes	Recent searches
+Recherche…	Checking…
+Reconnaissance vocale indisponible	Voice recognition unavailable
+Redémarrage	Restarting
+Redémarrer Lumen	Restart Lumen
+Refuser	Refuse
+Regarder sur 	Watch on 
+Relie Lumen à ton Home Assistant depuis le téléphone :\nonglet Plus › Home Assistant (adresse et jeton).	Link Lumen to your Home Assistant from the phone:\nMore tab › Home Assistant (address and token).
+Renommer	Rename
+Reprendre	Resume
+Reprendre 	Resume 
+Reprendre au-dessus des applis	Resume above the apps
+Reprendre · 	Resume · 
+Retirer des favoris	Remove from favourites
+Retirer la clé	Remove the key
+Retour	Back
+Retour à la liste	Back to the list
+Revoir les conseils	Show the tips again
+Reçu depuis le téléphone	Received from the phone
+Rien de nouveau pour l'instant	Nothing new for now
+Rien de proche pour l'instant	Nothing similar for now
+Rien ne correspond à « 	Nothing matches “
+Rien à afficher avec ce filtre · essaie « Partout » ou un autre type	Nothing to show with this filter · try “Everywhere” or another type
+Rien à reprendre pour l'instant.\nOuvre une appli depuis Lumen : elle apparaîtra ici, la plus récente en premier.	Nothing to resume for now.\nOpen an app from Lumen: it will appear here, most recent first.
+Rubriques	Sections
+Réessayer	Try again
+Réessayer le téléchargement	Retry the download
+Réglages	Settings
+Réglages d'À l'affiche	Now showing settings
+Réglages depuis le téléphone	Settings from the phone
+Saisir ma propre clé sur la TV	Enter my own key on the TV
+Saisissez-le une seconde fois	Enter it a second time
+Sans ordinateur : l'appli « Send Files to TV » permet d'installer Lumen, mais pas de désactiver l'accueil Google.	Without a computer: the “Send Files to TV” app can install Lumen, but cannot disable the Google home.
+Sauvegarde des réglages	Settings backup
+Service indisponible pour l'instant	Service unavailable for now
+Services	Services
+Seul le nom de la ville est envoyé à Open-Meteo, service météo gratuit et sans compte.	Only the city name is sent to Open-Meteo, a free weather service with no account.
+Seuls serveurs que Lumen peut contacter (HTTPS)	Only servers Lumen may contact (HTTPS)
+Si un jour tu veux retrouver l'accueil Google, avec les « Android SDK Platform-Tools » (adb) :	If one day you want the Google home back, with the “Android SDK Platform-Tools” (adb):
+Soleil et Lune	Sun and Moon
+Son de la vidéo	Video sound
+Sons de l'interface	Interface sounds
+Source	Source
+Source du fond d'écran	Background source
+Sources (HDMI)	Sources (HDMI)
+Stockage	Storage
+Style des vignettes	Tile style
+Suivre l'heure de la journée	Follow the time of day
+Supprimer ce profil et ses réglages	Delete this profile and its settings
+Système	System
+Sécurité	Security
+Sélection	Selection
+Sélectionne une appli de l'accueil : ses épisodes en cours apparaissent au-dessus. ◀ depuis la première vignette ouvre les dernières applis utilisées.	Select an app on the home screen: its episodes in progress appear above it. ◀ from the first tile opens the last used apps.
+Série	Series
+Séries	Series
+Ta clé passe avant la clé partagée.	Your key takes precedence over the shared key.
+Taille du texte	Text size
+Terminé	Done
+Tes appareils · choisis-les sur le téléphone (Plus › Home Assistant)	Your devices · pick them on the phone (More › Home Assistant)
+Tes photos et vidéos	Your photos and videos
+Texte indisponible.	Text unavailable.
+Thème des vidéos	Video theme
+Titres similaires	Similar titles
+Touche Menu : réglages  ·  micro de la télécommande : recherche vocale	Menu key: settings  ·  remote microphone: voice search
+Tous les fonds sont de nouveau affichés	All backgrounds are shown again
+Tout	All
+Tout désactiver	Turn everything off
+Tout vider (sauf mes photos et vidéos)	Clear everything (except my photos and videos)
+Toutes	All
+Toutes les 	Every 
+Toutes les applications	All apps
+Trop d'essais · réessayez dans 	Too many attempts · try again in 
+Très grande	Extra large
+Type	Type
+Téléchargement des photos en cours	Downloading photos
+Téléchargement des vidéos choisies…	Downloading the chosen videos…
+Téléchargement lancé	Download started
+Télécharger de nouveaux fonds	Download new backgrounds
+Téléchargées depuis le service qui les publie (Netflix…), contrôlées, jamais enregistrées.	Downloaded from the service that publishes them (Netflix…), checked, never stored.
+Télécommande dans les autres applis	Remote in other apps
+Téléphone	Phone
+Téléphone connecté	Phone connected
+Téléviseur	Television
+Uniquement pour les sources photo	Only for photo sources
+Utiliser ce profil	Use this profile
+Utiliser la clé partagée de Lumen	Use Lumen's shared key
+Vagues	Waves
+Verre teinté de la couleur de l'appli	Glass tinted with the app colour
+Verrouiller par code	Lock with a code
+Version 	Version 
+Vider · 	Clear · 
+Vidéo et TV	Video and TV
+Vidéos 4K	4K videos
+Vidéos Pexels	Pexels videos
+Vidéos de fond	Background videos
+Vidéos des ambiances	Ambience videos
+Vidéos en 4K	4K videos
+Vie privée	Privacy
+Vignettes	Tiles
+Vignettes et disposition	Tiles and layout
+Ville introuvable	City not found
+Ville pour la météo	City for the weather
+Villes	Cities
+Vérification impossible	Check failed
+Vérification impossible · réessaie plus tard	Check failed · try again later
+Vérifier à nouveau	Check again
+À autoriser par ADB : Réglages › Système › Installation	To grant via ADB: Settings › System › Installation
+À l'affiche	Now showing
+À propos	About
+À propos et licences	About and licences
+À relier depuis le téléphone : Plus › Home Assistant	Link it from the phone: More › Home Assistant
+Économiseur d'écran	Screen saver
+Économiseur d'écran de la TV	TV screen saver
+Écran d'accueil	Home screen
+Écran d'accueil pour Android TV · 	Home screen for Android TV · 
+Écran de nuit	Night screen
+Écriture impossible	Cannot write
+à l'instant	just now
+‹  Accueil et applis	‹  Home and apps
+‹  Fond d'écran	‹  Background
+▼ toutes les applis  ·  ◀ Reprendre  ·  ▶ À l'affiche	▼ all apps  ·  ◀ Resume  ·  ▶ Now showing
+il y a %s min	%s min ago
+il y a %s h	%s h ago
+il y a %s jours	%s days ago
+hier	yesterday
+SIL Open Font License 1.1 · The Inter Project Authors	SIL Open Font License 1.1 · The Inter Project Authors

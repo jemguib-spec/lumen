@@ -24,6 +24,7 @@ Sur une TV (ou un émulateur Android TV) branchée en adb :
 - **Textes à l'écran** calmes et sans jargon ; le détail technique va dans le journal d'erreurs (`Messages`).
 - **Accessibilité** : tout élément sélectionnable a une `contentDescription` (les briques `Tile`, `GlassUi.listRow`, `About.info` le font déjà).
 - **Couleurs et mouvement** : pas de couleur hexadécimale ni de durée en dur dans l'interface ; `Palette` (texte, surfaces, accent, danger) et `Motion` (rapide, moyen, lent, une seule courbe). Les dessins (paysages, météo) gardent leurs couleurs.
+- **Textes** : écrits en français dans le code, toujours passés par `L.t("…")` (ou `L.all` pour un tableau) ; chaque nouveau texte reçoit sa ligne dans `assets/lang/en.tsv`, `tools/i18n_check.py` le vérifie (lancé par `tests/run.sh`).
 - **Réglages** : un réglage à deux états est un `toggleRow`, à plusieurs valeurs un `choiceRow` ; une page de réglages ne dépasse pas dix lignes, au-delà on crée une sous-page.
 
 ## Proposer un changement

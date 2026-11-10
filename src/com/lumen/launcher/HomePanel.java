@@ -47,7 +47,7 @@ final class HomePanel {
         a.rowRefreshers.clear();
 
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
-        title.setText("Maison");
+        title.setText(L.t("Maison"));
         title.setGravity(Gravity.CENTER);
         col.addView(title, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         final TextView status = a.text(22, "sans-serif", Palette.TEXT_2);
@@ -56,15 +56,15 @@ final class HomePanel {
         col.addView(status, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         if (!a.prefs.haConfigured()) {
-            status.setText("Relie Lumen à ton Home Assistant depuis le téléphone :\nonglet Plus › Home Assistant (adresse et jeton).");
-            LinearLayout r = a.listRow("Ouvrir les réglages du téléphone", null, new View.OnClickListener() {
+            status.setText(L.t("Relie Lumen à ton Home Assistant depuis le téléphone :\nonglet Plus › Home Assistant (adresse et jeton)."));
+            LinearLayout r = a.listRow(L.t("Ouvrir les réglages du téléphone"), null, new View.OnClickListener() {
                 @Override public void onClick(View v) { a.closeOverlay(false); PhonePanel.openPhonePanel(a); }
             });
             col.addView(r, a.rowLp());
             r.requestFocus();
             return;
         }
-        status.setText("Connexion à Home Assistant…");
+        status.setText(L.t("Connexion à Home Assistant…"));
         final Map<String, HomeAssistant.Entity> live = new HashMap<>();
         // focus posé tout de suite pour que Retour ferme le panneau même pendant le chargement
         card.setFocusable(true);
@@ -116,10 +116,10 @@ final class HomePanel {
 
     private static void retryRow(final MainActivity a, final LinearLayout card, final LinearLayout col, final TextView status,
                                  final Map<String, HomeAssistant.Entity> live) {
-        final LinearLayout r = a.listRow("Réessayer", null, new View.OnClickListener() {
+        final LinearLayout r = a.listRow(L.t("Réessayer"), null, new View.OnClickListener() {
             @Override public void onClick(View v) {
                 col.removeView(v);
-                status.setText("Connexion à Home Assistant…");
+                status.setText(L.t("Connexion à Home Assistant…"));
                 card.requestFocus();
                 load(a, card, col, status, live, true);
             }
@@ -132,12 +132,12 @@ final class HomePanel {
                                   final Map<String, HomeAssistant.Entity> live, List<HomeAssistant.Entity> all) {
         List<HomeAssistant.Entity> shown = HomeAssistant.shown(all, a.prefs.haPinned(), MAX_SHOWN);
         if (shown.isEmpty()) {
-            status.setText("Aucun appareil pilotable trouvé (lumières, prises, scènes, volets…).");
+            status.setText(L.t("Aucun appareil pilotable trouvé (lumières, prises, scènes, volets…)."));
             return;
         }
         boolean pinned = !a.prefs.haPinned().isEmpty() && shown.size() < all.size();
-        status.setText(pinned ? "Tes appareils · choisis-les sur le téléphone (Plus › Home Assistant)"
-                : shown.size() + " appareils · choisis ceux à garder ici depuis le téléphone");
+        status.setText(pinned ? L.t("Tes appareils · choisis-les sur le téléphone (Plus › Home Assistant)")
+                : shown.size() + L.t(" appareils · choisis ceux à garder ici depuis le téléphone"));
         String domain = null;
         View first = null;
         for (final HomeAssistant.Entity e0 : shown) {

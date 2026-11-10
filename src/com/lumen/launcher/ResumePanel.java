@@ -59,7 +59,7 @@ final class ResumePanel {
         List<Object[]> out = new ArrayList<>();
         for (java.util.Map.Entry<String, Long> e : last.entrySet()) {
             AppRepo.App app = a.repo.findByPackage(e.getKey());
-            if (app == null || hidden.contains(app.key)) continue;
+            if (app == null || !a.prefs.appAllowed(app.key)) continue;
             out.add(new Object[]{app, e.getValue()});
         }
         java.util.Collections.sort(out, new java.util.Comparator<Object[]>() {
@@ -70,12 +70,12 @@ final class ResumePanel {
 
     static String ago(long t) {
         long m = (System.currentTimeMillis() - t) / 60000;
-        if (m < 1) return "à l'instant";
-        if (m < 60) return "il y a " + m + " min";
+        if (m < 1) return L.t("à l'instant");
+        if (m < 60) return L.t("il y a %s min").replace("%s", String.valueOf(m));
         long hours = m / 60;
-        if (hours < 24) return "il y a " + hours + " h";
+        if (hours < 24) return L.t("il y a %s h").replace("%s", String.valueOf(hours));
         long d = hours / 24;
-        return d == 1 ? "hier" : "il y a " + d + " jours";
+        return d == 1 ? L.t("hier") : L.t("il y a %s jours").replace("%s", String.valueOf(d));
     }
 
     /** Panneau latéral qui glisse depuis la gauche avec les dernières applis utilisées. */
@@ -86,7 +86,7 @@ final class ResumePanel {
         final LinearLayout card = a.glassCard(48);
         card.setPadding(a.u(24), a.u(52), a.u(24), a.u(32));
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
-        title.setText("Reprendre");
+        title.setText(L.t("Reprendre"));
         title.setPadding(a.u(28), 0, 0, a.u(28));
         card.addView(title);
         ScrollView sv = new ScrollView(a);
@@ -109,11 +109,11 @@ final class ResumePanel {
         }
         if (first == null) {
             TextView none = a.text(24, "sans-serif", Palette.TEXT_2);
-            none.setText("Rien à reprendre pour l'instant.\nOuvre une appli depuis Lumen : elle apparaîtra ici, la plus récente en premier.");
+            none.setText(L.t("Rien à reprendre pour l'instant.\nOuvre une appli depuis Lumen : elle apparaîtra ici, la plus récente en premier."));
             none.setLineSpacing(0, 1.25f);
             none.setPadding(a.u(28), a.u(10), 0, 0);
             col.addView(none);
-            LinearLayout back = a.listRow("Retour", null, new View.OnClickListener() {
+            LinearLayout back = a.listRow(L.t("Retour"), null, new View.OnClickListener() {
                 @Override public void onClick(View v) { a.closeOverlay(true); }
             });
             LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, a.u(88));

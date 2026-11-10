@@ -253,6 +253,26 @@ public class LumenTests {
         check("nouveautés : caractères de contrôle retirés", "ab".equals(UpdatePolicy.notes("a\u0007b")));
         check("nouveautés : texte long coupé", UpdatePolicy.notes(new String(new char[1000]).replace('\0', 'x')).length() <= UpdatePolicy.NOTES_MAX);
         check("nouveautés : null → vide", UpdatePolicy.notes(null).isEmpty());
+        // langue
+        java.util.Map<String, String> en = L.parse("# commentaire\nBonjour\tHello\nLigne\\nsuite\tLine\\nnext\nsans tab\n");
+        check("langue : dictionnaire lu", "Hello".equals(en.get("Bonjour")) && en.size() == 2);
+        check("langue : retours à la ligne décodés", "Line\nnext".equals(en.get("Ligne\nsuite")));
+        L.load("en", en);
+        check("langue : traduit", "Hello".equals(L.t("Bonjour")) && "Good evening".equals(L.t("Good evening")) == true);
+        check("langue : texte inconnu rendu tel quel", "Au revoir".equals(L.t("Au revoir")));
+        check("langue : L.all", "Hello".equals(L.all(new String[]{"Bonjour", "x"})[0]));
+        L.load("fr", null);
+        check("langue : retour au français", "Bonjour".equals(L.t("Bonjour")) && L.french());
+        check("langue : choix système", "fr".equals(L.choose("", "fr")) && "en".equals(L.choose("", "de")) && "fr".equals(L.choose("fr", "en")));
+        // profil enfant
+        java.util.List<Profiles.Profile> kl = Profiles.add(Profiles.parse(null), "Tom");
+        check("profil enfant : non par défaut", !kl.get(1).kid);
+        kl = Profiles.setKid(kl, kl.get(1).id, true);
+        check("profil enfant : marqué et conservé après lecture", kl.get(1).kid && Profiles.parse(Profiles.serialize(kl)).get(1).kid);
+        check("profil enfant : enregistré comme « :k »", Profiles.serialize(kl).endsWith(":Tom:k"));
+        check("profil enfant : le principal ne peut pas l'être", Profiles.setKid(kl, Profiles.MAIN, true) == null && !Profiles.parse("0:Moi:k").get(0).kid);
+        check("profil enfant : renommer garde le drapeau", Profiles.rename(kl, kl.get(1).id, "Tim").get(1).kid);
+        check("profil enfant : retiré", !Profiles.setKid(kl, kl.get(1).id, false).get(1).kid);
         // coffre des secrets (format AES-GCM ; la clé Keystore est testée sur la TV, ici une clé AES ordinaire)
         javax.crypto.KeyGenerator kg = javax.crypto.KeyGenerator.getInstance("AES");
         kg.init(256);

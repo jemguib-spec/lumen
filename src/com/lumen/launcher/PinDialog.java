@@ -24,7 +24,7 @@ final class PinDialog {
         show(a, title, new Entered() {
             @Override public boolean on(String pin, TextView msg) {
                 long wait = waitLeft(a);
-                if (wait > 0) { msg.setText("Trop d'essais · réessayez dans " + seconds(wait)); return false; }
+                if (wait > 0) { msg.setText(L.t("Trop d'essais · réessayez dans ") + seconds(wait)); return false; }
                 if (Pin.check(pin, a.prefs.pinStored())) {
                     a.prefs.pinOk();
                     a.closeOverlay(false);
@@ -33,7 +33,7 @@ final class PinDialog {
                 }
                 a.prefs.pinFailed();
                 long w = waitLeft(a);
-                msg.setText(w > 0 ? "Code incorrect · attendez " + seconds(w) : "Code incorrect");
+                msg.setText(w > 0 ? L.t("Code incorrect · attendez ") + seconds(w) : L.t("Code incorrect"));
                 return false;
             }
         });
@@ -42,10 +42,10 @@ final class PinDialog {
     /** Choix d'un nouveau code (saisi deux fois). */
     static void create(final MainActivity a, final Runnable done) {
         final String[] first = {null};
-        show(a, "Nouveau code à 4 chiffres", new Entered() {
+        show(a, L.t("Nouveau code à 4 chiffres"), new Entered() {
             @Override public boolean on(String pin, TextView msg) {
-                if (first[0] == null) { first[0] = pin; msg.setText("Saisissez-le une seconde fois"); return false; }
-                if (!first[0].equals(pin)) { first[0] = null; msg.setText("Les deux codes diffèrent · recommencez"); return false; }
+                if (first[0] == null) { first[0] = pin; msg.setText(L.t("Saisissez-le une seconde fois")); return false; }
+                if (!first[0].equals(pin)) { first[0] = null; msg.setText(L.t("Les deux codes diffèrent · recommencez")); return false; }
                 a.prefs.setPin(pin);
                 a.closeOverlay(false);
                 done.run();
@@ -63,7 +63,7 @@ final class PinDialog {
 
     private static String seconds(long ms) {
         long s = (ms + 999) / 1000;
-        return s < 60 ? s + " s" : (s + 59) / 60 + " min";
+        return s < 60 ? s + L.t(" s") : (s + 59) / 60 + L.t(" min");
     }
 
     private static void show(final MainActivity a, String title, final Entered entered) {
@@ -79,7 +79,7 @@ final class PinDialog {
 
         final TextView msg = a.text(22, "sans-serif", Palette.TEXT_2);
         msg.setGravity(Gravity.CENTER);
-        msg.setText("Flèches et OK, ou touches chiffrées");
+        msg.setText(L.t("Flèches et OK, ou touches chiffrées"));
         LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         ml.topMargin = a.u(14);
         card.addView(msg, ml);

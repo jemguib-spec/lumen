@@ -13,10 +13,10 @@ final class Greeting {
     private static final int MAX_RESUME = 38;
 
     static String hello(int hour) {
-        if (hour >= 5 && hour < 12) return "Bonjour";
-        if (hour >= 12 && hour < 18) return "Bon après-midi";
-        if (hour >= 18 && hour < 22) return "Bonsoir";
-        return "Bonne nuit";
+        if (hour >= 5 && hour < 12) return L.t("Bonjour");
+        if (hour >= 12 && hour < 18) return L.t("Bon après-midi");
+        if (hour >= 18 && hour < 22) return L.t("Bonsoir");
+        return L.t("Bonne nuit");
     }
 
     /** « 12° · Nuageux · Paris » (ligne météo de Lumen) → « Nuageux 12° ». */
@@ -32,7 +32,7 @@ final class Greeting {
         if (title == null || title.trim().isEmpty()) return "";
         String t = title.trim();
         if (t.length() > MAX_RESUME) t = t.substring(0, MAX_RESUME - 1).trim() + "…";
-        return "Reprendre " + t;
+        return L.t("Reprendre ") + t;
     }
 
     /** Écran de nuit du mode veille : de nightHour jusqu'à 7 h (-1 = jamais). */

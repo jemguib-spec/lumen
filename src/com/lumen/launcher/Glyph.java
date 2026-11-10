@@ -13,7 +13,7 @@ import android.graphics.drawable.Drawable;
 /** Pictogrammes dessinés en vectoriel : boutons de l'accueil et rubriques des réglages. */
 final class Glyph extends Drawable {
     static final int GRID = 0, SLIDERS = 1, INPUT = 2, MOON = 3, IMAGE = 4, HOME = 5, PHONE = 6, GEAR = 7, INFO = 8, DOC = 9, SPARK = 10,
-            MOVE = 11, STAR = 12, STAR_OFF = 13, HIDE = 14, LOCK = 15, TRASH = 16, UNLOCK = 17, CLOSE = 18, RESTART = 19, SEARCH = 20, PERSON = 21, MIC = 22;
+            MOVE = 11, STAR = 12, STAR_OFF = 13, HIDE = 14, LOCK = 15, TRASH = 16, UNLOCK = 17, CLOSE = 18, RESTART = 19, SEARCH = 20, PERSON = 21, MIC = 22, WIFI_OFF = 23, BATTERY_LOW = 24, UPDATE = 25;
     private final int type;
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -176,6 +176,34 @@ final class Glyph extends Drawable {
             case SEARCH: { // loupe : rechercher
                 c.drawCircle(cx - s * .06f, cy - s * .06f, s * .24f, p);
                 c.drawLine(cx + s * .12f, cy + s * .12f, cx + s * .32f, cy + s * .32f, p);
+                break;
+            }
+            case WIFI_OFF: { // ondes barrées : pas de réseau
+                android.graphics.RectF w1 = new android.graphics.RectF(cx - s * .40f, cy - s * .28f, cx + s * .40f, cy + s * .52f);
+                android.graphics.RectF w2 = new android.graphics.RectF(cx - s * .24f, cy - s * .12f, cx + s * .24f, cy + s * .36f);
+                c.drawArc(w1, 225f, 90f, false, p);
+                c.drawArc(w2, 225f, 90f, false, p);
+                c.drawCircle(cx, cy + s * .24f, s * .035f, p);
+                c.drawLine(cx - s * .34f, cy - s * .34f, cx + s * .34f, cy + s * .34f, p);
+                break;
+            }
+            case BATTERY_LOW: { // pile presque vide (télécommande)
+                android.graphics.RectF body = new android.graphics.RectF(cx - s * .36f, cy - s * .18f, cx + s * .28f, cy + s * .18f);
+                c.drawRoundRect(body, s * .06f, s * .06f, p);
+                c.drawLine(cx + s * .34f, cy - s * .07f, cx + s * .34f, cy + s * .07f, p);
+                Paint.Style st = p.getStyle();
+                p.setStyle(Paint.Style.FILL);
+                c.drawRect(cx - s * .30f, cy - s * .11f, cx - s * .20f, cy + s * .11f, p);
+                p.setStyle(st);
+                break;
+            }
+            case UPDATE: { // flèche vers le bas dans un bac : mise à jour prête
+                c.drawLine(cx, cy - s * .36f, cx, cy + s * .10f, p);
+                c.drawLine(cx - s * .16f, cy - s * .06f, cx, cy + s * .10f, p);
+                c.drawLine(cx + s * .16f, cy - s * .06f, cx, cy + s * .10f, p);
+                c.drawLine(cx - s * .34f, cy + s * .20f, cx - s * .34f, cy + s * .34f, p);
+                c.drawLine(cx - s * .34f, cy + s * .34f, cx + s * .34f, cy + s * .34f, p);
+                c.drawLine(cx + s * .34f, cy + s * .34f, cx + s * .34f, cy + s * .20f, p);
                 break;
             }
             case MIC: { // micro : recherche vocale

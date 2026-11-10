@@ -20,7 +20,7 @@
 - Certificats validés par le magasin système d'Android ; les certificats ajoutés par l'utilisateur ne sont pas acceptés (cible Android 29). Le trafic en clair est interdit (`usesCleartextTraffic=false`).
 - Réponses et fichiers plafonnés en taille.
 - Home Assistant (facultatif) : seule exception à la liste blanche, l'adresse de TON Home Assistant, réglée depuis le téléphone (action protégée par le code PIN s'il existe). En HTTP, l'adresse doit être sur le réseau local, et elle est revérifiée après résolution : le jeton ne part jamais en clair sur Internet. En HTTPS, tout hôte est permis (accès à distance). Aucune redirection n'est suivie. Le jeton reste sur la TV : il n'est jamais renvoyé au téléphone et n'est pas dans la sauvegarde. Actions en liste fermée (allumer/éteindre, scène, script, bouton, volet, lecture) ; serrures et alarmes exclues.
-- « À l'affiche » (facultatif) : `api.themoviedb.org` et `image.tmdb.org` ne sont joignables que si l'utilisateur a réglé sa propre clé TMDB (depuis le téléphone, code PIN demandé s'il existe) ; la clé n'est jamais renvoyée au téléphone ni sauvegardée dans la sauvegarde. Seules des listes publiques de films sont demandées : rien sur ce que tu regardes n'est envoyé.
+- « À l'affiche » (facultatif) : `api.themoviedb.org` et `image.tmdb.org` ne sont joignables que si l'utilisateur a réglé sa propre clé TMDB (depuis le téléphone ou la TV, code PIN demandé s'il existe) **ou accepté, une fois, la clé partagée du projet** (`dist/services.json`, lue avec `latest.json` ; la clé personnelle passe avant). La clé personnelle n'est jamais renvoyée au téléphone ni sauvegardée dans la sauvegarde. Seules des listes publiques de films sont demandées : rien sur ce que tu regardes n'est envoyé.
 
 ## Contenus légaux uniquement
 - NASA : domaine public.
@@ -72,6 +72,7 @@
 ## Profils (`Profiles`, `ProfilePrefs`, `ProfilePanel`, `WhoPage`)
 - Chaque profil a ses réglages personnels (liste fermée `Profiles.PERSONAL` : favoris, applis masquées, fonds, affichage, veille, sons, recherches, habitudes…). Tout le reste est commun : clés API, Home Assistant, code PIN et ses tentatives, **applis verrouillées** (changer de profil ne lève jamais un verrou), téléphones mémorisés, mises à jour.
 - Changer de profil ne demande pas de code ; ajouter, renommer ou supprimer un profil passe par le code PIN s'il existe (sur la TV comme depuis le téléphone).
+- **Profil enfant** (`Profile.kid`) : la TV ne connaît plus que ses applis favorites (`Prefs.appAllowed`, appliqué à la page Applications, à la recherche, à « Reprendre », à « À l'affiche » et aux demandes du téléphone). Quitter ce profil, ouvrir les réglages, gérer les profils, le menu complet d'une appli, masquer et désinstaller exigent le code PIN ; le téléphone ne peut pas changer de profil depuis un profil enfant. Un profil enfant ne peut être activé que si un code PIN existe (il est créé sinon) ; le profil principal ne peut pas l'être.
 - Une sauvegarde exporte et restaure les réglages du profil actif ; elle ne contient toujours ni code PIN ni clés.
 - Le profil principal garde les réglages d'avant les profils : rien n'est migré, rien ne peut être perdu à la mise à jour.
 
@@ -99,6 +100,8 @@
 | `Veille`, `UpdateFlow`, `DownloadPill` | Mode veille en cascade ; mises à jour et redémarrage ; indicateur de téléchargement |
 | `GlassUi`, `Palette`, `Motion` | Briques des panneaux en verre (carte, lignes, interrupteurs, choix, en-têtes) ; couleurs et durées nommées de l'interface |
 | `Tips` | Trois conseils sur les gestes, un par démarrage |
+| `TvStatus` | État de la TV sous l'horloge (réseau, pile de la télécommande, mise à jour) : lecture locale, rien d'envoyé |
+| `L`, `Lang` | Textes de l'interface et dictionnaires `assets/lang/*.tsv` (anglais) ; couverture vérifiée par `tools/i18n_check.py` |
 | `HomeBuilder`, `AppLauncher` | Construction de l'écran d'accueil ; ouverture et fermeture des applis, redémarrage |
 | `SettingsPanel`, `GalleryPanel`, `ResumePanel`, `PhonePanel`, `InputsPanel`, `CityPanel` | Un panneau par fonction |
 | `Tile`, `Glass`, `Glyph`, `Glow`, `AnimatedScene`, `WeatherFx`, `AmbientView` | Composants visuels |

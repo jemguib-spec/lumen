@@ -47,21 +47,21 @@ final class PhoneBridge implements PhoneServer.Host {
         });
         LinearLayout card = a.glassCard(44);
         card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
-        card.addView(a.menuHeader(null, false, "Nouveau téléphone", name));
+        card.addView(a.menuHeader(null, false, L.t("Nouveau téléphone"), name));
         TextView why = a.text(22, "sans-serif", 0x99FFFFFF);
-        why.setText("Il pourra piloter la TV, ouvrir des applis et écrire du texte. Accepte seulement si c'est le tien.");
+        why.setText(L.t("Il pourra piloter la TV, ouvrir des applis et écrire du texte. Accepte seulement si c'est le tien."));
         why.setGravity(Gravity.CENTER);
         why.setPadding(a.u(24), 0, a.u(24), a.u(24));
         card.addView(why);
-        LinearLayout allow = a.iconRow(Glyph.UNLOCK, "Autoriser", null, new View.OnClickListener() {
+        LinearLayout allow = a.iconRow(Glyph.UNLOCK, L.t("Autoriser"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { done[0] = true; a.h.removeCallbacks(timeout); a.closeOverlay(true); cb.answer(true, false); }
         }, false);
         card.addView(allow, a.rowLp());
-        card.addView(a.iconRow(Glyph.STAR, "Autoriser et se souvenir de ce téléphone", null, new View.OnClickListener() {
+        card.addView(a.iconRow(Glyph.STAR, L.t("Autoriser et se souvenir de ce téléphone"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { done[0] = true; a.h.removeCallbacks(timeout); a.closeOverlay(true); cb.answer(true, true); }
         }, false), a.rowLp());
         card.addView(a.menuDivider());
-        card.addView(a.iconRow(Glyph.CLOSE, "Refuser", null, new View.OnClickListener() {
+        card.addView(a.iconRow(Glyph.CLOSE, L.t("Refuser"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { done[0] = true; a.h.removeCallbacks(timeout); a.closeOverlay(true); cb.answer(false, false); a.showNotice("Téléphone refusé"); }
         }, true), a.rowLp());
         o.addView(card, new FrameLayout.LayoutParams(a.u(760), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
@@ -80,7 +80,7 @@ final class PhoneBridge implements PhoneServer.Host {
         }
         a.h.postDelayed(new Runnable() {
             @Override public void run() {
-                if (a.closeApp(app)) { a.showNotice(app.label + " fermée"); a.lastLaunched = null; }
+                if (a.closeApp(app)) { a.showNotice(app.label + L.t(" fermée")); a.lastLaunched = null; }
             }
         }, 1500);
         return "{\"ok\":true,\"name\":" + org.json.JSONObject.quote(app.label) + "}";
@@ -95,7 +95,7 @@ final class PhoneBridge implements PhoneServer.Host {
     @Override public void onFavoritesChanged() {
         if (a.overlay == null && !a.appsOpen) a.buildRow(a.focusedKey()); else a.dirtyRow = true;
         a.markAppsDirty();
-        a.showNotice("Favoris mis à jour");
+        a.showNotice(L.t("Favoris mis à jour"));
     }
 
     @Override public boolean onTvHome() { return a.resumedNow; }
@@ -186,7 +186,7 @@ final class PhoneBridge implements PhoneServer.Host {
             bg.setStroke(Math.max(1, a.u(2)), 0x66FFFFFF);
             phonePill.setBackground(bg);
             phonePill.setElevation(a.u(4));
-            phonePill.setContentDescription("Téléphone connecté");
+            phonePill.setContentDescription(L.t("Téléphone connecté"));
             FrameLayout.LayoutParams pl = new FrameLayout.LayoutParams(a.u(16), a.u(16), Gravity.TOP | Gravity.START);
             pl.leftMargin = a.u(112);
             pl.topMargin = a.u(36);
@@ -198,7 +198,7 @@ final class PhoneBridge implements PhoneServer.Host {
                     .setInterpolator(new android.view.animation.OvershootInterpolator(2.2f)).start();
             pulse(pl, 0);
             pulse(pl, 520);
-            a.showNotice("Contrôlée par " + a.phone.deviceName());
+            a.showNotice(L.t("Contrôlée par ") + a.phone.deviceName());
         } else if (!connected && phonePill != null) {
             final View pp = phonePill;
             phonePill = null;
@@ -209,7 +209,7 @@ final class PhoneBridge implements PhoneServer.Host {
     }
 
     @Override public void onHaLinked() {
-        if (!a.prefs.haButton()) { a.setHouseButton(true); a.showNotice("Bouton Maison ajouté à l'accueil"); }
+        if (!a.prefs.haButton()) { a.setHouseButton(true); a.showNotice(L.t("Bouton Maison ajouté à l'accueil")); }
     }
 
     @Override public void onPhoneName(String name) { if (phonePill != null) a.showNotice("Contrôlée par " + name); }
@@ -232,7 +232,7 @@ final class PhoneBridge implements PhoneServer.Host {
     }
 
     @Override public void onSettingsRestored(int count) {
-        a.showNotice(count + " réglages restaurés");
+        a.showNotice(count + L.t(" réglages restaurés"));
         a.h.postDelayed(new Runnable() { @Override public void run() { a.recreate(); } }, 1200); // tout est relu proprement
     }
 
@@ -244,13 +244,13 @@ final class PhoneBridge implements PhoneServer.Host {
             a.wall.refreshList();
             if (a.prefs.source() == Prefs.SRC_MINE && a.wall.usingFallback()) a.wall.restart();
         }
-        if (received > 0) a.showNotice("Reçu depuis le téléphone");
+        if (received > 0) a.showNotice(L.t("Reçu depuis le téléphone"));
     }
 
     @Override public String phoneProfile(String action, int id, String name) {
         boolean ok;
         switch (action) {
-            case "use": ok = ProfilePanel.switchTo(a, id); break;
+            case "use": ok = !a.prefs.isKidProfile() && ProfilePanel.switchTo(a, id); break; // quitter un profil enfant : sur la TV, avec le code
             case "add": ok = a.prefs.addProfile(name) >= 0; if (ok) a.updateProfileButton(); break;
             case "rename": ok = a.prefs.renameProfile(id, name); break;
             case "delete": ok = ProfilePanel.remove(a, id); break;

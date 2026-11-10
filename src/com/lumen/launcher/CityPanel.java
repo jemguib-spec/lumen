@@ -24,15 +24,15 @@ final class CityPanel {
         LinearLayout card = a.glassCard(44);
         card.setPadding(a.u(40), a.u(44), a.u(40), a.u(32));
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
-        title.setText("Ville pour la météo");
+        title.setText(L.t("Ville pour la météo"));
         card.addView(title);
         TextView hint = a.text(22, "sans-serif", Palette.TEXT_2);
-        hint.setText("Seul le nom de la ville est envoyé à Open-Meteo, service météo gratuit et sans compte.");
+        hint.setText(L.t("Seul le nom de la ville est envoyé à Open-Meteo, service météo gratuit et sans compte."));
         hint.setPadding(0, a.u(12), 0, a.u(28));
         card.addView(hint);
         final android.widget.EditText in = new android.widget.EditText(a);
         in.setSingleLine(true);
-        in.setHint("Ex. Paris");
+        in.setHint(L.t("Ex. Paris"));
         in.setText(a.weather.city());
         in.setTextSize(TypedValue.COMPLEX_UNIT_PX, 32 * a.unit);
         in.setTextColor(Palette.ON_SELECTED);
@@ -48,10 +48,10 @@ final class CityPanel {
                 final String q = in.getText().toString().trim();
                 a.closeOverlay(true);
                 if (q.isEmpty()) return true;
-                a.showNotice("Recherche de « " + q + " »…");
+                a.showNotice(L.t("Recherche de « ") + q + " »…");
                 a.weather.setCity(q, new Weather.Callback() {
                     @Override public void onWeather(String found) {
-                        a.showNotice(found == null ? "Ville introuvable" : "Météo : " + found);
+                        a.showNotice(found == null ? L.t("Ville introuvable") : L.t("Météo : ") + found);
                     }
                 });
                 return true;
@@ -61,7 +61,7 @@ final class CityPanel {
         View spacer = new View(a);
         card.addView(spacer, new LinearLayout.LayoutParams(1, a.u(20)));
         if (a.weather.hasCity()) {
-            card.addView(a.listRow("Désactiver la météo", null, new View.OnClickListener() {
+            card.addView(a.listRow(L.t("Désactiver la météo"), null, new View.OnClickListener() {
                 @Override public void onClick(View v) { a.weather.clearCity(); a.closeOverlay(true); a.showNotice("Météo désactivée"); }
             }), a.rowLp());
         }

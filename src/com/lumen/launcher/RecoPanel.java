@@ -37,6 +37,7 @@ final class RecoPanel {
     private static final ExecutorService img = Executors.newFixedThreadPool(2);
 
     static void open(final MainActivity a) {
+        if (a.prefs.isKidProfile()) { a.showNotice(L.t("Pas d'« À l'affiche » dans un profil enfant")); return; }
         a.recoOpen = true;
         detailsBack = null;
         FrameLayout o = a.openOverlay(new Runnable() { @Override public void run() { a.recoOpen = false; detailsBack = null; } });
@@ -48,7 +49,7 @@ final class RecoPanel {
         head.setOrientation(LinearLayout.HORIZONTAL);
         head.setGravity(Gravity.CENTER_VERTICAL);
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
-        title.setText("À l'affiche");
+        title.setText(L.t("À l'affiche"));
         title.setPadding(a.u(28), 0, 0, a.u(6));
         head.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         final LinearLayout seg = new LinearLayout(a);
@@ -79,19 +80,23 @@ final class RecoPanel {
         if (key.isEmpty()) {
             seg.setVisibility(View.GONE);
             modes.setVisibility(View.GONE);
-            sub.setText("FILMS ET SÉRIES DU MOMENT");
+            sub.setText(L.t("FILMS ET SÉRIES DU MOMENT"));
             TextView how = a.text(24, "sans-serif", 0xB3FFFFFF);
-            how.setText("Pour voir les films et séries les plus regardés en ce moment, sur toutes les plateformes ou seulement sur tes applis :\n\n"
-                    + "1. Crée une clé gratuite sur themoviedb.org (Compte › Paramètres › API).\n"
-                    + "2. Saisis-la ici, ou colle-la depuis le téléphone (Plus › Films du moment).\n\n"
-                    + "Sans clé, Lumen ne contacte jamais ce service.");
+            how.setText(L.t("Les films et séries les plus regardés en ce moment, sur toutes les plateformes ou seulement sur tes applis. ")
+                    + L.t("Les listes viennent de TMDB (themoviedb.org) : Lumen ne lui envoie jamais ce que tu regardes.\n\n")
+                    + L.t("Le plus simple : utiliser la clé partagée du projet Lumen. Ou ta propre clé gratuite (themoviedb.org › Compte › Paramètres › API), saisie ici ou collée depuis le téléphone."));
             how.setPadding(a.u(28), a.u(10), a.u(28), a.u(24));
             card.addView(how);
-            LinearLayout r = a.iconRow(Glyph.UNLOCK, "Saisir la clé sur la TV", null, new View.OnClickListener() {
+            LinearLayout shared = a.iconRow(Glyph.SPARK, L.t("Utiliser la clé partagée de Lumen"), null, new View.OnClickListener() {
+                @Override public void onClick(View v) { useSharedKey(a); }
+            }, false);
+            card.addView(shared, a.rowLp());
+            LinearLayout r = a.iconRow(Glyph.UNLOCK, L.t("Saisir ma propre clé sur la TV"), null, new View.OnClickListener() {
                 @Override public void onClick(View v) { a.closeOverlay(false); KeyPanel.open(a, KeyPanel.TMDB); }
             }, false);
             card.addView(r, a.rowLp());
-            card.addView(a.iconRow(Glyph.PHONE, "La coller depuis le téléphone", null, new View.OnClickListener() {
+            r = shared;
+            card.addView(a.iconRow(Glyph.PHONE, L.t("La coller depuis le téléphone"), null, new View.OnClickListener() {
                 @Override public void onClick(View v) { a.closeOverlay(false); PhonePanel.openPhonePanel(a); }
             }, false), a.rowLp());
             r.requestFocus();
@@ -101,8 +106,8 @@ final class RecoPanel {
         // filtres : mes applis, partout, puis chaque service présent sur la TV
         final List<String[]> mine = TmdbPolicy.installed(visiblePackages(a));
         final List<String[]> filters = new ArrayList<>();
-        if (!mine.isEmpty()) filters.add(new String[]{"mine", "Mes applis"});
-        filters.add(new String[]{"", "Partout"});
+        if (!mine.isEmpty()) filters.add(new String[]{"mine", L.t("Mes applis")});
+        filters.add(new String[]{"", L.t("Partout")});
         for (String[] p : mine) filters.add(new String[]{p[0], p[2]});
         String f0 = a.prefs.recoFilter();
         boolean known = false;
@@ -167,7 +172,7 @@ final class RecoPanel {
         }
         // Populaire · Nouveautés · Mieux notés · Pour toi
         mode = a.prefs.recoMode();
-        final String[][] modeList = {{Tmdb.POPULAR, "Populaire"}, {Tmdb.NEW, "Nouveautés"}, {Tmdb.TOP, "Mieux notés"}, {Tmdb.FOR_YOU, "Pour toi"}};
+        final String[][] modeList = {{Tmdb.POPULAR, L.t("Populaire")}, {Tmdb.NEW, L.t("Nouveautés")}, {Tmdb.TOP, L.t("Mieux notés")}, {Tmdb.FOR_YOU, L.t("Pour toi")}};
         final List<TextView> modeViews = new ArrayList<>();
         for (final String[] md : modeList) {
             final TextView mv = a.text(22, "sans-serif-medium", Palette.TEXT_3);
@@ -199,7 +204,7 @@ final class RecoPanel {
         }
         // Tout · Films · Séries
         type = a.prefs.recoType();
-        final String[][] types = {{"", "Tout"}, {"movie", "Films"}, {"tv", "Séries"}};
+        final String[][] types = {{"", L.t("Tout")}, {"movie", L.t("Films")}, {"tv", L.t("Séries")}};
         final List<TextView> segViews = new ArrayList<>();
         for (final String[] ty : types) {
             final TextView s = a.text(18, "sans-serif-medium", 0xB3FFFFFF);
@@ -233,6 +238,24 @@ final class RecoPanel {
             styleSeg(s, ty[0].equals(type), false);
         }
         for (String[] f : filters) if (f[0].equals(f0)) load(a, card, list, sub, key, f, mine, true);
+    }
+
+    /** Accord pour la clé partagée du projet ; si elle n'est pas encore sur la TV, on va la chercher maintenant. */
+    private static void useSharedKey(final MainActivity a) {
+        a.prefs.setTmdbSharedOk(true);
+        if (!a.prefs.tmdbKey().isEmpty()) { a.closeOverlay(false); open(a); return; }
+        a.showNotice(L.t("Recherche de la clé partagée…"));
+        io.execute(new Runnable() {
+            @Override public void run() {
+                a.updater.refreshServices();
+                a.h.post(new Runnable() {
+                    @Override public void run() {
+                        if (!a.prefs.tmdbKey().isEmpty()) { a.closeOverlay(false); open(a); }
+                        else a.showNotice(L.t("Le projet ne fournit pas de clé pour l'instant · utilise ta propre clé"), 4000);
+                    }
+                });
+            }
+        });
     }
 
     private static String type = "", mode = Tmdb.POPULAR;
@@ -280,7 +303,7 @@ final class RecoPanel {
 
     private static Set<String> visiblePackages(MainActivity a) {
         Set<String> hidden = a.prefs.hiddenApps(), out = new HashSet<>();
-        for (AppRepo.App x : a.repo.all()) if (!x.isInput() && !hidden.contains(x.key)) out.add(x.pkg);
+        for (AppRepo.App x : a.repo.all()) if (!x.isInput() && a.prefs.appAllowed(x.key)) out.add(x.pkg);
         return out;
     }
 
@@ -291,12 +314,12 @@ final class RecoPanel {
         final String ty = type, md = mode;
         String what = ty.isEmpty() ? "" : ty.equals("movie") ? "FILMS · " : "SÉRIES · ";
         String where = filter[0].isEmpty() ? "PARTOUT" : filter[0].equals("mine") ? "SUR TES APPLIS" : "SUR " + filter[1].toUpperCase(Locale.FRANCE);
-        sub.setText(what + (Tmdb.FOR_YOU.equals(md) ? "D'APRÈS CE QUE TU AS OUVERT"
-                : Tmdb.NEW.equals(md) ? "LES NOUVEAUTÉS " + where
-                : Tmdb.TOP.equals(md) ? "LES MIEUX NOTÉS " + where
-                : filter[0].isEmpty() ? "LES PLUS REGARDÉS CETTE SEMAINE" : "LES PLUS POPULAIRES " + where));
+        sub.setText(what + (Tmdb.FOR_YOU.equals(md) ? L.t("D'APRÈS CE QUE TU AS OUVERT")
+                : Tmdb.NEW.equals(md) ? L.t("LES NOUVEAUTÉS ") + where
+                : Tmdb.TOP.equals(md) ? L.t("LES MIEUX NOTÉS ") + where
+                : filter[0].isEmpty() ? L.t("LES PLUS REGARDÉS CETTE SEMAINE") : L.t("LES PLUS POPULAIRES ") + where));
         final TextView wait = a.text(24, "sans-serif", Palette.TEXT_2);
-        wait.setText("Chargement…");
+        wait.setText(L.t("Chargement…"));
         wait.setPadding(a.u(28), a.u(16), 0, 0);
         list.addView(wait);
         io.execute(new Runnable() {
@@ -306,7 +329,7 @@ final class RecoPanel {
                 try {
                     if (Tmdb.FOR_YOU.equals(md)) {
                         List<String> hist = a.prefs.recoHistory();
-                        if (hist.isEmpty()) err = "Ouvre quelques films ou séries depuis « À l'affiche » : Lumen te proposera ensuite des titres à ton goût (calculé sur la TV).";
+                        if (hist.isEmpty()) err = L.t("Ouvre quelques films ou séries depuis « À l'affiche » : Lumen te proposera ensuite des titres à ton goût (calculé sur la TV).");
                         else got = Tmdb.forYou(key, hist, ty);
                     } else if (Tmdb.POPULAR.equals(md)) {
                         if (filter[0].isEmpty()) got = Tmdb.trending(key, ty);
@@ -318,7 +341,7 @@ final class RecoPanel {
                         else for (String[] p : mine) if (p[0].equals(filter[0])) got = Tmdb.discover(key, ty, md, p);
                     }
                 } catch (Net.HttpError e) {
-                    err = e.code == 401 ? KEY_REFUSED : "Service indisponible pour l'instant";
+                    err = e.code == 401 ? KEY_REFUSED : L.t("Service indisponible pour l'instant");
                 } catch (Exception e) {
                     err = Messages.download(String.valueOf(e));
                     CrashLog.note(a, "TMDB : " + e);
@@ -330,10 +353,10 @@ final class RecoPanel {
                         if (!card.isAttachedToWindow() || lastFilter != filter || !ty.equals(type) || !md.equals(mode)) return; // filtre changé entre-temps
                         list.removeAllViews();
                         if (titles == null || titles.isEmpty()) {
-                            wait.setText(error != null ? error : "Rien à afficher avec ce filtre · essaie « Partout » ou un autre type");
+                            wait.setText(error != null ? error : L.t("Rien à afficher avec ce filtre · essaie « Partout » ou un autre type"));
                             list.addView(wait);
                             if (KEY_REFUSED.equals(error)) {
-                                LinearLayout fix = a.iconRow(Glyph.UNLOCK, "Changer la clé", null, new View.OnClickListener() {
+                                LinearLayout fix = a.iconRow(Glyph.UNLOCK, L.t("Changer la clé"), null, new View.OnClickListener() {
                                     @Override public void onClick(View v) { a.closeOverlay(false); KeyPanel.open(a, KeyPanel.TMDB); }
                                 }, false);
                                 LinearLayout.LayoutParams fl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, a.u(88));
@@ -452,14 +475,14 @@ final class RecoPanel {
 
     /** Ligne courte des listes : type, année, note (l'appli est montrée par son icône). */
     static String metaShort(Tmdb.Title t) {
-        StringBuilder b = new StringBuilder("movie".equals(t.type) ? "Film" : "Série");
+        StringBuilder b = new StringBuilder("movie".equals(t.type) ? L.t("Film") : L.t("Série"));
         if (!t.year.isEmpty()) b.append("  ·  ").append(t.year);
         if (t.rating > 0) b.append("  ·  ★ ").append(String.format(Locale.FRANCE, "%.1f", t.rating));
         return b.toString();
     }
 
     static String meta(Tmdb.Title t) {
-        StringBuilder b = new StringBuilder("movie".equals(t.type) ? "Film" : "Série");
+        StringBuilder b = new StringBuilder("movie".equals(t.type) ? L.t("Film") : L.t("Série"));
         if (!t.year.isEmpty()) b.append("  ·  ").append(t.year);
         if (t.rating > 0) b.append("  ·  ★ ").append(String.format(Locale.FRANCE, "%.1f", t.rating));
         if (!t.genres.isEmpty()) b.append("  ·  ").append(t.genres);
@@ -657,18 +680,18 @@ final class RecoPanel {
         actions.setOrientation(LinearLayout.VERTICAL);
         list.addView(actions);
         final TextView wait = a.text(22, "sans-serif", Palette.TEXT_3);
-        wait.setText("Recherche des applis qui le proposent…");
+        wait.setText(L.t("Recherche des applis qui le proposent…"));
         wait.setPadding(a.u(28), 0, 0, a.u(12));
         actions.addView(wait);
 
         // toujours présents : titres similaires, recherche de la TV, retour
-        list.addView(a.iconRow(Glyph.SPARK, "Titres similaires", null, new View.OnClickListener() {
+        list.addView(a.iconRow(Glyph.SPARK, L.t("Titres similaires"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { similar(a, list, t, key); }
         }, false), a.rowLp());
-        list.addView(a.iconRow(Glyph.SEARCH, "Chercher sur la TV", null, new View.OnClickListener() {
+        list.addView(a.iconRow(Glyph.SEARCH, L.t("Chercher sur la TV"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { a.prefs.addRecoHistory(t.type + ":" + t.id); globalSearch(a, t.name); }
         }, false), a.rowLp());
-        final LinearLayout backRow = a.iconRow(Glyph.MOVE, "Retour à la liste", null, new View.OnClickListener() {
+        final LinearLayout backRow = a.iconRow(Glyph.MOVE, L.t("Retour à la liste"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { back(); }
         }, false);
         list.addView(backRow, a.rowLp());
@@ -690,7 +713,7 @@ final class RecoPanel {
                         View first = null;
                         for (final String[] p : provs) {
                             if (!have.contains(p[0])) continue;
-                            LinearLayout r = a.iconRow(Glyph.SPARK, "Regarder sur " + p[2], null, new View.OnClickListener() {
+                            LinearLayout r = a.iconRow(Glyph.SPARK, L.t("Regarder sur ") + p[2], null, new View.OnClickListener() {
                                 @Override public void onClick(View v) { a.prefs.addRecoHistory(t.type + ":" + t.id); openIn(a, p, t.name); }
                             }, false);
                             AppRepo.App app = a.repo.findByPackage(p[0]);
@@ -701,12 +724,12 @@ final class RecoPanel {
                         if (first == null) {
                             TextView none = a.text(22, "sans-serif", Palette.TEXT_3);
                             boolean elsewhere = !provs.isEmpty();
-                            none.setText(elsewhere ? "Pas sur tes applis : disponible sur " + names(provs) : "Pas disponible en abonnement en France pour l'instant");
+                            none.setText(elsewhere ? L.t("Pas sur tes applis : disponible sur ") + names(provs) : L.t("Pas disponible en abonnement en France pour l'instant"));
                             none.setPadding(a.u(28), 0, a.u(20), a.u(14));
                             actions.addView(none);
                         }
                         if (trailer != null) {
-                            LinearLayout tr = a.iconRow(Glyph.IMAGE, "Bande-annonce", null, new View.OnClickListener() {
+                            LinearLayout tr = a.iconRow(Glyph.IMAGE, L.t("Bande-annonce"), null, new View.OnClickListener() {
                                 @Override public void onClick(View v) { a.prefs.addRecoHistory(t.type + ":" + t.id); playTrailer(a, trailer); }
                             }, false);
                             actions.addView(tr, a.rowLp());
@@ -741,7 +764,7 @@ final class RecoPanel {
         };
         list.removeAllViews();
         final TextView head = a.text(18, "sans-serif-medium", Palette.TEXT_3);
-        head.setText(("Dans le même esprit que " + t.name).toUpperCase(Locale.FRANCE));
+        head.setText((L.t("Dans le même esprit que ") + t.name).toUpperCase(Locale.FRANCE));
         head.setLetterSpacing(0.06f);
         head.setPadding(a.u(28), a.u(8), a.u(20), a.u(16));
         list.addView(head);
@@ -753,7 +776,7 @@ final class RecoPanel {
                 a.h.post(new Runnable() {
                     @Override public void run() {
                         if (!list.isAttachedToWindow()) return;
-                        if (titles == null || titles.isEmpty()) { head.setText("Rien de proche pour l'instant"); return; }
+                        if (titles == null || titles.isEmpty()) { head.setText(L.t("Rien de proche pour l'instant")); return; }
                         View first = null;
                         int n = 0;
                         for (Tmdb.Title x : titles) {
@@ -782,14 +805,14 @@ final class RecoPanel {
                 return;
             } catch (Exception ignored) { }
         }
-        a.showNotice("Installe YouTube pour voir les bandes-annonces");
+        a.showNotice(L.t("Installe YouTube pour voir les bandes-annonces"));
     }
 
     /** Ouvre le titre dans l'appli qui le propose (sa recherche) ; sinon la recherche de la TV. */
     private static void watch(final MainActivity a, final Tmdb.Title t, final String key) {
         a.prefs.addRecoHistory(t.type + ":" + t.id);
         if (t.provider != null) { openIn(a, t.provider, t.name); return; }
-        a.showNotice("Recherche de « " + t.name + " »…");
+        a.showNotice(L.t("Recherche de « ") + t.name + " »…");
         io.execute(new Runnable() {
             @Override public void run() {
                 List<String[]> ps = null;
@@ -819,7 +842,7 @@ final class RecoPanel {
             } catch (Exception ignored) { }
         }
         AppRepo.App app = a.repo.findByPackage(provider[0]);
-        if (app != null) { a.showNotice("Cherche « " + title + " » dans " + provider[2]); a.launchAnimated(app, null); }
+        if (app != null) { a.showNotice(L.t("Cherche « ") + title + L.t(" » dans ") + provider[2]); a.launchAnimated(app, null); }
     }
 
     private static void globalSearch(MainActivity a, String title) {
@@ -830,7 +853,7 @@ final class RecoPanel {
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             a.startActivity(i);
         } catch (Exception e) {
-            a.showNotice("« " + title + " » n'est sur aucune de tes applis");
+            a.showNotice("« " + title + L.t(" » n'est sur aucune de tes applis"));
         }
     }
 }

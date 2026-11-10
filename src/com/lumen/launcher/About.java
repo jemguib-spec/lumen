@@ -26,15 +26,15 @@ final class About {
     // ------------------------------------------------------------------ À propos
 
     static void fillAbout(final MainActivity a, final LinearLayout col) {
-        col.addView(info(a, "Lumen " + a.updater.currentVersion(), "Écran d'accueil pour Android TV · " + a.updater.state()));
-        col.addView(info(a, "Code source", SOURCE));
-        col.addView(info(a, "Licence", "GNU GPL version 3 ou ultérieure : vous pouvez utiliser, étudier, modifier et redistribuer Lumen, à condition de garder la même licence."));
+        col.addView(info(a, L.t("Lumen ") + a.updater.currentVersion(), L.t("Écran d'accueil pour Android TV · ") + a.updater.state()));
+        col.addView(info(a, L.t("Code source"), SOURCE));
+        col.addView(info(a, L.t("Licence"), L.t("GNU GPL version 3 ou ultérieure : vous pouvez utiliser, étudier, modifier et redistribuer Lumen, à condition de garder la même licence.")));
         DisplayMetrics dm = new DisplayMetrics();
         a.getWindowManager().getDefaultDisplay().getRealMetrics(dm);
-        col.addView(info(a, "Téléviseur", cap(Build.MANUFACTURER) + " " + Build.MODEL + " · Android " + Build.VERSION.RELEASE
-                + " · écran " + Math.max(dm.widthPixels, dm.heightPixels) + " × " + Math.min(dm.widthPixels, dm.heightPixels)));
+        col.addView(info(a, L.t("Téléviseur"), cap(Build.MANUFACTURER) + " " + Build.MODEL + L.t(" · Android ") + Build.VERSION.RELEASE
+                + L.t(" · écran ") + Math.max(dm.widthPixels, dm.heightPixels) + L.t(" × ") + Math.min(dm.widthPixels, dm.heightPixels)));
         final TextView[] space = new TextView[1];
-        LinearLayout sp = info(a, "Espace utilisé par Lumen", "Calcul…");
+        LinearLayout sp = info(a, L.t("Espace utilisé par Lumen"), L.t("Calcul…"));
         space[0] = (TextView) sp.getChildAt(1);
         col.addView(sp);
         new Thread(new Runnable() {
@@ -46,16 +46,16 @@ final class About {
             }
         }, "lumen-about").start();
 
-        col.addView(a.section("Vie privée"));
-        col.addView(info(a, "Aucune publicité, aucune télémétrie", "Aucun compte, aucune statistique, aucun identifiant envoyé."));
+        col.addView(a.section(L.t("Vie privée")));
+        col.addView(info(a, L.t("Aucune publicité, aucune télémétrie"), L.t("Aucun compte, aucune statistique, aucun identifiant envoyé.")));
         StringBuilder hosts = new StringBuilder();
         for (String h : new java.util.TreeSet<>(NetPolicy.ALLOWED_HOSTS)) hosts.append(hosts.length() > 0 ? "\n" : "").append(h);
         if (!a.prefs.pexelsKey().isEmpty())
             for (String h : new java.util.TreeSet<>(NetPolicy.PEXELS_HOSTS)) hosts.append('\n').append(h);
-        col.addView(info(a, "Seuls serveurs que Lumen peut contacter (HTTPS)", hosts.toString()));
-        col.addView(info(a, "Affiches des épisodes", a.prefs.shelfPosters()
-                ? "Téléchargées depuis le service qui les publie (Netflix…), contrôlées, jamais enregistrées."
-                : "Désactivées."));
+        col.addView(info(a, L.t("Seuls serveurs que Lumen peut contacter (HTTPS)"), hosts.toString()));
+        col.addView(info(a, L.t("Affiches des épisodes"), a.prefs.shelfPosters()
+                ? L.t("Téléchargées depuis le service qui les publie (Netflix…), contrôlées, jamais enregistrées.")
+                : L.t("Désactivées.")));
     }
 
     /** Fenêtre « Nouveautés » d'une version (texte annoncé par latest.json, déjà nettoyé). */
@@ -64,7 +64,7 @@ final class About {
         LinearLayout card = a.glassCard(48);
         card.setPadding(a.u(56), a.u(48), a.u(56), a.u(40));
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
-        title.setText("Nouveautés · Lumen " + version);
+        title.setText(L.t("Nouveautés · Lumen ") + version);
         card.addView(title);
         TextView body = a.text(26, "sans-serif", Palette.TEXT);
         body.setText(notes);
@@ -84,22 +84,22 @@ final class About {
     // ------------------------------------------------------------------ Licences
 
     static void fillLicences(final MainActivity a, final LinearLayout card, LinearLayout col) {
-        col.addView(link(a, card, "Lumen", "Logiciel libre · GNU GPL version 3 ou ultérieure · code source : " + SOURCE, SettingsPanel.LICENCE_GPL));
-        col.addView(link(a, card, "Police Inter", "SIL Open Font License 1.1 · The Inter Project Authors", SettingsPanel.LICENCE_INTER));
-        col.addView(link(a, card, "Photos et vidéos Wikimedia Commons",
-                "Licences libres (CC0, CC BY, CC BY-SA, domaine public) · auteur et licence de chaque fond", SettingsPanel.CREDITS));
-        col.addView(info(a, "Pexels" + (a.prefs.pexelsKey().isEmpty() ? " (désactivé)" : ""),
-                "Licence Pexels : utilisation gratuite ; le nom de l'auteur est affiché sur chaque vidéo."));
-        col.addView(info(a, "Météo", "Données Open-Meteo.com, licence CC BY 4.0."));
-        col.addView(info(a, "Paysages Lumen", "Créés par Lumen (tools/scenes.py), animations dessinées sur la TV."));
-        col.addView(info(a, "Soleil et Lune", "Calculés sur la TV (algorithme d'almanach), sans service extérieur."));
-        col.addView(info(a, "Tes photos et vidéos", "Envoyées depuis ton téléphone ; elles restent sur la TV."));
+        col.addView(link(a, card, "Lumen", L.t("Logiciel libre · GNU GPL version 3 ou ultérieure · code source : ") + SOURCE, SettingsPanel.LICENCE_GPL));
+        col.addView(link(a, card, L.t("Police Inter"), L.t("SIL Open Font License 1.1 · The Inter Project Authors"), SettingsPanel.LICENCE_INTER));
+        col.addView(link(a, card, L.t("Photos et vidéos Wikimedia Commons"),
+                L.t("Licences libres (CC0, CC BY, CC BY-SA, domaine public) · auteur et licence de chaque fond"), SettingsPanel.CREDITS));
+        col.addView(info(a, L.t("Pexels") + (a.prefs.pexelsKey().isEmpty() ? L.t(" (désactivé)") : ""),
+                L.t("Licence Pexels : utilisation gratuite ; le nom de l'auteur est affiché sur chaque vidéo.")));
+        col.addView(info(a, L.t("Météo"), L.t("Données Open-Meteo.com, licence CC BY 4.0.")));
+        col.addView(info(a, L.t("Paysages Lumen"), L.t("Créés par Lumen (tools/scenes.py), animations dessinées sur la TV.")));
+        col.addView(info(a, L.t("Soleil et Lune"), L.t("Calculés sur la TV (algorithme d'almanach), sans service extérieur.")));
+        col.addView(info(a, L.t("Tes photos et vidéos"), L.t("Envoyées depuis ton téléphone ; elles restent sur la TV.")));
     }
 
     /** Tous les fonds téléchargés, avec leur auteur et leur licence. */
     static void fillCredits(final MainActivity a, final LinearLayout col) {
         final TextView wait = a.text(24, "sans-serif", Palette.TEXT_2);
-        wait.setText("Chargement…");
+        wait.setText(L.t("Chargement…"));
         wait.setPadding(a.u(32), a.u(10), 0, 0);
         col.addView(wait);
         new Thread(new Runnable() {
@@ -117,7 +117,7 @@ final class About {
                             col.addView(info(a, w.title, w.credit));
                             n++;
                         }
-                        if (n == 0) col.addView(info(a, "Aucun fond téléchargé", "Les paysages Lumen n'ont pas d'auteur extérieur."));
+                        if (n == 0) col.addView(info(a, L.t("Aucun fond téléchargé"), L.t("Les paysages Lumen n'ont pas d'auteur extérieur.")));
                     }
                 });
             }
@@ -133,7 +133,7 @@ final class About {
             int n;
             while ((n = in.read(buf)) > 0) b.write(buf, 0, n);
             txt = b.toString("UTF-8");
-        } catch (Exception e) { txt = "Texte indisponible."; }
+        } catch (Exception e) { txt = L.t("Texte indisponible."); }
         // découpé en paragraphes sélectionnables : la télécommande fait défiler la page
         for (String para : txt.split("\n\\s*\n")) {
             String p = para.trim();

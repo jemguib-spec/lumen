@@ -12,7 +12,9 @@
 - Mode veille sur une ligne, ambiances vidéo avec minuterie de sommeil
 - Maison : lumières, prises, scènes et volets Home Assistant depuis l'accueil
 - Sources HDMI sur l'accueil, économiseur d'écran officiel de la TV
-- Code PIN facultatif (réglages, désinstallation, applis verrouillées)
+- Code PIN facultatif (réglages, désinstallation, applis verrouillées) ; profil enfant : seulement ses favoris, code PIN pour le reste
+- État de la TV sous l'horloge : pas de réseau, pile de la télécommande, mise à jour prête
+- Interface en français ou en anglais (réglage par profil)
 - Applis habituelles selon l'heure, calculées sur la TV uniquement
 - Taille du texte et contraste réglables, lecteur d'écran (TalkBack) pris en charge
 - Recherche vocale (micro de la télécommande ou bouton micro de la recherche)
@@ -30,6 +32,10 @@ Sous Ubuntu/Debian :
     tests/run.sh      # tests
 
 `build.sh` crée une clé de signature locale (`lumen.keystore`) si elle n'existe pas. Garde la même clé pour pouvoir installer les mises à jour par-dessus l'appli existante.
+
+`dist/services.json` : clé TMDB partagée du projet (facultative), proposée aux TV qui n'ont pas de clé personnelle pour « À l'affiche ». Pour la fournir, crée une clé gratuite sur themoviedb.org, mets-la dans le champ `tmdb` et pousse sur `main`.
+
+`tools/i18n_check.py` vérifie que chaque texte de l'interface a sa traduction (`assets/lang/en.tsv`).
 
 `tools/scenes.py` régénère les paysages de `assets/scenes` et `assets/anim` (Python, numpy, Pillow).
 

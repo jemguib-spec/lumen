@@ -68,9 +68,9 @@ final class Updater {
     String readyVersion() { return ready() == null ? "" : prefs.updateReadyVersion(); }
 
     String state() {
-        if (busy) return "Recherche…";
-        if (ready() != null) return prefs.updateReadyVersion() + " prête · OK pour installer";
-        return state.isEmpty() ? "Version " + currentVersion() : state;
+        if (busy) return L.t("Recherche…");
+        if (ready() != null) return prefs.updateReadyVersion() + L.t(" prête · OK pour installer");
+        return state.isEmpty() ? L.t("Version ") + currentVersion() : state;
     }
 
     private File dir() {
@@ -94,7 +94,7 @@ final class Updater {
             @Override public void run() {
                 retrySoon = false;
                 try { state = run1(); }
-                catch (Exception e) { state = "Vérification impossible · réessaie plus tard"; }
+                catch (Exception e) { state = L.t("Vérification impossible · réessaie plus tard"); }
                 finally {
                     busy = false;
                     // nouvel essai dans 10 min plutôt que dans 6 h si le fichier n'était pas encore à jour
@@ -105,16 +105,25 @@ final class Updater {
         }, "lumen-update").start();
     }
 
+    /** Clé partagée du projet (dist/services.json) ; silencieux si le fichier manque. */
+    void refreshServices() {
+        try {
+            JSONObject r = Net.getJson(UpdatePolicy.SERVICES + "?t=" + (System.currentTimeMillis() / 1000));
+            prefs.setTmdbSharedKey(r.optString("tmdb", ""));
+        } catch (Exception ignored) { }
+    }
+
     private String run1() throws Exception {
+        refreshServices();
         String mine = currentVersion();
         // paramètre unique : contourne le cache de GitHub (sinon une nouvelle version met jusqu'à 5 min à apparaître)
         JSONObject r = Net.getJson(UpdatePolicy.LATEST + "?t=" + (System.currentTimeMillis() / 1000));
         String v = UpdatePolicy.version(r.optString("version"));
-        if (v == null || UpdatePolicy.compare(v, mine) <= 0) return "Lumen est à jour (" + mine + ")";
+        if (v == null || UpdatePolicy.compare(v, mine) <= 0) return L.t("Lumen est à jour (") + mine + ")";
         if (ready() != null && v.equals(prefs.updateReadyVersion())) return "";
         String sha = r.optString("sha256").toLowerCase(java.util.Locale.ROOT);
         long size = r.optLong("size");
-        if (!UpdatePolicy.sha256Ok(sha) || size <= 0 || size > UpdatePolicy.MAX_BYTES) return "Mise à jour " + v + " mal décrite";
+        if (!UpdatePolicy.sha256Ok(sha) || size <= 0 || size > UpdatePolicy.MAX_BYTES) return L.t("Mise à jour ") + v + L.t(" mal décrite");
         prefs.setUpdateNotes(v, UpdatePolicy.notes(r.optString("notes")));
         File tmp = new File(dir(), "download.apk");
         Net.download(UpdatePolicy.apkUrl(r.optString("file", null), v, r.optString("url", null)) + "?v=" + v, tmp, UpdatePolicy.MAX_BYTES, null);
@@ -122,13 +131,13 @@ final class Updater {
             // juste après une publication, GitHub sert parfois encore l'ancien fichier quelques minutes
             tmp.delete();
             retrySoon = true;
-            return "Mise à jour " + v + " en cours de publication · nouvel essai dans 10 min";
+            return L.t("Mise à jour ") + v + L.t(" en cours de publication · nouvel essai dans 10 min");
         }
         String why = verify(tmp, v);
         if (why != null) { tmp.delete(); return why; }
         File out = new File(dir(), "Lumen.apk");
         out.delete();
-        if (!tmp.renameTo(out)) { tmp.delete(); return "Écriture impossible"; }
+        if (!tmp.renameTo(out)) { tmp.delete(); return L.t("Écriture impossible"); }
         prefs.setUpdateReadyVersion(v);
         return "";
     }
@@ -148,18 +157,18 @@ final class Updater {
     private String verify(File apk, String v) {
         try (InputStream in = new FileInputStream(apk)) {
             byte[] head = new byte[4];
-            if (in.read(head) != 4 || !UpdatePolicy.looksLikeApk(head)) return "Fichier refusé (ce n'est pas une appli)";
-        } catch (Exception e) { return "Fichier illisible"; }
+            if (in.read(head) != 4 || !UpdatePolicy.looksLikeApk(head)) return L.t("Fichier refusé (ce n'est pas une appli)");
+        } catch (Exception e) { return L.t("Fichier illisible"); }
         PackageManager pm = ctx.getPackageManager();
         PackageInfo got = pm.getPackageArchiveInfo(apk.getAbsolutePath(), PackageManager.GET_SIGNATURES);
-        if (got == null) return "Fichier refusé (appli illisible)";
-        if (!ctx.getPackageName().equals(got.packageName)) return "Fichier refusé (autre appli)";
+        if (got == null) return L.t("Fichier refusé (appli illisible)");
+        if (!ctx.getPackageName().equals(got.packageName)) return L.t("Fichier refusé (autre appli)");
         try {
             PackageInfo me = pm.getPackageInfo(ctx.getPackageName(), PackageManager.GET_SIGNATURES);
-            if (got.versionCode <= me.versionCode) return "Lumen est à jour (" + me.versionName + ")";
+            if (got.versionCode <= me.versionCode) return L.t("Lumen est à jour (") + me.versionName + ")";
             if (got.signatures == null || me.signatures == null || got.signatures.length == 0
-                    || !sameSigners(got.signatures, me.signatures)) return "Mise à jour refusée : signature différente";
-        } catch (Exception e) { return "Vérification impossible"; }
+                    || !sameSigners(got.signatures, me.signatures)) return L.t("Mise à jour refusée : signature différente");
+        } catch (Exception e) { return L.t("Vérification impossible"); }
         return null;
     }
 
@@ -194,7 +203,7 @@ final class Updater {
             }
             return true;
         } catch (Exception e) {
-            state = "Installation impossible";
+            state = L.t("Installation impossible");
             notifyState();
             return false;
         }

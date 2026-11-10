@@ -26,7 +26,7 @@ final class AppLauncher {
 
     /** Lance « r » tout de suite, ou après le code si l'appli est verrouillée. */
     void whenUnlocked(AppRepo.App app, Runnable r) {
-        if (a.prefs.isLocked(app.key)) PinDialog.ask(a, "Code pour " + app.label, r);
+        if (a.prefs.isLocked(app.key)) PinDialog.ask(a, L.t("Code pour ") + app.label, r);
         else r.run();
     }
 
@@ -131,7 +131,7 @@ final class AppLauncher {
                 i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 a.startActivity(i);
             } catch (Exception e2) {
-                a.showNotice("Impossible d'ouvrir " + app.label);
+                a.showNotice(L.t("Impossible d'ouvrir ") + app.label);
             }
         }
     }

@@ -267,23 +267,23 @@ final class AmbiancePanel {
         if (current == null) {
             String st = a.online.status(Online.COSY);
             if (a.prefs.videoOkCount() == 0 && a.online.cosyMine().isEmpty())
-                wait.setText("Aucune vidéo d'ambiance choisie (feu, pluie, océan…).\n"
-                        + "OK : les choisir sur les aperçus   ·   Retour : quitter\n\n"
-                        + "Le mode veille avec tes images : Réglages › Mode veille › Lancer le mode veille.");
+                wait.setText(L.t("Aucune vidéo d'ambiance choisie (feu, pluie, océan…).\n")
+                        + L.t("OK : les choisir sur les aperçus   ·   Retour : quitter\n\n")
+                        + L.t("Le mode veille avec tes images : Réglages › Mode veille › Lancer le mode veille."));
             else wait.setText(a.online.cosyBusy()
-                    ? "Téléchargement des vidéos choisies…" + (st.isEmpty() ? "" : "\n" + st)
-                    : "Aucune vidéo prête pour l'instant." + (st.isEmpty() ? "" : "\n" + st)
-                    + "\nOK : choisir d'autres vidéos ou réessayer");
+                    ? L.t("Téléchargement des vidéos choisies…") + (st.isEmpty() ? "" : "\n" + st)
+                    : L.t("Aucune vidéo prête pour l'instant.") + (st.isEmpty() ? "" : "\n" + st)
+                    + L.t("\nOK : choisir d'autres vidéos ou réessayer"));
             wait.setVisibility(View.VISIBLE);
             status.setText("");
             credit.setText("");
             return;
         }
         wait.setVisibility(View.GONE);
-        StringBuilder b = new StringBuilder(Online.COSY_NAMES[kind]);
+        StringBuilder b = new StringBuilder(L.t(Online.COSY_NAMES[kind]));
         if (timerEnd > 0) {
             long left = Math.max(0, (timerEnd - System.currentTimeMillis()) / 60000 + 1);
-            b.append("  ·  arrêt dans ").append(left).append(" min");
+            b.append(L.t("  ·  arrêt dans ")).append(left).append(L.t(" min"));
         }
         status.setText(b.toString());
         credit.setText(current.credit);
@@ -391,14 +391,14 @@ final class AmbiancePanel {
         LinearLayout first = null;
         if (current != null) {
             if (availableCount() > 1) {
-                first = a.listRow("Ambiance", new MainActivity.Value() {
-                    @Override public String get() { return Online.COSY_NAMES[kind]; }
+                first = a.listRow(L.t("Ambiance"), new MainActivity.Value() {
+                    @Override public String get() { return L.t(Online.COSY_NAMES[kind]); }
                 }, new View.OnClickListener() {
                     @Override public void onClick(View v) { showKind(kind + 1, 1); }
                 });
                 menu.addView(first, a.rowLp());
             }
-            LinearLayout other = a.listRow("Ne plus montrer cette vidéo", null, new View.OnClickListener() {
+            LinearLayout other = a.listRow(L.t("Ne plus montrer cette vidéo"), null, new View.OnClickListener() {
                 @Override public void onClick(View v) {
                     if (current == null) return;
                     a.prefs.hideWall(current.id);
@@ -409,7 +409,7 @@ final class AmbiancePanel {
             });
             menu.addView(other, a.rowLp());
             if (first == null) first = other;
-            menu.addView(a.listRow("Son de la vidéo", new MainActivity.Value() {
+            menu.addView(a.listRow(L.t("Son de la vidéo"), new MainActivity.Value() {
                 @Override public String get() { return a.prefs.ambianceSound() ? "Activé" : "Coupé"; }
             }, new View.OnClickListener() {
                 @Override public void onClick(View v) {
@@ -417,22 +417,22 @@ final class AmbiancePanel {
                     if (player != null) applyVolume(player);
                 }
             }), a.rowLp());
-            menu.addView(a.listRow("Choisir les vidéos", null, new View.OnClickListener() {
+            menu.addView(a.listRow(L.t("Choisir les vidéos"), null, new View.OnClickListener() {
                 @Override public void onClick(View v) { a.pickCosyVideos(); }
             }), a.rowLp());
-            menu.addView(a.listRow("Minuterie de sommeil", new MainActivity.Value() {
+            menu.addView(a.listRow(L.t("Minuterie de sommeil"), new MainActivity.Value() {
                 @Override public String get() { return TIMER_MIN[timerIdx] == 0 ? "Désactivée" : TIMER_MIN[timerIdx] + " min"; }
             }, new View.OnClickListener() {
                 @Override public void onClick(View v) { setTimer(timerIdx + 1); }
             }), a.rowLp());
         }
         if (current == null) {
-            first = a.listRow("Choisir les vidéos", null, new View.OnClickListener() {
+            first = a.listRow(L.t("Choisir les vidéos"), null, new View.OnClickListener() {
                 @Override public void onClick(View v) { a.pickCosyVideos(); }
             });
             menu.addView(first, a.rowLp());
             if (a.prefs.videoOkCount() > 0) {
-                LinearLayout retry = a.listRow("Réessayer le téléchargement", new MainActivity.Value() {
+                LinearLayout retry = a.listRow(L.t("Réessayer le téléchargement"), new MainActivity.Value() {
                     @Override public String get() { return a.online.cosyBusy() ? "En cours…" : ""; }
                 }, new View.OnClickListener() {
                     @Override public void onClick(View v) { a.online.refreshCosy(); a.showNotice("Téléchargement relancé"); }
@@ -441,7 +441,7 @@ final class AmbiancePanel {
                 first = retry;
             }
         }
-        LinearLayout quit = a.listRow("Quitter", null, new View.OnClickListener() {
+        LinearLayout quit = a.listRow(L.t("Quitter"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { a.closeAmbiance(); }
         });
         menu.addView(quit, a.rowLp());

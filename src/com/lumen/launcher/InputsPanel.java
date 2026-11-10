@@ -34,7 +34,7 @@ final class InputsPanel {
         LinearLayout card = a.glassCard(44);
         card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
-        title.setText("Entrées");
+        title.setText(L.t("Entrées"));
         title.setGravity(Gravity.CENTER);
         title.setPadding(0, 0, 0, a.u(30));
         card.addView(title, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -44,7 +44,7 @@ final class InputsPanel {
             try { lbl = (CharSequence) info.getClass().getMethod("loadCustomLabel", Context.class).invoke(info, a); } catch (Throwable ignored) { }
             if (lbl == null || lbl.length() == 0) lbl = info.loadLabel(a);
             String type = info.getType() == android.media.tv.TvInputInfo.TYPE_HDMI ? "HDMI"
-                    : info.getType() == android.media.tv.TvInputInfo.TYPE_TUNER ? "Chaînes TV"
+                    : info.getType() == android.media.tv.TvInputInfo.TYPE_TUNER ? L.t("Chaînes TV")
                     : info.getType() == android.media.tv.TvInputInfo.TYPE_COMPOSITE ? "AV" : "";
             LinearLayout r = a.iconRow(Glyph.INPUT, String.valueOf(lbl), new MainActivity.Value() {
                 final String t = type;
@@ -55,7 +55,7 @@ final class InputsPanel {
             card.addView(r, a.rowLp());
             if (first == null) first = r;
         }
-        LinearLayout settingsRow = a.listRow(list.isEmpty() ? "Aucune entrée trouvée · ouvrir les paramètres" : "Paramètres des entrées", null,
+        LinearLayout settingsRow = a.listRow(list.isEmpty() ? L.t("Aucune entrée trouvée · ouvrir les paramètres") : L.t("Paramètres des entrées"), null,
                 new View.OnClickListener() {
                     @Override public void onClick(View v) {
                         a.closeOverlay(false);
@@ -93,7 +93,7 @@ final class InputsPanel {
                 i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 a.startActivity(i);
             } catch (Exception e2) {
-                a.showNotice("Impossible d'ouvrir cette entrée");
+                a.showNotice(L.t("Impossible d'ouvrir cette entrée"));
             }
         }
     }

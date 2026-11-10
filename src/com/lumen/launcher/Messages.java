@@ -14,13 +14,13 @@ final class Messages {
     /** Erreur technique de téléchargement → phrase calme pour l'écran. */
     static String download(String technical) {
         String t = technical == null ? "" : technical.toLowerCase(Locale.ROOT);
-        if (t.isEmpty()) return "Rien de nouveau pour l'instant";
+        if (t.isEmpty()) return L.t("Rien de nouveau pour l'instant");
         if (t.contains("429") || t.contains("too many") || t.contains("patiente")) return "Le serveur demande une pause · reprise un peu plus tard";
         if (t.contains("unknownhost") || t.contains("unable to resolve") || t.contains("network is unreachable")
                 || t.contains("failed to connect") || t.contains("connectexception") || t.contains("timeout") || t.contains("timed out"))
-            return "Pas d'accès à Internet pour l'instant · nouvel essai plus tard";
+            return L.t("Pas d'accès à Internet pour l'instant · nouvel essai plus tard");
         if (t.contains("espace") || t.contains("no space")) return "Plus assez de place sur la TV";
         if (t.contains("refusé") || t.contains("non conforme")) return "Un fichier a été écarté · les autres continuent";
-        return "Les photos arrivent un peu plus tard · nouvel essai bientôt";
+        return L.t("Les photos arrivent un peu plus tard · nouvel essai bientôt");
     }
 }

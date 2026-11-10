@@ -15,7 +15,7 @@ final class Tips {
     static void showNext(MainActivity a) {
         int n = a.prefs.tipStep();
         if (n >= ALL.length) return;
-        a.showNotice(ALL[n], 5000);
+        a.showNotice(L.t(ALL[n]), 5000);
         a.prefs.setTipStep(n + 1);
     }
 

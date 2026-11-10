@@ -59,6 +59,15 @@ jobs:
           print('dist/latest.json cohérent :', v, 'Release' if url else 'dist/ seul')
           PY
           fi
+      - name: dist/services.json est bien formé
+        run: |
+          python3 - <<'PY'
+          import json, re
+          j = json.load(open('dist/services.json'))
+          k = j.get('tmdb', '')
+          assert isinstance(k, str) and (k == '' or re.fullmatch(r'[0-9a-f]{32}', k) or k.startswith('eyJ')), 'clé tmdb mal formée'
+          print('services.json ok', 'avec clé partagée' if k else 'sans clé partagée')
+          PY
       - name: CHANGELOG.md décrit la version du manifeste
         run: |
           v=$(sed -n 's/.*android:versionName="\([^"]*\)".*/\1/p' AndroidManifest.xml)

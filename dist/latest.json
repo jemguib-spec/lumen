@@ -1,7 +1,7 @@
 {
-  "version": "4.20.1",
-  "size": 4019578,
-  "sha256": "b1d0c95b953aad7b88911c6c9da4d1f4407c5a031eda630a0cfceb949c1f4aac",
-  "file": "Lumen-4.20.1.apk",
-  "notes": "- Les secrets de la TV (jeton Home Assistant, clés TMDB et Pexels) sont maintenant chiffrés avec une clé de l'Android Keystore ; ceux déjà enregistrés sont chiffrés automatiquement.\n- Mise à jour : l'adresse des Releases GitHub refuse les chemins détournés."
+  "version": "4.21.0",
+  "size": 4040122,
+  "sha256": "12f111c61b7ddccd3660805c42d2f81f14cb56add4291a8649fd3e000620b20b",
+  "file": "Lumen-4.21.0.apk",
+  "notes": "- Profil enfant : seules ses applis favorites existent ; quitter le profil, régler, masquer ou désinstaller demandent le code PIN de la maison.\n- État de la TV sous l'horloge : pas de réseau, pile de la télécommande faible, mise à jour prête.\n- « À l'affiche » sans clé personnelle : clé partagée du projet, acceptée une fois (ta propre clé passe avant).\n- Interface en anglais : Réglages › Accueil et applis › Lisibilité › Langue (système, français, English).\n- Réglages « À l'affiche » : ma clé, clé partagée, tout désactiver."
 }

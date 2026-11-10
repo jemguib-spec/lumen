@@ -93,29 +93,29 @@ final class Install {
         boolean wraithOn = wraith && enabled(a, SETUP_WRAITH);
         java.net.InetAddress ip = PhoneServer.localAddress();
 
-        col.addView(a.section("Où en est la TV"));
-        col.addView(About.info(a, state(ok) + "Écran d'accueil",
-                ok ? "Lumen s'ouvre quand tu appuies sur Accueil." :
-                home == null || "android".equals(home) ? "La TV demande encore quel accueil utiliser : appuie sur Accueil, choisis Lumen puis « Toujours »."
-                        : "La touche Accueil ouvre encore « " + label(a, home) + " » : désactive-le avec les commandes ci-dessous."));
+        col.addView(a.section(L.t("Où en est la TV")));
+        col.addView(About.info(a, state(ok) + L.t("Écran d'accueil"),
+                ok ? L.t("Lumen s'ouvre quand tu appuies sur Accueil.") :
+                home == null || "android".equals(home) ? L.t("La TV demande encore quel accueil utiliser : appuie sur Accueil, choisis Lumen puis « Toujours ».")
+                        : L.t("La touche Accueil ouvre encore « ") + label(a, home) + L.t(" » : désactive-le avec les commandes ci-dessous.")));
         if (stock != null)
-            col.addView(About.info(a, state(!stockOn) + "Accueil d'origine (" + label(a, stock) + ")",
-                    stockOn ? "Encore actif : il reprendra la main tant qu'il n'est pas désactivé (réversible)." : "Désactivé. Lumen est seul à répondre à la touche Accueil."));
+            col.addView(About.info(a, state(!stockOn) + L.t("Accueil d'origine (") + label(a, stock) + ")",
+                    stockOn ? L.t("Encore actif : il reprendra la main tant qu'il n'est pas désactivé (réversible).") : L.t("Désactivé. Lumen est seul à répondre à la touche Accueil.")));
         if (wraith)
-            col.addView(About.info(a, state(!wraithOn) + "Assistant de configuration Google",
-                    wraithOn ? "Encore actif : il peut relancer l'accueil Google au démarrage." : "Désactivé."));
+            col.addView(About.info(a, state(!wraithOn) + L.t("Assistant de configuration Google"),
+                    wraithOn ? L.t("Encore actif : il peut relancer l'accueil Google au démarrage.") : L.t("Désactivé.")));
         boolean usage = ResumePanel.usageAllowed(a);
-        col.addView(About.info(a, state(usage) + "Historique complet pour « Reprendre »",
-                usage ? "Autorisé : les applis ouvertes autrement que depuis Lumen apparaissent aussi." : "Facultatif. Sans lui, « Reprendre » ne connaît que les applis ouvertes depuis Lumen."));
+        col.addView(About.info(a, state(usage) + L.t("Historique complet pour « Reprendre »"),
+                usage ? L.t("Autorisé : les applis ouvertes autrement que depuis Lumen apparaissent aussi.") : L.t("Facultatif. Sans lui, « Reprendre » ne connaît que les applis ouvertes depuis Lumen.")));
         boolean saver = ScreenSaver.isLumen(a);
-        col.addView(About.info(a, state(saver) + "Économiseur d'écran de la TV",
-                saver ? "Le mode veille de Lumen s'affiche par-dessus n'importe quelle appli." : "Facultatif : Réglages › Mode veille › Économiseur d'écran de la TV."));
+        col.addView(About.info(a, state(saver) + L.t("Économiseur d'écran de la TV"),
+                saver ? L.t("Le mode veille de Lumen s'affiche par-dessus n'importe quelle appli.") : L.t("Facultatif : Réglages › Mode veille › Économiseur d'écran de la TV.")));
 
-        col.addView(a.section(ok ? "Pour revenir à l'accueil d'origine" : "Depuis un ordinateur"));
+        col.addView(a.section(ok ? L.t("Pour revenir à l'accueil d'origine") : L.t("Depuis un ordinateur")));
         TextView how = a.text(22, "sans-serif", Palette.TEXT_2);
-        how.setText(ok ? "Si un jour tu veux retrouver l'accueil Google, avec les « Android SDK Platform-Tools » (adb) :"
-                : "1. Paramètres de la TV › Système › À propos : appuie 7 fois sur « Build », puis Options pour les développeurs › Débogage USB.\n"
-                + "2. Sur un ordinateur du même Wi-Fi, avec les « Android SDK Platform-Tools » (adb), tape ces lignes et accepte la demande sur la TV :");
+        how.setText(ok ? L.t("Si un jour tu veux retrouver l'accueil Google, avec les « Android SDK Platform-Tools » (adb) :")
+                : L.t("1. Paramètres de la TV › Système › À propos : appuie 7 fois sur « Build », puis Options pour les développeurs › Débogage USB.\n")
+                + L.t("2. Sur un ordinateur du même Wi-Fi, avec les « Android SDK Platform-Tools » (adb), tape ces lignes et accepte la demande sur la TV :"));
         how.setLineSpacing(0, 1.25f);
         how.setPadding(a.u(32), 0, a.u(32), a.u(14));
         col.addView(how);
@@ -123,21 +123,21 @@ final class Install {
         col.addView(code(a, cmds));
         if (!ok) {
             TextView then = a.text(22, "sans-serif", Palette.TEXT_2);
-            then.setText("3. Appuie sur Accueil : Lumen s'affiche. Si la TV propose un choix, prends Lumen puis « Toujours ».\n"
-                    + "Sans ordinateur : l'appli « Send Files to TV » permet d'installer Lumen, mais pas de désactiver l'accueil Google.");
+            then.setText(L.t("3. Appuie sur Accueil : Lumen s'affiche. Si la TV propose un choix, prends Lumen puis « Toujours ».\n")
+                    + L.t("Sans ordinateur : l'appli « Send Files to TV » permet d'installer Lumen, mais pas de désactiver l'accueil Google."));
             then.setLineSpacing(0, 1.25f);
             then.setPadding(a.u(32), a.u(14), a.u(32), 0);
             col.addView(then);
         }
 
-        col.addView(a.section("Guide complet"));
+        col.addView(a.section(L.t("Guide complet")));
         LinearLayout guide = new LinearLayout(a);
         guide.setOrientation(LinearLayout.HORIZONTAL);
         guide.setGravity(Gravity.CENTER_VERTICAL);
         guide.setPadding(a.u(32), 0, a.u(32), 0);
         ImageView qr = new ImageView(a);
         qr.setImageBitmap(PhonePanel.qrBitmap(a, GUIDE, a.u(200)));
-        qr.setContentDescription("QR code vers le guide d'installation");
+        qr.setContentDescription(L.t("QR code vers le guide d'installation"));
         qr.setOutlineProvider(new android.view.ViewOutlineProvider() {
             @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), a.u(16)); }
         });
@@ -151,11 +151,11 @@ final class Install {
         guide.addView(g, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         col.addView(guide);
 
-        col.addView(a.section("Options"));
-        col.addView(a.listRow("Vérifier à nouveau", null, new View.OnClickListener() {
+        col.addView(a.section(L.t("Options")));
+        col.addView(a.listRow(L.t("Vérifier à nouveau"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { SettingsPanel.page(a, card, SettingsPanel.INSTALL); }
         }), a.rowLp());
-        col.addView(a.listRow("Proposer cette page au démarrage", new MainActivity.Value() {
+        col.addView(a.listRow(L.t("Proposer cette page au démarrage"), new MainActivity.Value() {
             @Override public String get() { return a.prefs.installHelpShown() ? "Non" : "Tant que Lumen n'est pas l'accueil"; }
         }, new View.OnClickListener() {
             @Override public void onClick(View v) { a.prefs.setInstallHelpShown(!a.prefs.installHelpShown()); }
@@ -185,7 +185,7 @@ final class Install {
             box.addView(t);
             all.append(l).append('\n');
         }
-        box.setContentDescription("Commandes : " + all);
+        box.setContentDescription(L.t("Commandes : ") + all);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(a.u(32), 0, a.u(32), 0);
         box.setLayoutParams(lp);

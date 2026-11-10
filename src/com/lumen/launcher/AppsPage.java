@@ -156,14 +156,14 @@ final class AppsPage {
         head.setGravity(Gravity.CENTER_VERTICAL);
         head.setPadding(a.u(112), 0, a.u(112), a.u(8));
         TextView title = a.text(52, "sans-serif-light", Palette.TEXT);
-        title.setText("Applications");
+        title.setText(L.t("Applications"));
         head.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         String keep = search != null ? search.getText().toString() : "";
         search = searchField();
         search.setText(keep);
         head.addView(search, new LinearLayout.LayoutParams(a.u(520), a.u(76)));
         if (a.voiceAvailable()) {
-            Tile mic = Tile.button(a, Glyph.MIC, "Recherche vocale", a.u(76));
+            Tile mic = Tile.button(a, Glyph.MIC, L.t("Recherche vocale"), a.u(76));
             mic.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { a.startVoiceSearch(); } });
             LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(a.u(76), a.u(76));
             ml.leftMargin = a.u(16);
@@ -188,8 +188,8 @@ final class AppsPage {
     private android.widget.EditText searchField() {
         final android.widget.EditText e = new android.widget.EditText(a);
         e.setSingleLine(true);
-        e.setHint("Appli, film, réglage, lumière…");
-        e.setContentDescription("Recherche");
+        e.setHint(L.t("Appli, film, réglage, lumière…"));
+        e.setContentDescription(L.t("Recherche"));
         e.setHintTextColor(Palette.TEXT_3);
         e.setTextColor(Palette.TEXT);
         e.setTextSize(TypedValue.COMPLEX_UNIT_PX, 26 * a.unit);
@@ -338,8 +338,8 @@ final class AppsPage {
         List<SearchTarget> out = new ArrayList<>();
         android.content.pm.PackageManager pm = a.getPackageManager();
         try {
-            if (pm.resolveActivity(new android.content.Intent(GLOBAL), 0) != null)
-                out.add(new SearchTarget("Recherche de la TV", "Films et séries de toutes les applis", null, GLOBAL, android.app.SearchManager.QUERY));
+            if (!a.prefs.isKidProfile() && pm.resolveActivity(new android.content.Intent(GLOBAL), 0) != null)
+                out.add(new SearchTarget(L.t("Recherche de la TV"), L.t("Films et séries de toutes les applis"), null, GLOBAL, android.app.SearchManager.QUERY));
         } catch (Exception ignored) { }
         java.util.Set<String> seen = new java.util.HashSet<>();
         for (String action : new String[]{android.content.Intent.ACTION_SEARCH, GMS}) {
@@ -349,8 +349,8 @@ final class AppsPage {
                 String pkg = ri.activityInfo.packageName;
                 if (pkg.equals(a.getPackageName()) || !seen.add(pkg)) continue;
                 AppRepo.App app = a.repo.findByPackage(pkg);
-                if (app == null || hidden.contains(app.key)) continue; // seulement les applis visibles de l'accueil
-                out.add(new SearchTarget(app.label, "Chercher dans l'appli", pkg, action,
+                if (app == null || !a.prefs.appAllowed(app.key)) continue; // seulement les applis visibles de l'accueil
+                out.add(new SearchTarget(app.label, L.t("Chercher dans l'appli"), pkg, action,
                         GMS.equals(action) ? "query" : android.app.SearchManager.QUERY));
                 if (out.size() >= 10) break;
             }
@@ -369,7 +369,7 @@ final class AppsPage {
         catch (Exception e) {
             // l'appli n'accepte pas la recherche directe : on l'ouvre simplement
             AppRepo.App app = t.pkg == null ? null : a.repo.findByPackage(t.pkg);
-            if (app != null) a.launchAnimated(app, null); else a.showNotice("Recherche indisponible");
+            if (app != null) a.launchAnimated(app, null); else a.showNotice(L.t("Recherche indisponible"));
         }
     }
 
@@ -396,7 +396,7 @@ final class AppsPage {
         Set<String> hidden = a.prefs.hiddenApps();
         final List<String> favs = a.prefs.favorites();
         List<AppRepo.App> apps = new ArrayList<>();
-        for (AppRepo.App x : a.repo.all()) if (!hidden.contains(x.key)) apps.add(x);
+        for (AppRepo.App x : a.repo.all()) if (a.prefs.appAllowed(x.key)) apps.add(x);
         final boolean bn = a.banner();
         int screenW = a.root.getWidth() > 0 ? a.root.getWidth() : a.u(1920);
         final int cols = 6, gap = a.u(30), tw = (screenW - a.u(224) - gap * (cols - 1)) / cols, th = tw * 9 / 16;
@@ -418,8 +418,8 @@ final class AppsPage {
                 SearchTarget t0 = null;
                 for (SearchTarget t : targets) if (app.pkg.equals(t.pkg)) t0 = t;
                 final SearchTarget direct = t0;
-                sections.addView(sectionLabel("Meilleur résultat"));
-                LinearLayout best = a.iconRow(Glyph.SEARCH, "Chercher « " + title + " » dans " + app.label,
+                sections.addView(sectionLabel(L.t("Meilleur résultat")));
+                LinearLayout best = a.iconRow(Glyph.SEARCH, L.t("Chercher « ") + title + L.t(" » dans ") + app.label,
                         new MainActivity.Value() { @Override public String get() { return direct != null ? "Entrée" : "Ouvrir l'appli"; } },
                         new View.OnClickListener() {
                             @Override public void onClick(View v) {
@@ -437,7 +437,7 @@ final class AppsPage {
             List<Integer> moods = ambianceMatches(q);
             boolean none = at == null && found.isEmpty() && shows.isEmpty() && sets.isEmpty() && house.isEmpty() && moods.isEmpty();
             if (!found.isEmpty() || none)
-                sections.addView(sectionLabel(none ? "Rien ne correspond à « " + q.trim() + " » · un autre mot, ou « Chercher dans… » ci-dessous pour chercher dans une appli" : found.size() + (found.size() > 1 ? " applis" : " appli")));
+                sections.addView(sectionLabel(none ? L.t("Rien ne correspond à « ") + q.trim() + L.t(" » · un autre mot, ou « Chercher dans… » ci-dessous pour chercher dans une appli") : found.size() + (found.size() > 1 ? L.t(" applis") : L.t(" appli"))));
             LinearLayout line = null;
             for (int i = 0; i < found.size(); i++) {
                 if (i % cols == 0) { line = appsLine(); sections.addView(line); }
@@ -446,21 +446,21 @@ final class AppsPage {
                     bestView = line.getChildAt(line.getChildCount() - 1);
             }
             if (!house.isEmpty()) {
-                sections.addView(sectionLabel("Maison"));
+                sections.addView(sectionLabel(L.t("Maison")));
                 for (final HomeAssistant.Entity e : house) {
                     resultRow(a.iconRow(Glyph.HOME, e.name, new MainActivity.Value() { @Override public String get() { return HomeAssistant.label(e); } },
                             new View.OnClickListener() { @Override public void onClick(View v) { remember(q0()); toggleHouse(e); } }, false));
                 }
             }
             if (!moods.isEmpty()) {
-                sections.addView(sectionLabel("Ambiances"));
+                sections.addView(sectionLabel(L.t("Ambiances")));
                 for (final int k : moods) {
-                    resultRow(a.iconRow(Glyph.SPARK, Online.COSY_NAMES[k], new MainActivity.Value() { @Override public String get() { return "Lancer l'ambiance"; } },
+                    resultRow(a.iconRow(Glyph.SPARK, L.t(Online.COSY_NAMES[k]), new MainActivity.Value() { @Override public String get() { return "Lancer l'ambiance"; } },
                             new View.OnClickListener() { @Override public void onClick(View v) { remember(q0()); a.phoneHost.phoneAmbiance(k); } }, false));
                 }
             }
             if (!shows.isEmpty()) {
-                sections.addView(sectionLabel("En cours"));
+                sections.addView(sectionLabel(L.t("En cours")));
                 for (final WatchNext.Entry e : shows) {
                     AppRepo.App owner = a.repo.findByPackage(e.pkg);
                     final String sub = owner == null ? "" : owner.label;
@@ -469,15 +469,15 @@ final class AppsPage {
                             new View.OnClickListener() {
                                 @Override public void onClick(View v) {
                                     android.content.Intent i = WatchNext.intentFor(e);
-                                    try { if (i != null) a.startActivity(i); else a.showNotice("Impossible de reprendre ce programme"); }
-                                    catch (Exception ex) { a.showNotice("Impossible de reprendre ce programme"); }
+                                    try { if (i != null) a.startActivity(i); else a.showNotice(L.t("Impossible de reprendre ce programme")); }
+                                    catch (Exception ex) { a.showNotice(L.t("Impossible de reprendre ce programme")); }
                                 }
                             }, false));
                 }
             }
             // chercher le film ou la série directement dans les applis (Canal+, Plex, Netflix…)
             if (!targets.isEmpty() && q.length() >= 2) {
-                sections.addView(sectionLabel("Chercher « " + q + " » dans…"));
+                sections.addView(sectionLabel(L.t("Chercher « ") + q + L.t(" » dans…")));
                 for (final SearchTarget t : targets) {
                     final String qq = q;
                     resultRow(a.iconRow(Glyph.SEARCH, t.label, new MainActivity.Value() { @Override public String get() { return t.hint; } },
@@ -485,10 +485,10 @@ final class AppsPage {
                 }
             }
             if (!sets.isEmpty()) {
-                sections.addView(sectionLabel("Réglages"));
+                sections.addView(sectionLabel(L.t("Réglages")));
                 for (final SettingsIndex.Entry e : sets) {
                     resultRow(a.iconRow(e.page == SettingsIndex.HOME ? Glyph.HOME : e.page == SettingsIndex.PHONE ? Glyph.PHONE : e.page == SettingsIndex.RECO ? Glyph.SPARK : Glyph.SLIDERS,
-                            e.label, new MainActivity.Value() { @Override public String get() { return e.where; } },
+                            L.t(e.label), new MainActivity.Value() { @Override public String get() { return L.t(e.where); } },
                             new View.OnClickListener() { @Override public void onClick(View v) { openSetting(e); } }, false));
                 }
             }
@@ -497,13 +497,13 @@ final class AppsPage {
 
         // champ de recherche sélectionné et vide : les recherches récentes, prêtes à relancer
         if (search != null && search.hasFocus() && !a.prefs.searches().isEmpty()) {
-            sections.addView(sectionLabel("Recherches récentes"));
+            sections.addView(sectionLabel(L.t("Recherches récentes")));
             for (final String r : a.prefs.searches()) {
                 resultRow(a.iconRow(Glyph.SEARCH, r, null, new View.OnClickListener() {
                     @Override public void onClick(View v) { search.setText(r); search.setSelection(search.length()); }
                 }, false));
             }
-            resultRow(a.iconRow(Glyph.TRASH, "Effacer l'historique", null, new View.OnClickListener() {
+            resultRow(a.iconRow(Glyph.TRASH, L.t("Effacer l'historique"), null, new View.OnClickListener() {
                 @Override public void onClick(View v) { a.prefs.clearSearches(); fillApps("", null); }
             }, false));
         }
@@ -517,12 +517,12 @@ final class AppsPage {
         // Favoris d'abord, dans l'ordre de l'accueil
         List<AppRepo.App> favApps = new ArrayList<>();
         for (String k : favs) { AppRepo.App x = a.repo.get(k); if (x != null && !hidden.contains(k)) favApps.add(x); }
-        addAppRow("Favoris", favApps, tw, th, bn, favs, gap, focusKey, focus, first);
+        addAppRow(L.t("Favoris"), favApps, tw, th, bn, favs, gap, focusKey, focus, first);
         List<List<AppRepo.App>> groups = new ArrayList<>();
         for (int i = 0; i < AppCategory.NAMES.length; i++) groups.add(new ArrayList<AppRepo.App>());
         for (AppRepo.App x : apps) if (!favs.contains(x.key)) groups.get(x.section()).add(x); // pas de doublon avec les favoris
         for (int i : AppCategory.ORDER)
-            addAppRow(AppCategory.NAMES[i], groups.get(i), tw, th, bn, favs, gap, focusKey, focus, first);
+            addAppRow(L.t(AppCategory.NAMES[i]), groups.get(i), tw, th, bn, favs, gap, focusKey, focus, first);
         return focus[0];
     }
 

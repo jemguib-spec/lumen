@@ -66,6 +66,9 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 ## Recherche vocale
 - Touche **Recherche** ou **Assistant** (micro) de la télécommande, ou le bouton micro à côté de la recherche de la page Applications : la fenêtre de reconnaissance vocale d'Android s'ouvre, et ce que tu dis arrive dans la recherche de Lumen (appli, film, réglage, lumière…). Lumen n'écoute rien lui-même : c'est le service vocal de la TV qui reconnaît la phrase, comme pour n'importe quelle appli. Sur certaines TV, Android garde la touche micro pour son propre assistant ; le bouton micro à l'écran marche toujours.
 
+## Langue
+- Réglages › Accueil et applis › Lisibilité › Langue : Système (français si la TV est en français, sinon anglais), Français ou English. Réglage par profil. La page du téléphone reste en français pour l'instant.
+
 ## Lecteur d'écran
 - Avec TalkBack (Paramètres de la TV › Accessibilité), vignettes, boutons et lignes de réglage sont annoncés avec leur nom et leur valeur.
 
@@ -114,6 +117,7 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 ## Accueil
 - **Bandeau d'accueil** : une ligne au-dessus des favoris — salutation selon l'heure, météo (si une ville est réglée) et dernier épisode en cours. Réglages › Accueil et applis › Bandeau d'accueil pour le masquer. Trois conseils sur les gestes s'affichent aux trois premiers démarrages (Réglages › Système › Diagnostic › Revoir les conseils pour les revoir).
 - L'appli que tu ouvres d'habitude à cette heure est sélectionnée au démarrage et entourée d'un liseré qui respire doucement.
+- **État de la TV**, sous l'horloge, seulement quand quelque chose mérite un mot : pas de réseau, pile de la télécommande faible (Android 12 et plus, télécommandes Bluetooth qui l'annoncent), mise à jour prête. Rien quand tout va bien.
 
 ## À l'affiche
 - Flèche **droite** depuis la dernière appli d'une rangée de l'accueil (le pendant de « Reprendre » à gauche), ou « affiche » dans la recherche : les films et séries du moment, avec affiches, année et note.
@@ -121,7 +125,8 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - Modes : **Populaire**, **Nouveautés**, **Mieux notés**, **Pour toi** (d'après les titres que tu as ouverts depuis « À l'affiche » ; calculé avec TMDB, l'historique reste sur la TV). Et Tout · Films · Séries.
 - OK sur un titre : sa fiche. **Regarder sur** chaque appli qui le propose (icône de l'appli), **Bande-annonce** (YouTube), **Titres similaires**, **Chercher sur la TV**. ◀ ou Retour revient à la liste.
 - La grande image indique aussi sur quelles applis le titre est disponible.
-- Réglages › Accueil et applis › À l'affiche : clé (affichée masquée), plateformes, sélection et type au départ, historique « Pour toi » (effaçable), retrait de la clé.
+- Réglages › Accueil et applis › À l'affiche : ma clé (affichée masquée), **clé partagée du projet** (interrupteur), plateformes, sélection et type au départ, historique « Pour toi » (effaçable), tout désactiver.
+- **Sans clé personnelle** : « Utiliser la clé partagée de Lumen » dans le panneau. Le projet publie une clé TMDB commune dans `dist/services.json` ; la TV la lit avec les mises à jour. Rien n'est contacté avant ton accord, et ta propre clé, si tu en mets une, passe avant.
 - Il faut une clé gratuite TMDB (themoviedb.org › Compte › Paramètres › API) : à saisir sur la TV (Réglages › Accueil et applis › À l'affiche, ou directement depuis le panneau) ou à coller depuis le téléphone (Plus › Films du moment). Sans clé, Lumen ne contacte jamais ce service.
 
 ## Quand une appli bloque
@@ -176,7 +181,8 @@ Chaque personne peut avoir son profil : ses favoris, ses applis masquées, son f
 - Ajouter, renommer ou supprimer : Réglages › Profils, ou téléphone › Plus › Profil (code PIN demandé s'il existe).
 - « Qui regarde ? » : dès qu'il y a deux profils, une page plein écran propose de choisir la personne à chaque démarrage de Lumen et au rallumage de la TV, puis dit « Bonjour Léa » (ou Bonsoir…). Retour garde le profil actuel. Réglages › Profils › Au démarrage : « Reprendre le dernier profil » pour ne plus la voir (réglage commun à tous).
 - Changer de profil à tout moment : bouton « Profils » en haut de l'accueil (même page, avec « Gérer les profils »), sans code, ou depuis le téléphone.
-- Le profil principal garde les réglages d'avant les profils ; il ne peut pas être supprimé.
+- **Profil enfant** (Réglages › Profils › le profil › Profil enfant) : dans ce profil, seules ses applis favorites existent ; la page Applications, la recherche, « Reprendre » et le téléphone ne voient rien d'autre. Le menu d'une appli se limite à « Fermer l'appli » et « Modifier (code PIN) ». Quitter le profil, ouvrir les réglages, gérer les profils, masquer ou désinstaller demandent le code PIN de la maison ; « À l'affiche » est fermé. Activer un profil enfant crée le code PIN s'il n'existe pas. L'adulte règle les favoris de l'enfant depuis ce profil (appui long › Modifier, avec le code), puis le laisse à l'enfant.
+- Le profil principal garde les réglages d'avant les profils ; il ne peut pas être supprimé ni devenir un profil enfant.
 - Les applis verrouillées le restent dans tous les profils : changer de profil ne lève jamais un verrou.
 
 ## Code PIN

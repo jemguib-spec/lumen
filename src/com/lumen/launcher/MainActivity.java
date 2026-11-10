@@ -73,6 +73,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         if (houseButton != null) houseButton.setVisibility(on ? View.VISIBLE : View.GONE);
     }
     TextView greet;
+    TvStatus status;
     final List<LinearLayout> rows = new ArrayList<>();
     private final List<HorizontalScrollView> rowScrolls = new ArrayList<>();
     ImageView appsBg;
@@ -123,6 +124,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         Glass.setScreen(sw, sh);
 
         prefs = new Prefs(this);
+        Lang.init(this, prefs.lang());
         textScale = Prefs.TEXT_SCALES[prefs.textScale()];
         highContrast = prefs.highContrast();
         Palette.apply(highContrast);
@@ -203,6 +205,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
 
     @Override protected void onPause() {
         super.onPause();
+        if (status != null) status.stop();
         resumedNow = false;
         h.removeCallbacks(afterShown);
         perf.setOn(false);
@@ -269,7 +272,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
             if (Intent.ACTION_PACKAGE_ADDED.equals(i.getAction())
                     && !i.getBooleanExtra(Intent.EXTRA_REPLACING, false) && i.getData() != null) {
                 AppRepo.App a = repo.findByPackage(i.getData().getSchemeSpecificPart());
-                if (a != null) showNotice(a.label + " installée");
+                if (a != null) showNotice(a.label + L.t(" installée"));
             }
             if (overlay != null) { dirtyRow = true; markAppsDirty(); return; }
             String key = focusedKey();
@@ -310,7 +313,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         if (Online.COSY.equals(theme)) { if (ambiance != null) ambiance.onVideosUpdated(); return; }
         boolean wasFallback = wall.usingFallback();
         wall.refreshList();
-        if (wasFallback && !wall.usingFallback()) showNotice("Nouvelles photos prêtes");
+        if (wasFallback && !wall.usingFallback()) showNotice(L.t("Nouvelles photos prêtes"));
     }
 
     private void updateCaption(final WallItem item) {
@@ -613,10 +616,11 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
                 if (low != null) { lowSpaceSaid = true; showNotice(low); }
             }
             refreshGreeting();
+            if (status != null) status.start();
             if (prefs.veilleSource() >= 0) for (String t : Library.themesFor(Library.veilleSource(prefs))) online.refreshIfNeeded(t, false);
             if (CrashLog.safeModeJustStarted) {
                 CrashLog.safeModeJustStarted = false;
-                showNotice("Lumen a redémarré en mode sans échec après des erreurs");
+                showNotice(L.t("Lumen a redémarré en mode sans échec après des erreurs"));
             }
             // trois conseils, un par démarrage, puis plus rien
             h.postDelayed(new Runnable() { @Override public void run() { if (!isFinishing() && overlay == null) Tips.showNext(MainActivity.this); } }, 4000);
@@ -646,7 +650,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
 
     /** Depuis les réglages : redemande, ou ouvre la page d'autorisations de Lumen si Android ne redemande plus. */
     void requestWatchNext() {
-        if (Build.VERSION.SDK_INT < 26) { showNotice("Les épisodes en cours demandent Android 8 ou plus récent"); return; }
+        if (Build.VERSION.SDK_INT < 26) { showNotice(L.t("Les épisodes en cours demandent Android 8 ou plus récent")); return; }
         if (WatchNext.granted(this)) { shelf.reload(); return; }
         if (Build.VERSION.SDK_INT >= 23 && shouldShowRequestPermissionRationale(WatchNext.PERMISSION) || !prefs.watchNextAsked()) {
             prefs.setWatchNextAsked(true);
@@ -656,7 +660,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
             Intent i = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:" + getPackageName()));
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(i);
-        } catch (Exception e) { showNotice("Autorisation impossible à demander sur cette TV"); }
+        } catch (Exception e) { showNotice(L.t("Autorisation impossible à demander sur cette TV")); }
     }
 
     @Override public void onRequestPermissionsResult(int code, String[] perms, int[] results) {
@@ -884,7 +888,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         } catch (Exception e) {
             uninstalling = null;
             hideSystemVeil(false);
-            showNotice("Cette appli ne peut pas être désinstallée");
+            showNotice(L.t("Cette appli ne peut pas être désinstallée"));
         }
     }
 
@@ -905,18 +909,18 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
      * Rien n'est envoyé par Lumen : c'est le service vocal de la TV qui écoute, comme pour toute appli.
      */
     void startVoiceSearch() {
-        if (!voiceAvailable()) { showNotice("Pas de reconnaissance vocale sur cette TV"); return; }
+        if (!voiceAvailable()) { showNotice(L.t("Pas de reconnaissance vocale sur cette TV")); return; }
         Intent i = new Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         i.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Une appli, un film, un réglage…");
         i.putExtra(android.speech.RecognizerIntent.EXTRA_MAX_RESULTS, 1);
-        try { startActivityForResult(i, REQ_VOICE); } catch (Exception e) { showNotice("Reconnaissance vocale indisponible"); }
+        try { startActivityForResult(i, REQ_VOICE); } catch (Exception e) { showNotice(L.t("Reconnaissance vocale indisponible")); }
     }
 
     private void onVoiceResult(Intent data) {
         java.util.ArrayList<String> r = data == null ? null : data.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
         final String q = r == null || r.isEmpty() || r.get(0) == null ? "" : r.get(0).trim();
-        if (q.isEmpty()) { showNotice("Je n'ai pas compris"); return; }
+        if (q.isEmpty()) { showNotice(L.t("Je n'ai pas compris")); return; }
         if (overlay != null) closeOverlay(false);
         openApps();
         h.postDelayed(new Runnable() { @Override public void run() { if (appsOpen) appsPage.typeFromPhone(q); } }, 350);
@@ -931,8 +935,8 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         veilApp = null; // le message vient d'ici, pas du voile
         hideSystemVeil(true);
         if (app == null) return;
-        if (result == RESULT_OK) showNotice(app.label + " désinstallée");
-        else if (result != RESULT_CANCELED) showNotice(app.label + " n'a pas pu être désinstallée");
+        if (result == RESULT_OK) showNotice(app.label + L.t(" désinstallée"));
+        else if (result != RESULT_CANCELED) showNotice(app.label + L.t(" n'a pas pu être désinstallée"));
     }
 
     // ------------------------------------------------------------------ fenêtres du système par-dessus Lumen
@@ -971,7 +975,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         if (app != null && !app.isInput()) {
             boolean gone;
             try { getPackageManager().getPackageInfo(app.pkg, 0); gone = false; } catch (Exception e) { gone = true; }
-            if (gone) showNotice(app.label + " désinstallée");
+            if (gone) showNotice(app.label + L.t(" désinstallée"));
         }
         if (!animate) { root.removeView(v); return; }
         v.animate().alpha(0f).setDuration(Motion.MEDIUM).withEndAction(new Runnable() {
