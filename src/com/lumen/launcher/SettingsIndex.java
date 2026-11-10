@@ -15,7 +15,7 @@ final class SettingsIndex {
     /** Cibles spéciales (hors rubriques des réglages). */
     static final int PHONE = -2, STORAGE = -3, HOME = -4, RECO = -5;
     /** Rubriques (mêmes numéros que SettingsPanel). */
-    static final int FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5, ABOUT = 6;
+    static final int FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5, ABOUT = 6, INSTALL = 14;
 
     static final class Entry {
         final String label, where, keywords;
@@ -46,6 +46,8 @@ final class SettingsIndex {
             new Entry("Sons de l'interface", S, SYSTEME, "sons bruit clic"),
             new Entry("Code PIN", S, SYSTEME, "code pin verrou enfant parental"),
             new Entry("À propos et licences", S, ABOUT, "a propos version licences"),
+            new Entry("Installation", S, INSTALL, "installation installer adb accueil par defaut google launcher desactiver commandes"),
+            new Entry("Nouveautés de la version", S, SYSTEME, "nouveautes version changements quoi de neuf"),
             new Entry("Réglages depuis le téléphone", "Réglages", PHONE, "telephone qr code smartphone telecommande"),
             new Entry("Maison", "Home Assistant", HOME, "maison home assistant lumieres scenes volets"),
             new Entry("À l'affiche", "Films et séries du moment", RECO, "affiche films series tendances populaire recommandations nouveautes top"),

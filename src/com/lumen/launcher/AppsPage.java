@@ -162,6 +162,13 @@ final class AppsPage {
         search = searchField();
         search.setText(keep);
         head.addView(search, new LinearLayout.LayoutParams(a.u(520), a.u(76)));
+        if (a.voiceAvailable()) {
+            Tile mic = Tile.button(a, Glyph.MIC, "Recherche vocale", a.u(76));
+            mic.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { a.startVoiceSearch(); } });
+            LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(a.u(76), a.u(76));
+            ml.leftMargin = a.u(16);
+            head.addView(mic, ml);
+        }
         col.addView(head);
 
         sections = new LinearLayout(a);
@@ -182,6 +189,7 @@ final class AppsPage {
         final android.widget.EditText e = new android.widget.EditText(a);
         e.setSingleLine(true);
         e.setHint("Appli, film, réglage, lumière…");
+        e.setContentDescription("Recherche");
         e.setHintTextColor(0x80FFFFFF);
         e.setTextColor(0xF5FFFFFF);
         e.setTextSize(TypedValue.COMPLEX_UNIT_PX, 26 * a.unit);

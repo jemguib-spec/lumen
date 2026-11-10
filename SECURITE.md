@@ -1,4 +1,4 @@
-# Lumen 4.18 — sécurité, vie privée et organisation du code
+# Lumen 4.20 — sécurité, vie privée et organisation du code
 
 ## Ce que Lumen ne fait jamais
 - Aucune télémétrie, aucune statistique, aucun compte, aucune publicité, aucun identifiant envoyé.
@@ -15,7 +15,7 @@
 
 ## Réseau sortant (`NetPolicy`, `Net`)
 - HTTPS obligatoire, port 443 uniquement, pas d'identifiants dans les adresses.
-- Liste blanche stricte : `raw.githubusercontent.com` (mise à jour : deux fichiers du dépôt, toutes les 6 heures au plus ou à l'ouverture de Réglages › Système, désactivable), `commons.wikimedia.org`, `upload.wikimedia.org`, `thumb.wikimedia.org` (aperçus), `api.open-meteo.com`, `geocoding-api.open-meteo.com` (météo seulement si une ville est réglée). `api.pexels.com`, `videos.pexels.com`, `images.pexels.com` ne sont joignables que si l'utilisateur a réglé sa propre clé Pexels ; la clé n'est envoyée qu'à `api.pexels.com`, jamais après une redirection, et n'est jamais renvoyée au téléphone.
+- Liste blanche stricte : `raw.githubusercontent.com` (mise à jour : `dist/latest.json` du dépôt, toutes les 6 heures au plus ou à l'ouverture de Réglages › Système, désactivable), `github.com` **uniquement** pour un fichier sous `/jemguib-spec/lumen/releases/download/` (l'APK de la Release ; l'adresse est recomposée par Lumen à partir du numéro de version, jamais reprise telle quelle du fichier) et ses redirections `objects.githubusercontent.com` / `release-assets.githubusercontent.com`, `commons.wikimedia.org`, `upload.wikimedia.org`, `thumb.wikimedia.org` (aperçus), `api.open-meteo.com`, `geocoding-api.open-meteo.com` (météo seulement si une ville est réglée). `api.pexels.com`, `videos.pexels.com`, `images.pexels.com` ne sont joignables que si l'utilisateur a réglé sa propre clé Pexels ; la clé n'est envoyée qu'à `api.pexels.com`, jamais après une redirection, et n'est jamais renvoyée au téléphone.
 - Les redirections sont suivies à la main et chaque destination est revérifiée.
 - Certificats validés par le magasin système d'Android ; les certificats ajoutés par l'utilisateur ne sont pas acceptés (cible Android 29). Le trafic en clair est interdit (`usesCleartextTraffic=false`).
 - Réponses et fichiers plafonnés en taille.
@@ -57,7 +57,8 @@
 - Ce qui reste lisible sur le réseau local (page en HTTP : un certificat local provoquerait une alerte du navigateur à chaque connexion) : uniquement des informations sans secret, comme la liste des applis, les réglages affichés ou la touche pressée. Personne ne peut pour autant agir à ta place : chaque requête est signée.
 
 ## Permissions Android
-- `INTERNET` : photos, vidéos, météo.
+- `INTERNET` : photos, vidéos, météo, mises à jour.
+- Aucune autorisation micro : la recherche vocale ouvre la fenêtre de reconnaissance d'Android (`RecognizerIntent`) ; c'est le service vocal de la TV qui écoute et transcrit, Lumen ne reçoit que le texte et ne l'envoie nulle part.
 - `REQUEST_DELETE_PACKAGES` : proposer la désinstallation d'une appli, que tu confirmes à chaque fois.
 - `PACKAGE_USAGE_STATS` (facultative, à accorder par ADB) : historique pour « Reprendre ».
 - `WRITE_SECURE_SETTINGS` (facultative, à accorder par ADB) : sert uniquement à choisir Lumen comme économiseur d'écran (`ScreenSaver`) ; aucun autre réglage de la TV n'est touché.
@@ -119,7 +120,8 @@
 | `ScreenSaver` | Lumen comme économiseur d'écran |
 | `Sky` | Lever / coucher du soleil, phase de lune, saisons (calcul local, sans réseau) |
 | `TopShelf`, `WatchNext`, `WatchNextFormat` | « Reprendre » au-dessus des applis : lecture des « en cours » publiés par les applis, affiches contrôlées |
-| `Updater`, `UpdatePolicy` | Mise à jour automatique depuis le dépôt GitHub, vérification de l'empreinte et de la signature |
+| `Updater`, `UpdatePolicy` | Mise à jour automatique : `dist/latest.json` du dépôt, APK de la GitHub Release de la version (adresse recomposée par Lumen, jamais reprise du fichier), vérification de l'empreinte et de la signature ; nouveautés nettoyées avant affichage |
+| `Install`, `InstallPolicy` | Assistant d'installation : état de l'accueil (lecture seule, `PackageManager`), commandes ADB à recopier ; Lumen ne désactive rien lui-même |
 | `LivingScene` | Animation des paysages Lumen (dessinée sur l'appareil) |
 | `AppCategory` | Rangées de la page Applications et recherche |
 | `Fonts` | Police Inter embarquée (assets/fonts, licence OFL) |
@@ -132,7 +134,7 @@
 ## Tests
 Le dépôt GitHub compile et lance les tests à chaque envoi (`.github/workflows/verifier.yml`) et vérifie que `dist/latest.json` décrit bien `dist/Lumen.apk`.
 
-`tests/run.sh` lance plus de 280 tests sur la politique réseau, le code PIN, la sauvegarde, les habitudes, les licences, les signatures de fichiers, le parseur HTTP, l'authentification, **les contrôles d'accès de la page du téléphone** (Host, X-Lumen, session volée, appareil, « télécommande seulement », signature, débit, code PIN, ouverture et messages de la connexion permanente, sur de vraies requêtes HTTP), la signature HMAC, le WebSocket, TMDB, Home Assistant, les catalogues de vidéos (fonds et ambiances), l'option Pexels et les calculs du ciel (comparés aux éphémérides de l'IMCCE, ±3 min). Il vérifie aussi que le QR code est lisible par un vrai décodeur (`zbarimg`).
+`tests/run.sh` lance plus de 360 tests sur la politique réseau, le code PIN, la sauvegarde, les habitudes, les licences, les signatures de fichiers, le parseur HTTP, l'authentification, **les contrôles d'accès de la page du téléphone** (Host, X-Lumen, session volée, appareil, « télécommande seulement », signature, débit, code PIN, ouverture et messages de la connexion permanente, sur de vraies requêtes HTTP), la signature HMAC, le WebSocket, TMDB, Home Assistant, les catalogues de vidéos (fonds et ambiances), l'option Pexels et les calculs du ciel (comparés aux éphémérides de l'IMCCE, ±3 min). Il vérifie aussi que le QR code est lisible par un vrai décodeur (`zbarimg`). La CI installe ensuite l'APK sur un émulateur Android TV et parcourt l'interface (`tools/smoke.sh`) : captures d'écran et journal en artefacts, échec si Lumen plante ou se bloque.
 
 ## Licence
 Lumen est un logiciel libre sous licence GNU GPL version 3 ou ultérieure (fichier `LICENSE`, en-tête `SPDX-License-Identifier: GPL-3.0-or-later` dans chaque fichier source). La police Inter reste sous SIL Open Font License 1.1.

@@ -67,7 +67,8 @@ final class UpdateFlow {
         String now = a.updater.currentVersion();
         if (!from.equals(now)) {
             a.prefs.setUpdatePending("");
-            a.showNotice("Lumen est à jour · " + now);
+            String notes = a.prefs.updateNotes(now);
+            a.showNotice("Lumen est à jour · " + now + (notes.isEmpty() ? "" : " · Réglages › Système › Nouveautés"));
         } else if (!hasUpdateVeil()) {
             a.prefs.setUpdatePending(""); // installation annulée
         }

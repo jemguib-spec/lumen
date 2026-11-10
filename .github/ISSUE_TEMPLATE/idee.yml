@@ -1,0 +1,17 @@
+name: Idée
+description: Une amélioration ou une nouvelle fonction
+title: "[Idée] "
+labels: [idée]
+body:
+  - type: textarea
+    id: besoin
+    attributes:
+      label: Le besoin
+      description: Dans quelle situation, devant la TV, ça manque ?
+    validations:
+      required: true
+  - type: textarea
+    id: proposition
+    attributes:
+      label: La proposition
+      description: Comment tu l'imagines à l'écran ou sur le téléphone. Lumen reste sans compte, sans publicité ni télémétrie, avec une liste fermée de serveurs (voir SECURITE.md).

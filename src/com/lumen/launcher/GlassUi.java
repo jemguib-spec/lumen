@@ -54,10 +54,15 @@ final class GlassUi {
         l.setEllipsize(TextUtils.TruncateAt.END);
         r.addView(l, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         final TextView v = a.text(24, "sans-serif", 0x8CFFFFFF);
+        // lecteur d'écran : « Horloge, Oui » plutôt que deux textes séparés
+        r.setContentDescription(label);
         if (value != null) {
             v.setText(value.get());
-            a.rowRefreshers.add(new Runnable() { @Override public void run() { v.setText(value.get()); } });
+            r.setContentDescription(label + ", " + value.get());
+            a.rowRefreshers.add(new Runnable() { @Override public void run() { String s = value.get(); v.setText(s); r.setContentDescription(label + ", " + s); } });
         }
+        l.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        v.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         LinearLayout.LayoutParams vl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         vl.leftMargin = a.u(20);
         r.addView(v, vl);

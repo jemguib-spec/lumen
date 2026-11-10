@@ -171,6 +171,12 @@ final class Prefs {
     void setLastUpdateCheck(long t) { sp.edit().putLong("update_check", t).apply(); }
     String updateReadyVersion() { return sp.getString("update_ready", ""); }
     void setUpdateReadyVersion(String v) { sp.edit().putString("update_ready", v).apply(); }
+    /** Assistant d'installation déjà proposé au démarrage (ou refusé). */
+    boolean installHelpShown() { return sp.getBoolean("install_help_shown", false); }
+    void setInstallHelpShown(boolean b) { sp.edit().putBoolean("install_help_shown", b).apply(); }
+    /** Nouveautés annoncées par latest.json pour une version (affichées quand c'est celle installée ou prête). */
+    String updateNotes(String version) { return version != null && version.equals(sp.getString("update_notes_v", "")) ? sp.getString("update_notes", "") : ""; }
+    void setUpdateNotes(String version, String notes) { sp.edit().putString("update_notes_v", version).putString("update_notes", notes == null ? "" : notes).apply(); }
     /** Version avant une mise à jour lancée (vide sinon) : sert à revenir et à annoncer « à jour ». */
     String updatePending() { return sp.getString("update_from", ""); }
     void setUpdatePending(String v) { sp.edit().putString("update_from", v).commit(); } // écrit tout de suite : Lumen va être arrêté

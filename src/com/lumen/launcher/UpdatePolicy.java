@@ -17,16 +17,55 @@ final class UpdatePolicy {
     static final String BASE = "https://raw.githubusercontent.com/" + REPO + "/main/dist/";
     static final String LATEST = BASE + "latest.json";
     static final String APK = BASE + "Lumen.apk";
+    /** Fichiers des GitHub Releases du dépôt (la Release « v4.20.0 » porte « Lumen-4.20.0.apk »). */
+    static final String RELEASES = "https://github.com/" + REPO + "/releases/download/";
     static final long MAX_BYTES = 40L << 20;
+    /** Longueur maximale des nouveautés affichées à l'écran. */
+    static final int NOTES_MAX = 400;
+
+    /** Adresse attendue de l'APK d'une version dans les Releases. */
+    static String releaseUrl(String version) {
+        return version(version) == null ? null : RELEASES + "v" + version + "/Lumen-" + version + ".apk";
+    }
 
     /**
-     * Adresse de l'APK annoncé par latest.json. Un nom propre à la version (« Lumen-4.18.2.apk »)
-     * n'a jamais été mis en cache par GitHub : pas de risque de recevoir l'ancien fichier juste
-     * après une publication. Sinon (ancienne description), Lumen.apk. Toujours dans dist/ du dépôt.
+     * Adresse de l'APK annoncé par latest.json, dans l'ordre :
+     * 1. « url » : le fichier de la GitHub Release de cette version, et seulement lui (adresse
+     *    recomposée par Lumen, jamais reprise telle quelle : le fichier ne peut pas pointer ailleurs) ;
+     * 2. « file » : un nom propre à la version dans dist/ (« Lumen-4.18.2.apk »), jamais mis en cache
+     *    par GitHub ;
+     * 3. sinon dist/Lumen.apk.
      */
-    static String apkUrl(String file, String version) {
+    static String apkUrl(String file, String version, String url) {
+        String release = releaseUrl(version);
+        if (release != null && release.equals(url)) return release;
         if (file != null && version != null && file.equals("Lumen-" + version + ".apk") && version(version) != null) return BASE + file;
         return APK;
+    }
+
+    static String apkUrl(String file, String version) { return apkUrl(file, version, null); }
+
+    /**
+     * Nouveautés d'une version, telles qu'affichées : texte brut, lignes « - » devenues « · »,
+     * sans caractères de contrôle, au plus NOTES_MAX caractères. Vide si rien d'utilisable.
+     */
+    static String notes(String raw) {
+        if (raw == null) return "";
+        StringBuilder b = new StringBuilder();
+        for (String line : raw.replace("\r", "").split("\n")) {
+            String l = line.trim();
+            if (l.startsWith("- ") || l.startsWith("* ")) l = "· " + l.substring(2).trim();
+            if (l.startsWith("#")) continue;
+            StringBuilder c = new StringBuilder();
+            for (int i = 0; i < l.length(); i++) { char ch = l.charAt(i); if (ch >= ' ' || ch == '\t') c.append(ch); }
+            l = c.toString().trim();
+            if (l.isEmpty()) continue;
+            if (b.length() > 0) b.append('\n');
+            b.append(l);
+        }
+        String s = b.toString();
+        if (s.length() > NOTES_MAX) s = s.substring(0, NOTES_MAX - 1).trim() + "…";
+        return s;
     }
 
     /** « v4.1.0 » ou « 4.1.0 » → « 4.1.0 » (null si ce n'est pas un numéro de version). */

@@ -74,6 +74,7 @@ final class Tile extends FrameLayout {
     static Tile app(Context c, AppRepo.App a, int w, int h, boolean banner, boolean showIcon, boolean tint, boolean labelBelow, boolean word) {
         Tile t = new Tile(c, w, h, dp(c, 10), false, banner ? 0.85f : 1f);
         t.title = a.label;
+        t.setContentDescription(a.label); // lecteur d'écran : le nom de l'appli, pas « bouton sans nom »
         t.tag = a;
         Drawable bannerD = banner ? a.banner(c.getPackageManager()) : null;
         if (bannerD != null) {
@@ -145,6 +146,7 @@ final class Tile extends FrameLayout {
     static Tile button(Context c, int glyphType, String title, int size) {
         Tile t = new Tile(c, size, size, size / 2f, true, 1f);
         t.title = title;
+        t.setContentDescription(title);
         t.focusScale = 1.12f;
         t.glass = new Glass.Surface(t.card, size / 2f, 0x1FFFFFFF);
         t.card.setBackground(t.glass);

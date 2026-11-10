@@ -232,6 +232,37 @@ public class LumenTests {
         check("fichier : autre format refusé", !UpdatePolicy.looksLikeApk(new byte[]{'<', 'h', 't', 'm'}));
         check("GitHub (fichiers du dépôt) autorisé pour la mise à jour", NetPolicy.allowed(UpdatePolicy.LATEST));
         check("API GitHub non nécessaire, refusée", !NetPolicy.allowed("https://api.github.com/repos/x/y"));
+        // GitHub Releases : seulement les fichiers des Releases du dépôt de Lumen
+        String rel = UpdatePolicy.releaseUrl("4.20.0");
+        check("Release : adresse recomposée", "https://github.com/jemguib-spec/lumen/releases/download/v4.20.0/Lumen-4.20.0.apk".equals(rel));
+        check("Release : fichier autorisé", NetPolicy.allowed(rel));
+        check("Release : redirection vers objects.githubusercontent.com autorisée", NetPolicy.allowed("https://objects.githubusercontent.com/github-production-release-asset/abc"));
+        check("Release : redirection vers release-assets.githubusercontent.com autorisée", NetPolicy.allowed("https://release-assets.githubusercontent.com/github-production-release-asset/abc"));
+        check("github.com : page du dépôt refusée", !NetPolicy.allowed("https://github.com/jemguib-spec/lumen"));
+        check("github.com : autre dépôt refusé", !NetPolicy.allowed("https://github.com/autre/depot/releases/download/v1/x.apk"));
+        check("github.com : dossier des Releases sans fichier refusé", !NetPolicy.allowed("https://github.com/jemguib-spec/lumen/releases/download/"));
+        check("github.com : sous-domaine piégé refusé", !NetPolicy.allowed("https://github.com.evil.net/jemguib-spec/lumen/releases/download/v1/x.apk"));
+        check("latest.json : url de la Release de cette version utilisée", rel.equals(UpdatePolicy.apkUrl(null, "4.20.0", rel)));
+        check("latest.json : url d'une autre version ignorée (dist/Lumen.apk)", UpdatePolicy.APK.equals(UpdatePolicy.apkUrl(null, "4.20.0", UpdatePolicy.releaseUrl("4.19.0"))));
+        check("latest.json : url étrangère ignorée", UpdatePolicy.APK.equals(UpdatePolicy.apkUrl(null, "4.20.0", "https://evil.example/Lumen-4.20.0.apk")));
+        check("latest.json : url absente, file propre à la version", (UpdatePolicy.BASE + "Lumen-4.20.0.apk").equals(UpdatePolicy.apkUrl("Lumen-4.20.0.apk", "4.20.0", null)));
+        check("latest.json : version invalide → pas d'adresse de Release", UpdatePolicy.releaseUrl("4.20.0/../x") == null);
+        check("nouveautés : puces et titres nettoyés", "· Recherche vocale\n· Assistant d'installation".equals(UpdatePolicy.notes("## 4.20.0\n\n- Recherche vocale\r\n* Assistant d'installation\n")));
+        check("nouveautés : caractères de contrôle retirés", "ab".equals(UpdatePolicy.notes("a\u0007b")));
+        check("nouveautés : texte long coupé", UpdatePolicy.notes(new String(new char[1000]).replace('\0', 'x')).length() <= UpdatePolicy.NOTES_MAX);
+        check("nouveautés : null → vide", UpdatePolicy.notes(null).isEmpty());
+        // assistant d'installation
+        check("installation : Lumen est l'accueil", InstallPolicy.isHome("com.lumen.launcher"));
+        check("installation : choix non fait (android) ≠ accueil", !InstallPolicy.isHome("android") && !InstallPolicy.isHome(null));
+        java.util.List<String> cmd = InstallPolicy.commands("192.168.1.42", "com.google.android.apps.tv.launcherx", true);
+        check("installation : adb connect avec l'adresse de la TV", cmd.get(0).equals("adb connect 192.168.1.42:5555"));
+        check("installation : accueil Google désactivé pour l'utilisateur 0", cmd.get(1).equals("adb shell pm disable-user --user 0 com.google.android.apps.tv.launcherx"));
+        check("installation : assistant Google désactivé", cmd.get(2).contains("com.google.android.tungsten.setupwraith"));
+        check("installation : historique pour Reprendre", cmd.get(3).equals("adb shell appops set com.lumen.launcher GET_USAGE_STATS allow"));
+        check("installation : adresse inconnue → marque-place", InstallPolicy.commands(null, null, false).get(0).contains("ADRESSE-IP-DE-LA-TV"));
+        check("installation : Android TV ancien modèle", InstallPolicy.commands(null, "com.google.android.tvlauncher", false).get(1).endsWith("com.google.android.tvlauncher"));
+        check("installation : sans assistant Google, 3 commandes", InstallPolicy.commands(null, null, false).size() == 3);
+        check("installation : retour en arrière réactive l'accueil d'origine", InstallPolicy.undoCommands(null, true).get(0).equals("adb shell pm enable com.google.android.apps.tv.launcherx") && InstallPolicy.undoCommands(null, true).size() == 2);
 
         // ---- page Applications : rangées et recherche
         check("rangée : Netflix en vidéo", AppCategory.of("com.netflix.ninja", "Netflix", -1) == AppCategory.VIDEO);

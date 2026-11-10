@@ -617,6 +617,8 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
                 CrashLog.safeModeJustStarted = false;
                 showNotice("Lumen a redémarré en mode sans échec après des erreurs");
             }
+            // premier démarrage sans être l'écran d'accueil : l'assistant d'installation s'ouvre (une fois)
+            h.postDelayed(new Runnable() { @Override public void run() { if (!isFinishing()) Install.maybeShowAtStart(MainActivity.this); } }, 1500);
         }
     };
 
@@ -765,6 +767,9 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         if (down && code == KeyEvent.KEYCODE_DPAD_LEFT && overlay != null && e.getRepeatCount() == 0
                 && SettingsPanel.inSubPage() && !(getCurrentFocus() instanceof android.widget.EditText)) { SettingsPanel.back(this); return true; }
         if (!down && code == KeyEvent.KEYCODE_MENU && overlay == null) { SettingsPanel.openSettings(MainActivity.this); return true; }
+        // micro de la télécommande : recherche vocale (si Android laisse la touche arriver jusqu'à Lumen)
+        if (!down && (code == KeyEvent.KEYCODE_SEARCH || code == KeyEvent.KEYCODE_VOICE_ASSIST || code == KeyEvent.KEYCODE_ASSIST)
+                && !(getCurrentFocus() instanceof android.widget.EditText)) { startVoiceSearch(); return true; }
         return super.dispatchKeyEvent(e);
     }
 
@@ -876,8 +881,43 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         }
     }
 
+    // ------------------------------------------------------------------ recherche vocale
+
+    private static final int REQ_VOICE = 45;
+
+    /** La TV sait-elle reconnaître la voix ? (Google TV : oui ; certaines box : non) */
+    boolean voiceAvailable() {
+        try {
+            return !getPackageManager().queryIntentActivities(new Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0).isEmpty();
+        } catch (Exception e) { return false; }
+    }
+
+    /**
+     * Micro de la télécommande (touche Recherche ou Assistant) ou bouton micro de la recherche :
+     * la fenêtre de reconnaissance d'Android s'ouvre, le texte reconnu arrive dans la recherche de Lumen.
+     * Rien n'est envoyé par Lumen : c'est le service vocal de la TV qui écoute, comme pour toute appli.
+     */
+    void startVoiceSearch() {
+        if (!voiceAvailable()) { showNotice("Pas de reconnaissance vocale sur cette TV"); return; }
+        Intent i = new Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        i.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Une appli, un film, un réglage…");
+        i.putExtra(android.speech.RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        try { startActivityForResult(i, REQ_VOICE); } catch (Exception e) { showNotice("Reconnaissance vocale indisponible"); }
+    }
+
+    private void onVoiceResult(Intent data) {
+        java.util.ArrayList<String> r = data == null ? null : data.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
+        final String q = r == null || r.isEmpty() || r.get(0) == null ? "" : r.get(0).trim();
+        if (q.isEmpty()) { showNotice("Je n'ai pas compris"); return; }
+        if (overlay != null) closeOverlay(false);
+        openApps();
+        h.postDelayed(new Runnable() { @Override public void run() { if (appsOpen) appsPage.typeFromPhone(q); } }, 350);
+    }
+
     @Override protected void onActivityResult(int req, int result, Intent data) {
         super.onActivityResult(req, result, data);
+        if (req == REQ_VOICE) { if (result == RESULT_OK) onVoiceResult(data); return; }
         if (req != REQ_UNINSTALL) return;
         AppRepo.App app = uninstalling;
         uninstalling = null;

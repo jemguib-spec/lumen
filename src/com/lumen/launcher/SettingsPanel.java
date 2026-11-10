@@ -56,6 +56,9 @@ final class SettingsPanel {
     /** Rouvre les réglages sans redemander le code : on vient d'y être, l'interface a seulement été reconstruite. */
     static void reopen(MainActivity a) { if (reopenPage >= 0) openUnlocked(a); }
 
+    /** Ouvre directement une page (assistant d'installation au premier démarrage). */
+    static void openAt(MainActivity a, int which) { reopenPage = which; openUnlocked(a); }
+
     /** Applique tout de suite un changement de fond (source, heure, rythme). */
     static void applyWallChange(final MainActivity a) {
         for (String t : Library.themesFor(a.prefs.source())) a.online.refreshIfNeeded(t, false);
@@ -79,10 +82,10 @@ final class SettingsPanel {
 
     // numéros repris dans SettingsIndex (recherche) : à garder identiques
     static final int ROOT = 0, FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5,
-            ABOUT = 6, LICENCES = 7, CREDITS = 8, LICENCE_INTER = 9, CITIES = 10, HIDDEN = 11, SCREENSAVER = 12, LICENCE_GPL = 13;
+            ABOUT = 6, LICENCES = 7, CREDITS = 8, LICENCE_INTER = 9, CITIES = 10, HIDDEN = 11, SCREENSAVER = 12, LICENCE_GPL = 13, INSTALL = 14;
     private static final String[] TITLES = {"Réglages", "Fond d'écran", "Accueil et applis", "Mode veille", "Ambiances",
-            "Système", "À propos", "Licences", "Crédits des fonds", "Police Inter", "Villes", "Applis masquées", "Économiseur d'écran", "Licence de Lumen"};
-    private static final int[] PARENT = {ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, SYSTEME, SYSTEME, LICENCES, LICENCES, FOND, ACCUEIL, VEILLE, LICENCES};
+            "Système", "À propos", "Licences", "Crédits des fonds", "Police Inter", "Villes", "Applis masquées", "Économiseur d'écran", "Licence de Lumen", "Installation"};
+    private static final int[] PARENT = {ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, SYSTEME, SYSTEME, LICENCES, LICENCES, FOND, ACCUEIL, VEILLE, LICENCES, SYSTEME};
     private static boolean[] citiesChanged;
     private static int page = ROOT, lastRubric = -1;
     private static LinearLayout openCard;
@@ -567,6 +570,15 @@ final class SettingsPanel {
                 if (a.updater.ready() != null) { a.closeOverlay(false); a.installUpdate(); } else a.updater.check(true);
             }
         }), a.rowLp());
+        final String notesFor = a.updater.ready() != null ? a.updater.readyVersion() : a.updater.currentVersion();
+        final String notes = a.prefs.updateNotes(notesFor);
+        if (!notes.isEmpty()) {
+            col.addView(a.listRow("Nouveautés", new MainActivity.Value() {
+                @Override public String get() { return notesFor; }
+            }, new View.OnClickListener() {
+                @Override public void onClick(View v) { About.showNotes(a, notesFor, notes); }
+            }), a.rowLp());
+        }
         col.addView(a.listRow("Mises à jour automatiques", new MainActivity.Value() {
             @Override public String get() { return a.prefs.autoUpdate() ? "Oui" : "Non"; }
         }, new View.OnClickListener() {
@@ -626,11 +638,15 @@ final class SettingsPanel {
             @Override public void onClick(View v) { CrashLog.clear(a); a.showNotice("Journal effacé"); }
         }), a.rowLp());
                 col.addView(a.section("Informations"));
+                col.addView(rubric(a, card, Glyph.HOME, "Installation", new MainActivity.Value() {
+                    @Override public String get() { return Install.isHome(a) ? "Terminée" : "À finir"; }
+                }, INSTALL), a.rowLp());
                 col.addView(rubric(a, card, Glyph.INFO, "À propos", null, ABOUT), a.rowLp());
                 col.addView(rubric(a, card, Glyph.DOC, "Licences", null, LICENCES), a.rowLp());
                 break;
             }
             case ABOUT: About.fillAbout(a, col); break;
+            case INSTALL: Install.fill(a, card, col); break;
             case LICENCES: About.fillLicences(a, card, col); break;
             case CREDITS: About.fillCredits(a, col); break;
             case LICENCE_INTER: About.fillText(a, col, "fonts/LICENCE-Inter.txt"); break;

@@ -22,7 +22,9 @@ import java.io.OutputStream;
 import java.util.Arrays;
 
 /**
- * Mise à jour automatique depuis le dépôt GitHub de Lumen (dist/latest.json et dist/Lumen.apk).
+ * Mise à jour automatique depuis le dépôt GitHub de Lumen : dist/latest.json décrit la dernière
+ * version et renvoie vers son fichier dans les GitHub Releases (ou dist/Lumen.apk, pont pour les
+ * anciennes versions).
  * Toutes les 6 heures au plus (quand Lumen est à l'écran), ou dès qu'on ouvre Réglages › Système : lecture de latest.json, téléchargement de Lumen.apk
  * si la version est plus récente, puis contrôles : taille et empreinte SHA-256 annoncées, fichier APK,
  * même nom d'appli, version plus récente et MÊME CLÉ DE SIGNATURE que Lumen installé. Android demande ensuite une confirmation
@@ -113,8 +115,9 @@ final class Updater {
         String sha = r.optString("sha256").toLowerCase(java.util.Locale.ROOT);
         long size = r.optLong("size");
         if (!UpdatePolicy.sha256Ok(sha) || size <= 0 || size > UpdatePolicy.MAX_BYTES) return "Mise à jour " + v + " mal décrite";
+        prefs.setUpdateNotes(v, UpdatePolicy.notes(r.optString("notes")));
         File tmp = new File(dir(), "download.apk");
-        Net.download(UpdatePolicy.apkUrl(r.optString("file", null), v) + "?v=" + v, tmp, UpdatePolicy.MAX_BYTES, null);
+        Net.download(UpdatePolicy.apkUrl(r.optString("file", null), v, r.optString("url", null)) + "?v=" + v, tmp, UpdatePolicy.MAX_BYTES, null);
         if (tmp.length() != size || !sha.equals(sha256(tmp))) {
             // juste après une publication, GitHub sert parfois encore l'ancien fichier quelques minutes
             tmp.delete();

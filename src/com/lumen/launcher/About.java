@@ -58,6 +58,29 @@ final class About {
                 : "Désactivées."));
     }
 
+    /** Fenêtre « Nouveautés » d'une version (texte annoncé par latest.json, déjà nettoyé). */
+    static void showNotes(final MainActivity a, String version, String notes) {
+        android.widget.FrameLayout o = a.openOverlay(null);
+        LinearLayout card = a.glassCard(48);
+        card.setPadding(a.u(56), a.u(48), a.u(56), a.u(40));
+        TextView title = a.text(44, "sans-serif-light", 0xF5FFFFFF);
+        title.setText("Nouveautés · Lumen " + version);
+        card.addView(title);
+        TextView body = a.text(26, "sans-serif", 0xD9FFFFFF);
+        body.setText(notes);
+        body.setLineSpacing(0, 1.3f);
+        body.setPadding(0, a.u(24), 0, a.u(8));
+        card.addView(body);
+        LinearLayout ok = a.listRow("OK", null, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.closeOverlay(true); }
+        });
+        LinearLayout.LayoutParams okl = new LinearLayout.LayoutParams(a.u(360), a.u(88));
+        okl.topMargin = a.u(24);
+        card.addView(ok, okl);
+        o.addView(card, new android.widget.FrameLayout.LayoutParams(a.u(900), ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.CENTER));
+        ok.requestFocus();
+    }
+
     // ------------------------------------------------------------------ Licences
 
     static void fillLicences(final MainActivity a, final LinearLayout card, LinearLayout col) {
@@ -141,6 +164,7 @@ final class About {
         if (title != null) s.setPadding(0, a.u(6), 0, 0);
         r.addView(s);
         if (title == null) r.addView(t); // garde l'index 1 pour le texte
+        r.setContentDescription(title == null ? text : title + ". " + text);
         r.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View v, boolean f) {
                 bg.setColor(f ? 0x1FFFFFFF : 0x00FFFFFF);

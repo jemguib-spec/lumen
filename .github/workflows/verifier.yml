@@ -20,16 +20,86 @@ jobs:
           sudo apt-get install -y -qq aapt apksigner zipalign dalvik-exchange android-sdk-platform-23 openjdk-17-jdk-headless zbar-tools imagemagick
       - name: Compilation
         run: ./build.sh   # clé de test créée à la volée : l'APK produit ici n'est pas publié
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Lumen-apk-test
+          path: build/Lumen.apk
+          retention-days: 7
       - name: Tests
         run: tests/run.sh
-      - name: Le fichier de mise à jour correspond bien à dist/Lumen.apk
+      - name: Le fichier de mise à jour est cohérent (version, Release, pont dist/Lumen.apk)
         run: |
           if [ -f dist/latest.json ]; then
-            want=$(python3 -c "import json;print(json.load(open('dist/latest.json'))['sha256'])")
-            got=$(sha256sum dist/Lumen.apk | cut -d' ' -f1)
-            test "$want" = "$got" || { echo "dist/latest.json ne correspond pas à dist/Lumen.apk"; exit 1; }
-            file=$(python3 -c "import json;print(json.load(open('dist/latest.json')).get('file',''))")
-            if [ -n "$file" ]; then
-              test "$(sha256sum "dist/$file" | cut -d' ' -f1)" = "$want" || { echo "dist/$file ne correspond pas à dist/latest.json"; exit 1; }
-            fi
+            python3 - <<'PY'
+          import json, re, subprocess, sys
+          j = json.load(open('dist/latest.json'))
+          v = j['version']
+          assert re.fullmatch(r'\d{1,4}(\.\d{1,4}){0,3}', v), 'version mal formée'
+          assert re.fullmatch(r'[0-9a-f]{64}', j['sha256']), 'sha256 mal formé'
+          manifest = open('AndroidManifest.xml', encoding='utf-8').read()
+          mv = re.search(r'android:versionName="([^"]*)"', manifest).group(1)
+          key = lambda x: [int(p) for p in x.split('.')]
+          assert key(mv) >= key(v), f'latest.json annonce {v}, plus récente que AndroidManifest.xml ({mv})'
+          url = j.get('url')
+          if url:
+              assert url == f'https://github.com/jemguib-spec/lumen/releases/download/v{v}/Lumen-{v}.apk', 'url hors des Releases du dépôt'
+          import os
+          if os.path.exists('dist/Lumen.apk'):
+              got = subprocess.check_output(['sha256sum', 'dist/Lumen.apk']).split()[0].decode()
+              assert got == j['sha256'], 'dist/Lumen.apk ne correspond pas à dist/latest.json'
+              assert os.path.getsize('dist/Lumen.apk') == j['size'], 'taille de dist/Lumen.apk différente'
+          else:
+              assert url, 'sans dist/Lumen.apk, latest.json doit donner une url de Release'
+          f = j.get('file')
+          if f:
+              assert os.path.exists('dist/' + f), f'dist/{f} manquant'
+              assert subprocess.check_output(['sha256sum', 'dist/' + f]).split()[0].decode() == j['sha256'], f'dist/{f} différent'
+          if 'notes' in j:
+              assert len(j['notes']) <= 4000, 'notes trop longues'
+          print('dist/latest.json cohérent :', v, 'Release' if url else 'dist/ seul')
+          PY
           fi
+      - name: CHANGELOG.md décrit la version du manifeste
+        run: |
+          v=$(sed -n 's/.*android:versionName="\([^"]*\)".*/\1/p' AndroidManifest.xml)
+          tools/changelog.sh "$v" >/dev/null || { echo "CHANGELOG.md : il manque la section « ## $v »"; exit 1; }
+
+  # Vrai parcours sur un émulateur Android TV : démarrage, accueil, Applications, Réglages ; captures
+  # d'écran en artefact (« captures »). Non bloquant pour l'instant : l'émulateur de GitHub est parfois
+  # capricieux ; dès qu'il se montre stable, retirer continue-on-error.
+  emulateur-android-tv:
+    needs: compiler-et-tester
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Lumen-apk-test
+          path: build
+      - name: Accélération matérielle (KVM)
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Parcours sur Android TV (API 30)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: android-tv
+          arch: x86
+          profile: tv_1080p
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: tools/smoke.sh build/Lumen.apk captures
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: captures
+          path: captures
+          retention-days: 30

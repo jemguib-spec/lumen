@@ -1,5 +1,8 @@
 # Lumen — installation sur une TV TCL (Google TV / Android TV)
 
+## 0. L'assistant sur la TV
+Dès que Lumen est installé et ouvert sans être l'écran d'accueil, il affiche lui-même cette page (aussi dans Réglages › Système › Installation) : où en est la TV (accueil, accueil Google, historique pour « Reprendre », économiseur), les commandes exactes à taper avec l'adresse IP de la TV déjà remplie, un QR code vers ce guide, et les commandes pour revenir en arrière. Le reste de ce chapitre détaille les mêmes étapes.
+
 ## 1. Préparer la TV
 1. Paramètres > Système > À propos > cliquer 7 fois sur « Build » (ou « Version de l'OS ») → mode développeur activé.
 2. Paramètres > Système > Options pour les développeurs > activer « Débogage USB » (il active aussi le débogage par le réseau sur la plupart des TCL).
@@ -60,6 +63,12 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 ## Police
 - Lumen utilise sa propre police, Inter (licence libre OFL, fichier de licence dans assets/fonts), identique sur toutes les TV quelle que soit la police du fabricant.
 
+## Recherche vocale
+- Touche **Recherche** ou **Assistant** (micro) de la télécommande, ou le bouton micro à côté de la recherche de la page Applications : la fenêtre de reconnaissance vocale d'Android s'ouvre, et ce que tu dis arrive dans la recherche de Lumen (appli, film, réglage, lumière…). Lumen n'écoute rien lui-même : c'est le service vocal de la TV qui reconnaît la phrase, comme pour n'importe quelle appli. Sur certaines TV, Android garde la touche micro pour son propre assistant ; le bouton micro à l'écran marche toujours.
+
+## Lecteur d'écran
+- Avec TalkBack (Paramètres de la TV › Accessibilité), vignettes, boutons et lignes de réglage sont annoncés avec leur nom et leur valeur.
+
 ## Page Applications
 - ▼ depuis l'accueil. Une recherche en haut (sans accents ni majuscules ; Retour efface la recherche), puis des rangées : Favoris, Vidéo et TV, Musique et radio, Jeux, Outils et autres. Les applis se rangent seules (catégorie déclarée par l'appli, sinon reconnue d'après son nom) ; chaque rangée défile horizontalement.
 
@@ -118,6 +127,10 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - Appui long sur l'appli › **Fermer l'appli** : Android arrête ses processus ; elle redémarre proprement à la prochaine ouverture.
 - Depuis le téléphone (onglet TV) : **Fermer l'appli** revient sur l'accueil puis ferme la dernière appli ouverte depuis Lumen.
 - Si c'est Lumen qui se comporte mal : Réglages › Système › **Redémarrer Lumen**.
+
+## Mises à jour
+- Lumen vérifie toutes les 6 heures (et à l'ouverture de Réglages › Système) si une version plus récente existe, la télécharge depuis les GitHub Releases du projet, la vérifie (empreinte, taille, même clé de signature), puis Android demande la confirmation d'installation.
+- **Nouveautés** (Réglages › Système) : ce qui change dans la version installée ou prête à installer.
 - Pendant un téléchargement de photos ou de vidéos, un petit indicateur en bas à droite de l'accueil dit ce qui se passe (« Ambiances · Vidéo 2 sur 4 · 37 % »).
 
 ## Recherche

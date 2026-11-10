@@ -1,0 +1,34 @@
+name: Bogue
+description: Quelque chose ne marche pas comme prévu
+title: "[Bogue] "
+labels: [bogue]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version de Lumen
+      description: Réglages › Système › À propos
+      placeholder: "4.20.0"
+    validations:
+      required: true
+  - type: input
+    id: tv
+    attributes:
+      label: Téléviseur et version d'Android
+      description: Aussi dans À propos (« Téléviseur »)
+      placeholder: "TCL 55C645 · Android 11"
+    validations:
+      required: true
+  - type: textarea
+    id: quoi
+    attributes:
+      label: Ce qui se passe
+      description: Ce que tu as fait, ce que tu attendais, ce qui s'est produit.
+    validations:
+      required: true
+  - type: textarea
+    id: journal
+    attributes:
+      label: Journal d'erreurs
+      description: Réglages › Système › Journal d'erreurs, ou depuis le téléphone Plus › Journal. Retire ce qui te semble personnel.
+      render: text

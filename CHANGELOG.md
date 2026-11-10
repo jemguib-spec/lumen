@@ -1,0 +1,159 @@
+# Nouveautés de Lumen
+
+Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
+
+## 4.20.0
+
+- Assistant d'installation sur la TV (Réglages › Système › Installation, et au premier démarrage si Lumen n'est pas l'écran d'accueil) : état de l'accueil, commandes à copier avec l'adresse de la TV, QR code vers le guide.
+- Recherche vocale : micro de la télécommande (touche Recherche ou Assistant) et bouton micro dans la recherche.
+- Lecteur d'écran (TalkBack) : vignettes, boutons et réglages annoncés.
+- Mises à jour téléchargées depuis les GitHub Releases ; les nouveautés de chaque version se lisent sur la TV.
+- Compilation et tests sur un émulateur Android TV à chaque envoi, avec captures d'écran.
+
+## 4.19.3
+
+_2026-11-09_ — Photos téléchargées même quand la TV a peu de place, et Lumen le dit.
+
+## 4.19.2
+
+_2026-11-09_ — « Qui regarde ? » s'affiche vraiment au démarrage, pastilles monochromes.
+
+## 4.19.1
+
+_2026-11-09_ — « Qui regarde ? » à chaque démarrage, pastilles bien rondes.
+
+## 4.19.0
+
+_2026-11-09_ — « Qui regarde ? » au démarrage de la TV.
+
+## 4.18.2
+
+_2026-11-09_ — Mise à jour fiable juste après une publication.
+
+## 4.18.1
+
+_2026-11-09_ — Bandeau sous le nom de la photo, mises à jour trouvées plus vite.
+
+## 4.18.0
+
+_2026-11-09_ — Profils par personne, secrets du téléphone chiffrés.
+
+## 4.17.2
+
+_2026-11-09_ — Code fiabilisé et allégé.
+
+## 4.17.1
+
+_2026-11-09_ — Page du téléphone, réglages et fonds, icônes.
+
+## 4.17.0
+
+_2026-11-09_ — Échanges téléphone ↔ TV signés.
+
+## 4.16.1
+
+_2026-11-09_ — Session du téléphone liée à son appareil.
+
+## 4.16.0
+
+_2026-11-09_ — Téléphone accepté sur la TV, accès « télécommande seulement ».
+
+## 4.15.1
+
+_2026-11-09_ — Retour sur Lumen après une mise à jour, en appuyant sur Accueil.
+
+## 4.15.0
+
+_2026-11-09_ — Télécommande instantanée (connexion permanente).
+
+## 4.14.1
+
+_2026-11-09_ — Télécommande du téléphone bien plus réactive.
+
+## 4.14.0
+
+_2026-11-09_ — « À l'affiche » plus riche.
+
+## 4.13.2
+
+_2026-11-09_ — Clés TMDB et Pexels saisissables directement sur la TV.
+
+## 4.13.1
+
+_2026-11-09_ — Filtres d'« À l'affiche » qui s'effacent au bord au lieu d'être coupés.
+
+## 4.13.0
+
+_2026-11-09_ — « À l'affiche » haut de gamme.
+
+## 4.12.1
+
+_2026-11-09_ — « À l'affiche » dans le style de Lumen.
+
+## 4.12.0
+
+_2026-11-09_ — « À l'affiche », films et séries du moment.
+
+## 4.11.3
+
+_2026-11-09_ — Redémarrage soigné.
+
+## 4.11.2
+
+_2026-11-09_ — « lumen » entier sur l'écran d'ouverture d'appli et de mise à jour.
+
+## 4.11.1
+
+_2026-11-09_ — Mise à jour sans passer par l'accueil d'origine de la TV.
+
+## 4.11.0
+
+_2026-11-09_ — Recherche intelligente.
+
+## 4.10.3
+
+_2026-11-09_ — Recherche depuis l'accueil et dans les applis.
+
+## 4.10.2
+
+_2026-11-09_ — Téléchargements visibles, fermer une appli qui bloque.
+
+## 4.10.1
+
+_2026-11-09_ — L'appli se charge derrière l'écran lumen.
+
+## 4.10.0
+
+_2026-11-09_ — Animations, recherche universelle, scènes et mode cinéma Home Assistant.
+
+## 4.9.8
+
+_2026-11-09_ — Ouverture de « Toutes les applications » plus douce.
+
+## 4.9.7
+
+_2026-11-09_ — Désinstallation en arrière-plan après la confirmation d'Android.
+
+## 4.9.6
+
+_2026-11-09_ — Fond calme derrière la désinstallation d'Android.
+
+## 4.9.5
+
+_2026-11-09_ — Petits menus redessinés.
+
+## 4.9.4
+
+_2026-11-09_ — Ouverture d'une appli comme le démarrage de Lumen.
+
+## 4.9.3
+
+_2026-11-09_ — Ambiances distinctes du mode veille.
+
+## 4.9.2
+
+_2026-11-09_ — Navigation vers le haut, stockage maîtrisé, ouverture d'appli plus belle.
+
+## 4.9.1
+
+_2026-11-09_ — APK publié (mise à jour automatique des TV).
