@@ -233,14 +233,31 @@ final class Prefs {
     int videoOkCount() { return set("video_ok").size(); }
 
     /** Clé Pexels personnelle (vide = Pexels désactivé). Reste sur la TV, n'est jamais renvoyée au téléphone. */
+    /**
+     * Secret (jeton, clé d'API) chiffré par le coffre (Vault). Une valeur encore en clair, enregistrée
+     * par une version précédente, est chiffrée à la première lecture ; une valeur chiffrée devenue
+     * illisible (clé perdue) est effacée, l'utilisateur la saisira de nouveau.
+     */
+    private String secret(String key) {
+        String stored = sp.getString(key, "");
+        if (stored.isEmpty()) return "";
+        if (!VaultCrypto.sealed(stored)) {
+            if (Vault.available()) sp.edit().putString(key, Vault.seal(stored)).apply();
+            return stored;
+        }
+        String plain = Vault.open(stored);
+        if (plain.isEmpty()) sp.edit().remove(key).apply();
+        return plain;
+    }
+
     /** Home Assistant : adresse, jeton (jamais renvoyé au téléphone, absent de la sauvegarde), appareils choisis. */
     String haUrl() { return sp.getString("ha_url", ""); }
-    String haToken() { return sp.getString("ha_token", ""); }
+    String haToken() { return secret("ha_token"); }
     /** Bouton « Maison » sur l'accueil : masqué par défaut. */
     boolean haButton() { return sp.getBoolean("ha_button", false); }
     void setHaButton(boolean b) { sp.edit().putBoolean("ha_button", b).apply(); }
     boolean haConfigured() { return !haUrl().isEmpty() && !haToken().isEmpty(); }
-    void setHa(String url, String token) { sp.edit().putString("ha_url", url).putString("ha_token", token).apply(); }
+    void setHa(String url, String token) { sp.edit().putString("ha_url", url).putString("ha_token", Vault.seal(token)).apply(); }
     Set<String> haPinned() { return set("ha_pinned"); }
     void setHaPinned(String id, boolean on) { Set<String> s = haPinned(); if (on) s.add(id); else s.remove(id); put("ha_pinned", s); }
 
@@ -270,10 +287,10 @@ final class Prefs {
     }
 
     /** Clé TMDB personnelle (vide = « À l'affiche » désactivé) ; jamais renvoyée au téléphone. */
-    String tmdbKey() { return sp.getString("tmdb_key", ""); }
+    String tmdbKey() { return secret("tmdb_key"); }
     void setTmdbKey(String k) {
         String v = TmdbPolicy.validKey(k) ? k : "";
-        sp.edit().putString("tmdb_key", v).apply();
+        sp.edit().putString("tmdb_key", Vault.seal(v)).apply();
         NetPolicy.setTmdbEnabled(!v.isEmpty());
     }
     /** Filtre de « À l'affiche » : "" = partout, "mine" = mes applis, sinon un paquet. */
@@ -310,10 +327,10 @@ final class Prefs {
     boolean phoneRemoteOnly() { return sp.getBoolean("phone_remote_only", false); }
     void setPhoneRemoteOnly(boolean b) { sp.edit().putBoolean("phone_remote_only", b).apply(); }
 
-    String pexelsKey() { return sp.getString("pexels_key", ""); }
+    String pexelsKey() { return secret("pexels_key"); }
     void setPexelsKey(String k) {
         String v = Pexels.validKey(k) ? k : "";
-        sp.edit().putString("pexels_key", v).apply();
+        sp.edit().putString("pexels_key", Vault.seal(v)).apply();
         NetPolicy.setPexelsEnabled(!v.isEmpty());
     }
 

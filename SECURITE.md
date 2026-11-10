@@ -56,6 +56,11 @@
 - Chiffrement des secrets (`Seal`) : le jeton Home Assistant, les clés TMDB et Pexels, le code PIN et le texte tapé sur le téléphone (y compris en direct) sont chiffrés par la page avec une clé tirée de celle du QR code, qui n'est jamais envoyée. La TV refuse ces envois s'ils arrivent en clair. Le message chiffré est ensuite signé comme le reste : impossible à lire, à modifier ou à rejouer, même en écoutant le Wi-Fi. Le même calcul est vérifié des deux côtés (Java et le vrai code de la page, exécuté par les tests).
 - Ce qui reste lisible sur le réseau local (page en HTTP : un certificat local provoquerait une alerte du navigateur à chaque connexion) : uniquement des informations sans secret, comme la liste des applis, les réglages affichés ou la touche pressée. Personne ne peut pour autant agir à ta place : chaque requête est signée.
 
+## Secrets gardés sur la TV (`Vault`)
+- Le jeton Home Assistant et les clés TMDB et Pexels sont chiffrés (AES-256-GCM) avec une clé créée dans l'Android Keystore de la TV, qui ne sort jamais du matériel quand celui-ci le permet. Une copie des préférences ne contient donc aucun secret lisible. Les valeurs enregistrées par une version précédente sont chiffrées à la première lecture. Sur Android 5, sans Keystore AES, elles restent telles quelles.
+- Le code PIN n'est pas un secret stocké : seul son empreinte PBKDF2 salée est gardée.
+- La sauvegarde (`Backup`) est une liste blanche de réglages : aucun de ces secrets n'y figure.
+
 ## Permissions Android
 - `INTERNET` : photos, vidéos, météo, mises à jour.
 - Aucune autorisation micro : la recherche vocale ouvre la fenêtre de reconnaissance d'Android (`RecognizerIntent`) ; c'est le service vocal de la TV qui écoute et transcrit, Lumen ne reçoit que le texte et ne l'envoie nulle part.
@@ -104,6 +109,7 @@
 | `PhoneServer`, `PhoneAuth`, `HttpRequest`, `QrCode`, `PhonePanel` | Réglages depuis le téléphone : serveur local, appairage, QR code |
 | `PhoneGate` | Contrôles d'accès de la page du téléphone (Host, X-Lumen, session, acceptation, « télécommande seulement », signature, débit, code PIN, connexion permanente) |
 | `Seal` | Chiffrement des secrets envoyés par le téléphone (clé tirée de celle du QR code) |
+| `Vault`, `VaultCrypto` | Coffre des secrets sur la TV : jeton Home Assistant, clés TMDB et Pexels chiffrés en AES-256-GCM avec une clé de l'Android Keystore (Android 6+), jamais en clair dans les préférences |
 | `Profiles`, `ProfilePrefs`, `ProfilePanel`, `WhoPage` | Profils par personne : réglages personnels ou communs, gestion des profils, page « Qui regarde ? » |
 | `Signer`, `WsFrames`, `RateLimit` | Signature HMAC des échanges, connexion permanente (WebSocket), limite de débit |
 | `PhoneRemote`, `RemoteService` | Touches de la télécommande du téléphone, dans Lumen puis dans les autres applis (service d'accessibilité facultatif) |

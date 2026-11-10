@@ -2,6 +2,11 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.20.1
+
+- Les secrets de la TV (jeton Home Assistant, clés TMDB et Pexels) sont maintenant chiffrés avec une clé de l'Android Keystore ; ceux déjà enregistrés sont chiffrés automatiquement.
+- Mise à jour : l'adresse des Releases GitHub refuse les chemins détournés.
+
 ## 4.20.0
 
 - Assistant d'installation sur la TV (Réglages › Système › Installation, et au premier démarrage si Lumen n'est pas l'écran d'accueil) : état de l'accueil, commandes à copier avec l'adresse de la TV, QR code vers le guide.

@@ -253,6 +253,19 @@ public class LumenTests {
         check("nouveautés : caractères de contrôle retirés", "ab".equals(UpdatePolicy.notes("a\u0007b")));
         check("nouveautés : texte long coupé", UpdatePolicy.notes(new String(new char[1000]).replace('\0', 'x')).length() <= UpdatePolicy.NOTES_MAX);
         check("nouveautés : null → vide", UpdatePolicy.notes(null).isEmpty());
+        // coffre des secrets (format AES-GCM ; la clé Keystore est testée sur la TV, ici une clé AES ordinaire)
+        javax.crypto.KeyGenerator kg = javax.crypto.KeyGenerator.getInstance("AES");
+        kg.init(256);
+        javax.crypto.SecretKey vk = kg.generateKey(), vk2 = kg.generateKey();
+        String vsealed = VaultCrypto.seal(vk, "jeton-home-assistant-é");
+        check("coffre : format K1.<nonce>.<chiffré>", vsealed.matches("K1\\.[0-9a-f]{24}\\.[0-9a-f]+"));
+        check("coffre : déchiffré à l'identique", "jeton-home-assistant-é".equals(VaultCrypto.open(vk, vsealed)));
+        check("coffre : deux chiffrements du même secret diffèrent (nonce)", !vsealed.equals(VaultCrypto.seal(vk, "jeton-home-assistant-é")));
+        check("coffre : autre clé refusée", VaultCrypto.open(vk2, vsealed) == null);
+        String tampered = vsealed.substring(0, vsealed.length() - 1) + (vsealed.endsWith("0") ? "1" : "0");
+        check("coffre : secret altéré refusé", VaultCrypto.open(vk, tampered) == null);
+        check("coffre : valeur en clair reconnue comme non chiffrée", !VaultCrypto.sealed("abcd1234") && VaultCrypto.open(vk, "abcd1234") == null);
+        check("coffre : mal formé refusé", VaultCrypto.open(vk, "K1.zz.yy") == null && VaultCrypto.open(vk, null) == null);
         // assistant d'installation
         check("installation : Lumen est l'accueil", InstallPolicy.isHome("com.lumen.launcher"));
         check("installation : choix non fait (android) ≠ accueil", !InstallPolicy.isHome("android") && !InstallPolicy.isHome(null));

@@ -1,7 +1,7 @@
 {
-  "version": "4.20.0",
+  "version": "4.20.1",
   "size": 4019578,
-  "sha256": "61d6a6ec12cdcfaf479b54697b530f30c54fbfd30c7c9e261a353533c443db4e",
-  "file": "Lumen-4.20.0.apk",
-  "notes": "- Assistant d'installation sur la TV (Réglages › Système › Installation, et au premier démarrage si Lumen n'est pas l'écran d'accueil) : état de l'accueil, commandes à copier avec l'adresse de la TV, QR code vers le guide.\n- Recherche vocale : micro de la télécommande (touche Recherche ou Assistant) et bouton micro dans la recherche.\n- Lecteur d'écran (TalkBack) : vignettes, boutons et réglages annoncés.\n- Mises à jour téléchargées depuis les GitHub Releases ; les nouveautés de chaque version se lisent sur la TV.\n- Compilation et tests sur un émulateur Android TV à chaque envoi, avec captures d'écran.\n- Réglages redessinés : interrupteurs pour les réglages à deux états, ◀ ▶ pour les choix multiples, pages courtes avec sous-pages (Paysages Lumen, Avancé, Vignettes et disposition, Reprendre, Lisibilité, Diagnostic), phrases d'aide.\n- Interface plus homogène : couleurs et durées d'animation unifiées, textes secondaires plus lisibles sur un fond clair, titres de section plus grands, bandeau d'accueil mis en avant.\n- États vides qui disent quoi faire (Reprendre, À l'affiche, recherche) ; trois conseils sur les gestes aux premiers démarrages.\n- Page du téléphone : thème clair quand le téléphone est en mode clair.\n- « À l'affiche » a sa page de réglages : clé masquée, plateformes, sélection et type au départ, historique « Pour toi » effaçable, retrait de la clé."
+  "sha256": "b1d0c95b953aad7b88911c6c9da4d1f4407c5a031eda630a0cfceb949c1f4aac",
+  "file": "Lumen-4.20.1.apk",
+  "notes": "- Les secrets de la TV (jeton Home Assistant, clés TMDB et Pexels) sont maintenant chiffrés avec une clé de l'Android Keystore ; ceux déjà enregistrés sont chiffrés automatiquement.\n- Mise à jour : l'adresse des Releases GitHub refuse les chemins détournés."
 }
