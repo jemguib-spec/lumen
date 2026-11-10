@@ -121,7 +121,8 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - Modes : **Populaire**, **Nouveautés**, **Mieux notés**, **Pour toi** (d'après les titres que tu as ouverts depuis « À l'affiche » ; calculé avec TMDB, l'historique reste sur la TV). Et Tout · Films · Séries.
 - OK sur un titre : sa fiche. **Regarder sur** chaque appli qui le propose (icône de l'appli), **Bande-annonce** (YouTube), **Titres similaires**, **Chercher sur la TV**. ◀ ou Retour revient à la liste.
 - La grande image indique aussi sur quelles applis le titre est disponible.
-- Il faut une clé gratuite TMDB (themoviedb.org › Compte › Paramètres › API) : à saisir sur la TV (Réglages › Accueil et applis › Films du moment, ou directement depuis le panneau) ou à coller depuis le téléphone (Plus › Films du moment). Sans clé, Lumen ne contacte jamais ce service.
+- Réglages › Accueil et applis › À l'affiche : clé (affichée masquée), plateformes, sélection et type au départ, historique « Pour toi » (effaçable), retrait de la clé.
+- Il faut une clé gratuite TMDB (themoviedb.org › Compte › Paramètres › API) : à saisir sur la TV (Réglages › Accueil et applis › À l'affiche, ou directement depuis le panneau) ou à coller depuis le téléphone (Plus › Films du moment). Sans clé, Lumen ne contacte jamais ce service.
 
 ## Quand une appli bloque
 - Appui long sur l'appli › **Fermer l'appli** : Android arrête ses processus ; elle redémarre proprement à la prochaine ouverture.

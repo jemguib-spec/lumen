@@ -45,6 +45,13 @@ final class KeyPanel {
                 : "Clé gratuite sur pexels.com/api. Sans clé, Lumen ne contacte jamais Pexels.");
         hint.setPadding(0, a.u(12), 0, a.u(28));
         card.addView(hint);
+        if (has) {
+            String k = tmdb ? a.prefs.tmdbKey() : a.prefs.pexelsKey();
+            TextView cur = a.text(22, "sans-serif-medium", Palette.TEXT_2);
+            cur.setText("Clé actuelle : ····" + k.substring(Math.max(0, k.length() - 4)) + "  ·  elle reste sur la TV, jamais réaffichée en entier");
+            cur.setPadding(0, 0, 0, a.u(20));
+            card.addView(cur);
+        }
 
         final android.widget.EditText in = new android.widget.EditText(a);
         in.setSingleLine(true);

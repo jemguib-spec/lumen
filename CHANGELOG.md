@@ -13,6 +13,7 @@ Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte
 - Interface plus homogène : couleurs et durées d'animation unifiées, textes secondaires plus lisibles sur un fond clair, titres de section plus grands, bandeau d'accueil mis en avant.
 - États vides qui disent quoi faire (Reprendre, À l'affiche, recherche) ; trois conseils sur les gestes aux premiers démarrages.
 - Page du téléphone : thème clair quand le téléphone est en mode clair.
+- « À l'affiche » a sa page de réglages : clé masquée, plateformes, sélection et type au départ, historique « Pour toi » effaçable, retrait de la clé.
 
 ## 4.19.3
 

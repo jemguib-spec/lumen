@@ -83,12 +83,12 @@ final class SettingsPanel {
     // numéros repris dans SettingsIndex (recherche) : à garder identiques
     static final int ROOT = 0, FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5,
             ABOUT = 6, LICENCES = 7, CREDITS = 8, LICENCE_INTER = 9, CITIES = 10, HIDDEN = 11, SCREENSAVER = 12, LICENCE_GPL = 13, INSTALL = 14,
-            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20;
+            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21;
     private static final String[] TITLES = {"Réglages", "Fond d'écran", "Accueil et applis", "Mode veille", "Ambiances",
             "Système", "À propos", "Licences", "Crédits des fonds", "Police Inter", "Villes", "Applis masquées", "Économiseur d'écran", "Licence de Lumen", "Installation",
-            "Paysages Lumen", "Avancé", "Vignettes et disposition", "Reprendre", "Lisibilité", "Diagnostic"};
+            "Paysages Lumen", "Avancé", "Vignettes et disposition", "Reprendre", "Lisibilité", "Diagnostic", "À l'affiche"};
     private static final int[] PARENT = {ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, SYSTEME, SYSTEME, LICENCES, LICENCES, FOND, ACCUEIL, VEILLE, LICENCES, SYSTEME,
-            FOND, FOND, ACCUEIL, ACCUEIL, ACCUEIL, SYSTEME};
+            FOND, FOND, ACCUEIL, ACCUEIL, ACCUEIL, SYSTEME, ACCUEIL};
     private static boolean[] citiesChanged;
     private static int page = ROOT, lastRubric = -1;
     private static LinearLayout openCard;
@@ -431,16 +431,62 @@ final class SettingsPanel {
                         if (on && !a.prefs.haConfigured()) a.showNotice("À relier depuis le téléphone : Plus › Home Assistant");
                     }
                 }), a.rowLp());
-                col.addView(a.listRow("Films du moment (TMDB)", new MainActivity.Value() {
-                    @Override public String get() { return a.prefs.tmdbKey().isEmpty() ? "Ajouter une clé" : "Activé"; }
-                }, new View.OnClickListener() {
-                    @Override public void onClick(View v) { KeyPanel.open(a, KeyPanel.TMDB); }
-                }), a.rowLp());
+                col.addView(rubric(a, card, Glyph.SPARK, "À l'affiche", new MainActivity.Value() {
+                    @Override public String get() { return a.prefs.tmdbKey().isEmpty() ? "Clé à ajouter" : "Activé"; }
+                }, AFFICHE), a.rowLp());
                 col.addView(a.listRow("Applis masquées", new MainActivity.Value() {
                     @Override public String get() { int n = a.prefs.hiddenApps().size(); return n == 0 ? "Aucune" : String.valueOf(n); }
                 }, new View.OnClickListener() {
                     @Override public void onClick(View v) { if (!a.prefs.hiddenApps().isEmpty()) fillHiddenApps(a, card); }
                 }), a.rowLp());
+                break;
+            }
+            case AFFICHE: {
+                final boolean hasKey = !a.prefs.tmdbKey().isEmpty();
+                col.addView(a.listRow("Clé TMDB", new MainActivity.Value() {
+                    @Override public String get() {
+                        String k = a.prefs.tmdbKey();
+                        return k.isEmpty() ? "Ajouter · OK" : "Enregistrée · ····" + k.substring(Math.max(0, k.length() - 4)) + " · OK pour changer";
+                    }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) { KeyPanel.open(a, KeyPanel.TMDB); }
+                }), a.rowLp());
+                if (hasKey) {
+                    col.addView(a.listRow("Ouvrir À l'affiche", null, new View.OnClickListener() {
+                        @Override public void onClick(View v) { a.closeOverlay(false); RecoPanel.open(a); }
+                    }), a.rowLp());
+                    col.addView(a.section("Au départ"));
+                    final String[] filterVals = {"mine", ""};
+                    col.addView(a.ui.choiceRow("Plateformes", new String[]{"Mes applis", "Partout"}, new GlassUi.IntValue() {
+                        @Override public int get() { return "".equals(a.prefs.recoFilter()) ? 1 : 0; }
+                    }, new GlassUi.IntSetter() {
+                        @Override public void set(int i) { a.prefs.setRecoFilter(filterVals[i]); }
+                    }), a.rowLp());
+                    final String[] modeVals = {Tmdb.POPULAR, Tmdb.NEW, Tmdb.TOP, Tmdb.FOR_YOU};
+                    col.addView(a.ui.choiceRow("Sélection", new String[]{"Populaire", "Nouveautés", "Mieux notés", "Pour toi"}, new GlassUi.IntValue() {
+                        @Override public int get() { return Math.max(0, java.util.Arrays.asList(modeVals).indexOf(a.prefs.recoMode())); }
+                    }, new GlassUi.IntSetter() {
+                        @Override public void set(int i) { a.prefs.setRecoMode(modeVals[i]); }
+                    }), a.rowLp());
+                    final String[] typeVals = {"", "movie", "tv"};
+                    col.addView(a.ui.choiceRow("Type", new String[]{"Films et séries", "Films", "Séries"}, new GlassUi.IntValue() {
+                        @Override public int get() { return Math.max(0, java.util.Arrays.asList(typeVals).indexOf(a.prefs.recoType())); }
+                    }, new GlassUi.IntSetter() {
+                        @Override public void set(int i) { a.prefs.setRecoType(typeVals[i]); }
+                    }), a.rowLp());
+                    col.addView(a.section("Vie privée"));
+                    col.addView(a.listRow("Historique « Pour toi »", new MainActivity.Value() {
+                        @Override public String get() { int n = a.prefs.recoHistory().size(); return n == 0 ? "Vide" : n + (n > 1 ? " titres" : " titre") + " · OK pour effacer"; }
+                    }, new View.OnClickListener() {
+                        @Override public void onClick(View v) { a.prefs.clearRecoHistory(); a.showNotice("Historique « Pour toi » effacé"); }
+                    }), a.rowLp());
+                    col.addView(a.iconRow(Glyph.TRASH, "Retirer la clé et désactiver", null, new View.OnClickListener() {
+                        @Override public void onClick(View v) { a.prefs.setTmdbKey(""); a.prefs.clearRecoHistory(); page(a, card, AFFICHE); a.showNotice("À l'affiche désactivé · Lumen ne contacte plus TMDB"); }
+                    }, true), a.rowLp());
+                    hint(a, col, "Les titres ouverts depuis « À l'affiche » nourrissent « Pour toi ». Ils restent sur la TV : seules des listes publiques sont demandées à TMDB, jamais ce que tu regardes.");
+                } else {
+                    hint(a, col, "Films et séries du moment, avec affiches, notes et bandes-annonces, filtrés sur les applis installées. Il faut une clé gratuite : themoviedb.org › Compte › Paramètres › API. Sans clé, Lumen ne contacte jamais TMDB.");
+                }
                 break;
             }
             case VIGNETTES: {

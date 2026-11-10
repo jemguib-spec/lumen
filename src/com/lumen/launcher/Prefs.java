@@ -296,6 +296,8 @@ final class Prefs {
         sp.edit().putString("reco_hist", TextUtils.join(",", l)).apply();
     }
 
+    void clearRecoHistory() { sp.edit().remove("reco_hist").apply(); }
+
     /** Type dans « À l'affiche » : "" = films et séries, "movie" ou "tv". */
     String recoType() { return sp.getString("reco_type", ""); }
     void setRecoType(String t) { sp.edit().putString("reco_type", t).apply(); }

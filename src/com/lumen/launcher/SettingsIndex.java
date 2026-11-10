@@ -16,7 +16,7 @@ final class SettingsIndex {
     static final int PHONE = -2, STORAGE = -3, HOME = -4, RECO = -5;
     /** Rubriques (mêmes numéros que SettingsPanel). */
     static final int FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5, ABOUT = 6, INSTALL = 14,
-            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20;
+            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21;
 
     static final class Entry {
         final String label, where, keywords;
@@ -47,6 +47,7 @@ final class SettingsIndex {
             new Entry("Sons de l'interface", A, LISIBILITE, "sons bruit clic"),
             new Entry("Code PIN", S, SYSTEME, "code pin verrou enfant parental"),
             new Entry("À propos et licences", S, ABOUT, "a propos version licences"),
+            new Entry("Réglages d'À l'affiche", A, AFFICHE, "affiche tmdb films series plateformes selection type historique pour toi"),
             new Entry("Reprendre au-dessus des applis", A, REPRENDRE, "reprendre episodes en cours affiches historique"),
             new Entry("Paysages Lumen animés et météo", F, PAYSAGES, "paysages animes meteo pluie neige saison decors"),
             new Entry("Qualité et espace des vidéos", F, FOND_AVANCE, "qualite 4k hd espace go videos theme villes telecharger"),
@@ -56,7 +57,7 @@ final class SettingsIndex {
             new Entry("Réglages depuis le téléphone", "Réglages", PHONE, "telephone qr code smartphone telecommande"),
             new Entry("Maison", "Home Assistant", HOME, "maison home assistant lumieres scenes volets"),
             new Entry("À l'affiche", "Films et séries du moment", RECO, "affiche films series tendances populaire recommandations nouveautes top"),
-            new Entry("Clé TMDB (films du moment)", A, ACCUEIL, "cle tmdb api themoviedb films moment"),
+            new Entry("Clé TMDB (films du moment)", A, AFFICHE, "cle tmdb api themoviedb films moment"),
             new Entry("Clé Pexels", F, FOND_AVANCE, "cle pexels api videos"),
     };
 
