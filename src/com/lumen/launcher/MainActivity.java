@@ -771,12 +771,14 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
             // Geste gauche depuis la première vignette d'une ligne → panneau « Reprendre »
             if (!appsOpen && code == KeyEvent.KEYCODE_DPAD_LEFT && f instanceof Tile && isInside(f, rowsBox)) {
                 View next = f.focusSearch(View.FOCUS_LEFT);
-                if (next == null || !isInside(next, rowsBox)) { ResumePanel.openResume(MainActivity.this); return true; }
+                // au bout de la ligne : une carte de « Reprendre » ou une scène, plus haut, ne compte pas comme voisine
+                if (next == null || !(f.getParent() instanceof View) || !isInside(next, (View) f.getParent())) { ResumePanel.openResume(MainActivity.this); return true; }
             }
             // Geste droite depuis la dernière vignette d'une ligne → « À l'affiche »
             if (!appsOpen && code == KeyEvent.KEYCODE_DPAD_RIGHT && f instanceof Tile && isInside(f, rowsBox)) {
                 View next = f.focusSearch(View.FOCUS_RIGHT);
-                if (next == null || !isInside(next, rowsBox)) { RecoPanel.open(MainActivity.this); return true; }
+                // au bout de la ligne : une carte de « Reprendre » ou une scène, plus haut, ne compte pas comme voisine
+                if (next == null || !(f.getParent() instanceof View) || !isInside(next, (View) f.getParent())) { RecoPanel.open(MainActivity.this); return true; }
             }
             // Geste haut depuis la première ligne des applis → accueil
             if (appsOpen && code == KeyEvent.KEYCODE_DPAD_UP && f != null) {

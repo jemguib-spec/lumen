@@ -5,6 +5,7 @@ Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte
 ## 4.24.1
 
 - Fond immersif : avec plusieurs films ou épisodes en cours dans une appli, le fond suit maintenant celui qui est sélectionné dans « Reprendre » (avant, il restait sur le premier).
+- ▶ sur la dernière appli d'une ligne ouvre bien « À l'affiche » (et ◀ sur la première, « Reprendre »), même quand les cartes « Reprendre » de l'appli sont affichées au-dessus : la sélection ne part plus dans ces cartes.
 
 ## 4.24.0
 
