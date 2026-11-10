@@ -66,15 +66,15 @@ final class AppLauncher {
         z.setElevation(a.u(60));
         a.root.addView(z, MainActivity.match());
         DecelerateInterpolator di = new DecelerateInterpolator(1.6f);
-        z.animate().alpha(1f).setDuration(280).setInterpolator(di).start();
+        z.animate().alpha(1f).setDuration(Motion.FAST).setInterpolator(di).start();
         word.setAlpha(0f);
         word.setScaleX(0.96f);
         word.setScaleY(0.96f);
-        word.animate().alpha(1f).scaleX(1f).scaleY(1f).setStartDelay(120).setDuration(600).setInterpolator(di).start();
+        word.animate().alpha(1f).scaleX(1f).scaleY(1f).setStartDelay(40).setDuration(Motion.MEDIUM).setInterpolator(di).start();
         name.setAlpha(0f);
         name.setTranslationY(a.u(8));
-        name.animate().alpha(1f).translationY(0).setStartDelay(320).setDuration(500).setInterpolator(di).start();
-        if (from != null) from.animate().scaleX(1.12f).scaleY(1.12f).alpha(0f).setDuration(280).setInterpolator(di).start();
+        name.animate().alpha(1f).translationY(0).setStartDelay(100).setDuration(Motion.MEDIUM).setInterpolator(di).start();
+        if (from != null) from.animate().scaleX(1.12f).scaleY(1.12f).alpha(0f).setDuration(Motion.FAST).setInterpolator(di).start();
         final Tile src = from;
         a.zoomView = z;
         a.h.postDelayed(new Runnable() {
@@ -83,7 +83,7 @@ final class AppLauncher {
                 a.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                 if (src != null) src.restoreAfterLaunch(); // la vignette reprend sa place pour le retour
             }
-        }, 900);
+        }, 400); // l'écran « lumen » a juste le temps d'apparaître : l'appli ne doit pas attendre
         // filet de sécurité si l'appli ne s'ouvre pas
         a.h.postDelayed(new Runnable() {
             @Override public void run() {

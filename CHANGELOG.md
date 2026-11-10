@@ -4,6 +4,7 @@ Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte
 
 ## Prochaine version
 
+- Les applis s'ouvrent plus vite : l'écran « lumen » ne retient plus le lancement que 0,4 s (0,9 s avant).
 - Sélection fondue : une vignette ou une ligne de panneau qui prend le focus passe au blanc en douceur (fond, texte, pictogramme, interrupteur) au lieu de basculer d'un coup.
 - Verre éclairé d'en haut : arête supérieure lumineuse, flancs discrets, sur les vignettes, les boutons et les panneaux.
 - Défilement plus fluide : le verre ne crée plus d'objet à chaque image.
