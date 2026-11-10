@@ -66,7 +66,8 @@ final class NetPolicy {
      * (« /jemguib-spec/lumen/releases/download/… ») : rien d'autre du site.
      */
     static boolean releaseDownload(String host, String path) {
-        return "github.com".equals(host) && path != null && path.startsWith(RELEASE_PATH) && path.length() > RELEASE_PATH.length();
+        return "github.com".equals(host) && path != null && path.startsWith(RELEASE_PATH) && path.length() > RELEASE_PATH.length()
+                && !path.contains("..") && !path.contains("//") && !path.contains("%");
     }
     static final String RELEASE_PATH = "/jemguib-spec/lumen/releases/download/";
 

@@ -241,6 +241,8 @@ public class LumenTests {
         check("github.com : page du dépôt refusée", !NetPolicy.allowed("https://github.com/jemguib-spec/lumen"));
         check("github.com : autre dépôt refusé", !NetPolicy.allowed("https://github.com/autre/depot/releases/download/v1/x.apk"));
         check("github.com : dossier des Releases sans fichier refusé", !NetPolicy.allowed("https://github.com/jemguib-spec/lumen/releases/download/"));
+        check("github.com : remontée « .. » dans le chemin refusée", !NetPolicy.allowed("https://github.com/jemguib-spec/lumen/releases/download/../../autre/x.apk"));
+        check("github.com : chemin encodé refusé", !NetPolicy.allowed("https://github.com/jemguib-spec/lumen/releases/download/%2e%2e/x.apk"));
         check("github.com : sous-domaine piégé refusé", !NetPolicy.allowed("https://github.com.evil.net/jemguib-spec/lumen/releases/download/v1/x.apk"));
         check("latest.json : url de la Release de cette version utilisée", rel.equals(UpdatePolicy.apkUrl(null, "4.20.0", rel)));
         check("latest.json : url d'une autre version ignorée (dist/Lumen.apk)", UpdatePolicy.APK.equals(UpdatePolicy.apkUrl(null, "4.20.0", UpdatePolicy.releaseUrl("4.19.0"))));
