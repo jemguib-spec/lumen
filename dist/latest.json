@@ -1,7 +1,7 @@
 {
-  "version": "4.22.0",
+  "version": "4.23.0",
   "size": 4048384,
-  "sha256": "693858db81caf3685fc41d3cd8a79a372846f3e017b6e23879ff0743318ef238",
-  "file": "Lumen-4.22.0.apk",
-  "notes": "- Fond immersif : reste une seconde sur une appli qui a un épisode en cours, le paysage laisse place à l'image de cet épisode (adoucie, assombrie), avec son titre en haut à gauche ; le paysage revient dès que tu bouges. Réglages › Accueil et applis › Reprendre › Fond de l'épisode en cours.\n- Couleurs accordées au fond : la sélection et les interrupteurs prennent une nuance du fond affiché (blanc chaud à l'aube, bleuté la nuit). Réglages › Accueil et applis › Vignettes et disposition › Couleurs accordées au fond.\n- Les applis s'ouvrent plus vite : l'écran « lumen » ne retient plus le lancement que 0,4 s (0,9 s avant).\n- Sélection fondue : une vignette ou une ligne de panneau qui prend le focus passe au blanc en douceur (fond, texte, pictogramme, interrupteur) au lieu de basculer d'un coup.\n- Verre éclairé d'en haut : arête supérieure lumineuse, flancs discrets, sur les vignettes, les boutons et les panneaux.\n- Défilement plus fluide : le verre ne crée plus d'objet à chaque image."
+  "sha256": "c64292713473ed31a16e9f589b1a24d463a42c085ce656a566381902ed712eed",
+  "file": "Lumen-4.23.0.apk",
+  "notes": "- Nouvel identifiant de l'appli : fr.lumen.accueil (au lieu de com.lumen.launcher), enregistré auprès de Google pour la vérification des développeurs Android. Pour Android, c'est une nouvelle appli : à installer une fois à la main, puis désinstaller l'ancien Lumen (voir INSTALLATION.md, section 5)."
 }
