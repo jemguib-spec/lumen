@@ -2,7 +2,7 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
-## Prochaine version
+## 4.22.0
 
 - Fond immersif : reste une seconde sur une appli qui a un épisode en cours, le paysage laisse place à l'image de cet épisode (adoucie, assombrie), avec son titre en haut à gauche ; le paysage revient dès que tu bouges. Réglages › Accueil et applis › Reprendre › Fond de l'épisode en cours.
 - Couleurs accordées au fond : la sélection et les interrupteurs prennent une nuance du fond affiché (blanc chaud à l'aube, bleuté la nuit). Réglages › Accueil et applis › Vignettes et disposition › Couleurs accordées au fond.
