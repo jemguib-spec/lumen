@@ -22,6 +22,15 @@ final class Palette {
     /** Accent (interrupteur allumé), même vert que la page du téléphone ; actions qui retirent. */
     static final int ACCENT = 0xFF7EE2A8, DANGER = 0xFFFF8A80, DANGER_SELECTED = 0xFFFF6B5E;
 
+    /** Couleur intermédiaire entre a (t = 0) et b (t = 1), transparence comprise : pour les fondus. */
+    static int mix(int a, int b, float t) {
+        if (t <= 0f) return a;
+        if (t >= 1f) return b;
+        int aa = Math.round(((a >>> 24) & 255) * (1 - t) + ((b >>> 24) & 255) * t), rr = Math.round(((a >> 16) & 255) * (1 - t) + ((b >> 16) & 255) * t),
+                gg = Math.round(((a >> 8) & 255) * (1 - t) + ((b >> 8) & 255) * t), bb = Math.round((a & 255) * (1 - t) + (b & 255) * t);
+        return (aa << 24) | (rr << 16) | (gg << 8) | bb;
+    }
+
     /** Contraste renforcé : secondaires presque opaques, panneaux pleins, voile plus sombre. */
     static void apply(boolean highContrast) {
         TEXT_2 = highContrast ? 0xF2FFFFFF : 0xA6FFFFFF;

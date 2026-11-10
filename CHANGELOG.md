@@ -2,6 +2,12 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## Prochaine version
+
+- Sélection fondue : une vignette ou une ligne de panneau qui prend le focus passe au blanc en douceur (fond, texte, pictogramme, interrupteur) au lieu de basculer d'un coup.
+- Verre éclairé d'en haut : arête supérieure lumineuse, flancs discrets, sur les vignettes, les boutons et les panneaux.
+- Défilement plus fluide : le verre ne crée plus d'objet à chaque image.
+
 ## 4.21.1
 
 - La page du téléphone suit la langue de la TV : anglais complet, en plus du français.

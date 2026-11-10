@@ -158,12 +158,10 @@ final class SettingsPanel {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(a.u(46), a.u(46));
         lp.rightMargin = a.u(22);
         row.addView(chip, 0, lp);
-        final View.OnFocusChangeListener old = row.getOnFocusChangeListener();
-        row.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override public void onFocusChange(View v, boolean f) {
-                if (old != null) old.onFocusChange(v, f);
-                g.setColor(f ? Palette.ON_SELECTED : 0xE6FFFFFF);
-                bg.setColor(f ? 0x14000000 : 0x24FFFFFF);
+        if (row instanceof GlassUi.Row) ((GlassUi.Row) row).follow(new GlassUi.Row.Tint() {
+            @Override public void at(float t) {
+                g.setColor(Palette.mix(0xE6FFFFFF, Palette.ON_SELECTED, t));
+                bg.setColor(Palette.mix(0x24FFFFFF, 0x14000000, t));
             }
         });
         return row;

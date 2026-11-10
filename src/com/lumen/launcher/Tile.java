@@ -269,17 +269,36 @@ final class Tile extends FrameLayout {
             ring.setStroke((int) dp(getContext(), 2.5f), Color.WHITE);
             card.setForeground(f ? ring : null);
         }
-        if (glass != null) {
-            glass.setSolid(f);
-            if (label != null) label.setTextColor(f ? focusText : Palette.TEXT);
-            if (glyph != null) glyph.setColor(f ? Palette.ON_SELECTED : Palette.TEXT);
-        }
+        if (glass != null) fadeSelection(f);
         if (f) {
             sheen();
             Sounds snd = Sounds.peek();
             if (snd != null) snd.tick();
         }
         if (focusListener != null) focusListener.onTileFocus(this, f);
+    }
+
+    private float selection;                 // 0 = verre, 1 = vignette blanche
+    private android.animation.ValueAnimator selectionAnim;
+
+    /**
+     * Le verre devient blanc (et le nom ou le pictogramme sombre) en fondu court, au lieu de
+     * basculer d'un coup : la sélection glisse d'une vignette à l'autre.
+     */
+    private void fadeSelection(boolean f) {
+        if (selectionAnim != null) selectionAnim.cancel();
+        selectionAnim = android.animation.ValueAnimator.ofFloat(selection, f ? 1f : 0f);
+        selectionAnim.setDuration(Motion.FOCUS);
+        selectionAnim.setInterpolator(Motion.EASE);
+        selectionAnim.addUpdateListener(new android.animation.ValueAnimator.AnimatorUpdateListener() {
+            @Override public void onAnimationUpdate(android.animation.ValueAnimator va) {
+                selection = (Float) va.getAnimatedValue();
+                glass.setSolidLevel(selection);
+                if (label != null) label.setTextColor(Palette.mix(Palette.TEXT, focusText, selection));
+                if (glyph != null) glyph.setColor(Palette.mix(Palette.TEXT, Palette.ON_SELECTED, selection));
+            }
+        });
+        selectionAnim.start();
     }
 
     /** Reflet lumineux qui balaie la vignette une fois quand elle reçoit le focus. */

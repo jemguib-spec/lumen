@@ -6,13 +6,14 @@ import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 
 /**
- * Une seule échelle de mouvement pour toute l'interface : rapide (sélection, interrupteurs),
+ * Une seule échelle de mouvement pour toute l'interface : sélection (le fondu d'une ligne ou d'une
+ * vignette qui prend le focus, assez court pour suivre une touche maintenue), rapide (interrupteurs),
  * moyenne (panneaux, pages), lente (fonds, apparitions). Et une seule courbe. Les animations des
  * paysages et des vidéos ont leur propre rythme, lié au contenu.
  */
 final class Motion {
     private Motion() { }
 
-    static final int FAST = 180, MEDIUM = 320, SLOW = 700;
+    static final int FOCUS = 120, FAST = 180, MEDIUM = 320, SLOW = 700;
     static final Interpolator EASE = new DecelerateInterpolator(1.8f);
 }

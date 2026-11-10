@@ -94,8 +94,11 @@ final class Glass {
         private final RectF r = new RectF();
         private float radius;
         private int veilColor;
-        private boolean solid;
+        private float solidLevel;                // 0 = verre, 1 = surface pleine (sélection)
         private int solidColor = 0xFFF5F5F7;
+        private int rimColor = 0x29FFFFFF;
+        private final android.graphics.Path clip = new android.graphics.Path();
+        private float shapeW = -1, shapeH = -1, shapeR = -1;
 
         Surface(View host, float radius, int veilColor) {
             this.host = host;
@@ -104,27 +107,54 @@ final class Glass {
             veil.setColor(veilColor);
             rim.setStyle(Paint.Style.STROKE);
             rim.setStrokeWidth(Math.max(1f, Tile.dp(host.getContext(), 0.75f)));
-            rim.setColor(0x29FFFFFF);
         }
 
-        void setSolid(boolean s) { solid = s; invalidateSelf(); }
+        void setSolid(boolean s) { setSolidLevel(s ? 1f : 0f); }
+
+        /** Fondu entre le verre (0) et la surface pleine de la sélection (1). */
+        void setSolidLevel(float level) {
+            level = Math.max(0f, Math.min(1f, level));
+            if (level == solidLevel) return;
+            solidLevel = level;
+            invalidateSelf();
+        }
 
         /** Teinte le verre avec une couleur (opaque) : voile coloré à ~55 %, filet plus lumineux. */
         void setGlassTint(int color) {
             veilColor = (color & 0x00FFFFFF) | 0x8C000000;
-            rim.setColor(0x40FFFFFF);
+            rimColor = 0x40FFFFFF;
+            shapeW = -1; // filet à refaire
             invalidateSelf();
         }
         void setRadius(float rad) { radius = rad; invalidateSelf(); }
 
+        /**
+         * Contour d'écrêtage et filet, refaits seulement quand la taille ou le rayon changent (rien
+         * n'est alloué pendant un défilement). Le filet est éclairé d'en haut, comme une vraie plaque
+         * de verre : arête supérieure lumineuse, flancs discrets, léger retour de lumière en bas.
+         */
+        private void shape(Rect b) {
+            if (b.width() == shapeW && b.height() == shapeH && radius == shapeR) return;
+            shapeW = b.width(); shapeH = b.height(); shapeR = radius;
+            clip.rewind();
+            r.set(b);
+            clip.addRoundRect(r, radius, radius, android.graphics.Path.Direction.CW);
+            int a = rimColor >>> 24, rgb = rimColor & 0x00FFFFFF;
+            rim.setShader(new android.graphics.LinearGradient(0, b.top, 0, b.bottom,
+                    new int[]{(Math.min(255, a * 17 / 10) << 24) | rgb, ((a * 6 / 10) << 24) | rgb, ((a * 9 / 10) << 24) | rgb},
+                    new float[]{0f, 0.55f, 1f}, android.graphics.Shader.TileMode.CLAMP));
+        }
+
         @Override public void draw(Canvas c) {
             Rect b = getBounds();
             r.set(b);
-            if (solid) {
+            if (solidLevel >= 1f) {
                 veil.setColor(solidColor);
                 c.drawRoundRect(r, radius, radius, veil);
                 return;
             }
+            shape(b);
+            r.set(b);
             Bitmap bd = backdrop;
             if (bd != null && !bd.isRecycled() && host.getWidth() > 0) {
                 host.getLocationOnScreen(loc);
@@ -137,9 +167,7 @@ final class Glass {
                 float cr = Math.max(cl + 1, Math.min(sr, bd.getWidth())), cb = Math.max(ct + 1, Math.min(sb, bd.getHeight()));
                 src.set((int) cl, (int) ct, (int) Math.ceil(cr), (int) Math.ceil(cb));
                 int save = c.save();
-                android.graphics.Path p = new android.graphics.Path();
-                p.addRoundRect(r, radius, radius, android.graphics.Path.Direction.CW);
-                c.clipPath(p);
+                c.clipPath(clip);
                 c.drawBitmap(bd, src, b, bmp); // étire la portion valide sur toute la vue
                 c.restoreToCount(save);
             }
@@ -148,6 +176,11 @@ final class Glass {
             float inset = rim.getStrokeWidth() / 2f;
             r.inset(inset, inset);
             c.drawRoundRect(r, radius, radius, rim);
+            if (solidLevel > 0f) { // la sélection arrive en fondu par-dessus le verre
+                r.set(b);
+                veil.setColor(Palette.mix(solidColor & 0x00FFFFFF, solidColor, solidLevel));
+                c.drawRoundRect(r, radius, radius, veil);
+            }
         }
 
         @Override public void setAlpha(int a) { }

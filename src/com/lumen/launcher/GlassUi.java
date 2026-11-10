@@ -35,8 +35,45 @@ final class GlassUi {
         return card;
     }
 
-    LinearLayout listRow(String label, final MainActivity.Value value, final View.OnClickListener click) {
-        final LinearLayout r = new LinearLayout(a);
+    /**
+     * Ligne de panneau dont la sélection se fond (fond, textes, pictogrammes) au lieu de basculer
+     * d'un coup. Chaque élément de la ligne suit le même niveau : 0 au repos, 1 sélectionnée.
+     */
+    static final class Row extends LinearLayout {
+        interface Tint { void at(float level); }
+
+        private final ArrayList<Tint> tints = new ArrayList<>();
+        private float level;
+        private android.animation.ValueAnimator anim;
+
+        Row(android.content.Context c) { super(c); }
+
+        /** Ajoute un élément qui suit la sélection ; il prend tout de suite l'état courant. */
+        void follow(Tint t) { tints.add(t); t.at(level); }
+
+        void select(boolean on) {
+            if (anim != null) anim.cancel();
+            anim = android.animation.ValueAnimator.ofFloat(level, on ? 1f : 0f);
+            anim.setDuration(Motion.FOCUS);
+            anim.setInterpolator(Motion.EASE);
+            anim.addUpdateListener(new android.animation.ValueAnimator.AnimatorUpdateListener() {
+                @Override public void onAnimationUpdate(android.animation.ValueAnimator va) {
+                    level = (Float) va.getAnimatedValue();
+                    for (int i = 0; i < tints.size(); i++) tints.get(i).at(level);
+                }
+            });
+            anim.start();
+        }
+    }
+
+    Row listRow(String label, MainActivity.Value value, View.OnClickListener click) {
+        return row(label, value, click, Palette.TEXT, Palette.SELECTED, Palette.ON_SELECTED);
+    }
+
+    /** restText : couleur du texte au repos ; selBg et selText : fond et texte de la ligne sélectionnée. */
+    private Row row(final String label, final MainActivity.Value value, final View.OnClickListener click,
+                    final int restText, final int selBg, final int selText) {
+        final Row r = new Row(a);
         r.setOrientation(LinearLayout.HORIZONTAL);
         r.setGravity(Gravity.CENTER_VERTICAL);
         r.setFocusable(true);
@@ -66,12 +103,17 @@ final class GlassUi {
         LinearLayout.LayoutParams vl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         vl.leftMargin = a.u(20);
         r.addView(v, vl);
+        r.follow(new Row.Tint() {
+            @Override public void at(float t) {
+                bg.setColor(Palette.mix(selBg & 0x00FFFFFF, selBg, t));
+                l.setTextColor(Palette.mix(restText, selText, t));
+                v.setTextColor(Palette.mix(Palette.TEXT_2, Palette.ON_SELECTED_2, t));
+            }
+        });
         r.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View view, boolean f) {
                 if (f) Sounds.get(a).tick();
-                bg.setColor(f ? Palette.SELECTED : 0x00FFFFFF);
-                l.setTextColor(f ? Palette.ON_SELECTED : Palette.TEXT);
-                v.setTextColor(f ? Palette.ON_SELECTED_2 : Palette.TEXT_2);
+                r.select(f);
                 // ni agrandissement ni ombre : dans un panneau arrondi, ils seraient coupés aux bords
             }
         });
@@ -94,7 +136,7 @@ final class GlassUi {
      * sans lire « Oui / Non »). OK bascule ; l'appelant change le réglage dans click.
      */
     LinearLayout toggleRow(String label, final Bool get, final View.OnClickListener click) {
-        final LinearLayout r = listRow(label, null, click);
+        final Row r = listRow(label, null, click);
         final Toggle t = new Toggle(a);
         t.setOn(get.get(), false);
         LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(a.u(72), a.u(40));
@@ -104,10 +146,7 @@ final class GlassUi {
         a.rowRefreshers.add(new Runnable() {
             @Override public void run() { t.setOn(get.get(), true); r.setContentDescription(r.getChildAt(0) == null ? "" : ((TextView) r.getChildAt(0)).getText() + ", " + (get.get() ? "activé" : "désactivé")); }
         });
-        final View.OnFocusChangeListener base = r.getOnFocusChangeListener();
-        r.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override public void onFocusChange(View v, boolean f) { if (base != null) base.onFocusChange(v, f); t.setFocused(f); }
-        });
+        r.follow(new Row.Tint() { @Override public void at(float level) { t.setFocusLevel(level); } });
         return r;
     }
 
@@ -142,12 +181,13 @@ final class GlassUi {
     static final class Toggle extends View {
         private final android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
         private float pos;          // 0 = éteint, 1 = allumé
-        private boolean on, focused;
+        private boolean on;
+        private float focus;        // 0 = ligne au repos, 1 = ligne sélectionnée (fond clair)
         private android.animation.ValueAnimator anim;
 
         Toggle(android.content.Context c) { super(c); }
 
-        void setFocused(boolean f) { focused = f; invalidate(); }
+        void setFocusLevel(float f) { focus = f; invalidate(); }
 
         void setOn(boolean value, boolean animate) {
             if (on == value && (animate || pos == (value ? 1f : 0f))) return;
@@ -165,18 +205,14 @@ final class GlassUi {
 
         @Override protected void onDraw(android.graphics.Canvas c) {
             float w = getWidth(), h = getHeight(), r = h / 2f;
-            int offTrack = focused ? 0x26000000 : 0x38FFFFFF;
-            p.setColor(blend(offTrack, Palette.ACCENT, pos));
+            // rail : clair sur le verre, sombre sur la ligne sélectionnée ; vert d'accent quand il est allumé
+            int offTrack = focus <= 0f ? 0x38FFFFFF : focus >= 1f ? 0x26000000 : Palette.mix(0x38FFFFFF, 0x26000000, focus);
+            p.setColor(Palette.mix(offTrack, Palette.ACCENT, pos));
             c.drawRoundRect(0, 0, w, h, r, r, p);
             float kr = r - h * 0.14f, kx = r + pos * (w - 2 * r);
-            p.setColor(focused && pos < 0.5f ? Palette.ON_SELECTED : 0xFFFFFFFF);
+            // bouton : blanc, sauf éteint sur une ligne sélectionnée (sombre, pour rester visible)
+            p.setColor(pos < 0.5f ? Palette.mix(0xFFFFFFFF, Palette.ON_SELECTED, focus) : 0xFFFFFFFF);
             c.drawCircle(kx, r, kr, p);
-        }
-
-        private static int blend(int a, int b, float t) {
-            int aa = (int) (((a >>> 24) & 255) * (1 - t) + ((b >>> 24) & 255) * t), rr = (int) (((a >> 16) & 255) * (1 - t) + ((b >> 16) & 255) * t),
-                    gg = (int) (((a >> 8) & 255) * (1 - t) + ((b >> 8) & 255) * t), bb = (int) ((a & 255) * (1 - t) + (b & 255) * t);
-            return (aa << 24) | (rr << 16) | (gg << 8) | bb;
         }
     }
 
@@ -185,24 +221,16 @@ final class GlassUi {
      * (texte rouge doux, fond rouge à la sélection).
      */
     LinearLayout iconRow(int glyphType, String label, MainActivity.Value value, View.OnClickListener click, final boolean danger) {
-        final LinearLayout r = listRow(label, value, click);
+        final Row r = danger ? row(label, value, click, Palette.DANGER, Palette.DANGER_SELECTED, 0xFFFFFFFF) : listRow(label, value, click);
         final Glyph g = new Glyph(glyphType, danger ? Palette.DANGER : Palette.TEXT);
         ImageView iv = new ImageView(a);
         iv.setImageDrawable(g);
         LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(a.u(34), a.u(34));
         il.rightMargin = a.u(22);
         r.addView(iv, 0, il);
-        final TextView l = (TextView) r.getChildAt(1);
-        if (danger) l.setTextColor(Palette.DANGER);
-        final View.OnFocusChangeListener base = r.getOnFocusChangeListener();
-        r.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override public void onFocusChange(View v, boolean f) {
-                if (base != null) base.onFocusChange(v, f);
-                if (danger) {
-                    ((GradientDrawable) r.getBackground()).setColor(f ? Palette.DANGER_SELECTED : 0x00FFFFFF);
-                    l.setTextColor(f ? 0xFFFFFFFF : Palette.DANGER);
-                    g.setColor(f ? 0xFFFFFFFF : Palette.DANGER);
-                } else g.setColor(f ? Palette.ON_SELECTED : Palette.TEXT);
+        r.follow(new Row.Tint() {
+            @Override public void at(float t) {
+                g.setColor(danger ? Palette.mix(Palette.DANGER, 0xFFFFFFFF, t) : Palette.mix(Palette.TEXT, Palette.ON_SELECTED, t));
             }
         });
         return r;
