@@ -2,6 +2,10 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.23.0
+
+- Nouvel identifiant de l'appli : fr.lumen.accueil (au lieu de com.lumen.launcher), enregistré auprès de Google pour la vérification des développeurs Android. Pour Android, c'est une nouvelle appli : à installer une fois à la main, puis désinstaller l'ancien Lumen (voir INSTALLATION.md, section 5).
+
 ## 4.22.0
 
 - Fond immersif : reste une seconde sur une appli qui a un épisode en cours, le paysage laisse place à l'image de cet épisode (adoucie, assombrie), avec son titre en haut à gauche ; le paysage revient dès que tu bouges. Réglages › Accueil et applis › Reprendre › Fond de l'épisode en cours.
