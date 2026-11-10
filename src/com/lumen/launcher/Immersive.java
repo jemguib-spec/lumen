@@ -13,18 +13,21 @@ import java.util.concurrent.Executors;
 /**
  * Fond immersif : quand la sélection s'arrête une seconde sur une appli de l'accueil qui a un film
  * ou un épisode en cours, le paysage laisse place à l'image de ce programme, adoucie et assombrie ;
- * il revient dès que la sélection passe ailleurs. Mêmes images et mêmes règles que « Reprendre »
+ * il revient dès que la sélection passe ailleurs. Avec plusieurs programmes en cours, le fond suit
+ * celui qui est sélectionné dans « Reprendre ». Mêmes images et mêmes règles que « Reprendre »
  * (rien de plus n'est téléchargé si « Affiches des épisodes » est désactivé), rien n'est enregistré.
  */
 final class Immersive {
-    private static final long DWELL_MS = 1000;
+    private static final long DWELL_MS = 1000, ENTRY_MS = 350;
 
     private final MainActivity a;
     final FrameLayout view;
     private final ImageView image;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private AppRepo.App wanted;
-    private String shownPkg;
+    /** Le programme sélectionné dans « Reprendre » (null = le plus récent de l'appli). */
+    private WatchNext.Entry wantedEntry;
+    private String shownPkg, shownPoster;
     private int generation;
     /** Verre du vrai fond (rendu au départ) et verre de l'image affichée. */
     private Bitmap wallGlass, posterGlass;
@@ -45,20 +48,30 @@ final class Immersive {
     boolean showing() { return shownPkg != null; }
 
     /** Une vignette de l'accueil vient d'être sélectionnée (null = autre chose qu'une appli). */
-    void focusApp(AppRepo.App app) {
+    void focusApp(AppRepo.App app) { focus(app, null, DWELL_MS); }
+
+    /** Un programme de « Reprendre » vient d'être sélectionné : le fond devient le sien. */
+    void focusEntry(AppRepo.App app, WatchNext.Entry e) { focus(app, e, ENTRY_MS); }
+
+    private void focus(AppRepo.App app, WatchNext.Entry e, long delay) {
         wanted = app;
+        wantedEntry = e;
         a.h.removeCallbacks(arm);
+        generation++; // une image encore en chargement pour l'ancienne sélection ne s'affichera pas
         if (showing() && (app == null || !app.pkg.equals(shownPkg))) clear(true);
-        if (app != null) a.h.postDelayed(arm, DWELL_MS);
+        if (app != null) a.h.postDelayed(arm, delay);
     }
 
     private final Runnable arm = new Runnable() {
         @Override public void run() {
             final AppRepo.App app = wanted;
-            if (app == null || app.pkg.equals(shownPkg) || !a.prefs.immersive() || !a.prefs.topShelf()
+            if (app == null || !a.prefs.immersive() || !a.prefs.topShelf()
                     || a.appsOpen || a.ambientOn || a.idle || !a.resumedNow) return;
-            final WatchNext.Entry e = a.shelf.firstWithArt(app.pkg);
+            WatchNext.Entry pick = wantedEntry;
+            if (pick == null || pick.poster == null || pick.poster.isEmpty()) pick = a.shelf.firstWithArt(app.pkg);
+            final WatchNext.Entry e = pick;
             if (e == null) return;
+            if (app.pkg.equals(shownPkg) && e.poster.equals(shownPoster)) return; // déjà à l'écran
             final boolean network = a.prefs.shelfPosters();
             if (!network && !e.poster.startsWith("content://")) return;
             final int gen = ++generation;
@@ -92,9 +105,18 @@ final class Immersive {
 
     private void show(AppRepo.App app, WatchNext.Entry e, Bitmap big) {
         if (a.appsOpen || a.ambientOn || a.idle || !a.resumedNow) return;
+        boolean swap = showing() && image.getDrawable() != null; // d'un programme à l'autre : fondu entre les deux images
         if (!showing()) wallGlass = Glass.backdrop();
         shownPkg = app.pkg;
-        image.setImageBitmap(big);
+        shownPoster = e.poster;
+        if (swap) {
+            android.graphics.drawable.Drawable old = image.getDrawable();
+            if (old instanceof android.graphics.drawable.TransitionDrawable) old = ((android.graphics.drawable.TransitionDrawable) old).getDrawable(1);
+            android.graphics.drawable.TransitionDrawable td = new android.graphics.drawable.TransitionDrawable(
+                    new android.graphics.drawable.Drawable[]{old, new android.graphics.drawable.BitmapDrawable(a.getResources(), big)});
+            image.setImageDrawable(td);
+            td.startTransition(Motion.MEDIUM);
+        } else image.setImageBitmap(big);
         view.animate().cancel();
         view.setVisibility(View.VISIBLE);
         view.animate().alpha(1f).setStartDelay(0).setDuration(Motion.SLOW).setInterpolator(Motion.EASE).start();
@@ -122,6 +144,7 @@ final class Immersive {
         generation++;
         if (!showing()) return;
         shownPkg = null;
+        shownPoster = null;
         posterGlass = null;
         view.animate().cancel();
         if (animate) {

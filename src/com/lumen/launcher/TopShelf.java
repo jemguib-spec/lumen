@@ -208,6 +208,7 @@ final class TopShelf {
         cell.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View v, boolean f) {
                 if (f) Sounds.get(a).tick();
+                if (f) a.immersive.focusEntry(app, e); // le fond suit le programme sélectionné
                 cell.animate().scaleX(f ? 1.07f : 1f).scaleY(f ? 1.07f : 1f).setDuration(Motion.FAST)
                         .setInterpolator(new DecelerateInterpolator(2f)).start();
                 card.setElevation(f ? a.u(30) : 0);
