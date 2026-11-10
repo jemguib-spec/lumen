@@ -1,7 +1,7 @@
 {
-  "version": "4.24.0",
+  "version": "4.24.1",
   "size": 4060672,
-  "sha256": "09a28ec719b0486cc974a38e81b49a5a60b3b70a988eeb16a812b3a49ac6c9b3",
-  "file": "Lumen-4.24.0.apk",
-  "notes": "- Page Maison redessinée, en plein écran : chaque appareil Home Assistant est une tuile de verre avec son pictogramme ; une lumière allumée éclaire sa tuile dans sa vraie couleur et une jauge montre son intensité.\n- Régler depuis la TV : OK maintenu sur une lumière, un volet ou un ventilateur, puis ◀ ▶ pour l'intensité, la position ou la vitesse.\n- Un onglet par pièce (si tes appareils sont rangés par pièce dans Home Assistant) ; les scènes en pastilles en haut.\n- Bouton Maison vivant : le nombre de lumières allumées s'affiche dessus et son verre s'éclaire.\n- Scènes sur l'accueil : pastilles de verre, onde lumineuse au lancement, la dernière scène lancée reste marquée."
+  "sha256": "1ae2a17512f7226de3a1a712d5583262919c77ce4ea856ef97966504cbfd3b0e",
+  "file": "Lumen-4.24.1.apk",
+  "notes": "- Fond immersif : avec plusieurs films ou épisodes en cours dans une appli, le fond suit maintenant celui qui est sélectionné dans « Reprendre » (avant, il restait sur le premier).\n- ▶ sur la dernière appli d'une ligne ouvre bien « À l'affiche » (et ◀ sur la première, « Reprendre »), même quand les cartes « Reprendre » de l'appli sont affichées au-dessus : la sélection ne part plus dans ces cartes."
 }
