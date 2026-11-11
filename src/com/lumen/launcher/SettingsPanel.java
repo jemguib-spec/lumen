@@ -158,10 +158,11 @@ final class SettingsPanel {
         ImageView iv = new ImageView(a);
         iv.setImageDrawable(g);
         chip.addView(iv, new FrameLayout.LayoutParams(a.u(30), a.u(30), Gravity.CENTER));
-        // carrée, à CHIP_PAD du haut, du bas et du bord gauche de la ligne (qui a 32 de marge à gauche)
+        // carrée, à CHIP_PAD du haut, du bas et du bord gauche de la ligne. La marge gauche de la ligne
+        // devient CHIP_PAD (une marge négative ferait couper la pastille : la ligne écrête à sa marge).
         int pad = a.u(Radius.CHIP_PAD), side = a.u(88 * a.textScale) - 2 * pad;
+        row.setPadding(pad, row.getPaddingTop(), row.getPaddingRight(), row.getPaddingBottom());
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(side, side);
-        lp.leftMargin = pad - row.getPaddingLeft();
         lp.rightMargin = a.u(22);
         row.addView(chip, 0, lp);
         if (row instanceof GlassUi.Row) ((GlassUi.Row) row).follow(new GlassUi.Row.Tint() {

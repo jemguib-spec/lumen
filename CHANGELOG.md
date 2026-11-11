@@ -2,6 +2,10 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.26.3
+
+- Réglages : les pastilles d'icône devant les rubriques (Vignettes et disposition, Reprendre, Lisibilité, À l'affiche…) s'affichent en entier ; elles étaient coupées sur leur côté gauche.
+
 ## 4.26.2
 
 - Arrondis, suite : les anneaux de sélection (À l'affiche, Reprendre, tuiles Maison, vignettes à cocher), le liseré des applis habituelles, le contour du mode déplacement et le filet du verre de toutes les cartes suivent eux aussi la règle : un trait posé au bord prend le rayon de la forme moins sa demi-épaisseur.
