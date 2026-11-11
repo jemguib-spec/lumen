@@ -1,7 +1,7 @@
 {
-  "version": "4.28.1",
-  "size": 4097536,
-  "sha256": "7f8d9bb5a1f9b22b3eaf16b33d5ef42e2a0f4365ae24784d1502de0b0e8b5d2a",
-  "file": "Lumen-4.28.1.apk",
-  "notes": "- Notifications des applis plus discrètes : une petite carte de verre à gauche de l'accueil, sous le nom du fond, au lieu de la grande carte au milieu en haut. Icône, nom de l'appli, titre et deux lignes de texte au plus ; elle glisse depuis la gauche.\n- Réglages › Notifications : « Afficher les notifications sur l'accueil »."
+  "version": "4.30.0",
+  "size": 4101632,
+  "sha256": "33721ce8747063fb160530e08588325ddff04915c7564bce4129b6d6ee739533",
+  "file": "Lumen-4.30.0.apk",
+  "notes": "- Météo dans le volet de l'accueil (▲ depuis les boutons du haut), à gauche des notifications et dans le même verre : pictogramme au trait et température en grand, le ciel, les extrêmes du jour, les trois jours suivants et le lever et coucher du soleil. Sans ville réglée, OK permet d'en choisir une.\n- Le volet s'ouvre aussi quand les notifications sont coupées, pour la météo ; son en-tête donne la date du jour et le nombre de notifications.\n- Nouveaux pictogrammes météo dans le style de Lumen : soleil, éclaircies, nuages, pluie, neige, orage, brouillard.\n- Les mots de la météo (« Éclaircies », « Averses »…) sont traduits en anglais."
 }
