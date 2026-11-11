@@ -115,10 +115,15 @@ final class HomeAssistant {
         final String area;
         /** Lumière dont l'intensité se règle (pas seulement allumée ou éteinte). */
         final boolean dim;
+        /** Groupe de lumières déclaré dans Home Assistant (une pièce, une zone, un groupe) : pilote plusieurs ampoules d'un coup. */
+        final boolean group;
 
         Entity(String id, String name, String state, int brightness) { this(id, name, state, brightness, 0, "", brightness >= 0); }
 
-        Entity(String id, String name, String state, int level, int color, String area, boolean dim) {
+        Entity(String id, String name, String state, int level, int color, String area, boolean dim) { this(id, name, state, level, color, area, dim, false); }
+
+        Entity(String id, String name, String state, int level, int color, String area, boolean dim, boolean group) {
+            this.group = group;
             this.id = id;
             this.domain = id.substring(0, id.indexOf('.'));
             this.name = name;
@@ -190,17 +195,35 @@ final class HomeAssistant {
         return out;
     }
 
-    /** Appareils à montrer sur la TV : ceux choisis, sinon tout (borné). */
-    static List<Entity> shown(List<Entity> all, Set<String> pinned, int max) {
+    /** Appareils à montrer sur la TV : ceux choisis, sinon tout (borné), les ampoules laissant la place à leurs groupes. */
+    static List<Entity> shown(List<Entity> all, Set<String> pinned, int max) { return shown(all, pinned, max, false); }
+
+    /**
+     * Sans choix fait sur le téléphone, une maison qui a des groupes de lumières ne montre que ces
+     * groupes : trente ampoules une à une noient la page. everyBulb les montre toutes quand même.
+     */
+    static List<Entity> shown(List<Entity> all, Set<String> pinned, int max, boolean everyBulb) {
         List<Entity> out = new ArrayList<>();
         boolean any = false;
         for (Entity e : all) if (pinned.contains(e.id)) { any = true; break; }
+        boolean groupsOnly = !any && !everyBulb && hiddenBulbs(all, pinned) > 0;
         for (Entity e : all) {
             if (any && !pinned.contains(e.id)) continue;
+            if (groupsOnly && "light".equals(e.domain) && !e.group) continue;
             out.add(e);
             if (out.size() >= max) break;
         }
         return out;
+    }
+
+    /** Nombre d'ampoules masquées derrière les groupes de lumières (0 : pas de groupe, ou appareils choisis à la main). */
+    static int hiddenBulbs(List<Entity> all, Set<String> pinned) {
+        int groups = 0, bulbs = 0;
+        for (Entity e : all) {
+            if (pinned.contains(e.id)) return 0;
+            if ("light".equals(e.domain)) { if (e.group) groups++; else bulbs++; }
+        }
+        return groups > 0 ? bulbs : 0;
     }
 
     static String clean(String s, int max) {

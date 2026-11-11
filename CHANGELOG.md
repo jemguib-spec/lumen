@@ -2,6 +2,12 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.24.3
+
+- Page Maison plus lisible : quand Home Assistant a des groupes de lumières (un groupe, une pièce ou une zone Hue), seuls ces groupes sont affichés ; les ampoules une à une sont rangées derrière « Afficher chaque ampoule », en bas de la page. Si tu as choisi tes appareils sur le téléphone, c'est ton choix qui s'affiche, comme avant.
+- Page Maison : en défilant, les tuiles et les scènes ne passent plus par-dessus le titre et les onglets des pièces.
+- Scènes : les pastilles passent à la ligne selon leur largeur, aucune ne sort plus de l'écran.
+
 ## 4.24.2
 
 - Home Assistant en https sur le réseau local avec un certificat auto-signé (ex. https://192.168.1.20:8123) : la liaison fonctionne. Lumen retient ce certificat à la liaison et n'accepte ensuite que lui ; refais la liaison depuis le téléphone (Plus › Home Assistant) pour en profiter.

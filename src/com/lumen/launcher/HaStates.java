@@ -83,9 +83,12 @@ final class HaStates {
             if (name.trim().isEmpty()) name = id.substring(id.indexOf('.') + 1).replace('_', ' ');
             name = HomeAssistant.clean(name, 60);
             int level = -1, color = 0;
-            boolean dim = false;
+            boolean dim = false, group = false;
             if (at != null) {
                 if (id.startsWith("light.")) {
+                    // un groupe annonce ses ampoules (« entity_id ») ; les pièces et zones Hue se déclarent comme telles
+                    JSONArray members = at.optJSONArray("entity_id");
+                    group = members != null && members.length() > 0 || at.optBoolean("is_hue_group", false);
                     if (at.has("brightness") && !at.isNull("brightness")) level = (int) Math.round(at.optDouble("brightness", 0) * 100 / 255.0);
                     JSONArray modes = at.optJSONArray("supported_color_modes");
                     if (modes == null) dim = level >= 0;
@@ -100,7 +103,7 @@ final class HaStates {
                 }
             }
             String area = areas == null ? null : areas.get(id);
-            out.add(new HomeAssistant.Entity(id, name, HomeAssistant.clean(o.optString("state", ""), 30), level, color, area, dim));
+            out.add(new HomeAssistant.Entity(id, name, HomeAssistant.clean(o.optString("state", ""), 30), level, color, area, dim, group));
         }
         Collections.sort(out, new Comparator<HomeAssistant.Entity>() {
             @Override public int compare(HomeAssistant.Entity x, HomeAssistant.Entity y) {

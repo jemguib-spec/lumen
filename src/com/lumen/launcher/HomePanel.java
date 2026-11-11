@@ -29,16 +29,18 @@ import java.util.concurrent.Executors;
  */
 final class HomePanel {
     private static final ExecutorService io = Executors.newSingleThreadExecutor();
-    private static final int MAX_SHOWN = 60, COLS = 5, PILLS = 5;
+    private static final int MAX_SHOWN = 60, COLS = 5, SIDE = 112;
     private static final long REFRESH_MS = 8000;
     /** Pièce affichée (« » = toute la maison) : gardée d'une ouverture à l'autre. */
     private static String room = "";
+    /** Chaque ampoule affichée, même celles déjà pilotées par un groupe (sinon : les groupes seulement). */
+    private static boolean everyBulb;
 
     private final MainActivity a;
     private FrameLayout page;
     private LinearLayout tabs, body;
     private TextView status;
-    private List<HomeAssistant.Entity> shown = new ArrayList<>();
+    private List<HomeAssistant.Entity> all = new ArrayList<>(), shown = new ArrayList<>();
     private final List<HaTile> tiles = new ArrayList<>();
     private final Map<String, GlassUi.Pill> pills = new HashMap<>();
     private final List<TextView> chips = new ArrayList<>();
@@ -61,28 +63,31 @@ final class HomePanel {
         page.addView(tint, MainActivity.match());
         LinearLayout col = new LinearLayout(a);
         col.setOrientation(LinearLayout.VERTICAL);
-        col.setClipChildren(false);
-        col.setClipToPadding(false);
-        col.setPadding(a.u(112), a.u(64), a.u(112), 0);
+        // la colonne coupe ce qui dépasse de la liste : en défilant, tuiles et scènes ne passent plus
+        // sur le titre ni sur les onglets ; les marges de côté sont dans chaque bloc, pour que la
+        // tuile sélectionnée garde la place de grandir
+        col.setPadding(0, a.u(64), 0, 0);
         page.addView(col, MainActivity.match());
         o.addView(page, MainActivity.match());
 
         TextView title = a.text(48, "sans-serif-light", Palette.TEXT);
         title.setText(L.t("Maison"));
-        col.addView(title);
+        LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        tl.leftMargin = tl.rightMargin = a.u(SIDE);
+        col.addView(title, tl);
         status = a.text(22, "sans-serif", Palette.TEXT_2);
         LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         sl.topMargin = a.u(8);
+        sl.leftMargin = sl.rightMargin = a.u(SIDE);
         col.addView(status, sl);
 
         HorizontalScrollView ts = new HorizontalScrollView(a);
         ts.setHorizontalScrollBarEnabled(false);
         ts.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        ts.setClipChildren(false);
         ts.setClipToPadding(false);
         tabs = new LinearLayout(a);
         tabs.setOrientation(LinearLayout.HORIZONTAL);
-        tabs.setPadding(0, a.u(22), 0, a.u(4));
+        tabs.setPadding(a.u(SIDE), a.u(22), a.u(SIDE), a.u(4));
         tabs.setVisibility(View.GONE);
         ts.addView(tabs);
         col.addView(ts, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -98,7 +103,7 @@ final class HomePanel {
         body.setOrientation(LinearLayout.VERTICAL);
         body.setClipChildren(false);
         body.setClipToPadding(false);
-        body.setPadding(0, a.u(8), 0, a.u(72));
+        body.setPadding(a.u(SIDE), a.u(8), a.u(SIDE), a.u(72));
         sv.addView(body);
         col.addView(sv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
@@ -147,13 +152,8 @@ final class HomePanel {
                             return;
                         }
                         if (build) {
-                            shown = HomeAssistant.shown(got, a.prefs.haPinned(), MAX_SHOWN);
-                            boolean pinned = !a.prefs.haPinned().isEmpty() && shown.size() < got.size();
-                            status.setText(shown.isEmpty() ? L.t("Aucun appareil pilotable trouvé (lumières, prises, scènes, volets…).")
-                                    : pinned ? L.t("Tes appareils · choisis-les sur le téléphone (Plus › Home Assistant)")
-                                    : shown.size() + L.t(" appareils · choisis ceux à garder ici depuis le téléphone"));
-                            buildTabs();
-                            buildBody(true);
+                            HomePanel.this.all = got;
+                            pick();
                             // tant que la page est ouverte, l'état suit la maison (une seule boucle)
                             a.h.postDelayed(new Runnable() {
                                 @Override public void run() {
@@ -171,6 +171,17 @@ final class HomePanel {
                 });
             }
         });
+    }
+
+    /** Choisit les appareils affichés (groupes de lumières d'abord), puis dessine les onglets et les tuiles. */
+    private void pick() {
+        shown = HomeAssistant.shown(all, a.prefs.haPinned(), MAX_SHOWN, everyBulb);
+        boolean pinned = HomeAssistant.shown(all, a.prefs.haPinned(), all.size() + 1, true).size() < all.size();
+        status.setText(shown.isEmpty() ? L.t("Aucun appareil pilotable trouvé (lumières, prises, scènes, volets…).")
+                : pinned ? L.t("Tes appareils · choisis-les sur le téléphone (Plus › Home Assistant)")
+                : shown.size() + L.t(" appareils · choisis ceux à garder ici depuis le téléphone"));
+        buildTabs();
+        buildBody(true);
     }
 
     private void retryRow() {
@@ -248,24 +259,26 @@ final class HomePanel {
         View first = null;
         String last = a.prefs.haLastScene();
         LinearLayout line = null;
+        int screenW = a.root.getWidth() > 0 ? a.root.getWidth() : a.u(1920);
+        int wide = screenW - a.u(SIDE * 2), used = 0, free = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
         for (int i = 0; i < scenes.size(); i++) {
-            if (i % PILLS == 0) {
-                if (i == 0) body.addView(section(L.t("Scènes")));
-                line = line(a.u(10), a.u(10));
-            }
+            if (i == 0) body.addView(section(L.t("Scènes")));
             final HomeAssistant.Entity e = scenes.get(i);
             GlassUi.Pill p = new GlassUi.Pill(a, e.name, e.id.equals(last), new View.OnClickListener() {
                 @Override public void onClick(View v) { launch(e, v); }
             });
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.rightMargin = a.u(18);
+            // à la ligne quand la pastille ne tient plus : aucune ne sort de l'écran, quel que soit son nom
+            p.measure(free, free);
+            if (line == null || used + p.getMeasuredWidth() > wide) { line = line(a.u(10), a.u(10)); used = 0; }
+            used += p.getMeasuredWidth() + lp.rightMargin;
             line.addView(p, lp);
             pills.put(e.id, p);
             if (first == null) first = p;
         }
         int gap = a.u(28);
-        int screenW = a.root.getWidth() > 0 ? a.root.getWidth() : a.u(1920);
-        int tw = (screenW - a.u(224) - gap * (COLS - 1)) / COLS, th = Math.round(tw * 0.56f);
+        int tw = (wide - gap * (COLS - 1)) / COLS, th = Math.round(tw * 0.56f);
         String domain = null;
         int inLine = 0;
         View firstTile = null;
@@ -290,6 +303,12 @@ final class HomePanel {
             hint.setPadding(0, a.u(26), 0, 0);
             body.addView(hint);
         }
+        // les ampoules rangées derrière leurs groupes restent à portée, tout en bas
+        final int bulbs = HomeAssistant.hiddenBulbs(all, a.prefs.haPinned());
+        if (bulbs > 0) addRow(a.listRow(everyBulb ? L.t("Afficher seulement les groupes de lumières") : L.t("Afficher chaque ampoule") + " (" + bulbs + ")",
+                null, new View.OnClickListener() {
+                    @Override public void onClick(View v) { everyBulb = !everyBulb; pick(); }
+                }));
         // d'abord un appareil (le geste le plus courant), sinon une scène
         if (focusFirst) { if (firstTile != null) firstTile.requestFocus(); else if (first != null) first.requestFocus(); }
         body.setAlpha(0f);
