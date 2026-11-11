@@ -2,6 +2,10 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.30.1
+
+- Ville de la météo : la fenêtre a maintenant une ligne « Valider » sous le champ. Avant, seule la touche « Terminé » du clavier validait, et beaucoup de claviers de TV ne l'envoient pas : on ne pouvait pas enregistrer la ville. Tape la ville, Retour pour fermer le clavier, ▼ puis OK sur « Valider ». La touche Entrée d'un clavier branché valide aussi.
+
 ## 4.30.0
 
 - Météo dans le volet de l'accueil (▲ depuis les boutons du haut), à gauche des notifications et dans le même verre : pictogramme au trait et température en grand, le ciel, les extrêmes du jour, les trois jours suivants et le lever et coucher du soleil. Sans ville réglée, OK permet d'en choisir une.

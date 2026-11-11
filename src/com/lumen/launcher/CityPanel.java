@@ -20,7 +20,7 @@ final class CityPanel {
 
     static void openCityInput(final MainActivity a) {
         FrameLayout o = a.openOverlay(null);
-        LinearLayout card = a.formCard(44, a.weather.hasCity());
+        LinearLayout card = a.formCard(44, true); // la dernière ligne est toujours une ligne d'action
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText(L.t("Ville pour la météo"));
         card.addView(title);
@@ -38,23 +38,38 @@ final class CityPanel {
         in.setPadding(a.u(28), a.u(20), a.u(28), a.u(20));
         in.setBackground(a.fieldBackground());
         in.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);
-        in.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override public boolean onEditorAction(TextView v, int action, KeyEvent ev) {
+        // valider : touche « OK » ou « Terminé » du clavier, Entrée, ou la ligne « Valider » dessous
+        // (beaucoup de claviers de TV n'envoient pas l'action « Terminé » : la ligne reste le chemin sûr)
+        final Runnable submit = new Runnable() {
+            @Override public void run() {
                 final String q = in.getText().toString().trim();
+                hideKeyboard(a, in);
+                if (q.isEmpty()) { a.showNotice(L.t("Tape le nom d'une ville")); return; }
                 a.closeOverlay(true);
-                if (q.isEmpty()) return true;
                 a.showNotice(L.t("Recherche de « ") + q + " »…");
                 a.weather.setCity(q, new Weather.Callback() {
                     @Override public void onWeather(String found) {
                         a.showNotice(found == null ? L.t("Ville introuvable") : L.t("Météo : ") + found);
                     }
                 });
+            }
+        };
+        in.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override public boolean onEditorAction(TextView v, int action, KeyEvent ev) { submit.run(); return true; }
+        });
+        in.setOnKeyListener(new View.OnKeyListener() {
+            @Override public boolean onKey(View v, int code, KeyEvent e) {
+                if (code != KeyEvent.KEYCODE_ENTER && code != KeyEvent.KEYCODE_NUMPAD_ENTER) return false;
+                if (e.getAction() == KeyEvent.ACTION_UP) submit.run();
                 return true;
             }
         });
         card.addView(in, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        card.addView(new View(a), new LinearLayout.LayoutParams(1, a.u(20)));
+        card.addView(a.iconRow(Glyph.SEARCH, L.t("Valider"), null, new View.OnClickListener() {
+            @Override public void onClick(View v) { submit.run(); }
+        }, false), a.rowLp());
         if (a.weather.hasCity()) {
-            card.addView(new View(a), new LinearLayout.LayoutParams(1, a.u(20)));
             card.addView(a.listRow(L.t("Désactiver la météo"), null, new View.OnClickListener() {
                 @Override public void onClick(View v) { a.weather.clearCity(); a.closeOverlay(true); a.showNotice("Météo désactivée"); }
             }), a.rowLp());
@@ -68,4 +83,9 @@ final class CityPanel {
         } catch (Exception ignored) { }
     }
 
+    private static void hideKeyboard(Context c, View v) {
+        try {
+            ((android.view.inputmethod.InputMethodManager) c.getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(v.getWindowToken(), 0);
+        } catch (Exception ignored) { }
+    }
 }
