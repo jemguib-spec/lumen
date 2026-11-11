@@ -103,6 +103,12 @@ final class HaStates {
                 }
             }
             String area = areas == null ? null : areas.get(id);
+            if (group && (area == null || area.isEmpty())) {
+                List<String> ids = new ArrayList<>();
+                JSONArray members = at.optJSONArray("entity_id");
+                for (int m = 0; members != null && m < members.length() && m < 200; m++) ids.add(members.optString(m));
+                area = HomeAssistant.groupArea(name, ids, areas);
+            }
             out.add(new HomeAssistant.Entity(id, name, HomeAssistant.clean(o.optString("state", ""), 30), level, color, area, dim, group));
         }
         Collections.sort(out, new Comparator<HomeAssistant.Entity>() {

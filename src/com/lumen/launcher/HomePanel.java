@@ -29,7 +29,7 @@ import java.util.concurrent.Executors;
  */
 final class HomePanel {
     private static final ExecutorService io = Executors.newSingleThreadExecutor();
-    private static final int MAX_SHOWN = 60, COLS = 5, SIDE = 112;
+    private static final int MAX_SHOWN = 60, SIDE = 112;
     private static final long REFRESH_MS = 8000;
     /** Pièce affichée (« » = toute la maison) : gardée d'une ouverture à l'autre. */
     private static String room = "";
@@ -163,6 +163,8 @@ final class HomePanel {
                                 }
                             }, REFRESH_MS);
                         } else {
+                            HomePanel.this.all = got;
+                            summary();
                             Map<String, HomeAssistant.Entity> live = new HashMap<>();
                             for (HomeAssistant.Entity e : got) live.put(e.id, e);
                             for (HaTile t : tiles) t.update(live.get(t.entityId()));
@@ -176,12 +178,17 @@ final class HomePanel {
     /** Choisit les appareils affichés (groupes de lumières d'abord), puis dessine les onglets et les tuiles. */
     private void pick() {
         shown = HomeAssistant.shown(all, a.prefs.haPinned(), MAX_SHOWN, everyBulb);
-        boolean pinned = HomeAssistant.shown(all, a.prefs.haPinned(), all.size() + 1, true).size() < all.size();
-        status.setText(shown.isEmpty() ? L.t("Aucun appareil pilotable trouvé (lumières, prises, scènes, volets…).")
-                : pinned ? L.t("Tes appareils · choisis-les sur le téléphone (Plus › Home Assistant)")
-                : shown.size() + L.t(" appareils · choisis ceux à garder ici depuis le téléphone"));
+        summary();
         buildTabs();
         buildBody(true);
+    }
+
+    /** Sous le titre, l'état de la maison en une phrase ; il suit les relectures. */
+    private void summary() {
+        if (shown.isEmpty()) { status.setText(L.t("Aucun appareil pilotable trouvé (lumières, prises, scènes, volets…).")); return; }
+        int on = HomeAssistant.lightsOn(all);
+        status.setText(on == 0 ? L.t("Toutes les lumières sont éteintes") : on == 1 ? L.t("1 lumière allumée") : on + L.t(" lumières allumées"));
+        status.setTextColor(on == 0 ? Palette.TEXT_2 : Palette.TEXT);
     }
 
     private void retryRow() {
@@ -204,7 +211,8 @@ final class HomePanel {
         tabs.removeAllViews();
         chips.clear();
         TreeSet<String> rooms = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-        for (HomeAssistant.Entity e : shown) if (!e.area.isEmpty()) rooms.add(e.area);
+        // toutes les pièces de la maison qui ont un appareil pilotable, pas seulement celles des appareils choisis
+        for (HomeAssistant.Entity e : all) if (!e.area.isEmpty()) rooms.add(e.area);
         if (rooms.size() < 2) { room = ""; tabs.setVisibility(View.GONE); return; }
         if (!rooms.contains(room)) room = "";
         tabs.setVisibility(View.VISIBLE);
@@ -252,10 +260,14 @@ final class HomePanel {
         tiles.clear();
         pills.clear();
         List<HomeAssistant.Entity> scenes = new ArrayList<>(), devices = new ArrayList<>();
-        for (HomeAssistant.Entity e : shown) {
-            if (!room.isEmpty() && !room.equals(e.area)) continue;
+        // une pièce montre ses propres appareils : ceux choisis sur le téléphone s'il y en a dans la
+        // pièce, sinon tout ce qu'elle contient (ses groupes de lumières avant ses ampoules)
+        final List<HomeAssistant.Entity> here = room.isEmpty() ? all : HomeAssistant.inRoom(all, room);
+        for (HomeAssistant.Entity e : room.isEmpty() ? shown : HomeAssistant.shown(here, a.prefs.haPinned(), MAX_SHOWN, everyBulb)) {
             if (e.trigger()) scenes.add(e); else devices.add(e);
         }
+        // peu d'appareils : des tuiles plus grandes, qui occupent l'écran
+        final int COLS = devices.size() <= 8 ? 4 : 5;
         View first = null;
         String last = a.prefs.haLastScene();
         LinearLayout line = null;
@@ -299,12 +311,14 @@ final class HomePanel {
         }
         if (!devices.isEmpty()) {
             TextView hint = a.text(20, "sans-serif", Palette.TEXT_3);
-            hint.setText(L.t("OK : allumer ou éteindre   ·   OK maintenu : régler, puis ◀ ▶"));
+            hint.setText(L.t("OK : allumer ou éteindre   ·   OK maintenu : régler, puis ◀ ▶") + "\n"
+                    + L.t("Tes appareils · choisis-les sur le téléphone (Plus › Home Assistant)"));
+            hint.setLineSpacing(a.u(8), 1f);
             hint.setPadding(0, a.u(26), 0, 0);
             body.addView(hint);
         }
         // les ampoules rangées derrière leurs groupes restent à portée, tout en bas
-        final int bulbs = HomeAssistant.hiddenBulbs(all, a.prefs.haPinned());
+        final int bulbs = HomeAssistant.hiddenBulbs(here, a.prefs.haPinned());
         if (bulbs > 0) addRow(a.listRow(everyBulb ? L.t("Afficher seulement les groupes de lumières") : L.t("Afficher chaque ampoule") + " (" + bulbs + ")",
                 null, new View.OnClickListener() {
                     @Override public void onClick(View v) { everyBulb = !everyBulb; pick(); }

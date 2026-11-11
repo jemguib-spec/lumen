@@ -35,6 +35,7 @@ final class HaTile extends FrameLayout {
     private final Glass.Surface glass;
     private final View fill;
     private final Glyph glyph;
+    private final android.graphics.drawable.GradientDrawable badge;
     private final TextView name, state;
     private final Listener listener;
     private final float radius;
@@ -68,9 +69,14 @@ final class HaTile extends FrameLayout {
         glyph = new Glyph(glyphFor(entity.domain), Palette.TEXT_2);
         ImageView iv = new ImageView(a);
         iv.setImageDrawable(glyph);
-        LayoutParams gl = new LayoutParams(a.u(46), a.u(46), Gravity.TOP | Gravity.START);
-        gl.leftMargin = a.u(22);
-        gl.topMargin = a.u(20);
+        // pastille ronde derrière le pictogramme : discrète éteint, pleine de la couleur de la lumière allumé
+        badge = new android.graphics.drawable.GradientDrawable();
+        badge.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        iv.setBackground(badge);
+        iv.setPadding(a.u(12), a.u(12), a.u(12), a.u(12));
+        LayoutParams gl = new LayoutParams(a.u(64), a.u(64), Gravity.TOP | Gravity.START);
+        gl.leftMargin = a.u(20);
+        gl.topMargin = a.u(18);
         card.addView(iv, gl);
         LinearLayout txt = new LinearLayout(a);
         txt.setOrientation(LinearLayout.VERTICAL);
@@ -185,7 +191,8 @@ final class HaTile extends FrameLayout {
         boolean gauge = on && (wanted >= 0 || e.level >= 0) && HomeAssistant.adjustable(e);
         fill.setBackgroundColor((lit & 0x00FFFFFF) | 0x4D000000);
         fill.animate().scaleY(gauge ? shownLevel() / 100f : 0f).setStartDelay(0).setDuration(Motion.FAST).setInterpolator(Motion.EASE).start();
-        glyph.setColor(on ? 0xFFFFFFFF : Palette.TEXT_2);
+        badge.setColor(on ? lit : 0x1FFFFFFF);
+        glyph.setColor(on ? Palette.ON_SELECTED : Palette.TEXT_2);
         name.setText(e.name);
         String s = waiting ? "…" : stateText(on);
         state.setText(adjusting ? "‹   " + shownLevel() + " %   ›" : s);

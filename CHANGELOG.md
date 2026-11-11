@@ -2,6 +2,13 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.24.4
+
+- Page Maison : un onglet pour chaque pièce de Home Assistant qui a un appareil pilotable, même si tu n'as choisi aucun appareil de cette pièce sur le téléphone ; la pièce montre alors tout ce qu'elle contient (ses groupes de lumières avant ses ampoules).
+- Un groupe de lumières que Home Assistant n'a rangé dans aucune pièce va dans celle de ses ampoules, sinon dans la pièce qui porte son nom.
+- Sous le titre, l'état de la maison en une phrase (« 3 lumières allumées », « Toutes les lumières sont éteintes »), tenu à jour.
+- Tuiles plus grandes quand il y a peu d'appareils (quatre par ligne), pictogramme dans une pastille ronde qui se remplit de la couleur de la lumière quand elle est allumée.
+
 ## 4.24.3
 
 - Page Maison plus lisible : quand Home Assistant a des groupes de lumières (un groupe, une pièce ou une zone Hue), seuls ces groupes sont affichés ; les ampoules une à une sont rangées derrière « Afficher chaque ampoule », en bas de la page. Si tu as choisi tes appareils sur le téléphone, c'est ton choix qui s'affiche, comme avant.

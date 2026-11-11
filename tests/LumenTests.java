@@ -429,6 +429,22 @@ public class LumenTests {
                 && HomeAssistant.hiddenBulbs(house, none) == 2 && HomeAssistant.shown(house, none, 10, true).size() == 4
                 && HomeAssistant.shown(house, picked, 10).size() == 1 && HomeAssistant.hiddenBulbs(house, picked) == 0
                 && HomeAssistant.hiddenBulbs(ents, none) == 0);
+        java.util.Map<String, String> where = new java.util.HashMap<>();
+        where.put("light.plan_de_travail", "Cuisine"); where.put("light.evier", "Cuisine"); where.put("light.couloir", "Entrée");
+        check("HA : un groupe sans pièce prend celle de ses ampoules, sinon la pièce qui porte son nom",
+                "Cuisine".equals(HomeAssistant.groupArea("Bas", java.util.Arrays.asList("light.plan_de_travail", "light.couloir", "light.evier"), where))
+                && "Entrée".equals(HomeAssistant.groupArea("entrée", new java.util.ArrayList<String>(), where))
+                && HomeAssistant.groupArea("Garage", java.util.Arrays.asList("light.inconnue"), where).isEmpty()
+                && HomeAssistant.groupArea("Garage", new java.util.ArrayList<String>(), null).isEmpty());
+        java.util.List<HomeAssistant.Entity> rooms = java.util.Arrays.asList(
+                new HomeAssistant.Entity("light.groupe_salon", "Salon", "on", 60, 0, "Salon", true, true),
+                new HomeAssistant.Entity("light.canape", "Canapé", "on", 60, 0, "Salon", true),
+                new HomeAssistant.Entity("light.tele", "Télé", "off", 60, 0, "Salon", true),
+                new HomeAssistant.Entity("light.toilette", "toilette", "on", -1, 0, "toilette", false));
+        check("HA : chaque pièce montre ses appareils (une pièce sans groupe garde ses ampoules), lumières allumées sans doublon",
+                HomeAssistant.inRoom(rooms, "Salon").size() == 3 && HomeAssistant.shown(HomeAssistant.inRoom(rooms, "Salon"), none, 10).size() == 1
+                && HomeAssistant.shown(HomeAssistant.inRoom(rooms, "toilette"), none, 10).size() == 1
+                && HomeAssistant.lightsOn(rooms) == 2 && HomeAssistant.lightsOn(java.util.Arrays.asList(salonGroup)) == 1);
         try {
             String chunked = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n4\r\n[{\"a\r\n3\r\n\":1\r\n2\r\n}]\r\n0\r\n\r\n";
             String plain = "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n[]";

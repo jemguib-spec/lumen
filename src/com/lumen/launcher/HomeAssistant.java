@@ -216,6 +216,46 @@ final class HomeAssistant {
         return out;
     }
 
+    /** Les appareils rangés dans cette pièce. */
+    static List<Entity> inRoom(List<Entity> all, String room) {
+        List<Entity> out = new ArrayList<>();
+        for (Entity e : all) if (e.area.equals(room)) out.add(e);
+        return out;
+    }
+
+    /**
+     * Pièce d'un groupe de lumières que Home Assistant n'a rangé nulle part : celle de la plupart
+     * de ses ampoules, sinon la pièce qui porte son nom (groupe « Cuisine » → pièce « Cuisine »).
+     */
+    static String groupArea(String name, List<String> members, java.util.Map<String, String> areas) {
+        if (areas == null) return "";
+        java.util.Map<String, Integer> votes = new java.util.HashMap<>();
+        String best = "";
+        int most = 0;
+        for (String m : members) {
+            String ar = areas.get(m);
+            if (ar == null || ar.isEmpty()) continue;
+            Integer n = votes.get(ar);
+            int v = n == null ? 1 : n + 1;
+            votes.put(ar, v);
+            if (v > most) { most = v; best = ar; }
+        }
+        if (!best.isEmpty()) return best;
+        for (String ar : areas.values()) if (ar.equalsIgnoreCase(name.trim())) return ar;
+        return "";
+    }
+
+    /** Lumières allumées dans la maison : les ampoules, sans recompter les groupes qui les pilotent. */
+    static int lightsOn(List<Entity> all) {
+        int bulbs = 0, bulbsOn = 0, groupsOn = 0;
+        for (Entity e : all) {
+            if (!"light".equals(e.domain)) continue;
+            if (e.group) { if (e.on()) groupsOn++; }
+            else { bulbs++; if (e.on()) bulbsOn++; }
+        }
+        return bulbs > 0 ? bulbsOn : groupsOn;
+    }
+
     /** Nombre d'ampoules masquées derrière les groupes de lumières (0 : pas de groupe, ou appareils choisis à la main). */
     static int hiddenBulbs(List<Entity> all, Set<String> pinned) {
         int groups = 0, bulbs = 0;
