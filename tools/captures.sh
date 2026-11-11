@@ -60,6 +60,7 @@ if adb shell cmd notification allow_listener $PKG/com.lumen.launcher.NotifyServi
   fresh 14
   adb shell cmd notification post -S bigtext -t "'Nouvelle saison disponible'" lumen-capture "'La saison 2 de votre série arrive ce soir, tous les épisodes d’un coup.'" >/dev/null 2>&1
   shot 21-notification 2
+  keys DPAD_UP 4;      shot 22-volet-notifications 2   # ▲ jusqu'aux boutons ronds, puis le volet
   adb shell cmd notification cancel lumen-capture >/dev/null 2>&1
 else
   echo "accès aux notifications impossible par ADB : pas de capture de notification"

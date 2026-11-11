@@ -652,14 +652,13 @@ Notifications	Notifications
 Notifications des applis	App notifications
 Nouvelle notification	New notification
 Nouvelle saison disponible	New season available
-Quand une appli annonce une nouvelle sortie, un épisode ou un message, Lumen l'affiche dans une petite carte à gauche de l'accueil, puis la garde sous la cloche. Retour l'efface. Rien n'est enregistré ni envoyé ; rien dans un profil enfant.	When an app announces a new release, an episode or a message, Lumen shows it in a small card on the left of the home screen, then keeps it under the bell. Back dismisses it. Nothing is stored or sent; nothing in a kids profile.
+Quand une appli annonce une nouvelle sortie, un épisode ou un message, Lumen l'affiche dans une petite carte à gauche de l'accueil, puis la garde dans le volet des notifications : ▲ depuis les boutons du haut, ou la cloche. Retour efface la carte. Rien n'est enregistré ni envoyé ; rien dans un profil enfant.	When an app announces a new release, an episode or a message, Lumen shows it in a small card on the left of the home screen, then keeps it in the notification shade: ▲ from the top buttons, or the bell. Back dismisses the card. Nothing is stored or sent; nothing in a kids profile.
 Réglages › Notifications : les nouvelles sorties et messages des applis s'affichent sur l'accueil	Settings › Notifications: new releases and messages from apps show up on the home screen
 Réseau et Internet	Network and Internet
 Résolution, mode d'image	Resolution, picture mode
 Son	Sound
 Sortie audio, enceintes	Audio output, speakers
 Tous les paramètres	All settings
-Tout effacer de l'accueil	Clear all from the home screen
 Télécommandes et accessoires	Remotes and accessories
 Une appli coupée n'apparaît plus sur l'accueil ni sous la cloche.	A muted app no longer shows on the home screen or under the bell.
 Wi-Fi, câble	Wi-Fi, cable
@@ -677,3 +676,9 @@ quand une appli en envoie	when an app sends one
 si la TV en a	if the TV has any
 ◀ ▶ pour changer de jeu ou de volume : le son se fait entendre aussitôt. Seuls les sons de Lumen changent, pas le volume de la TV, des applis ni des vidéos. Le bouton Sons de l'accueil (Accueil et applis › Boutons de l'accueil) coupe ou remet les sons d'un appui.	◀ ▶ to change the sound set or volume: you hear it right away. Only Lumen's sounds change, not the volume of the TV, apps or videos. The Sounds button on the home screen (Home and apps › Home screen buttons) mutes or unmutes in one press.
 Activées	On
+# 4.29.0 : volet des notifications
+Les nouvelles sorties et messages des applis apparaîtront ici.	New releases and messages from apps will show up here.
+OK : autoriser Lumen à lire les notifications	OK: allow Lumen to read notifications
+OK pour ouvrir · ▼ pour fermer	OK to open · ▼ to close
+Seulement de l'accueil	From the home screen only
+Tout effacer	Clear all

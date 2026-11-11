@@ -718,13 +718,13 @@ final class SettingsPanel {
                 col.addView(a.listRow(L.t("Dernières notifications"), new MainActivity.Value() {
                     @Override public String get() { return String.valueOf(NotifyService.items().size()); }
                 }, new View.OnClickListener() {
-                    @Override public void onClick(View v) { a.closeOverlay(false); a.notify.openList(); }
+                    @Override public void onClick(View v) { a.closeOverlay(false); a.notify.openShade(); }
                 }), a.rowLp());
                 col.addView(a.listRow(L.t("Essayer"), null, new View.OnClickListener() {
                     @Override public void onClick(View v) { a.notify.sample(); }
                 }), a.rowLp());
                 hint(a, col, granted
-                        ? L.t("Quand une appli annonce une nouvelle sortie, un épisode ou un message, Lumen l'affiche dans une petite carte à gauche de l'accueil, puis la garde sous la cloche. Retour l'efface. Rien n'est enregistré ni envoyé ; rien dans un profil enfant.")
+                        ? L.t("Quand une appli annonce une nouvelle sortie, un épisode ou un message, Lumen l'affiche dans une petite carte à gauche de l'accueil, puis la garde dans le volet des notifications : ▲ depuis les boutons du haut, ou la cloche. Retour efface la carte. Rien n'est enregistré ni envoyé ; rien dans un profil enfant.")
                         : L.t("Android doit d'abord autoriser Lumen à lire les notifications. Si la TV ne propose pas l'écran d'autorisation, depuis un ordinateur : ") + NotifyService.adbCommand(a));
                 break;
             }

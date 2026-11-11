@@ -191,7 +191,7 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
     adb shell pm grant fr.lumen.accueil android.permission.WRITE_SECURE_SETTINGS
 
 ## Notifications des applis
-Quand une appli annonce une nouvelle sortie, un nouvel épisode ou un message, Lumen l'affiche dans une petite carte de verre à gauche de l'accueil, sous le nom du fond (6, 10 ou 20 s), puis la garde sous le bouton cloche, qui n'apparaît que lorsqu'il y a des notifications. OK sur une notification de la liste l'ouvre dans son appli ; Retour efface la grande carte. Réglages › Notifications : activer ou couper, durée à l'écran, applis à faire taire une à une, « Essayer ».
+Quand une appli annonce une nouvelle sortie, un nouvel épisode ou un message, Lumen l'affiche dans une petite carte de verre à gauche de l'accueil, sous le nom du fond (6, 10 ou 20 s), puis la garde dans le volet des notifications. Depuis les boutons ronds du haut, ▲ fait descendre ce volet : toutes les notifications côte à côte, la plus récente à gauche ; ◀ ▶ pour choisir, OK l'ouvre dans son appli, ▼ ou Retour referme. La cloche (qui n'apparaît que lorsqu'il y a des notifications) ouvre le même volet. Retour efface la petite carte. Réglages › Notifications : activer ou couper, durée à l'écran, applis à faire taire une à une, « Essayer ».
 
 Android doit d'abord autoriser Lumen à lire les notifications : Réglages › Notifications › Accès aux notifications ouvre l'écran d'Android quand la TV le propose. Si Google TV le cache, depuis un ordinateur :
 

@@ -100,7 +100,7 @@ final class HomeBuilder {
         // cloche : les dernières notifications des applis, seulement quand il y en a
         Tile bell = a.bellButton = Tile.button(a, Glyph.BELL, L.t("Notifications"), bs);
         bell.setFocusListener(a.homeFocus);
-        bell.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { a.notify.openList(); } });
+        bell.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { a.notify.openShade(); } });
         // bouton Sons : un appui coupe ou remet les sons de Lumen (le jeu et le volume restent dans Réglages › Sons)
         Tile snd = a.soundButton = Tile.button(a, Glyph.SOUND, L.t("Sons activés"), bs);
         snd.setFocusListener(a.homeFocus);

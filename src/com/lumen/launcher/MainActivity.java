@@ -909,6 +909,11 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
                 // au bout de la ligne : une carte de « Reprendre » ou une scène, plus haut, ne compte pas comme voisine
                 if (next == null || !(f.getParent() instanceof View) || !isInside(next, (View) f.getParent())) { RecoPanel.open(MainActivity.this); return true; }
             }
+            // Geste haut depuis le haut de l'accueil (boutons ronds) → volet des notifications
+            if (!appsOpen && code == KeyEvent.KEYCODE_DPAD_UP && f != null && isInside(f, homeLayer) && notify.on()) {
+                View next = f.focusSearch(View.FOCUS_UP);
+                if (next == null || !isInside(next, homeLayer)) { notify.openShade(); return true; }
+            }
             // Geste haut depuis la première ligne des applis → accueil
             if (appsOpen && code == KeyEvent.KEYCODE_DPAD_UP && f != null) {
                 View next = f.focusSearch(View.FOCUS_UP);
@@ -916,6 +921,12 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
             }
         }
         if (resumeOpen && down && code == KeyEvent.KEYCODE_DPAD_RIGHT) { closeOverlay(true); return true; }
+        // ▼ dans le volet des notifications : il remonte (rien n'est plus bas dans le volet)
+        if (notify.shadeOpen() && down && code == KeyEvent.KEYCODE_DPAD_DOWN) {
+            View f = getCurrentFocus();
+            View next = f == null ? null : f.focusSearch(View.FOCUS_DOWN);
+            if (next == null || !isInside(next, overlay)) { closeOverlay(true); return true; }
+        }
         // ◀ dans « À l'affiche » : on ferme seulement si rien n'est à gauche (les filtres défilent)
         if (recoOpen && down && code == KeyEvent.KEYCODE_DPAD_LEFT) {
             View f = getCurrentFocus();

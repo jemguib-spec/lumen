@@ -2,6 +2,11 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.29.0
+
+- Volet des notifications : depuis les boutons ronds du haut de l'accueil, ▲ fait descendre une bande de verre avec toutes les notifications côte à côte, la plus récente à gauche (icône, appli, heure, titre, deux lignes de texte). ◀ ▶ pour passer de l'une à l'autre, OK l'ouvre dans son appli, ▼ ou Retour referme. « Tout effacer » vide la liste de l'accueil (les notifications restent dans Android).
+- La cloche et Réglages › Notifications › Dernières notifications ouvrent ce même volet. Sans notification, il le dit ; si Lumen n'a pas encore l'accès, OK mène au réglage pour l'autoriser.
+
 ## 4.28.1
 
 - Notifications des applis plus discrètes : une petite carte de verre à gauche de l'accueil, sous le nom du fond, au lieu de la grande carte au milieu en haut. Icône, nom de l'appli, titre et deux lignes de texte au plus ; elle glisse depuis la gauche.
