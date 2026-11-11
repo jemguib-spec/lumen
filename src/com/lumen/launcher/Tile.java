@@ -250,8 +250,9 @@ final class Tile extends FrameLayout {
         if (usualRing != null) return;
         usualRing = new View(getContext());
         GradientDrawable ring = new GradientDrawable();
-        ring.setCornerRadius(radius);
-        ring.setStroke((int) dp(getContext(), 2), 0xCCFFFFFF);
+        int rw = (int) dp(getContext(), 2);
+        ring.setCornerRadius(Radius.stroke(radius, rw));
+        ring.setStroke(rw, 0xCCFFFFFF);
         usualRing.setBackground(ring);
         usualRing.setAlpha(0f);
         card.addView(usualRing, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
@@ -285,8 +286,9 @@ final class Tile extends FrameLayout {
     void setMoving(boolean moving) {
         if (moving) {
             GradientDrawable b = new GradientDrawable();
-            b.setCornerRadius(radius);
-            b.setStroke((int) dp(getContext(), 2), Color.WHITE);
+            int bw = (int) dp(getContext(), 2);
+            b.setCornerRadius(Radius.stroke(radius, bw));
+            b.setStroke(bw, Color.WHITE);
             card.setForeground(b);
             animate().translationY(-dp(getContext(), 8)).setDuration(Motion.FAST).start();
         } else {
@@ -307,8 +309,9 @@ final class Tile extends FrameLayout {
         card.animate().translationZ(f ? dp(getContext(), 18) : 0).setDuration(f ? 360 : 220).start();
         if (banner) { // bannière : liseré blanc au focus (une bannière blanche ne doit pas sembler sélectionnée)
             GradientDrawable ring = new GradientDrawable();
-            ring.setCornerRadius(radius);
-            ring.setStroke((int) dp(getContext(), 2.5f), Color.WHITE);
+            int rw = (int) dp(getContext(), 2.5f);
+            ring.setCornerRadius(Radius.stroke(radius, rw));
+            ring.setStroke(rw, Color.WHITE);
             card.setForeground(f ? ring : null);
         }
         if (glass != null) fadeSelection(f);

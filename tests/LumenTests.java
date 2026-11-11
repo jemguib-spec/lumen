@@ -598,11 +598,12 @@ public class LumenTests {
         check("arrondis : tuile Maison = pastille + marge", Radius.HA_TILE == Radius.HA_ICON / 2 + Radius.HA_INSET);
         check("arrondis : vignette à cocher = coche + marge", Radius.CHECK_CELL == Radius.CHECK / 2 + Radius.CHECK_INSET);
         check("arrondis : barre de progression = vignette − marge", Radius.SHELF_BAR / 2 + Radius.SHELF_BAR_INSET == Radius.SHELF);
+        check("arrondis : contour tracé au bord = rayon − demi-épaisseur", Radius.stroke(18, 4) == 16 && Radius.stroke(1, 4) == 0);
         check("arrondis : pastille de rubrique = ligne − marge", Radius.CHIP + Radius.CHIP_PAD == Radius.ROW);
         // la même règle partout : aucun rayon écrit en dur dans l'interface (cartes, fonds, contours, dessins)
         boolean noLiteral = true;
         java.util.regex.Pattern literal = java.util.regex.Pattern.compile(
-                "glassCard\\(\\s*\\d|setCornerRadius\\(\\s*(a\\.)?u\\(\\s*\\d|(setRoundRect|drawRoundRect)\\([^;]*\\bu\\(\\s*\\d");
+                "glassCard\\(\\s*\\d|Glass\\.Surface\\([^;]*\\bu\\(\\s*\\d|setCornerRadius\\(\\s*(a\\.)?u\\(\\s*\\d|(setRoundRect|drawRoundRect)\\([^;]*\\bu\\(\\s*\\d");
         try (java.util.stream.Stream<java.nio.file.Path> files = Files.list(new File("src/com/lumen/launcher").toPath())) {
             for (java.nio.file.Path f : (Iterable<java.nio.file.Path>) files::iterator) {
                 java.util.regex.Matcher m = literal.matcher(new String(Files.readAllBytes(f), StandardCharsets.UTF_8));

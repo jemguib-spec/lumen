@@ -180,7 +180,8 @@ final class Glass {
             c.drawRoundRect(r, radius, radius, veil);
             float inset = rim.getStrokeWidth() / 2f;
             r.inset(inset, inset);
-            c.drawRoundRect(r, radius, radius, rim);
+            float rr = Radius.stroke(radius, rim.getStrokeWidth()); // filet posé à inset du bord : rayon − inset
+            c.drawRoundRect(r, rr, rr, rim);
             if (solidLevel > 0f) { // la sélection arrive en fondu par-dessus le verre
                 r.set(b);
                 veil.setColor(Palette.mix(Palette.SELECTED & 0x00FFFFFF, Palette.SELECTED, solidLevel));

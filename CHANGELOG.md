@@ -2,6 +2,11 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.26.2
+
+- Arrondis, suite : les anneaux de sélection (À l'affiche, Reprendre, tuiles Maison, vignettes à cocher), le liseré des applis habituelles, le contour du mode déplacement et le filet du verre de toutes les cartes suivent eux aussi la règle : un trait posé au bord prend le rayon de la forme moins sa demi-épaisseur.
+- Les pastilles de suggestions de l'accueil et de la Maison sont arrondies en entier, comme les autres pastilles.
+
 ## 4.26.1
 
 - Une seule règle pour tous les coins arrondis, partout : quand un élément arrondi est posé dans un autre, son coin suit celui qui l'entoure (rayon extérieur = rayon intérieur + marge). Menus, réglages et leurs pastilles de rubrique, fenêtres de saisie, code PIN, À l'affiche, tuiles Maison, vignettes à cocher, barre de progression des programmes.

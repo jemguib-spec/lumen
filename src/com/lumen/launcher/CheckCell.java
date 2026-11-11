@@ -88,8 +88,9 @@ final class CheckCell {
     /** Anneau blanc de la vignette sélectionnée. */
     static GradientDrawable ring(MainActivity a, float radius) {
         GradientDrawable g = new GradientDrawable();
-        g.setCornerRadius(radius);
-        g.setStroke(a.u(4), Palette.SELECTED);
+        int w = a.u(4);
+        g.setCornerRadius(Radius.stroke(radius, w)); // trait à w / 2 du bord de la vignette
+        g.setStroke(w, Palette.SELECTED);
         return g;
     }
 }

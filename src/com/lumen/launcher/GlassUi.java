@@ -180,7 +180,7 @@ final class GlassUi {
             setClickable(true);
             setSoundEffectsEnabled(false);
             setPadding(a.u(26), a.u(14), a.u(30), a.u(14));
-            glass = new Glass.Surface(this, a.u(40), 0x33FFFFFF);
+            glass = new Glass.Surface(this, a.u(Radius.PILL), 0x33FFFFFF);
             setBackground(glass);
             glyph = new Glyph(Glyph.SPARK, Palette.TEXT);
             ImageView iv = new ImageView(a);

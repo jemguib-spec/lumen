@@ -23,6 +23,12 @@ final class Radius {
     /** Rayon d'un élément posé à pad des bords d'un conteneur de rayon outer (jamais négatif). */
     static float inner(float outer, float pad) { return Math.max(0f, outer - pad); }
 
+    /**
+     * Contour (anneau, liseré, filet) d'épaisseur stroke tracé sur le bord d'une forme de rayon outer :
+     * le trait est centré à stroke / 2 du bord, il prend donc le rayon outer − stroke / 2.
+     */
+    static float stroke(float outer, float stroke) { return inner(outer, stroke / 2f); }
+
     /** Marge à laisser entre un élément de rayon inner et le bord d'un conteneur de rayon outer. */
     static float pad(float outer, float inner) { return Math.max(0f, outer - inner); }
 
