@@ -44,7 +44,7 @@ final class SettingsPanel {
                         || before[5] != (a.prefs.tintTiles() ? 1 : 0)) { a.dirtyRow = true; a.markAppsDirty(); }
             }
         });
-        final LinearLayout card = a.glassCard(48);
+        final LinearLayout card = a.glassCard(Radius.CARD);
         FrameLayout.LayoutParams cl = new FrameLayout.LayoutParams(a.u(760), ViewGroup.LayoutParams.MATCH_PARENT, Gravity.END);
         cl.topMargin = cl.bottomMargin = cl.rightMargin = a.u(48);
         o.addView(card, cl);

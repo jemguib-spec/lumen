@@ -61,8 +61,8 @@ final class About {
     /** Fenêtre « Nouveautés » d'une version (texte annoncé par latest.json, déjà nettoyé). */
     static void showNotes(final MainActivity a, String version, String notes) {
         android.widget.FrameLayout o = a.openOverlay(null);
-        LinearLayout card = a.glassCard(48);
-        card.setPadding(a.u(56), a.u(48), a.u(56), a.u(40));
+        // la ligne OK finit dans le coin bas gauche : marge FORM_PAD, coins FORM
+        LinearLayout card = a.formCard(48, false);
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText(L.t("Nouveautés · Lumen ") + version);
         card.addView(title);
@@ -153,7 +153,7 @@ final class About {
         r.setFocusable(true);
         r.setPadding(a.u(32), a.u(20), a.u(32), a.u(20));
         final GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(a.u(24));
+        bg.setCornerRadius(a.u(Radius.ROW));
         bg.setColor(0x00FFFFFF);
         r.setBackground(bg);
         final TextView t = a.text(24, "sans-serif", Palette.TEXT);

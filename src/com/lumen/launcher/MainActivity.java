@@ -1260,6 +1260,9 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
 
     // briques des panneaux : voir GlassUi
     LinearLayout glassCard(float radiusPx) { return ui.glassCard(radiusPx); }
+    LinearLayout menuCard(float top) { return ui.menuCard(top); }
+    LinearLayout formCard(float top, boolean lastIsRow) { return ui.formCard(top, lastIsRow); }
+    GradientDrawable fieldBackground() { return ui.fieldBackground(); }
     LinearLayout listRow(String label, final Value value, final View.OnClickListener click) { return ui.listRow(label, value, click); }
     LinearLayout iconRow(int glyphType, String label, Value value, View.OnClickListener click, final boolean danger) { return ui.iconRow(glyphType, label, value, click, danger); }
     LinearLayout menuHeader(android.graphics.drawable.Drawable art, boolean wide, String title, String sub) { return ui.menuHeader(art, wide, title, sub); }

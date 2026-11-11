@@ -154,7 +154,7 @@ final class TopShelf {
         cell.setSoundEffectsEnabled(false);
         cell.setClipChildren(false);
         final FrameLayout card = new FrameLayout(a);
-        final float radius = a.u(16);
+        final float radius = a.u(Radius.SHELF);
         card.setOutlineProvider(new android.view.ViewOutlineProvider() {
             @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), radius); }
         });
@@ -170,7 +170,7 @@ final class TopShelf {
         card.addView(sh, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, h * 2 / 3, Gravity.BOTTOM));
         LinearLayout txt = new LinearLayout(a);
         txt.setOrientation(LinearLayout.VERTICAL);
-        txt.setPadding(a.u(16), 0, a.u(16), a.u(e.progress >= 0 ? 22 : 14));
+        txt.setPadding(a.u(16), 0, a.u(16), a.u(e.progress >= 0 ? 24 : 14));
         TextView t = a.text(22, "sans-serif-medium", 0xFFFFFFFF);
         t.setText(e.title);
         t.setMaxLines(e.portrait ? 2 : 1);
@@ -189,18 +189,20 @@ final class TopShelf {
             FrameLayout bar = new FrameLayout(a);
             GradientDrawable track = new GradientDrawable();
             track.setColor(0x4DFFFFFF);
-            track.setCornerRadius(a.u(3));
+            track.setCornerRadius(a.u(Radius.SHELF_BAR / 2));
             bar.setBackground(track);
             View fill = new View(a);
             GradientDrawable fd = new GradientDrawable();
             fd.setColor(Palette.SELECTED);
-            fd.setCornerRadius(a.u(3));
+            fd.setCornerRadius(a.u(Radius.SHELF_BAR / 2));
             fill.setBackground(fd);
-            int bw = w - a.u(32);
-            bar.addView(fill, new FrameLayout.LayoutParams(Math.round(bw * e.progress), a.u(5)));
-            FrameLayout.LayoutParams bl = new FrameLayout.LayoutParams(bw, a.u(5), Gravity.BOTTOM | Gravity.START);
-            bl.leftMargin = a.u(16);
-            bl.bottomMargin = a.u(12);
+            // barre arrondie en entier, posée dans les coins bas : rayon de la barre + marge = rayon de la vignette
+            int inset = a.u(Radius.SHELF_BAR_INSET), bh = a.u(Radius.SHELF_BAR);
+            int bw = w - 2 * inset;
+            bar.addView(fill, new FrameLayout.LayoutParams(Math.round(bw * e.progress), bh));
+            FrameLayout.LayoutParams bl = new FrameLayout.LayoutParams(bw, bh, Gravity.BOTTOM | Gravity.START);
+            bl.leftMargin = inset;
+            bl.bottomMargin = inset;
             card.addView(bar, bl);
         }
         cell.addView(card, new FrameLayout.LayoutParams(w, h));

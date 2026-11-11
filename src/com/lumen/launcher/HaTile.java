@@ -49,7 +49,7 @@ final class HaTile extends FrameLayout {
         this.a = a;
         this.listener = l;
         this.e = entity;
-        radius = a.u(22);
+        radius = a.u(Radius.HA_TILE); // pastille ronde du coin + sa marge
         setFocusable(true);
         setClickable(true);
         setSoundEffectsEnabled(false);
@@ -74,9 +74,8 @@ final class HaTile extends FrameLayout {
         badge.setShape(android.graphics.drawable.GradientDrawable.OVAL);
         iv.setBackground(badge);
         iv.setPadding(a.u(12), a.u(12), a.u(12), a.u(12));
-        LayoutParams gl = new LayoutParams(a.u(64), a.u(64), Gravity.TOP | Gravity.START);
-        gl.leftMargin = a.u(20);
-        gl.topMargin = a.u(18);
+        LayoutParams gl = new LayoutParams(a.u(Radius.HA_ICON), a.u(Radius.HA_ICON), Gravity.TOP | Gravity.START);
+        gl.leftMargin = gl.topMargin = a.u(Radius.HA_INSET);
         card.addView(iv, gl);
         LinearLayout txt = new LinearLayout(a);
         txt.setOrientation(LinearLayout.VERTICAL);

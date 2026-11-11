@@ -83,7 +83,7 @@ final class ResumePanel {
         List<Object[]> items = recentApps(a);
         a.resumeOpen = true;
         FrameLayout o = a.openOverlay(new Runnable() { @Override public void run() { a.resumeOpen = false; } });
-        final LinearLayout card = a.glassCard(48);
+        final LinearLayout card = a.glassCard(Radius.CARD);
         card.setPadding(a.u(24), a.u(52), a.u(24), a.u(32));
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText(L.t("Reprendre"));
@@ -138,7 +138,7 @@ final class ResumePanel {
         r.setSoundEffectsEnabled(false);
         r.setPadding(a.u(24), 0, a.u(24), 0);
         final GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(a.u(24));
+        bg.setCornerRadius(a.u(Radius.ROW));
         bg.setColor(0x00FFFFFF);
         r.setBackground(bg);
         ImageView ic = new ImageView(a);

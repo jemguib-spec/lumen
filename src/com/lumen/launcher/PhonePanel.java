@@ -26,8 +26,7 @@ final class PhonePanel {
     /** Un téléphone est déjà connecté : le déconnecter, ou en connecter un autre (nouveau QR code). */
     private static void openConnected(final MainActivity a) {
         FrameLayout o = a.openOverlay(null);
-        LinearLayout card = a.glassCard(44);
-        card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
+        LinearLayout card = a.menuCard(40);
         card.addView(a.menuHeader(null, false, L.t("Téléphone connecté"), a.phone.deviceName()));
         card.addView(a.iconRow(Glyph.PHONE, L.t("Connecter un autre téléphone"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { a.closeOverlay(false); showQr(a); }
@@ -66,7 +65,7 @@ final class PhonePanel {
         final String url = a.phone.start();
         if (url == null) { a.showNotice(L.t("Pas de connexion réseau")); return; }
         FrameLayout o = a.openOverlay(null);
-        LinearLayout card = a.glassCard(48);
+        LinearLayout card = a.glassCard(Radius.CARD);
         card.setGravity(Gravity.CENTER_HORIZONTAL);
         card.setPadding(a.u(64), a.u(56), a.u(64), a.u(48));
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);

@@ -22,7 +22,7 @@ final class RemoteKeyPanel {
     /** Depuis l'accueil : ouvre le choix de la fonction pour la touche qui vient d'être pressée. */
     static void ask(final MainActivity a, final String id) {
         FrameLayout o = a.openOverlay(null);
-        LinearLayout card = a.glassCard(48);
+        LinearLayout card = a.glassCard(Radius.CARD);
         FrameLayout.LayoutParams cl = new FrameLayout.LayoutParams(a.u(760), ViewGroup.LayoutParams.MATCH_PARENT, Gravity.END);
         cl.topMargin = cl.bottomMargin = cl.rightMargin = a.u(48);
         o.addView(card, cl);

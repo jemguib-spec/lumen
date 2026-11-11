@@ -24,8 +24,7 @@ final class AppMenu {
         final AppRepo.App app = (AppRepo.App) t.tag;
         if (a.prefs.isKidProfile() && !unlocked) { kidMenu(a, t, fromHome, app); return; }
         FrameLayout o = a.openOverlay(null);
-        LinearLayout card = a.glassCard(44);
-        card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
+        LinearLayout card = a.menuCard(40);
 
         // fiche : bannière (ou icône), nom, version
         android.graphics.drawable.Drawable banner = app.banner(a.getPackageManager());
@@ -123,8 +122,7 @@ final class AppMenu {
     /** Profil enfant : fermer l'appli, et « Modifier » (code PIN) pour l'adulte qui règle les favoris. */
     private static void kidMenu(final MainActivity a, final Tile t, final boolean fromHome, final AppRepo.App app) {
         FrameLayout o = a.openOverlay(null);
-        LinearLayout card = a.glassCard(44);
-        card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
+        LinearLayout card = a.menuCard(40);
         android.graphics.drawable.Drawable banner = app.banner(a.getPackageManager());
         card.addView(a.menuHeader(banner != null ? banner : app.icon(a.getPackageManager()), banner != null, app.label, L.t("Profil enfant")));
         LinearLayout first = null;

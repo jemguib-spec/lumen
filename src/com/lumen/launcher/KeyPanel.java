@@ -2,7 +2,6 @@
 // Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
-import android.graphics.drawable.GradientDrawable;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -34,8 +33,7 @@ final class KeyPanel {
 
     private static void show(final MainActivity a, final boolean tmdb, boolean has) {
         FrameLayout o = a.openOverlay(null);
-        LinearLayout card = a.glassCard(44);
-        card.setPadding(a.u(40), a.u(44), a.u(40), a.u(32));
+        LinearLayout card = a.formCard(44, true);
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText(tmdb ? L.t("Films du moment") : L.t("Vidéos Pexels"));
         card.addView(title);
@@ -63,10 +61,7 @@ final class KeyPanel {
         in.setPadding(a.u(28), a.u(20), a.u(28), a.u(20));
         in.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
                 | android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-        GradientDrawable ib = new GradientDrawable();
-        ib.setColor(Palette.SELECTED);
-        ib.setCornerRadius(a.u(22));
-        in.setBackground(ib);
+        in.setBackground(a.fieldBackground());
         in.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE | android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);
         in.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override public boolean onEditorAction(TextView v, int action, KeyEvent ev) { save(a, tmdb, in.getText().toString()); return true; }

@@ -46,8 +46,7 @@ final class PhoneBridge implements PhoneServer.Host {
         FrameLayout o = a.openOverlay(new Runnable() {
             @Override public void run() { a.h.removeCallbacks(timeout); if (!done[0]) { done[0] = true; cb.answer(false, false); } }
         });
-        LinearLayout card = a.glassCard(44);
-        card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
+        LinearLayout card = a.menuCard(40);
         card.addView(a.menuHeader(null, false, L.t("Nouveau téléphone"), name));
         TextView why = a.text(22, "sans-serif", 0x99FFFFFF);
         why.setText(L.t("Il pourra piloter la TV, ouvrir des applis et écrire du texte. Accepte seulement si c'est le tien."));

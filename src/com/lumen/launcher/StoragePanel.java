@@ -15,8 +15,7 @@ final class StoragePanel {
 
     static void open(final MainActivity a) {
         FrameLayout o = a.openOverlay(null);
-        final LinearLayout card = a.glassCard(44);
-        card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
+        final LinearLayout card = a.menuCard(40);
         a.rowRefreshers.clear();
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText(L.t("Stockage"));

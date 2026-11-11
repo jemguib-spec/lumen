@@ -30,6 +30,8 @@ final class Tile extends FrameLayout {
     Object tag;
     String title = "";
     private final float radius;
+    /** Rayon des vignettes d'applis, en dp. */
+    static final float TILE_RADIUS_DP = 10;
     private final boolean round;
     private Glass.Surface glass;
     private TextView label;
@@ -72,7 +74,7 @@ final class Tile extends FrameLayout {
      *             dans la couleur de l'appli
      */
     static Tile app(Context c, AppRepo.App a, int w, int h, boolean banner, boolean showIcon, boolean tint, boolean labelBelow, boolean word) {
-        Tile t = new Tile(c, w, h, dp(c, 10), false, banner ? 0.85f : 1f);
+        Tile t = new Tile(c, w, h, dp(c, TILE_RADIUS_DP), false, banner ? 0.85f : 1f);
         t.title = a.label;
         t.setContentDescription(a.label); // lecteur d'écran : le nom de l'appli, pas « bouton sans nom »
         t.tag = a;
@@ -85,7 +87,7 @@ final class Tile extends FrameLayout {
             t.card.setBackgroundColor(0xFF1C1D22);
             t.banner = true;
         } else if (word) {
-            t.glass = new Glass.Surface(t.card, dp(c, 10), 0x1FFFFFFF);
+            t.glass = new Glass.Surface(t.card, dp(c, TILE_RADIUS_DP), 0x1FFFFFFF);
             if (tint) t.glass.setGlassTint(a.color(c.getPackageManager()));
             t.card.setBackground(t.glass);
             t.focusText = readable(a.color(c.getPackageManager()));
@@ -102,7 +104,7 @@ final class Tile extends FrameLayout {
             tl.leftMargin = tl.rightMargin = (int) (h * 0.12f);
             t.card.addView(t.label, tl);
         } else {
-            t.glass = new Glass.Surface(t.card, dp(c, 10), 0x1FFFFFFF);
+            t.glass = new Glass.Surface(t.card, dp(c, TILE_RADIUS_DP), 0x1FFFFFFF);
             if (tint) t.glass.setGlassTint(a.color(c.getPackageManager()));
             t.card.setBackground(t.glass);
             boolean icon = showIcon || banner; // sans bannière, on montre au moins l'icône
@@ -201,7 +203,8 @@ final class Tile extends FrameLayout {
             favDot.setBackground(d);
             int s = (int) dp(getContext(), 6);
             LayoutParams lp = new LayoutParams(s, s, Gravity.TOP | Gravity.END);
-            lp.topMargin = lp.rightMargin = (int) dp(getContext(), 7);
+            // arrondis imbriqués (Radius) : rayon du point (3) + marge (7) = rayon de la vignette (10)
+            lp.topMargin = lp.rightMargin = (int) dp(getContext(), Radius.pad(TILE_RADIUS_DP, 3));
             card.addView(favDot, lp);
         }
         if (favDot != null) favDot.setVisibility(fav ? VISIBLE : GONE);

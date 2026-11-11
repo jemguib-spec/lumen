@@ -3,7 +3,6 @@
 package com.lumen.launcher;
 
 import android.content.Context;
-import android.graphics.drawable.GradientDrawable;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -21,8 +20,7 @@ final class CityPanel {
 
     static void openCityInput(final MainActivity a) {
         FrameLayout o = a.openOverlay(null);
-        LinearLayout card = a.glassCard(44);
-        card.setPadding(a.u(40), a.u(44), a.u(40), a.u(32));
+        LinearLayout card = a.formCard(44, a.weather.hasCity());
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText(L.t("Ville pour la météo"));
         card.addView(title);
@@ -38,10 +36,7 @@ final class CityPanel {
         in.setTextColor(Palette.ON_SELECTED);
         in.setHintTextColor(Palette.ON_SELECTED_2);
         in.setPadding(a.u(28), a.u(20), a.u(28), a.u(20));
-        GradientDrawable ib = new GradientDrawable();
-        ib.setColor(Palette.SELECTED);
-        ib.setCornerRadius(a.u(22));
-        in.setBackground(ib);
+        in.setBackground(a.fieldBackground());
         in.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);
         in.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override public boolean onEditorAction(TextView v, int action, KeyEvent ev) {
@@ -58,9 +53,8 @@ final class CityPanel {
             }
         });
         card.addView(in, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        View spacer = new View(a);
-        card.addView(spacer, new LinearLayout.LayoutParams(1, a.u(20)));
         if (a.weather.hasCity()) {
+            card.addView(new View(a), new LinearLayout.LayoutParams(1, a.u(20)));
             card.addView(a.listRow(L.t("Désactiver la météo"), null, new View.OnClickListener() {
                 @Override public void onClick(View v) { a.weather.clearCity(); a.closeOverlay(true); a.showNotice("Météo désactivée"); }
             }), a.rowLp());

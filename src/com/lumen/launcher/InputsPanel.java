@@ -31,8 +31,7 @@ final class InputsPanel {
             }
         } catch (Throwable ignored) { }
         FrameLayout o = a.openOverlay(null);
-        LinearLayout card = a.glassCard(44);
-        card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
+        LinearLayout card = a.menuCard(40);
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);
         title.setText(L.t("Entrées"));
         title.setGravity(Gravity.CENTER);

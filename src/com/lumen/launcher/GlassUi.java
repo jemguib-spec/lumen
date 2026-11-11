@@ -18,7 +18,37 @@ final class GlassUi {
 
     GlassUi(MainActivity a) { this.a = a; }
 
-    /** Carte de verre flottante. */
+    /**
+     * Menu : lignes posées à {@link Radius#PAD} des bords, coins à {@link Radius#CARD} (rayon des
+     * lignes + marge). En bas, l'espace sous la dernière ligne complète la marge.
+     */
+    LinearLayout menuCard(float top) {
+        LinearLayout card = glassCard(Radius.CARD);
+        card.setPadding(a.u(Radius.PAD), a.u(top), a.u(Radius.PAD), a.u(Radius.PAD - Radius.ROW_GAP));
+        return card;
+    }
+
+    /**
+     * Fenêtre de saisie : champ et lignes posés à {@link Radius#FORM_PAD} des bords, coins à
+     * {@link Radius#FORM}. lastIsRow : la dernière ligne a son espace dessous (rowLp), qui compte
+     * dans la marge du bas.
+     */
+    LinearLayout formCard(float top, boolean lastIsRow) {
+        LinearLayout card = glassCard(Radius.FORM);
+        card.setPadding(a.u(Radius.FORM_PAD), a.u(top), a.u(Radius.FORM_PAD),
+                a.u(lastIsRow ? Radius.FORM_PAD - Radius.ROW_GAP : Radius.FORM_PAD));
+        return card;
+    }
+
+    /** Fond d'un champ de saisie dans une fenêtre : même rayon que les lignes. */
+    GradientDrawable fieldBackground() {
+        GradientDrawable ib = new GradientDrawable();
+        ib.setColor(Palette.SELECTED);
+        ib.setCornerRadius(a.u(Radius.ROW));
+        return ib;
+    }
+
+    /** Carte de verre flottante (rayon en pixels de conception, voir {@link Radius}). */
     LinearLayout glassCard(float radiusPx) {
         LinearLayout card = new LinearLayout(a);
         card.setOrientation(LinearLayout.VERTICAL);
@@ -81,8 +111,8 @@ final class GlassUi {
         r.setSoundEffectsEnabled(false);
         r.setPadding(a.u(32), 0, a.u(32), 0);
         final GradientDrawable bg = new GradientDrawable();
-        // arrondi concentrique avec les cartes (rayon 48, marge 24) : les coins suivent ceux du panneau
-        bg.setCornerRadius(a.u(24));
+        // arrondi concentrique avec les cartes (Radius.CARD = ROW + PAD) : les coins suivent ceux du panneau
+        bg.setCornerRadius(a.u(Radius.ROW));
         bg.setColor(0x00FFFFFF);
         r.setBackground(bg);
         final TextView l = a.text(28, "sans-serif", Palette.TEXT);
@@ -364,7 +394,7 @@ final class GlassUi {
 
     LinearLayout.LayoutParams rowLp() {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, a.u(88 * a.textScale));
-        lp.bottomMargin = a.u(6);
+        lp.bottomMargin = a.u(Radius.ROW_GAP);
         return lp;
     }
 }

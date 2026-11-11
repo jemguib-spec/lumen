@@ -2,7 +2,6 @@
 // Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
-import android.graphics.drawable.GradientDrawable;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -29,8 +28,7 @@ final class ProfilePanel {
     /** Gestion des profils, déjà déverrouillée (depuis les réglages). */
     static void manage(final MainActivity a) {
         FrameLayout o = a.openOverlay(null);
-        LinearLayout card = a.glassCard(44);
-        card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
+        LinearLayout card = a.menuCard(40);
         card.addView(a.menuHeader(null, false, L.t("Profils"),
                 L.t("Chacun a ses favoris, ses fonds et son affichage. Clés, Maison et code PIN restent communs.")));
         LinearLayout first = null;
@@ -71,8 +69,7 @@ final class ProfilePanel {
 
     private static void edit(final MainActivity a, final Profiles.Profile p) {
         FrameLayout o = a.openOverlay(null);
-        LinearLayout card = a.glassCard(44);
-        card.setPadding(a.u(24), a.u(40), a.u(24), a.u(24));
+        LinearLayout card = a.menuCard(40);
         card.addView(a.menuHeader(null, false, p.name, p.id == Profiles.MAIN ? L.t("Profil principal") : p.kid ? L.t("Profil enfant") : null));
         LinearLayout use = a.iconRow(Glyph.PERSON, L.t("Utiliser ce profil"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { a.closeOverlay(true); switchTo(a, p.id); }
@@ -126,8 +123,7 @@ final class ProfilePanel {
     /** Saisie d'un prénom (clavier de la TV). */
     private static void askName(final MainActivity a, String title, String initial, final Name done) {
         FrameLayout o = a.openOverlay(null);
-        LinearLayout card = a.glassCard(44);
-        card.setPadding(a.u(40), a.u(44), a.u(40), a.u(32));
+        LinearLayout card = a.formCard(44, true);
         TextView t = a.text(44, "sans-serif-light", Palette.TEXT);
         t.setText(title);
         t.setPadding(0, 0, 0, a.u(28));
@@ -144,10 +140,7 @@ final class ProfilePanel {
         in.setHintTextColor(Palette.ON_SELECTED_2);
         in.setPadding(a.u(28), a.u(20), a.u(28), a.u(20));
         in.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS);
-        GradientDrawable ib = new GradientDrawable();
-        ib.setColor(Palette.SELECTED);
-        ib.setCornerRadius(a.u(22));
-        in.setBackground(ib);
+        in.setBackground(a.fieldBackground());
         in.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE | android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);
         final Runnable save = new Runnable() {
             @Override public void run() {

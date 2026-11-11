@@ -2,6 +2,11 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.26.1
+
+- Coins arrondis harmonisés partout : quand un élément arrondi est posé dans un autre, son coin suit celui qui l'entoure (rayon extérieur = rayon intérieur + marge). Menus, réglages, fenêtres de saisie, code PIN, À l'affiche, tuiles Maison, vignettes à cocher et barre de progression des programmes, ainsi que la page du téléphone (listes, onglets, vignettes et leurs pastilles).
+- Code PIN : les touches occupent toute la largeur de la fenêtre.
+
 ## 4.26.0
 
 - Nouveau bouton haut-parleur en haut de l'accueil, à côté de Réglages : un appui coupe les sons de Lumen (le haut-parleur est alors barré), un autre les remet.

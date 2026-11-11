@@ -68,9 +68,11 @@ final class PinDialog {
 
     private static void show(final MainActivity a, String title, final Entered entered) {
         FrameLayout o = a.openOverlay(null);
-        LinearLayout card = a.glassCard(44);
+        LinearLayout card = a.glassCard(Radius.FORM);
         card.setGravity(Gravity.CENTER_HORIZONTAL);
-        card.setPadding(a.u(40), a.u(44), a.u(40), a.u(40));
+        // les touches ont leur écart autour d'elles : carte + écart = FORM_PAD jusqu'aux touches des coins
+        final int side = a.u(Radius.FORM_PAD - Radius.KEY_GAP);
+        card.setPadding(side, a.u(44), side, side);
 
         TextView t = a.text(36, "sans-serif-light", Palette.TEXT);
         t.setText(title);
@@ -139,11 +141,13 @@ final class PinDialog {
                     cellView = key(a, k, value, digit);
                     if (firstKey == null && value == 5) firstKey = cellView;
                 }
-                LinearLayout.LayoutParams kl = new LinearLayout.LayoutParams(a.u(116), a.u(84));
-                kl.setMargins(a.u(8), a.u(8), a.u(8), a.u(8));
+                // les touches occupent toute la largeur : celles des coins sont à FORM_PAD des bords
+                LinearLayout.LayoutParams kl = new LinearLayout.LayoutParams(0, a.u(84), 1f);
+                int gap = a.u(Radius.KEY_GAP);
+                kl.setMargins(gap, gap, gap, gap);
                 row.addView(cellView, kl);
             }
-            card.addView(row);
+            card.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         }
         o.addView(card, new FrameLayout.LayoutParams(a.u(560), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         if (firstKey != null) firstKey.requestFocus();
@@ -159,7 +163,7 @@ final class PinDialog {
         k.setClickable(true);
         k.setSoundEffectsEnabled(false);
         final GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(a.u(22));
+        bg.setCornerRadius(a.u(Radius.ROW));
         bg.setColor(0x1FFFFFFF);
         k.setBackground(bg);
         k.setOnFocusChangeListener(new View.OnFocusChangeListener() {

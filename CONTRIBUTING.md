@@ -23,6 +23,7 @@ Sur une TV (ou un émulateur Android TV) branchée en adb :
 - **Aucune dépendance** : pas de bibliothèque tierce, pas de Gradle imposé. Ça se compile avec `javac` et les outils Android de la distribution.
 - **Textes à l'écran** calmes et sans jargon ; le détail technique va dans le journal d'erreurs (`Messages`).
 - **Accessibilité** : tout élément sélectionnable a une `contentDescription` (les briques `Tile`, `GlassUi.listRow`, `About.info` le font déjà).
+- **Arrondis imbriqués** : rayon externe = rayon interne + marge (padding). Une carte, un rail ou une vignette qui contient un élément arrondi prend son rayon dans `Radius` (`Radius.outer`, `menuCard`, `formCard`), jamais un nombre en dur ; côté téléphone, `phone.css` l'écrit `calc(interne + marge)`. `tests/LumenTests.java` le vérifie.
 - **Couleurs et mouvement** : pas de couleur hexadécimale ni de durée en dur dans l'interface ; `Palette` (texte, surfaces, accent, danger) et `Motion` (rapide, moyen, lent, une seule courbe). Les dessins (paysages, météo) gardent leurs couleurs.
 - **Textes** : écrits en français dans le code, toujours passés par `L.t("…")` (ou `L.all` pour un tableau) ; chaque nouveau texte reçoit sa ligne dans `assets/lang/en.tsv`, `tools/i18n_check.py` le vérifie (lancé par `tests/run.sh`).
 - **Réglages** : un réglage à deux états est un `toggleRow`, à plusieurs valeurs un `choiceRow` ; une page de réglages ne dépasse pas dix lignes, au-delà on crée une sous-page.

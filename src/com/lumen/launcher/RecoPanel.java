@@ -42,7 +42,7 @@ final class RecoPanel {
         detailsBack = null;
         FrameLayout o = a.openOverlay(new Runnable() { @Override public void run() { a.recoOpen = false; detailsBack = null; } });
         hero = new Hero(a, o);
-        final LinearLayout card = a.glassCard(48);
+        final LinearLayout card = a.glassCard(Radius.CARD);
         card.setPadding(a.u(24), a.u(48), a.u(24), a.u(28));
         // en-tête : le titre, et à droite le choix Tout · Films · Séries
         LinearLayout head = new LinearLayout(a);
@@ -54,11 +54,12 @@ final class RecoPanel {
         head.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         final LinearLayout seg = new LinearLayout(a);
         GradientDrawable segBg = new GradientDrawable();
-        segBg.setCornerRadius(a.u(30));
+        segBg.setCornerRadius(a.u(Radius.SEG)); // pastille + marge du rail
         segBg.setColor(0x14FFFFFF);
         segBg.setStroke(Math.max(1, a.u(1.5f)), 0x1FFFFFFF);
         seg.setBackground(segBg);
-        seg.setPadding(a.u(4), a.u(4), a.u(4), a.u(4));
+        final int segPad = a.u(Radius.SEG_PAD);
+        seg.setPadding(segPad, segPad, segPad, segPad);
         head.addView(seg, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         card.addView(head);
         // modes : de simples mots, le mode choisi en blanc et souligné (sobre, comme des onglets)
@@ -215,7 +216,7 @@ final class RecoPanel {
             s.setSoundEffectsEnabled(false);
             s.setPadding(a.u(20), a.u(8), a.u(20), a.u(8));
             GradientDrawable sb = new GradientDrawable();
-            sb.setCornerRadius(a.u(26));
+            sb.setCornerRadius(a.u(Radius.SEG_ITEM));
             s.setBackground(sb);
             s.setTag(ty[0]);
             seg.addView(s);
@@ -395,9 +396,9 @@ final class RecoPanel {
         r.setFocusable(true);
         r.setClickable(true);
         r.setSoundEffectsEnabled(false);
-        r.setPadding(a.u(16), a.u(12), a.u(24), a.u(12));
+        r.setPadding(a.u(16), a.u(Radius.POSTER_PAD), a.u(24), a.u(Radius.POSTER_PAD));
         final GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(a.u(24));
+        bg.setCornerRadius(a.u(Radius.ROW));
         bg.setColor(0x00FFFFFF);
         r.setBackground(bg);
 
@@ -412,7 +413,7 @@ final class RecoPanel {
         poster.setScaleType(ImageView.ScaleType.CENTER_CROP);
         poster.setBackgroundColor(Palette.LINE);
         poster.setOutlineProvider(new android.view.ViewOutlineProvider() {
-            @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), a.u(12)); }
+            @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), a.u(Radius.POSTER)); } // ligne − marge
         });
         poster.setClipToOutline(true);
         r.addView(poster, new LinearLayout.LayoutParams(a.u(66), a.u(99)));

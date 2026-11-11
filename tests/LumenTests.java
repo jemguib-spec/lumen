@@ -127,6 +127,17 @@ public class LumenTests {
                 && Profiles.ownerOf("p3.tmdb_key") == -1 && Profiles.ownerOf("p0.favorites") == -1 && Profiles.ownerOf("pin") == -1);
     }
 
+    /** Déclarations de la première règle CSS dont le sélecteur est exactement sel (sans les accolades). */
+    static String cssRule(String css, String sel) {
+        int i = 0;
+        while ((i = css.indexOf(sel + "{", i)) >= 0) {
+            char before = i == 0 ? '\n' : css.charAt(i - 1);
+            if (before == '\n' || before == '}') { int end = css.indexOf('}', i); return end < 0 ? "" : css.substring(i + sel.length() + 1, end); }
+            i += sel.length();
+        }
+        return "";
+    }
+
     static void check(String name, boolean cond) {
         if (cond) ok++; else { ko++; System.out.println("ÉCHEC : " + name); }
     }
@@ -577,6 +588,41 @@ public class LumenTests {
         check("sons : une touche peut couper ou remettre les sons", RemoteKeys.validAction(RemoteKeys.SOUNDS) && !RemoteKeys.actionName(RemoteKeys.SOUNDS).isEmpty());
         check("recherche : « volume » et « muet » mènent à la page des sons", !SettingsIndex.search("volume", 6).isEmpty()
                 && SettingsIndex.search("volume", 6).get(0).page == SettingsIndex.SONS && SettingsIndex.search("muet", 6).get(0).page == SettingsIndex.SONS);
+        // arrondis imbriqués : rayon externe = rayon interne + marge, partout
+        check("arrondis : rayon externe = interne + marge", Radius.outer(24, 24) == 48 && Radius.inner(48, 24) == 24 && Radius.pad(48, 24) == 24
+                && Radius.inner(10, 30) == 0 && Radius.pad(10, 30) == 0);
+        check("arrondis : cartes de menu = ligne + marge", Radius.CARD == Radius.ROW + Radius.PAD);
+        check("arrondis : fenêtres de saisie = ligne + marge", Radius.FORM == Radius.ROW + Radius.FORM_PAD && Radius.FORM_PAD > Radius.KEY_GAP);
+        check("arrondis : rail Tout · Films · Séries = pastille + marge", Radius.SEG == Radius.SEG_ITEM + Radius.SEG_PAD);
+        check("arrondis : affiche = ligne − marge", Radius.POSTER + Radius.POSTER_PAD == Radius.ROW);
+        check("arrondis : tuile Maison = pastille + marge", Radius.HA_TILE == Radius.HA_ICON / 2 + Radius.HA_INSET);
+        check("arrondis : vignette à cocher = coche + marge", Radius.CHECK_CELL == Radius.CHECK / 2 + Radius.CHECK_INSET);
+        check("arrondis : barre de progression = vignette − marge", Radius.SHELF_BAR / 2 + Radius.SHELF_BAR_INSET == Radius.SHELF);
+        boolean noLiteralCard = true;
+        java.util.regex.Pattern literalCard = java.util.regex.Pattern.compile("glassCard\\(\\s*\\d");
+        try (java.util.stream.Stream<java.nio.file.Path> files = Files.list(new File("src/com/lumen/launcher").toPath())) {
+            for (java.nio.file.Path f : (Iterable<java.nio.file.Path>) files::iterator)
+                if (literalCard.matcher(new String(Files.readAllBytes(f), StandardCharsets.UTF_8)).find()) { noLiteralCard = false; System.out.println("  rayon en dur : " + f); }
+        } catch (java.io.IOException e) { noLiteralCard = false; }
+        check("arrondis : aucune carte de verre avec un rayon en dur (passer par Radius)", noLiteralCard);
+        String css;
+        try { css = new String(Files.readAllBytes(new File("assets/phone.css").toPath()), StandardCharsets.UTF_8); }
+        catch (java.io.IOException e) { css = ""; }
+        check("arrondis (téléphone) : listes = icône + marge", cssRule(css, ":root").contains("--r:calc(var(--r-ic) + var(--pad-row))")
+                && cssRule(css, ".row").contains("padding:var(--pad-row)") && cssRule(css, ".row img").contains("border-radius:var(--r-ic)")
+                && cssRule(css, ".list").contains("border-radius:var(--r)"));
+        boolean nested = true;
+        for (String sel : new String[]{".seg", ".tabs", ".job"}) {
+            String r = cssRule(css, sel);
+            nested &= r.contains("padding:var(--pad)") && r.contains("border-radius:calc(var(--in) + var(--pad))");
+        }
+        nested &= cssRule(css, ".seg button").contains("border-radius:var(--in)") && cssRule(css, ".tabs button").contains("border-radius:var(--in)")
+                && cssRule(css, ".tg").contains("border-radius:calc(var(--in) + var(--pad))") && cssRule(css, ".tg::after").contains("left:var(--pad)");
+        check("arrondis (téléphone) : rails, onglets, interrupteurs, envois = intérieur + marge", nested);
+        check("arrondis (téléphone) : vignettes = rond ou pastille du coin + marge",
+                cssRule(css, ".thumb").contains("border-radius:calc(var(--ring) + var(--gap))") && cssRule(css, ".thumb .ring").contains("top:var(--gap)")
+                && cssRule(css, ".tile").contains("border-radius:calc(var(--x) + var(--gap))") && cssRule(css, ".tile .x").contains("top:var(--gap)")
+                && cssRule(css, ".wall").contains("border-radius:calc(var(--pill) + var(--gap))") && cssRule(css, ".wall .eye").contains("right:var(--gap)"));
         check("bandeau : salutation selon l'heure", Greeting.hello(8).equals("Bonjour") && Greeting.hello(14).equals("Bon après-midi")
                 && Greeting.hello(20).equals("Bonsoir") && Greeting.hello(23).equals("Bonne nuit") && Greeting.hello(3).equals("Bonne nuit"));
         check("bandeau : ligne complète", Greeting.line(21, "", "12° · Pluie · Paris", "The Bear")

@@ -37,7 +37,7 @@ final class CheckCell {
         cell.setSoundEffectsEnabled(false);
         cell.setClipChildren(false);
         card = new FrameLayout(a);
-        radius = a.u(18);
+        radius = a.u(Radius.CHECK_CELL); // coche ronde du coin + sa marge
         card.setOutlineProvider(new android.view.ViewOutlineProvider() {
             @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), radius); }
         });
@@ -46,7 +46,7 @@ final class CheckCell {
         img = new ImageView(a);
         img.setScaleType(ImageView.ScaleType.CENTER_CROP);
         card.addView(img, MainActivity.match());
-        check = a.text(28, "sans-serif-medium", Palette.ON_SELECTED);
+        check = a.text(24, "sans-serif-medium", Palette.ON_SELECTED);
         check.setGravity(Gravity.CENTER);
         checkBg.setShape(GradientDrawable.OVAL);
         checkBg.setColor(Palette.SELECTED);
@@ -55,8 +55,8 @@ final class CheckCell {
 
     /** Pose la pastille (au-dessus des calques ajoutés), le titre et les réactions ; renvoie la vignette. */
     View finish(String title, final View.OnClickListener onClick) {
-        FrameLayout.LayoutParams ckl = new FrameLayout.LayoutParams(a.u(48), a.u(48), Gravity.TOP | Gravity.END);
-        ckl.topMargin = ckl.rightMargin = a.u(14);
+        FrameLayout.LayoutParams ckl = new FrameLayout.LayoutParams(a.u(Radius.CHECK), a.u(Radius.CHECK), Gravity.TOP | Gravity.END);
+        ckl.topMargin = ckl.rightMargin = a.u(Radius.CHECK_INSET);
         card.addView(check, ckl);
         cell.addView(card, new FrameLayout.LayoutParams(tw, th));
         TextView name = a.text(22, "sans-serif", 0xB3FFFFFF);

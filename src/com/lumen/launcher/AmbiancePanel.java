@@ -386,8 +386,7 @@ final class AmbiancePanel {
     }
 
     private void openMenu() {
-        menu = a.glassCard(44);
-        menu.setPadding(a.u(24), a.u(28), a.u(24), a.u(24));
+        menu = a.menuCard(Radius.PAD); // des lignes jusqu'en haut : même marge que sur les côtés
         LinearLayout first = null;
         if (current != null) {
             if (availableCount() > 1) {
