@@ -22,7 +22,7 @@ menu() { fresh; key MENU 2; } # réglages, première rubrique sélectionnée
 rubrique() { menu; keys DPAD_DOWN "$1"; key DPAD_CENTER 2; }
 # Boutons ronds de l'accueil, de gauche à droite : Rechercher, Ambiances, Entrées, (Maison),
 # (Profils), Toutes les applications, Sons, Réglages
-bouton() { fresh; key DPAD_UP 1; keys DPAD_LEFT 8; keys DPAD_RIGHT "$1"; key DPAD_CENTER 3; }
+bouton() { fresh; keys DPAD_UP 3; keys DPAD_LEFT 8; keys DPAD_RIGHT "$1"; key DPAD_CENTER 3; }
 
 # Interface en français : Réglages › Accueil et applis › Lisibilité › Langue → Français
 rubrique 1; keys DPAD_DOWN 6; key DPAD_CENTER 2

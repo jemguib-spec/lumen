@@ -14,7 +14,7 @@ Installation et utilisation détaillée : [INSTALLATION.md](INSTALLATION.md) · 
 
 ## L'accueil
 
-<!-- CAPTURES:ACCUEIL -->
+<img src="docs/captures/accueil-selection.jpg" width="49%" alt="Accueil : la vignette sélectionnée devient blanche et prend la couleur de l'appli">
 
 - **Favoris** en vignettes de verre, centrés, de 1 à 3 lignes de 3 à 7 applis. L'appli sélectionnée s'éclaire, une lueur de sa couleur monte en dessous.
 - **Boutons ronds** en haut : Rechercher, Ambiances, Entrées (HDMI, chaînes), Maison, Profils, Toutes les applications, Sons (coupés d'un appui), Réglages. À droite, l'horloge et la date.
@@ -28,7 +28,7 @@ Installation et utilisation détaillée : [INSTALLATION.md](INSTALLATION.md) · 
 
 ## Toutes les applications et la recherche
 
-<!-- CAPTURES:APPLIS -->
+<img src="docs/captures/applications.jpg" width="49%" alt="Page Applications : recherche, favoris et applis rangées par catégorie">
 
 - ▼ depuis l'accueil : une recherche en haut, puis des rangées rangées toutes seules — Favoris, « Ce soir » (les habitudes), Vidéo et TV, Musique et radio, Jeux, Outils et autres, Sources HDMI.
 - La **recherche** (loupe, touche Recherche ou micro de la télécommande) trouve les applis, les épisodes en cours, les réglages, les ambiances et les appareils de la maison. Elle tolère les fautes et les initiales (« netflx », « ytm »), et propose « Chercher « … » dans » Google TV ou directement dans Netflix, Plex, YouTube…
@@ -36,7 +36,7 @@ Installation et utilisation détaillée : [INSTALLATION.md](INSTALLATION.md) · 
 
 ## Fonds d'écran
 
-<!-- CAPTURES:FONDS -->
+<img src="docs/captures/fond.jpg" width="49%" alt="Réglages › Fond d'écran"> <img src="docs/captures/galerie.jpg" width="49%" alt="Galerie des fonds : chaque image se coche ou se décoche">
 
 Réglages › Fond d'écran, au choix :
 
@@ -57,13 +57,11 @@ Les paysages Lumen sont générés par `tools/scenes.py` :
 
 ## Ambiances et minuterie de sommeil
 
-<!-- CAPTURES:AMBIANCES -->
-
 Bouton ✦ de l'accueil : de vraies vidéos en plein écran avec leur son — **Cheminée, Pluie, Aquarium, Nuit étoilée, Vagues, Neige**. ◀ ▶ changent d'ambiance, OK ouvre le menu : choisir les vidéos (sur aperçus), couper le son, **minuterie** de 15, 30, 60 ou 90 min (le son baisse, l'écran passe au noir, la TV se met en veille). Tes propres vidéos, envoyées depuis le téléphone, passent en premier.
 
 ## Mode veille
 
-<!-- CAPTURES:VEILLE -->
+<img src="docs/captures/veille-reglages.jpg" width="49%" alt="Réglages › Mode veille"> <img src="docs/captures/mode-veille.jpg" width="49%" alt="Le mode veille : le fond et une seule ligne en bas">
 
 - Après 1 à 10 minutes sans activité (ou jamais) : le fond en plein écran et **une seule ligne** discrète — heure, date, météo, lever et coucher du soleil, phase de la Lune, légende de l'image. Elle bouge de quelques pixels chaque minute pour protéger l'écran.
 - **Écran de nuit** (de 22 h, 23 h ou minuit jusqu'à 7 h) : presque noir, une grande horloge très douce.
@@ -71,7 +69,7 @@ Bouton ✦ de l'accueil : de vraies vidéos en plein écran avec leur son — **
 
 ## Le téléphone comme télécommande
 
-<!-- CAPTURES:TELEPHONE -->
+<img src="docs/captures/telephone.jpg" width="49%" alt="Le QR code pour piloter la TV depuis le téléphone"> <img src="docs/captures/telecommande.jpg" width="49%" alt="Réglages › Télécommande : relier les touches sans rôle">
 
 Réglages › Réglages depuis le téléphone affiche un **QR code** : scanné sur le même Wi-Fi, il ouvre une page avec cinq onglets — **TV** (pavé tactile, volume, lecture, écrire ou dicter dans la recherche, ouvrir une appli, une source HDMI, une ambiance), **Accueil** (ranger les favoris, verrouiller une appli), **Vidéos** (cocher les vidéos sur aperçus), **Envois** (tes photos et vidéos), **Plus** (tous les réglages, Home Assistant, stockage, sauvegarde, code PIN). Chaque nouveau téléphone doit être accepté sur la TV ; tout reste sur le réseau local, un seul téléphone à la fois.
 
@@ -81,7 +79,7 @@ Bouton Maison de l'accueil, une fois Home Assistant relié depuis le téléphone
 
 ## Profils, enfants et code PIN
 
-<!-- CAPTURES:PROFILS -->
+<img src="docs/captures/profils.jpg" width="49%" alt="Profils : un par personne, « Qui regarde ? » au démarrage">
 
 - Un **profil** par personne : favoris, fond, affichage, mode veille, sons, recherches et habitudes. Dès deux profils, « Qui regarde ? » s'affiche au démarrage.
 - **Profil enfant** : seulement ses applis favorites ; tout le reste (réglages, autres applis, sortir du profil) demande le code.
@@ -89,7 +87,9 @@ Bouton Maison de l'accueil, une fois Home Assistant relié depuis le téléphone
 
 ## Tous les réglages
 
-<!-- CAPTURES:REGLAGES -->
+<img src="docs/captures/reglages.jpg" width="49%" alt="Les réglages : neuf rubriques"> <img src="docs/captures/accueil-et-applis.jpg" width="49%" alt="Réglages › Accueil et applis">
+<img src="docs/captures/vignettes.jpg" width="49%" alt="Réglages › Vignettes et disposition"> <img src="docs/captures/sons.jpg" width="49%" alt="Réglages › Sons : jeu de sons et volume propres à Lumen">
+<img src="docs/captures/systeme.jpg" width="49%" alt="Réglages › Système : mises à jour, code PIN, sauvegarde, diagnostic">
 
 Bouton Réglages ou touche Menu. Les réglages à deux états ont un interrupteur ; ceux à plusieurs valeurs se changent avec ◀ ▶ sans quitter la ligne.
 
