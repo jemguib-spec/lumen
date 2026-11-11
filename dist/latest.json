@@ -1,7 +1,7 @@
 {
-  "version": "4.24.4",
-  "size": 4064768,
-  "sha256": "156e6321bb5bca4284c9b2d3f884cb68b5986c06da4f198067f470e20b430f77",
-  "file": "Lumen-4.24.4.apk",
-  "notes": "- Page Maison : un onglet pour chaque pièce de Home Assistant qui a un appareil pilotable, même si tu n'as choisi aucun appareil de cette pièce sur le téléphone ; la pièce montre alors tout ce qu'elle contient (ses groupes de lumières avant ses ampoules).\n- Un groupe de lumières que Home Assistant n'a rangé dans aucune pièce va dans celle de ses ampoules, sinon dans la pièce qui porte son nom.\n- Sous le titre, l'état de la maison en une phrase (« 3 lumières allumées », « Toutes les lumières sont éteintes »), tenu à jour.\n- Tuiles plus grandes quand il y a peu d'appareils (quatre par ligne), pictogramme dans une pastille ronde qui se remplit de la couleur de la lumière quand elle est allumée."
+  "version": "4.25.0",
+  "size": 4072960,
+  "sha256": "df7b85a2b73796d1621da599c8357b935f4bbb8ababad9360ec8923038ac6db6",
+  "file": "Lumen-4.25.0.apk",
+  "notes": "- Touches de la télécommande sans rôle (Guide, Info, boutons de couleur, chiffres, boutons d'appli…) : quand tu appuies sur l'une d'elles depuis l'accueil, Lumen demande « Veux-tu la relier à une fonction ? ». Au choix : réglages de Lumen, retour, toutes les applis, recherche vocale, Reprendre, À l'affiche, Maison, mode veille, ambiances, paramètres de la TV, ou ouvrir l'appli de ton choix. « Ne rien faire » : Lumen ne redemande plus pour cette touche.\n- Réglages › Télécommande : la liste des touches reliées, pour changer leur fonction ou les oublier, et un interrupteur pour ne plus recevoir la proposition.\n- Les touches de navigation, de volume et de lecture gardent leur rôle ; celles que la TV garde pour elle (Accueil, boutons Netflix de certaines télécommandes) n'arrivent pas jusqu'à Lumen et ne peuvent pas être reliées. Avec un code PIN, il est demandé avant de relier une touche ; rien n'est proposé dans un profil enfant."
 }
