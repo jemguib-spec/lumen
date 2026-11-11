@@ -303,6 +303,8 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     @Override protected void onStop() {
         super.onStop();
         phone.onBackground();
+        if (SyncLink.receiving()) closeOverlay(false); // l'écran « Recevoir » ne reste pas avec un code mort
+        SyncLink.stopAll(this); // copie entre TV : rien n'écoute ni ne cherche hors de l'écran
         online.setActive(false);
         closeAmbiance();
     }
@@ -318,6 +320,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         try { unregisterReceiver(screenOff); } catch (Exception ignored) { }
         try { unregisterReceiver(screenOn); } catch (Exception ignored) { }
         phone.stop();
+        SyncLink.stopAll(this);
         super.onDestroy();
     }
 
@@ -1510,7 +1513,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     };
 
     private final BroadcastReceiver screenOff = new BroadcastReceiver() {
-        @Override public void onReceive(Context c, Intent i) { phone.disconnect(); }
+        @Override public void onReceive(Context c, Intent i) { phone.disconnect(); SyncLink.stopAll(c); }
     };
 
 }

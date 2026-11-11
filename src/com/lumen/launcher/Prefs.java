@@ -576,6 +576,54 @@ final class Prefs {
         return o;
     }
 
+    /**
+     * Réglages à copier vers une autre TV : ceux des groupes choisis (TvSync), pris dans la
+     * sauvegarde (liste blanche). La source du fond est toujours envoyée, sauf « Mes photos et
+     * vidéos » : elles ne sont que sur cette TV.
+     */
+    org.json.JSONObject exportSync(boolean[] groups) throws org.json.JSONException {
+        org.json.JSONObject all = exportBackup().getJSONObject("settings");
+        Set<String> keys = TvSync.keysOf(groups);
+        org.json.JSONObject out = new org.json.JSONObject();
+        java.util.Iterator<String> it = all.keys();
+        while (it.hasNext()) {
+            String k = it.next();
+            if (keys.contains(k)) out.put(k, all.get(k));
+        }
+        out.remove("source");
+        if (keys.contains("source") && source() != SRC_MINE) out.put("source", source());
+        return out;
+    }
+
+    /**
+     * Applique les réglages reçus d'une autre TV : mêmes contrôles qu'une sauvegarde, groupes choisis
+     * seulement ; les réglages de ces groupes que l'autre TV n'a jamais changés reviennent à leur
+     * valeur par défaut, pour que les deux TV soient vraiment pareilles. Renvoie le nombre repris.
+     */
+    int importSync(org.json.JSONObject settings, boolean[] groups) throws java.io.IOException {
+        Set<String> keys = TvSync.keysOf(groups);
+        Set<String> sent = new HashSet<>();
+        org.json.JSONObject v = new org.json.JSONObject();
+        try {
+            java.util.Iterator<String> it = settings.keys();
+            while (it.hasNext()) {
+                String k = it.next();
+                if (keys.contains(k)) { v.put(k, settings.get(k)); sent.add(k); }
+            }
+            org.json.JSONObject wrap = new org.json.JSONObject();
+            wrap.put("format", Backup.FORMAT);
+            wrap.put("version", Backup.VERSION);
+            wrap.put("settings", v);
+            int n = importBackup(wrap);
+            SharedPreferences.Editor ed = sp.edit();
+            for (String k : TvSync.resetKeys(groups, sent)) ed.remove(k);
+            ed.commit();
+            return n;
+        } catch (org.json.JSONException e) {
+            throw new java.io.IOException("Réglages illisibles");
+        }
+    }
+
     /** Restaure une sauvegarde : seules les clés connues, du bon type et dans les bornes, sont reprises. Renvoie le nombre de réglages repris. */
     int importBackup(org.json.JSONObject o) throws java.io.IOException {
         if (o == null || !Backup.FORMAT.equals(o.optString("format")) || o.optInt("version", 0) != Backup.VERSION)

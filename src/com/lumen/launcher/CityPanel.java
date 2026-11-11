@@ -83,7 +83,7 @@ final class CityPanel {
         } catch (Exception ignored) { }
     }
 
-    private static void hideKeyboard(Context c, View v) {
+    static void hideKeyboard(Context c, View v) {
         try {
             ((android.view.inputmethod.InputMethodManager) c.getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(v.getWindowToken(), 0);
         } catch (Exception ignored) { }

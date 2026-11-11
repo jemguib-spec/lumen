@@ -152,6 +152,89 @@ public class LumenTests {
         return true;
     }
 
+    /** Copie des réglages entre TV : groupes, code, signature, essais, réponses (TvSync). */
+    static void tvSync() throws Exception {
+        // chaque réglage de la sauvegarde a sa place : un groupe, ou propre à la TV (un nouveau réglage oblige à choisir)
+        java.util.List<String> all = new java.util.ArrayList<>();
+        for (String[] t : new String[][]{Backup.BOOLS, Backup.INTS, Backup.STRINGS, Backup.SETS}) java.util.Collections.addAll(all, t);
+        boolean placed = true, once = true;
+        for (String k : all) {
+            boolean g = TvSync.groupOf(k) >= 0, l = TvSync.local(k);
+            if (!g && !l) { placed = false; System.out.println("  copie entre TV : réglage sans place « " + k + " »"); }
+            if (g && l) once = false;
+        }
+        check("copie entre TV : chaque réglage de la sauvegarde est classé", placed);
+        check("copie entre TV : un réglage est soit copié, soit propre à la TV", once);
+        boolean inBackup = true;
+        for (String k : TvSync.keysOf(new boolean[]{true, true, true, true})) if (Backup.typeOf(k) == Backup.NONE) inBackup = false;
+        check("copie entre TV : seulement des réglages de la sauvegarde (liste blanche)", inBackup);
+        check("copie entre TV : secrets jamais copiés", TvSync.groupOf("pin") < 0 && TvSync.groupOf("pexels_key") < 0 && TvSync.groupOf("ha_token") < 0
+                && TvSync.groupOf("tmdb_key") < 0 && TvSync.groupOf("trusted_phones") < 0 && TvSync.groupOf(null) < 0);
+        check("copie entre TV : habitudes, télécommande et vidéos restent sur la TV", TvSync.local("habits") && TvSync.local("remote_keys")
+                && TvSync.local("video_ok") && TvSync.local("video_disk_gb") && TvSync.groupOf("habits") < 0);
+        check("copie entre TV : un nom de groupe par groupe", TvSync.GROUP_NAMES.length == 4);
+        boolean[] onlyApps = {false, false, false, true};
+        check("copie entre TV : groupes choisis seulement", TvSync.keysOf(onlyApps).contains("favorites") && !TvSync.keysOf(onlyApps).contains("clock"));
+        java.util.Set<String> sent = new java.util.HashSet<>(java.util.Arrays.asList("source", "interval"));
+        java.util.List<String> reset = TvSync.resetKeys(new boolean[]{false, true, false, true}, sent);
+        check("copie entre TV : un réglage jamais changé sur l'autre TV revient par défaut", reset.contains("cities") && reset.contains("favorites"));
+        check("copie entre TV : réglages envoyés pas remis à zéro", !reset.contains("interval"));
+        check("copie entre TV : verrous jamais retirés, source gardée", !reset.contains("locked_apps") && !TvSync.resetKeys(new boolean[]{false, true, false, false},
+                new java.util.HashSet<String>()).contains("source"));
+        check("copie entre TV : groupe non choisi intouché", !reset.contains("clock") && !reset.contains("home_cols"));
+        check("copie entre TV : groupes écrits et relus", java.util.Arrays.equals(TvSync.parseGroups(TvSync.groupsText(new boolean[]{true, false, true, true})),
+                new boolean[]{true, false, true, true}));
+        check("copie entre TV : groupes inconnus ignorés", !TvSync.any(TvSync.parseGroups("9,a,-1,,01")) && !TvSync.any(TvSync.parseGroups(null)));
+        // code et signature
+        java.security.SecureRandom r = new java.security.SecureRandom();
+        String code = TvSync.newCode(r), nonce = TvSync.newNonce(r);
+        String other = code.equals("000000") ? "000001" : "000000";
+        check("copie entre TV : code à 6 chiffres", TvSync.codeOk(code) && !TvSync.codeOk("12345") && !TvSync.codeOk("12a456") && !TvSync.codeOk(null));
+        check("copie entre TV : code affiché en deux blocs", TvSync.spaced("427913").equals("427 913"));
+        check("copie entre TV : numéro aléatoire bien formé", TvSync.nonceOk(nonce) && !nonce.equals(TvSync.newNonce(r)));
+        byte[] body = "{\"settings\":{}}".getBytes("UTF-8");
+        String sig = TvSync.sign(code, nonce, body);
+        check("copie entre TV : envoi signé avec le bon code accepté", TvSync.verify(code, nonce, body, sig));
+        check("copie entre TV : signature d'un autre code refusée", !TvSync.verify(code, nonce, body, TvSync.sign(other, nonce, body)));
+        check("copie entre TV : contenu modifié refusé", !TvSync.verify(code, nonce, "{\"settings\":{\"x\":1}}".getBytes("UTF-8"), sig));
+        check("copie entre TV : rejeu sur une autre réception refusé", !TvSync.verify(code, TvSync.newNonce(r), body, sig));
+        check("copie entre TV : signature absente ou mal formée refusée", !TvSync.verify(code, nonce, body, null) && !TvSync.verify(code, nonce, body, "zz"));
+        // essais
+        TvSync.Gate g = new TvSync.Gate(code, nonce, 1000);
+        for (int i = 0; i < TvSync.MAX_TRIES - 1; i++) g.check(body, TvSync.sign(other, nonce, body), 1000);
+        check("copie entre TV : 4 mauvais codes, encore ouvert", !g.closed(1000) && g.check(body, sig, 1000) == TvSync.Gate.OK);
+        check("copie entre TV : un seul envoi accepté", g.check(body, sig, 1000) == TvSync.Gate.CLOSED);
+        TvSync.Gate g2 = new TvSync.Gate(code, nonce, 1000);
+        for (int i = 0; i < TvSync.MAX_TRIES; i++) g2.check(body, TvSync.sign(other, nonce, body), 1000);
+        check("copie entre TV : fermé après 5 mauvais codes, même avec le bon", g2.closed(1000) && g2.check(body, sig, 1000) == TvSync.Gate.CLOSED);
+        TvSync.Gate g3 = new TvSync.Gate(code, nonce, 1000);
+        check("copie entre TV : fermé après 3 min", g3.check(body, sig, 1000 + TvSync.OPEN_MS + 1) == TvSync.Gate.CLOSED);
+        // « bonjour », noms, adresses
+        String[] hello = TvSync.parseHello(TvSync.helloBody(nonce, "Salon"));
+        check("copie entre TV : bonjour relu", hello != null && hello[0].equals(nonce) && hello[1].equals("Salon"));
+        check("copie entre TV : bonjour d'une autre appli refusé", TvSync.parseHello("HTTP ok") == null && TvSync.parseHello("lumen-sync 2\n" + nonce + "\nX") == null
+                && TvSync.parseHello("lumen-sync 1\nabc\nX") == null && TvSync.parseHello(null) == null);
+        check("copie entre TV : nom nettoyé et borné", TvSync.cleanName("  Salon\u0000 \n TV ").equals("Salon TV") && TvSync.cleanName("").equals("TV")
+                && TvSync.cleanName("abcdefghijklmnopqrstuvwxyz0123456789").length() == 30);
+        Object[] ad = TvSync.address(" 192.168.1.20 ");
+        check("copie entre TV : adresse locale tapée", ad != null && ad[0].equals("192.168.1.20") && (Integer) ad[1] == TvSync.PORT);
+        Object[] ap = TvSync.address("10.0.0.7:8767");
+        check("copie entre TV : adresse avec port", ap != null && ap[0].equals("10.0.0.7") && (Integer) ap[1] == 8767);
+        check("copie entre TV : adresses hors réseau local refusées", TvSync.address("8.8.8.8") == null && TvSync.address("172.32.0.1") == null
+                && TvSync.address("192.168.1.300") == null && TvSync.address("exemple.fr") == null && TvSync.address("10.0.0.1:80") == null
+                && TvSync.address("127.0.0.1") == null && TvSync.address(null) == null);
+        // réponse HTTP
+        Object[] resp = TvSync.readResponse(new ByteArrayInputStream("HTTP/1.1 403 Error\r\nContent-Length: 4\r\n\r\ncode".getBytes("UTF-8")), 100);
+        check("copie entre TV : réponse lue", (Integer) resp[0] == 403 && resp[1].equals("code"));
+        boolean refused = false;
+        try { TvSync.readResponse(new ByteArrayInputStream("HTTP/1.1 200 OK\r\nContent-Length: 9999\r\n\r\n".getBytes("UTF-8")), 100); } catch (java.io.IOException e) { refused = true; }
+        check("copie entre TV : réponse trop longue refusée", refused);
+        refused = false;
+        try { TvSync.readResponse(new ByteArrayInputStream("SSH-2.0\r\n\r\n".getBytes("UTF-8")), 100); } catch (java.io.IOException e) { refused = true; }
+        check("copie entre TV : réponse non HTTP refusée", refused);
+        check("sauvegarde : durée des notifications restaurée (bornée)", Backup.intOk("notif_secs", 10) && !Backup.intOk("notif_secs", 0) && !Backup.intOk("notif_secs", 999));
+    }
+
     public static void main(String[] args) throws Exception {
         // ---- politique réseau
         // ---- catalogue fermé des vidéos d'ambiance
@@ -913,6 +996,7 @@ public class LumenTests {
             check("WebSocket : texte en clair refusé", PhoneGate.wsCommand("S 10 " + sig2 + " " + clear, ws, sk) == null);
         } catch (Exception sealErr) { check("chiffrement : " + sealErr, false); }
         try { phoneGate(); } catch (Exception gateErr) { check("contrôles de la page du téléphone : " + gateErr, false); }
+        try { tvSync(); } catch (Exception syncErr) { check("copie entre TV : " + syncErr, false); }
 
         profilesTests();
 

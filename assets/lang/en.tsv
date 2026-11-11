@@ -698,3 +698,46 @@ Ville de la météo : Réglages › Mode veille › Météo	Weather city: Settin
 Éclaircies	Sunny spells
 Tape le nom d'une ville	Type a city name
 Valider	Confirm
+ Profil : 	 Profile: 
+ réglages copiés	 settings copied
+Accueil et boutons	Home screen and buttons
+Adresse de l'autre TV	Address of the other TV
+Adresse du réseau local attendue, ex. 192.168.1.20	Local network address expected, e.g. 192.168.1.20
+Afficher un code	Show a code
+Annuler	Cancel
+Apparence et sons	Look and sounds
+Appliquer sur cette TV	Apply on this TV
+Aucune TV en réception à cette adresse	No TV receiving at this address
+Autres TV	Other TVs
+Cette TV n'attend plus · relance « Recevoir » sur elle	That TV stopped waiting · start “Receive” on it again
+Cette TV n'est plus en réception	That TV is no longer receiving
+Coche au moins un groupe de réglages	Tick at least one group of settings
+Code affiché sur « 	Code shown on “
+Copier les réglages	Copy settings
+Copier les réglages vers une autre TV	Copy settings to another TV
+De « 	From “
+Elle s'affiche sous le code, sur la TV en réception.	It is shown under the code, on the receiving TV.
+Envoi…	Sending…
+Envoyer les réglages de cette TV	Send this TV's settings
+Ex. 192.168.1.20	E.g. 192.168.1.20
+Favoris et applis masquées	Favourites and hidden apps
+Fond d'écran et veille	Wallpaper and ambient mode
+Les réglages de ces groupes que l'autre TV n'a jamais changés reviennent à leur valeur par défaut.	Settings in these groups that the other TV never changed go back to their default value.
+Recevoir des réglages	Receive settings
+Recevoir les réglages d'une autre TV	Receive settings from another TV
+Recherche de la TV…	Looking for the TV…
+Recherche des TV en réception…	Looking for receiving TVs…
+Réception arrêtée (rien reçu en 3 min)	Receiving stopped (nothing received in 3 min)
+Réglages envoyés · à accepter sur « 	Settings sent · to accept on “
+Réglages illisibles	Unreadable settings
+Réglages refusés	Settings declined
+Réglages reçus	Settings received
+Réglages reçus illisibles	The received settings are unreadable
+Saisir l'adresse d'une TV	Enter a TV's address
+Sur l'autre TV : Réglages › Système › Autres TV › Recevoir. Elle apparaît ici ; choisis-la puis tape le code qu'elle affiche. Le code PIN, Home Assistant, les clés, les habitudes, la télécommande et les vidéos téléchargées restent propres à chaque TV. Les réglages vont au profil ouvert sur l'autre TV.	On the other TV: Settings › System › Other TVs › Receive. It shows up here; pick it, then type the code it displays. The PIN code, Home Assistant, keys, habits, remote control and downloaded videos stay specific to each TV. Settings go to the profile open on the other TV.
+Sur l'autre TV : Réglages › Système › Autres TV, choisis cette TV puis tape ce code. Rien n'est appliqué sans ton accord ; la réception s'arrête après 3 min.	On the other TV: Settings › System › Other TVs, pick this TV, then type this code. Nothing is applied without your OK; receiving stops after 3 min.
+TV injoignable · sur le même réseau ?	TV unreachable · on the same network?
+Trop de codes faux · réception arrêtée	Too many wrong codes · receiving stopped
+Trop de réglages à envoyer	Too many settings to send
+Vers la TV	To the TV
+ »	”

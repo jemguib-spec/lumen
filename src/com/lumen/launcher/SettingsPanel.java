@@ -39,6 +39,7 @@ final class SettingsPanel {
                 if (!a.prefs.appGlow()) a.glow.fade();
                 if (!a.prefs.immersive()) a.immersive.clear(true);
                 a.backdropChanged(); // « Couleurs accordées au fond » a pu changer
+                SyncLink.stopFinding(a); // plus de recherche des autres TV une fois les réglages fermés
                 a.rowRefreshers.clear();
                 if (before[3] != a.prefs.tileStyle() || before[4] != (a.prefs.showIcons() ? 1 : 0)
                         || before[5] != (a.prefs.tintTiles() ? 1 : 0)) { a.dirtyRow = true; a.markAppsDirty(); }
@@ -87,14 +88,14 @@ final class SettingsPanel {
     static final int ROOT = 0, FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5,
             ABOUT = 6, LICENCES = 7, CREDITS = 8, LICENCE_INTER = 9, CITIES = 10, HIDDEN = 11, SCREENSAVER = 12, LICENCE_GPL = 13, INSTALL = 14,
             PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21, TOUCHES = 22, TOUCHE = 23, SONS = 24,
-            NOTIFS = 25, NOTIF_APPS = 26, BOUTONS = 27;
+            NOTIFS = 25, NOTIF_APPS = 26, BOUTONS = 27, SYNC = 28;
     private static final String[] TITLES = {"Réglages", "Fond d'écran", "Accueil et applis", "Mode veille", "Ambiances",
             "Système", "À propos", "Licences", "Crédits des fonds", "Police Inter", "Villes", "Applis masquées", "Économiseur d'écran", "Licence de Lumen", "Installation",
             "Paysages Lumen", "Avancé", "Vignettes et disposition", "Reprendre", "Lisibilité", "Diagnostic", "À l'affiche", "Télécommande", "Fonction de la touche", "Sons",
-            "Notifications", "Applis qui notifient", "Boutons de l'accueil"};
+            "Notifications", "Applis qui notifient", "Boutons de l'accueil", "Autres TV"};
     private static final int[] PARENT = {ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, SYSTEME, SYSTEME, LICENCES, LICENCES, FOND, ACCUEIL, VEILLE, LICENCES, SYSTEME,
             FOND, FOND, ACCUEIL, ACCUEIL, ACCUEIL, SYSTEME, ACCUEIL, ROOT, TOUCHES, ROOT,
-            ROOT, NOTIFS, ACCUEIL};
+            ROOT, NOTIFS, ACCUEIL, SYSTEME};
     private static boolean[] citiesChanged;
     private static int page = ROOT, lastRubric = -1;
     private static LinearLayout openCard;
@@ -158,6 +159,7 @@ final class SettingsPanel {
     /** Cadre commun : titre (avec « ‹ » dans les sous-pages), liste qui défile, arrivée en glissant. */
     private static LinearLayout frame(final MainActivity a, final LinearLayout card, int which) {
         int from = page;
+        if (which != SYNC) SyncLink.stopFinding(a); // la recherche des autres TV ne vit que sur leur page
         page = which;
         openCard = card;
         card.removeAllViews();
@@ -862,6 +864,9 @@ final class SettingsPanel {
                 }, new View.OnClickListener() {
                     @Override public void onClick(View v) { PhonePanel.openPhonePanel(a); }
                 }), a.rowLp());
+                col.addView(rubric(a, card, Glyph.TV, L.t("Autres TV"), new MainActivity.Value() {
+                    @Override public String get() { return L.t("Copier les réglages"); }
+                }, SYNC), a.rowLp());
                 col.addView(a.section(L.t("Informations")));
                 col.addView(rubric(a, card, Glyph.HOME, L.t("Installation"), new MainActivity.Value() {
                     @Override public String get() { return Install.isHome(a) ? "Terminée" : "À finir"; }
@@ -928,6 +933,7 @@ final class SettingsPanel {
                 hint(a, col, L.t("Mesures : temps de démarrage, images par seconde, mémoire et processeur, en haut à gauche. Tout reste sur la TV."));
                 break;
             }
+            case SYNC: SyncPanel.fill(a, col); break;
             case ABOUT: About.fillAbout(a, col); break;
             case INSTALL: Install.fill(a, card, col); break;
             case LICENCES: About.fillLicences(a, card, col); break;

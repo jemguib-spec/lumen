@@ -16,7 +16,7 @@ final class SettingsIndex {
     static final int PHONE = -2, STORAGE = -3, HOME = -4, RECO = -5;
     /** Rubriques (mêmes numéros que SettingsPanel). */
     static final int FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5, ABOUT = 6, INSTALL = 14,
-            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21, TOUCHES = 22, SONS = 24, NOTIFS = 25, ROOT = 0, BOUTONS = 27;
+            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21, TOUCHES = 22, SONS = 24, NOTIFS = 25, ROOT = 0, BOUTONS = 27, SYNC = 28;
 
     static final class Entry {
         final String label, where, keywords;
@@ -50,6 +50,7 @@ final class SettingsIndex {
             new Entry("Bouton Sons sur l'accueil", A, BOUTONS, "bouton sons haut parleur masquer afficher accueil"),
             new Entry("Sons de l'interface", "Réglages", SONS, "sons son bip bips beep bruit bruits clic couper muet silence volume jeu timbre"),
             new Entry("Code PIN", S, SYSTEME, "code pin verrou enfant parental"),
+            new Entry("Copier les réglages vers une autre TV", S, SYNC, "synchro synchroniser synchronisation autres autre tv televiseur televiseurs copier envoyer recevoir reglages identiques pareils meme reseau maison"),
             new Entry("À propos et licences", S, ABOUT, "a propos version licences"),
             new Entry("Réglages d'À l'affiche", A, AFFICHE, "affiche tmdb films series plateformes selection type historique pour toi"),
             new Entry("Reprendre au-dessus des applis", A, REPRENDRE, "reprendre episodes en cours affiches historique"),

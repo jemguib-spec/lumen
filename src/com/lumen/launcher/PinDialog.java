@@ -54,7 +54,11 @@ final class PinDialog {
         });
     }
 
-    private interface Entered { boolean on(String pin, TextView msg); }
+    /** Code saisi en entier ; true s'il est accepté (le pavé se ferme), sinon les points se vident. */
+    interface Entered { boolean on(String pin, TextView msg); }
+
+    /** Saisie d'un code chiffré d'une autre longueur (code affiché par une autre TV). */
+    static void code(MainActivity a, String title, int length, Entered entered) { show(a, title, length, entered); }
 
     private static long waitLeft(MainActivity a) {
         long lock = Pin.lockMillis(a.prefs.pinFails());
@@ -66,7 +70,9 @@ final class PinDialog {
         return s < 60 ? s + L.t(" s") : (s + 59) / 60 + L.t(" min");
     }
 
-    private static void show(final MainActivity a, String title, final Entered entered) {
+    private static void show(MainActivity a, String title, Entered entered) { show(a, title, Pin.LENGTH, entered); }
+
+    private static void show(final MainActivity a, String title, final int length, final Entered entered) {
         FrameLayout o = a.openOverlay(null);
         LinearLayout card = a.glassCard(Radius.FORM);
         card.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -88,8 +94,8 @@ final class PinDialog {
 
         final LinearLayout dots = new LinearLayout(a);
         dots.setGravity(Gravity.CENTER);
-        final GradientDrawable[] dot = new GradientDrawable[Pin.LENGTH];
-        for (int i = 0; i < Pin.LENGTH; i++) {
+        final GradientDrawable[] dot = new GradientDrawable[length];
+        for (int i = 0; i < length; i++) {
             View d = new View(a);
             dot[i] = new GradientDrawable();
             dot[i].setShape(GradientDrawable.OVAL);
@@ -107,17 +113,17 @@ final class PinDialog {
         final StringBuilder typed = new StringBuilder();
         final Runnable paint = new Runnable() {
             @Override public void run() {
-                for (int i = 0; i < Pin.LENGTH; i++) dot[i].setColor(i < typed.length() ? Palette.SELECTED : 0x00000000);
+                for (int i = 0; i < length; i++) dot[i].setColor(i < typed.length() ? Palette.SELECTED : 0x00000000);
             }
         };
         paint.run();
         final Digit digit = new Digit() {
             @Override public void press(int d) {
                 if (d < 0) { if (typed.length() > 0) typed.setLength(typed.length() - 1); paint.run(); return; }
-                if (typed.length() >= Pin.LENGTH) return;
+                if (typed.length() >= length) return;
                 typed.append((char) ('0' + d));
                 paint.run();
-                if (typed.length() == Pin.LENGTH) {
+                if (typed.length() == length) {
                     final String pin = typed.toString();
                     typed.setLength(0);
                     a.h.postDelayed(new Runnable() {

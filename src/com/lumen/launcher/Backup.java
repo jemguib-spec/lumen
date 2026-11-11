@@ -51,6 +51,7 @@ final class Backup {
             case "night_hour": return v >= -1 && v <= 23;
             case "sound_theme": return v >= 0 && v < SoundDesign.THEME_NAMES.length;
             case "sound_volume": return v >= 0 && v < SoundDesign.VOLUME_NAMES.length;
+            case "notif_secs": return v >= 1 && v <= 60;
             default: return false;
         }
     }

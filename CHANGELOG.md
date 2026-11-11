@@ -2,6 +2,13 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.31.0
+
+- Copier les réglages vers une autre TV de la maison : Réglages › Système › Autres TV. Sur la TV qui reçoit, « Recevoir les réglages d'une autre TV » affiche un code à 6 chiffres ; sur la TV de référence, coche ce qui part (apparence et sons, fond d'écran et veille, accueil et boutons, favoris et applis masquées), choisis l'autre TV, trouvée toute seule sur le Wi-Fi (ou tape son adresse), puis tape le code. L'autre TV montre d'où viennent les réglages et ne change rien sans « Appliquer ».
+- Les réglages des groupes choisis que la TV de référence n'a jamais changés reviennent à leur valeur par défaut sur l'autre TV : les deux TV sont vraiment pareilles.
+- Le code PIN, Home Assistant, les clés TMDB et Pexels, les habitudes, les touches de la télécommande et les vidéos téléchargées restent propres à chaque TV. La réception s'arrête après un envoi, 3 minutes, 5 codes faux, ou dès qu'on quitte l'écran.
+- Sauvegarde des réglages : la durée d'affichage des notifications est maintenant bien restaurée.
+
 ## 4.30.1
 
 - Ville de la météo : la fenêtre a maintenant une ligne « Valider » sous le champ. Avant, seule la touche « Terminé » du clavier validait, et beaucoup de claviers de TV ne l'envoient pas : on ne pouvait pas enregistrer la ville. Tape la ville, Retour pour fermer le clavier, ▼ puis OK sur « Valider ». La touche Entrée d'un clavier branché valide aussi.
