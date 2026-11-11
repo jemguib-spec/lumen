@@ -573,6 +573,8 @@ public class LumenTests {
                 && SoundDesign.volume(99) == SoundDesign.DEFAULT_VOLUME && SoundDesign.volume(3) == 3);
         check("sons : jeu et volume repris dans la sauvegarde, bornés", Backup.typeOf("sound_theme") == Backup.INT && Backup.intOk("sound_volume", 4)
                 && !Backup.intOk("sound_volume", 5) && !Backup.intOk("sound_theme", -1));
+        check("sons : « bip » trouve la page des sons", !SettingsIndex.search("bip", 6).isEmpty() && SettingsIndex.search("bip", 6).get(0).page == SettingsIndex.SONS);
+        check("sons : une touche peut couper ou remettre les sons", RemoteKeys.validAction(RemoteKeys.SOUNDS) && !RemoteKeys.actionName(RemoteKeys.SOUNDS).isEmpty());
         check("recherche : « volume » et « muet » mènent à la page des sons", !SettingsIndex.search("volume", 6).isEmpty()
                 && SettingsIndex.search("volume", 6).get(0).page == SettingsIndex.SONS && SettingsIndex.search("muet", 6).get(0).page == SettingsIndex.SONS);
         check("bandeau : salutation selon l'heure", Greeting.hello(8).equals("Bonjour") && Greeting.hello(14).equals("Bon après-midi")

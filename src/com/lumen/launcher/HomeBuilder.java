@@ -93,16 +93,21 @@ final class HomeBuilder {
         Tile all = Tile.button(a, Glyph.GRID, L.t("Toutes les applications"), bs);
         all.setFocusListener(a.homeFocus);
         all.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { a.openApps(); } });
+        // bouton Sons : un appui coupe ou remet les sons de Lumen (le jeu et le volume restent dans Réglages › Sons)
+        Tile snd = a.soundButton = Tile.button(a, Glyph.SOUND, L.t("Sons activés"), bs);
+        snd.setFocusListener(a.homeFocus);
+        snd.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { a.toggleSounds(); } });
         Tile set = Tile.button(a, Glyph.SLIDERS, L.t("Réglages"), bs);
         set.setFocusListener(a.homeFocus);
         set.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { SettingsPanel.openSettings(a); } });
-        for (Tile b : new Tile[]{find, amb, inputs, house, who, all, set}) {
+        for (Tile b : new Tile[]{find, amb, inputs, house, who, all, snd, set}) {
             LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             bl.leftMargin = a.u(18);
             a.topButtons.addView(b, bl);
         }
         house.setVisibility(a.prefs.haButton() ? View.VISIBLE : View.GONE);
         a.updateProfileButton();
+        a.updateSoundButton();
         FrameLayout.LayoutParams tbl = MainActivity.wrap(Gravity.TOP | Gravity.END);
         tbl.topMargin = a.u(56);
         tbl.rightMargin = a.u(420);

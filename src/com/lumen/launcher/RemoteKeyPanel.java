@@ -145,6 +145,7 @@ final class RemoteKeyPanel {
             case RemoteKeys.HOME: return Glyph.HOME;
             case RemoteKeys.VEILLE: return Glyph.MOON;
             case RemoteKeys.AMBIANCE: return Glyph.IMAGE;
+            case RemoteKeys.SOUNDS: return Glyph.SOUND;
             case RemoteKeys.TV_SETTINGS: return Glyph.GEAR;
             default: return Glyph.RESTART; // retour
         }
@@ -171,6 +172,7 @@ final class RemoteKeyPanel {
                 break;
             case RemoteKeys.VEILLE: a.enterAmbient(); break;
             case RemoteKeys.AMBIANCE: a.openAmbiance(); break;
+            case RemoteKeys.SOUNDS: a.toggleSounds(); break;
             case RemoteKeys.TV_SETTINGS:
                 // les paramètres de la TV sont derrière le code, comme dans Réglages › Système › Diagnostic
                 PinDialog.ask(a, L.t("Code pour les réglages"), new Runnable() {

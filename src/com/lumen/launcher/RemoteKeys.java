@@ -16,10 +16,10 @@ final class RemoteKeys {
 
     /** Fonctions que l'on peut relier à une touche ; « app:clé » ouvre une appli. */
     static final String NONE = "none", SETTINGS = "settings", BACK = "back", APPS = "apps", SEARCH = "search",
-            RECO = "reco", RESUME = "resume", HOME = "maison", VEILLE = "veille", AMBIANCE = "ambiance", TV_SETTINGS = "tv";
+            RECO = "reco", RESUME = "resume", HOME = "maison", VEILLE = "veille", AMBIANCE = "ambiance", TV_SETTINGS = "tv", SOUNDS = "sons";
     static final String APP_PREFIX = "app:";
     /** Fonctions proposées, dans l'ordre du panneau (« Ouvrir une appli » et « Ne rien faire » sont ajoutées à part). */
-    static final String[] ACTIONS = {SETTINGS, BACK, APPS, SEARCH, RESUME, RECO, HOME, VEILLE, AMBIANCE, TV_SETTINGS};
+    static final String[] ACTIONS = {SETTINGS, BACK, APPS, SEARCH, RESUME, RECO, HOME, VEILLE, AMBIANCE, SOUNDS, TV_SETTINGS};
 
     static final int MAX_KEYS = 64, MAX_APP_KEY = 300;
 
@@ -98,6 +98,7 @@ final class RemoteKeys {
             case HOME: return L.t("Maison");
             case VEILLE: return L.t("Mode veille");
             case AMBIANCE: return L.t("Ambiances");
+            case SOUNDS: return L.t("Couper ou remettre les sons");
             case TV_SETTINGS: return L.t("Paramètres de la TV");
             case NONE: return L.t("Ne rien faire");
             default: return isApp(action) ? L.t("Ouvrir une appli") : "";

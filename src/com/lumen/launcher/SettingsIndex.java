@@ -44,7 +44,7 @@ final class SettingsIndex {
             new Entry("Ambiances", AM, AMBIANCES, "ambiances cheminee feu pluie videos son"),
             new Entry("Stockage", S, STORAGE, "stockage espace memoire plein vider supprimer cache"),
             new Entry("Rechercher une mise à jour", S, SYSTEME, "mise a jour version update rechercher"),
-            new Entry("Sons de l'interface", "Réglages", SONS, "sons son bruit bruits clic couper muet silence volume jeu timbre"),
+            new Entry("Sons de l'interface", "Réglages", SONS, "sons son bip bips beep bruit bruits clic couper muet silence volume jeu timbre"),
             new Entry("Code PIN", S, SYSTEME, "code pin verrou enfant parental"),
             new Entry("À propos et licences", S, ABOUT, "a propos version licences"),
             new Entry("Réglages d'À l'affiche", A, AFFICHE, "affiche tmdb films series plateformes selection type historique pour toi"),

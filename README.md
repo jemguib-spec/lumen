@@ -17,7 +17,7 @@
 - Interface en français ou en anglais (réglage par profil)
 - Applis habituelles selon l'heure, calculées sur la TV uniquement
 - Taille du texte et contraste réglables, lecteur d'écran (TalkBack) pris en charge
-- Sons de l'interface : à couper, quatre jeux au choix, volume propre à Lumen
+- Sons de l'interface : coupés d'un appui depuis l'accueil, quatre jeux au choix, volume propre à Lumen
 - Recherche vocale (micro de la télécommande ou bouton micro de la recherche)
 - Touches de la télécommande sans rôle (Guide, Info, couleurs, chiffres…) : Lumen propose de les relier à une fonction ou à une appli
 - Assistant d'installation sur la TV : état de l'accueil, commandes à copier, QR code vers le guide

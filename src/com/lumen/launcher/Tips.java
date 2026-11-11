@@ -11,6 +11,7 @@ final class Tips {
             "Appui long sur une appli : déplacer, favoris, masquer, infos",
             "Touche Menu : réglages  ·  micro de la télécommande : recherche vocale",
             "Une touche de la télécommande sans rôle ? Appuie dessus : Lumen propose de la relier à une fonction",
+            "Le haut-parleur en haut de l'accueil coupe ou remet les sons de Lumen",
     };
 
     static void showNext(MainActivity a) {

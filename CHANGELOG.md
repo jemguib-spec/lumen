@@ -4,10 +4,12 @@ Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte
 
 ## 4.26.0
 
+- Nouveau bouton haut-parleur en haut de l'accueil, à côté de Réglages : un appui coupe les sons de Lumen (le haut-parleur est alors barré), un autre les remet.
 - Nouvelle rubrique Réglages › Sons : couper les sons de Lumen, choisir leur jeu et leur volume.
+- Une touche de la télécommande sans rôle peut aussi être reliée à « Couper ou remettre les sons ».
 - Quatre jeux de sons : Cristal (les sons d'origine), Bois (marimba), Gouttes (gouttes d'eau) et Ouate (très doux, plus grave). ◀ ▶ sur « Jeu de sons » ou « Volume » fait entendre le changement aussitôt ; « Écouter » le rejoue.
 - Volume en cinq crans, de « Très bas » à « Très fort ». Seuls les sons de Lumen changent : le volume de la TV, des applis et des vidéos reste le même.
-- Réglable aussi depuis le téléphone (Réglages › Accueil), par profil, et repris dans la sauvegarde des réglages. La recherche trouve la page avec « sons », « volume » ou « muet ».
+- Réglable aussi depuis le téléphone (Réglages › Accueil), par profil, et repris dans la sauvegarde des réglages. La recherche trouve la page avec « sons », « bip », « volume » ou « muet ».
 
 ## 4.25.1
 

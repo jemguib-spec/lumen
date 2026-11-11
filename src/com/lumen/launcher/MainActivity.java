@@ -60,12 +60,28 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     View appsTint;
     Cinema cinema;
     private LinearLayout sceneBar;
-    Tile houseButton, profileButton;
+    Tile houseButton, profileButton, soundButton;
 
     /** Affiche ou masque le bouton « Maison » (Réglages › Accueil et applis). */
     /** Bouton « profil » de l'accueil : seulement quand il y a plusieurs profils. */
     void updateProfileButton() {
         if (profileButton != null) profileButton.setVisibility(prefs.hasProfiles() ? View.VISIBLE : View.GONE);
+    }
+
+    /** Bouton Sons de l'accueil : haut-parleur, ou haut-parleur barré quand les sons sont coupés. */
+    void updateSoundButton() {
+        if (soundButton == null) return;
+        boolean on = prefs.sounds();
+        soundButton.setGlyph(on ? Glyph.SOUND : Glyph.SOUND_OFF, on ? L.t("Sons activés") : L.t("Sons coupés"));
+    }
+
+    /** Coupe ou remet les sons de Lumen d'un seul appui (bouton de l'accueil, touche reliée). */
+    void toggleSounds() {
+        prefs.setSounds(!prefs.sounds());
+        Sounds.get(this).apply(prefs);
+        updateSoundButton();
+        if (prefs.sounds()) { Sounds.get(this).tock(); showNotice(L.t("Sons activés · jeu et volume dans Réglages › Sons")); }
+        else showNotice(L.t("Sons coupés"));
     }
 
     void setHouseButton(boolean on) {

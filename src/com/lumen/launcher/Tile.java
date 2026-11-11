@@ -143,6 +143,13 @@ final class Tile extends FrameLayout {
     }
 
     /** Bouton rond en verre (toutes les applis, réglages). */
+    /** Change le pictogramme et le nom d'un bouton rond (bouton Sons : allumé ou coupé). */
+    void setGlyph(int glyphType, String newTitle) {
+        if (glyph != null) glyph.setType(glyphType);
+        title = newTitle;
+        setContentDescription(newTitle);
+    }
+
     static Tile button(Context c, int glyphType, String title, int size) {
         Tile t = new Tile(c, size, size, size / 2f, true, 1f);
         t.title = title;

@@ -35,6 +35,7 @@ final class SettingsPanel {
             @Override public void run() {
                 a.clockBox.setVisibility(a.prefs.showClock() ? View.VISIBLE : View.GONE);
                 Sounds.get(a).apply(a.prefs);
+                a.updateSoundButton();
                 if (!a.prefs.appGlow()) a.glow.fade();
                 if (!a.prefs.immersive()) a.immersive.clear(true);
                 a.backdropChanged(); // « Couleurs accordées au fond » a pu changer
