@@ -671,6 +671,34 @@ public class LumenTests {
                 && Palette.mix(0xFFFFFFFF, 0xFF111216, 0.5f) == 0xFF88898B);
         check("bandeau : titre long raccourci", Greeting.resume("Un titre vraiment très très long pour une seule ligne").endsWith("…"));
         check("écran de nuit : 23 h à 7 h", Greeting.night(23, 23) && Greeting.night(3, 23) && !Greeting.night(7, 23) && !Greeting.night(22, 23));
+        java.util.Calendar dl = new java.util.GregorianCalendar(2026, java.util.Calendar.NOVEMBER, 11);
+        check("date : dans la langue de Lumen, pas celle d'Android", DateLine.format(dl, "fr").equals("Mercredi 11 novembre")
+                && DateLine.format(dl, "en").equals("Wednesday 11 November"));
+        check("date : « 1er » en français", DateLine.format(new java.util.GregorianCalendar(2026, java.util.Calendar.AUGUST, 1), "fr").equals("Samedi 1er août"));
+        String own = "fr.lumen.accueil";
+        check("notifications : une nouvelle sortie s'affiche", NotifyPolicy.show("com.netflix.ninja", own, "Nouvelle saison", "Disponible maintenant", null, false, false, false));
+        check("notifications : ni Lumen, ni lecture en cours, ni résumé de groupe", !NotifyPolicy.show(own, own, "x", "y", null, false, false, false)
+                && !NotifyPolicy.show("com.app", own, "Lecture", "", "transport", false, false, false)
+                && !NotifyPolicy.show("com.app", own, "x", "y", null, true, false, false)
+                && !NotifyPolicy.show("com.app", own, "x", "y", null, false, true, false)
+                && !NotifyPolicy.show("com.app", own, "x", "y", null, false, false, true));
+        check("notifications : ni recommandations ni téléchargements ni système", !NotifyPolicy.show("com.app", own, "Film", "", "recommendation", false, false, false)
+                && !NotifyPolicy.show("com.app", own, "50 %", "", "progress", false, false, false) && !NotifyPolicy.show("android", own, "x", "y", null, false, false, false));
+        check("notifications : rien de vide", !NotifyPolicy.show("com.app", own, "  ", null, null, false, false, false));
+        check("notifications : même contenu, même empreinte (une mise à jour ne resurgit pas)",
+                NotifyPolicy.fingerprint("p", "Titre ", " texte  long") .equals(NotifyPolicy.fingerprint("p", "Titre", "texte long"))
+                && !NotifyPolicy.fingerprint("p", "Titre", "a").equals(NotifyPolicy.fingerprint("q", "Titre", "a")));
+        check("notifications : durée selon le réglage, plus longue pour un long texte", NotifyPolicy.displayMs(10, "t", "x") == 10000
+                && NotifyPolicy.displayMs(6, "t", new String(new char[200]).replace('\0', 'a')) == 10000 && NotifyPolicy.displayMs(0, "", "") == 10000);
+        java.util.List<String> nkept = new java.util.ArrayList<>();
+        NotifyPolicy.KeyOf<String> self = new NotifyPolicy.KeyOf<String>() { @Override public String key(String t) { return t; } };
+        for (int i = 0; i < 30; i++) nkept = NotifyPolicy.push(nkept, "n" + i, "n" + i, self);
+        nkept = NotifyPolicy.push(nkept, "n25", "n25", self);
+        check("notifications : la plus récente d'abord, sans doublon, au plus " + NotifyPolicy.MAX_KEPT, nkept.size() == NotifyPolicy.MAX_KEPT
+                && nkept.get(0).equals("n25") && nkept.indexOf("n25") == nkept.lastIndexOf("n25") && nkept.get(1).equals("n29"));
+        check("notifications : « il y a »", NotifyPolicy.ago(0, 30000, true).equals("à l'instant") && NotifyPolicy.ago(0, 5 * 60000, true).equals("il y a 5 min")
+                && NotifyPolicy.ago(0, 3 * 3600000L, true).equals("il y a 3 h") && NotifyPolicy.ago(0, 30 * 3600000L, false).equals("yesterday"));
+        check("notifications : durée inconnue → 10 s", NotifyPolicy.SECONDS[NotifyPolicy.secondsIndex(42)] == 10 && NotifyPolicy.SECONDS[NotifyPolicy.secondsIndex(20)] == 20);
         check("écran de nuit : minuit et désactivé", Greeting.night(0, 0) && !Greeting.night(23, 0) && !Greeting.night(2, -1));
         check("messages : jamais technique", !Messages.download("Hôte non autorisé : thumb.wikimedia.org").contains("Hôte")
                 && Messages.download("java.net.UnknownHostException").startsWith("Pas d'accès"));

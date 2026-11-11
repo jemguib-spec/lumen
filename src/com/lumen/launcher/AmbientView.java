@@ -73,9 +73,7 @@ final class AmbientView extends FrameLayout {
         clock.setMinWidth(Math.round(clock.getPaint().measureText("00:00") * 1.04f));
         bar.addView(clock);
 
-        TextClock date = new TextClock(c);
-        date.setFormat24Hour("EEEE d MMMM");
-        date.setFormat12Hour("EEEE d MMMM");
+        DateClock date = new DateClock(c); // dans la langue de Lumen, pas celle d'Android
         style(date, 24, "sans-serif", TXT);
         bar.addView(date, gap(18));
 
@@ -119,6 +117,9 @@ final class AmbientView extends FrameLayout {
     }
 
     FrameLayout wallLayer() { return wallLayer; }
+
+    /** Écran de nuit affiché (presque noir) : rien ne doit l'éclairer, pas même une notification. */
+    boolean nightShown() { return nightOn && getVisibility() == VISIBLE; }
 
     /** Voile de couleur selon l'heure : doré le matin, neutre le jour, chaud le soir, sombre la nuit. */
     static int tintFor(int hour) {

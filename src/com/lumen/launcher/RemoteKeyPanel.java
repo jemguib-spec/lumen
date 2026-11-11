@@ -175,15 +175,7 @@ final class RemoteKeyPanel {
             case RemoteKeys.SOUNDS: a.toggleSounds(); break;
             case RemoteKeys.TV_SETTINGS:
                 // les paramètres de la TV sont derrière le code, comme dans Réglages › Système › Diagnostic
-                PinDialog.ask(a, L.t("Code pour les réglages"), new Runnable() {
-                    @Override public void run() {
-                        try {
-                            Intent i = new Intent(Settings.ACTION_SETTINGS);
-                            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            a.startActivity(i);
-                        } catch (Exception e) { a.showNotice(L.t("Paramètres indisponibles")); }
-                    }
-                });
+                TvQuickPanel.openLocked(a);
                 break;
             default: break;
         }

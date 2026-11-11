@@ -16,7 +16,7 @@ final class SettingsIndex {
     static final int PHONE = -2, STORAGE = -3, HOME = -4, RECO = -5;
     /** Rubriques (mêmes numéros que SettingsPanel). */
     static final int FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5, ABOUT = 6, INSTALL = 14,
-            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21, TOUCHES = 22, SONS = 24;
+            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21, TOUCHES = 22, SONS = 24, NOTIFS = 25;
 
     static final class Entry {
         final String label, where, keywords;
@@ -44,6 +44,8 @@ final class SettingsIndex {
             new Entry("Ambiances", AM, AMBIANCES, "ambiances cheminee feu pluie videos son"),
             new Entry("Stockage", S, STORAGE, "stockage espace memoire plein vider supprimer cache"),
             new Entry("Rechercher une mise à jour", S, SYSTEME, "mise a jour version update rechercher"),
+            new Entry("Notifications des applis", "Réglages", NOTIFS, "notifications notification alerte nouvelle sortie episode message cloche"),
+            new Entry("Bouton Sons sur l'accueil", "Réglages", SONS, "bouton sons haut parleur volume masquer afficher accueil"),
             new Entry("Sons de l'interface", "Réglages", SONS, "sons son bip bips beep bruit bruits clic couper muet silence volume jeu timbre"),
             new Entry("Code PIN", S, SYSTEME, "code pin verrou enfant parental"),
             new Entry("À propos et licences", S, ABOUT, "a propos version licences"),

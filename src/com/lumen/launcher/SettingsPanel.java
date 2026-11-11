@@ -86,12 +86,15 @@ final class SettingsPanel {
     // numéros repris dans SettingsIndex (recherche) : à garder identiques
     static final int ROOT = 0, FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5,
             ABOUT = 6, LICENCES = 7, CREDITS = 8, LICENCE_INTER = 9, CITIES = 10, HIDDEN = 11, SCREENSAVER = 12, LICENCE_GPL = 13, INSTALL = 14,
-            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21, TOUCHES = 22, TOUCHE = 23, SONS = 24;
+            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21, TOUCHES = 22, TOUCHE = 23, SONS = 24,
+            NOTIFS = 25, NOTIF_APPS = 26;
     private static final String[] TITLES = {"Réglages", "Fond d'écran", "Accueil et applis", "Mode veille", "Ambiances",
             "Système", "À propos", "Licences", "Crédits des fonds", "Police Inter", "Villes", "Applis masquées", "Économiseur d'écran", "Licence de Lumen", "Installation",
-            "Paysages Lumen", "Avancé", "Vignettes et disposition", "Reprendre", "Lisibilité", "Diagnostic", "À l'affiche", "Télécommande", "Fonction de la touche", "Sons"};
+            "Paysages Lumen", "Avancé", "Vignettes et disposition", "Reprendre", "Lisibilité", "Diagnostic", "À l'affiche", "Télécommande", "Fonction de la touche", "Sons",
+            "Notifications", "Applis qui notifient"};
     private static final int[] PARENT = {ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, SYSTEME, SYSTEME, LICENCES, LICENCES, FOND, ACCUEIL, VEILLE, LICENCES, SYSTEME,
-            FOND, FOND, ACCUEIL, ACCUEIL, ACCUEIL, SYSTEME, ACCUEIL, ROOT, TOUCHES, ROOT};
+            FOND, FOND, ACCUEIL, ACCUEIL, ACCUEIL, SYSTEME, ACCUEIL, ROOT, TOUCHES, ROOT,
+            ROOT, NOTIFS};
     private static boolean[] citiesChanged;
     private static int page = ROOT, lastRubric = -1;
     private static LinearLayout openCard;
@@ -106,9 +109,18 @@ final class SettingsPanel {
 
     static boolean inSubPage() { return openCard != null && openCard.isAttachedToWindow() && page != ROOT; }
 
-    /** Colonne qui défile (sans barre, bords estompés) remplissant la carte des réglages. */
+    /**
+     * Colonne qui défile (sans barre, bords estompés) remplissant la carte des réglages. Tant qu'il
+     * reste des lignes plus bas, un petit chevron l'indique en bas de la carte.
+     */
     static LinearLayout scrollColumn(MainActivity a, LinearLayout card, int top) {
-        ScrollView sv = new ScrollView(a);
+        final Runnable[] onScroll = new Runnable[1];
+        final ScrollView sv = new ScrollView(a) {
+            @Override protected void onScrollChanged(int l, int t, int ol, int ot) {
+                super.onScrollChanged(l, t, ol, ot);
+                if (onScroll[0] != null) onScroll[0].run();
+            }
+        };
         sv.setVerticalScrollBarEnabled(false);
         sv.setOverScrollMode(View.OVER_SCROLL_NEVER);
         sv.setVerticalFadingEdgeEnabled(true);
@@ -118,7 +130,28 @@ final class SettingsPanel {
         col.setClipChildren(false);
         col.setPadding(a.u(24), a.u(top), a.u(24), a.u(48));
         sv.addView(col);
-        card.addView(sv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        FrameLayout holder = new FrameLayout(a);
+        holder.addView(sv, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        final ImageView more = new ImageView(a);
+        more.setImageDrawable(new Glyph(Glyph.CHEVRON_DOWN, Palette.TEXT_2));
+        more.setAlpha(0f);
+        more.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        FrameLayout.LayoutParams ml = new FrameLayout.LayoutParams(a.u(36), a.u(36), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        ml.bottomMargin = a.u(10);
+        holder.addView(more, ml);
+        final Runnable check = new Runnable() {
+            @Override public void run() {
+                Boolean want = sv.canScrollVertically(1);
+                if (want.equals(more.getTag())) return;
+                more.setTag(want);
+                more.animate().alpha(want ? 1f : 0f).setDuration(Motion.FAST).start();
+            }
+        };
+        onScroll[0] = check;
+        col.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override public void onLayoutChange(View v, int l, int t, int r, int b, int ol, int ot, int or, int ob) { sv.post(check); }
+        });
+        card.addView(holder, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         return col;
     }
 
@@ -220,13 +253,15 @@ final class SettingsPanel {
                     rubric(a, card, Glyph.SPARK, L.t("Ambiances"), null, AMBIANCES),
                     rubric(a, card, Glyph.SOUND, L.t("Sons"), new MainActivity.Value() { @Override public String get() {
                         return a.prefs.sounds() ? L.t(SoundDesign.THEME_NAMES[a.prefs.soundTheme()]) + " · " + L.t(SoundDesign.VOLUME_NAMES[a.prefs.soundVolume()]) : L.t("Coupés"); } }, SONS),
+                    rubric(a, card, Glyph.BELL, L.t("Notifications"), new MainActivity.Value() { @Override public String get() {
+                        return !a.prefs.notifyOn() ? L.t("Désactivées") : NotifyService.granted(a) ? L.t("En grand") : L.t("À autoriser"); } }, NOTIFS),
                     null,
                     null,
                     rubric(a, card, Glyph.SWITCH, L.t("Télécommande"), new MainActivity.Value() { @Override public String get() {
                         int n = linkedKeys(a); return n == 0 ? "" : n + (n > 1 ? L.t(" touches reliées") : L.t(" touche reliée")); } }, TOUCHES),
                     rubric(a, card, Glyph.GEAR, "Système", new MainActivity.Value() { @Override public String get() {
                         return a.updater.ready() != null ? L.t("Mise à jour prête") : L.t("Lumen ") + a.updater.currentVersion(); } }, SYSTEME)};
-                int[] targets = {FOND, ACCUEIL, VEILLE, AMBIANCES, SONS, -3, -2, TOUCHES, SYSTEME};
+                int[] targets = {FOND, ACCUEIL, VEILLE, AMBIANCES, SONS, NOTIFS, -3, -2, TOUCHES, SYSTEME};
                 for (int i = 0; i < rows.length; i++) {
                     if (rows[i] == null && targets[i] == -3) {
                         col.addView(a.listRow(L.t("Profils"), new MainActivity.Value() {
@@ -627,7 +662,70 @@ final class SettingsPanel {
                 col.addView(a.listRow(L.t("Écouter"), null, new View.OnClickListener() {
                     @Override public void onClick(View v) { Sounds.get(a).preview(); }
                 }), a.rowLp());
-                hint(a, col, L.t("◀ ▶ pour changer de jeu ou de volume : le son se fait entendre aussitôt. Seuls les sons de Lumen changent, pas le volume de la TV, des applis ni des vidéos."));
+                col.addView(toggle(a, L.t("Bouton Sons sur l'accueil"), new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.soundButton(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setSoundButton(!a.prefs.soundButton()); a.updateSoundButton(); }
+                }), a.rowLp());
+                hint(a, col, L.t("◀ ▶ pour changer de jeu ou de volume : le son se fait entendre aussitôt. Seuls les sons de Lumen changent, pas le volume de la TV, des applis ni des vidéos. Le bouton Sons de l'accueil coupe ou remet les sons d'un appui."));
+                break;
+            }
+            case NOTIFS: {
+                col.addView(toggle(a, L.t("Afficher les notifications en grand"), new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.notifyOn(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setNotifyOn(!a.prefs.notifyOn()); a.notify.updateBell(); if (!a.prefs.notifyOn()) a.notify.hideCard(); }
+                }), a.rowLp());
+                final boolean granted = NotifyService.granted(a);
+                col.addView(a.listRow(L.t("Accès aux notifications"), new MainActivity.Value() {
+                    @Override public String get() { return NotifyService.granted(a) ? L.t("Autorisé") : L.t("À autoriser · OK"); }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) {
+                        if (NotifyService.granted(a)) { a.showNotice(L.t("Lumen a déjà accès aux notifications")); return; }
+                        if (NotifyService.grantSelf(a)) { a.showNotice(L.t("Accès aux notifications autorisé")); page(a, card, NOTIFS); return; }
+                        if (NotifyService.openSystemScreen(a)) { a.closeOverlay(false); a.showNotice(L.t("Autorisez « Lumen » dans la liste"), 4000); return; }
+                        a.showNotice(L.t("Cette TV cache le réglage : voir la commande ci-dessous"), 4000);
+                    }
+                }), a.rowLp());
+                final String[] secNames = new String[NotifyPolicy.SECONDS.length];
+                for (int i = 0; i < secNames.length; i++) secNames[i] = NotifyPolicy.SECONDS[i] + L.t(" s");
+                col.addView(a.ui.choiceRow(L.t("Durée à l'écran"), secNames, new GlassUi.IntValue() {
+                    @Override public int get() { return NotifyPolicy.secondsIndex(a.prefs.notifySeconds()); }
+                }, new GlassUi.IntSetter() {
+                    @Override public void set(int i) { a.prefs.setNotifySeconds(NotifyPolicy.SECONDS[i]); }
+                }), a.rowLp());
+                col.addView(rubric(a, card, Glyph.GRID, L.t("Applis qui notifient"), new MainActivity.Value() {
+                    @Override public String get() { int n = a.prefs.notifyMuted().size(); return n == 0 ? L.t("Toutes") : n + (n > 1 ? L.t(" coupées") : L.t(" coupée")); }
+                }, NOTIF_APPS), a.rowLp());
+                col.addView(a.listRow(L.t("Dernières notifications"), new MainActivity.Value() {
+                    @Override public String get() { return String.valueOf(NotifyService.items().size()); }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) { a.closeOverlay(false); a.notify.openList(); }
+                }), a.rowLp());
+                col.addView(a.listRow(L.t("Essayer"), null, new View.OnClickListener() {
+                    @Override public void onClick(View v) { a.notify.sample(); }
+                }), a.rowLp());
+                hint(a, col, granted
+                        ? L.t("Quand une appli annonce une nouvelle sortie, un épisode ou un message, Lumen l'affiche en grand en haut de l'écran, puis la garde sous la cloche de l'accueil. Retour l'efface. Rien n'est enregistré ni envoyé ; rien dans un profil enfant.")
+                        : L.t("Android doit d'abord autoriser Lumen à lire les notifications. Si la TV ne propose pas l'écran d'autorisation, depuis un ordinateur : ") + NotifyService.adbCommand(a));
+                break;
+            }
+            case NOTIF_APPS: {
+                java.util.List<String> pkgs = new java.util.ArrayList<>(a.prefs.notifySeen());
+                final java.util.Map<String, String> names = new java.util.HashMap<>();
+                for (String p : pkgs) names.put(p, Install.label(a, p));
+                java.util.Collections.sort(pkgs, new java.util.Comparator<String>() {
+                    @Override public int compare(String x, String y) { return names.get(x).compareToIgnoreCase(names.get(y)); }
+                });
+                for (final String p : pkgs) {
+                    col.addView(toggle(a, names.get(p), new GlassUi.Bool() {
+                        @Override public boolean get() { return !a.prefs.notifyMuted().contains(p); }
+                    }, new Runnable() {
+                        @Override public void run() { a.prefs.setNotifyMuted(p, !a.prefs.notifyMuted().contains(p)); a.notify.updateBell(); }
+                    }), a.rowLp());
+                }
+                hint(a, col, pkgs.isEmpty() ? L.t("Chaque appli apparaît ici dès sa première notification : tu pourras alors la couper.")
+                        : L.t("Une appli coupée n'apparaît plus en grand ni sous la cloche."));
                 break;
             }
             case VEILLE: {

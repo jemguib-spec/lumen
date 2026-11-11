@@ -18,11 +18,16 @@ fresh() {
 }
 menu() { fresh; key MENU 2; } # réglages, première rubrique sélectionnée
 # Rubriques des réglages, dans l'ordre : Fond d'écran, Accueil et applis, Mode veille, Ambiances,
-# Sons, Profils, Réglages depuis le téléphone, Télécommande, Système
+# Sons, Notifications, Profils, Réglages depuis le téléphone, Télécommande, Système
 rubrique() { menu; keys DPAD_DOWN "$1"; key DPAD_CENTER 2; }
-# Boutons ronds de l'accueil, de gauche à droite : Rechercher, Ambiances, Entrées, (Maison),
-# (Profils), Toutes les applications, Sons, Réglages
-bouton() { fresh; keys DPAD_UP 3; keys DPAD_LEFT 8; keys DPAD_RIGHT "$1"; key DPAD_CENTER 3; }
+# Boutons ronds de l'accueil, de gauche à droite : (Notifications), Rechercher, Ambiances, (Entrées),
+# (Maison), (Profils), Toutes les applications, Paramètres de la TV, (Sons), Réglages. Entre
+# parenthèses : affichés seulement si besoin, d'où le repérage depuis la gauche (Rechercher,
+# Ambiances) ou depuis la droite (Réglages = 0, Paramètres de la TV = 1).
+sel() { fresh; keys DPAD_UP 3; keys DPAD_LEFT 10; keys DPAD_RIGHT "$1"; }
+bouton() { sel "$1"; key DPAD_CENTER 3; }
+seld() { fresh; keys DPAD_UP 3; keys DPAD_RIGHT 10; keys DPAD_LEFT "$1"; }
+boutond() { seld "$1"; key DPAD_CENTER 3; }
 
 # Interface en français : Réglages › Accueil et applis › Lisibilité › Langue → Français
 rubrique 1; keys DPAD_DOWN 6; key DPAD_CENTER 2
@@ -33,7 +38,8 @@ key DPAD_RIGHT;        shot 02-accueil-selection
 fresh; key DPAD_DOWN 3; shot 03-applications
 bouton 0;              shot 04-recherche 2
 bouton 1;              shot 05-ambiances 5
-bouton 2;              shot 06-entrees
+seld 1;                shot 06-bouton-nomme
+boutond 1;             shot 06-parametres-tv
 menu;                  shot 07-reglages
 rubrique 0;            shot 08-fond
 keys DPAD_DOWN 4; key DPAD_CENTER; shot 09-galerie 12
@@ -42,10 +48,21 @@ keys DPAD_DOWN 4; key DPAD_CENTER; shot 11-vignettes
 rubrique 2;            shot 12-veille-reglages
 keys DPAD_DOWN 3; key DPAD_CENTER; shot 13-mode-veille 6
 rubrique 4;            shot 14-sons
-rubrique 5;            shot 15-profils 2
-rubrique 6;            shot 16-telephone 3
-rubrique 7;            shot 17-telecommande
-rubrique 8;            shot 18-systeme
+rubrique 5;            shot 14-notifications-reglages
+rubrique 6;            shot 15-profils 2
+rubrique 7;            shot 16-telephone 3
+rubrique 8;            shot 17-telecommande
+rubrique 9;            shot 18-systeme
+
+# Notification d'une appli en grand : accès donné par ADB, puis une notification envoyée par le shell
+if adb shell cmd notification allow_listener $PKG/com.lumen.launcher.NotifyService >/dev/null 2>&1; then
+  fresh 14
+  adb shell cmd notification post -S bigtext -t "'Nouvelle saison disponible'" lumen-capture "'La saison 2 de votre série arrive ce soir, tous les épisodes d’un coup.'" >/dev/null 2>&1
+  shot 21-notification 2
+  adb shell cmd notification cancel lumen-capture >/dev/null 2>&1
+else
+  echo "accès aux notifications impossible par ADB : pas de capture de notification"
+fi
 
 # Soir et nuit : il faut changer l'heure de la TV (émulateur avec adb root seulement)
 if adb root >/dev/null 2>&1 && sleep 3 && adb wait-for-device && [ "$(adb shell id -u | tr -d '\r')" = 0 ]; then

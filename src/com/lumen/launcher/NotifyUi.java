@@ -1,0 +1,232 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
+package com.lumen.launcher;
+
+import android.app.PendingIntent;
+import android.graphics.Outline;
+import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewOutlineProvider;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import java.util.List;
+
+/**
+ * Notifications des applis sur l'accueil : une grande carte de verre en haut de l'écran quand une
+ * appli annonce quelque chose (nouvelle sortie, nouvel épisode, message), puis le bouton cloche
+ * qui garde les dernières et les rouvre dans leur appli. Rien dans un profil enfant ; une appli
+ * verrouillée par code ne montre que son nom.
+ */
+final class NotifyUi implements NotifyService.Listener {
+    private final MainActivity a;
+    private LinearLayout card;
+    private ImageView icon;
+    private TextView app, title, text;
+    private NotifyService.Item current;
+    private final Runnable hide = new Runnable() { @Override public void run() { hideCard(); } };
+
+    NotifyUi(MainActivity a) { this.a = a; }
+
+    /** Notifications activées et permises dans ce profil. */
+    boolean on() { return a.prefs.notifyOn() && !a.prefs.isKidProfile(); }
+
+    // ------------------------------------------------------------------ arrivée d'une notification
+
+    @Override public void onNotify(NotifyService.Item item, boolean fresh) {
+        updateBell();
+        if (item == null) {
+            // retirée par son appli : la carte en cours s'efface aussi
+            if (current != null && !contains(current.key)) hideCard();
+            return;
+        }
+        a.prefs.addNotifySeen(item.pkg);
+        if (!fresh || !on() || a.prefs.notifyMuted().contains(item.pkg)) return;
+        if (!a.resumedNow || a.ambiance != null || (a.ambient != null && a.ambient.nightShown())) return; // pas pendant une ambiance ni la nuit
+        showCard(item);
+    }
+
+    private static boolean contains(String key) {
+        for (NotifyService.Item i : NotifyService.items()) if (i.key.equals(key)) return true;
+        return false;
+    }
+
+    /** Une appli verrouillée par code : on dit seulement qu'elle a une notification. */
+    private boolean locked(String pkg) {
+        if (!a.prefs.hasPin()) return false;
+        for (AppRepo.App ap : a.repo.all()) if (pkg.equals(ap.pkg) && a.prefs.isLocked(ap.key)) return true;
+        return false;
+    }
+
+    private void build() {
+        card = a.glassCard(Radius.CARD);
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setPadding(a.u(Radius.PAD + 12), a.u(Radius.PAD + 8), a.u(Radius.PAD + 20), a.u(Radius.PAD + 8));
+        card.setAlpha(0f);
+        card.setVisibility(View.GONE);
+        icon = new ImageView(a);
+        icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        // l'icône est posée à PAD + 12 du bord gauche : son arrondi suit celui de la carte (rayon externe = interne + marge)
+        icon.setOutlineProvider(new ViewOutlineProvider() {
+            @Override public void getOutline(View v, Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), a.u(Radius.inner(Radius.CARD, Radius.PAD + 12))); }
+        });
+        icon.setClipToOutline(true);
+        LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(a.u(112), a.u(112));
+        il.rightMargin = a.u(36);
+        card.addView(icon, il);
+        LinearLayout col = new LinearLayout(a);
+        col.setOrientation(LinearLayout.VERTICAL);
+        app = a.text(20, "sans-serif-medium", Palette.TEXT_2);
+        app.setLetterSpacing(0.1f);
+        app.setSingleLine(true);
+        app.setEllipsize(TextUtils.TruncateAt.END);
+        col.addView(app);
+        title = a.text(40, "sans-serif-medium", Palette.TEXT);
+        title.setMaxLines(2);
+        title.setEllipsize(TextUtils.TruncateAt.END);
+        LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        tl.topMargin = a.u(10);
+        col.addView(title, tl);
+        text = a.text(27, "sans-serif", Palette.TEXT_2);
+        text.setMaxLines(3);
+        text.setEllipsize(TextUtils.TruncateAt.END);
+        text.setLineSpacing(0, 1.15f);
+        LinearLayout.LayoutParams xl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        xl.topMargin = a.u(10);
+        col.addView(text, xl);
+        card.addView(col, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        card.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+        card.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE); // TalkBack la lit à son arrivée
+        FrameLayout.LayoutParams cl = new FrameLayout.LayoutParams(a.u(1120), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        cl.topMargin = a.u(170);
+        a.root.addView(card, cl);
+    }
+
+    private void showCard(NotifyService.Item item) {
+        if (card == null) build();
+        current = item;
+        boolean hidden = locked(item.pkg);
+        String appName = Install.label(a, item.pkg);
+        app.setText((appName + " · " + NotifyPolicy.ago(item.when, System.currentTimeMillis(), L.french())).toUpperCase(java.util.Locale.FRANCE));
+        title.setText(hidden ? L.t("Nouvelle notification") : (item.title.isEmpty() ? appName : item.title));
+        text.setText(hidden ? L.t("Appli verrouillée par code") : item.text);
+        text.setVisibility(text.getText().length() == 0 ? View.GONE : View.VISIBLE);
+        Drawable d = null;
+        try { d = a.getPackageManager().getApplicationIcon(item.pkg); } catch (Exception ignored) { }
+        icon.setImageDrawable(d);
+        icon.setVisibility(d == null ? View.GONE : View.VISIBLE);
+        card.setContentDescription(appName + ". " + title.getText() + ". " + text.getText());
+        card.bringToFront(); // au-dessus des panneaux ouverts et du mode veille
+        card.setVisibility(View.VISIBLE);
+        card.animate().cancel();
+        if (card.getAlpha() < 0.05f) card.setTranslationY(-a.u(40));
+        card.animate().alpha(1f).translationY(0).setDuration(Motion.MEDIUM).setInterpolator(Motion.EASE).start();
+        Sounds.get(a).tock();
+        a.h.removeCallbacks(hide);
+        a.h.postDelayed(hide, NotifyPolicy.displayMs(a.prefs.notifySeconds(), item.title, item.text));
+    }
+
+    /** Exemple (Réglages › Notifications › Essayer) : la carte telle qu'elle apparaîtra. */
+    void sample() {
+        showCard(new NotifyService.Item("lumen-essai", a.getPackageName(), L.t("Nouvelle saison disponible"),
+                L.t("Exemple : c'est ainsi qu'une appli annonce une nouvelle sortie sur l'accueil."), System.currentTimeMillis(), null));
+    }
+
+    void hideCard() {
+        a.h.removeCallbacks(hide);
+        current = null;
+        if (card == null || card.getVisibility() != View.VISIBLE) return;
+        card.animate().cancel();
+        card.animate().alpha(0f).translationY(-a.u(30)).setDuration(Motion.MEDIUM).setInterpolator(Motion.EASE).withEndAction(new Runnable() {
+            @Override public void run() { if (current == null) card.setVisibility(View.GONE); }
+        }).start();
+    }
+
+    /** La carte est à l'écran (Retour l'efface sans rien faire d'autre). */
+    boolean visible() { return current != null; }
+
+    // ------------------------------------------------------------------ bouton cloche et liste
+
+    /** Bouton cloche de l'accueil : seulement quand des notifications attendent. */
+    void updateBell() {
+        Tile b = a.bellButton;
+        if (b == null) return;
+        int n = on() ? visibleCount() : 0;
+        if (n == 0) a.moveFocusOff(b);
+        b.setVisibility(n == 0 ? View.GONE : View.VISIBLE);
+        b.setGlyph(Glyph.BELL, n == 1 ? L.t("1 notification") : n + L.t(" notifications"));
+    }
+
+    private int visibleCount() {
+        int n = 0;
+        java.util.Set<String> muted = a.prefs.notifyMuted();
+        for (NotifyService.Item i : NotifyService.items()) if (!muted.contains(i.pkg)) n++;
+        return n;
+    }
+
+    /** Liste des dernières notifications : OK ouvre l'appli à la bonne page. */
+    void openList() {
+        hideCard();
+        FrameLayout o = a.openOverlay(new Runnable() { @Override public void run() { updateBell(); } });
+        LinearLayout c = a.menuCard(40);
+        TextView head = a.text(44, "sans-serif-light", Palette.TEXT);
+        head.setText(L.t("Notifications"));
+        head.setGravity(Gravity.CENTER);
+        head.setPadding(0, 0, 0, a.u(30));
+        c.addView(head, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        LinearLayout first = null;
+        List<NotifyService.Item> items = NotifyService.items();
+        java.util.Set<String> muted = a.prefs.notifyMuted();
+        int shown = 0;
+        for (final NotifyService.Item it : items) {
+            if (muted.contains(it.pkg) || shown >= 6) continue;
+            shown++;
+            final boolean hidden = locked(it.pkg);
+            final String appName = Install.label(a, it.pkg);
+            String label = hidden ? appName : appName + " · " + (it.title.isEmpty() ? it.text : it.title);
+            LinearLayout r = a.iconRow(Glyph.BELL, label, new MainActivity.Value() {
+                @Override public String get() { return NotifyPolicy.ago(it.when, System.currentTimeMillis(), L.french()); }
+            }, new View.OnClickListener() {
+                @Override public void onClick(View v) { a.closeOverlay(false); open(it); }
+            }, false);
+            c.addView(r, a.rowLp());
+            if (first == null) first = r;
+        }
+        LinearLayout clear = a.listRow(shown == 0 ? L.t("Aucune notification") : L.t("Tout effacer de l'accueil"), null, new View.OnClickListener() {
+            @Override public void onClick(View v) { NotifyService.forgetAll(); a.closeOverlay(false); }
+        });
+        c.addView(clear, a.rowLp());
+        if (first == null) first = clear;
+        o.addView(c, new FrameLayout.LayoutParams(a.u(900), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        first.requestFocus();
+    }
+
+    /** Ouvre la notification dans son appli (code demandé si l'appli est verrouillée). */
+    private void open(final NotifyService.Item it) {
+        Runnable go = new Runnable() {
+            @Override public void run() {
+                NotifyService.forget(it.key);
+                boolean ok = false;
+                if (it.open != null) {
+                    try { it.open.send(); ok = true; } catch (PendingIntent.CanceledException ignored) { } catch (Exception ignored) { }
+                }
+                if (!ok) {
+                    android.content.Intent i = a.getPackageManager().getLeanbackLaunchIntentForPackage(it.pkg);
+                    if (i == null) i = a.getPackageManager().getLaunchIntentForPackage(it.pkg);
+                    if (i != null) {
+                        try { i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK); a.startActivity(i); ok = true; } catch (Exception ignored) { }
+                    }
+                }
+                if (!ok) a.showNotice(L.t("Cette notification ne s'ouvre pas"));
+            }
+        };
+        if (locked(it.pkg)) PinDialog.ask(a, L.t("Code pour ") + Install.label(a, it.pkg), go);
+        else go.run();
+    }
+}

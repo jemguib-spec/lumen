@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="fr.lumen.accueil"
-    android:versionCode="94"
-    android:versionName="4.26.3">
+    android:versionCode="95"
+    android:versionName="4.27.0">
 
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="29" />
 
@@ -75,6 +75,17 @@
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/remote_service" />
+        </service>
+        <!-- Facultatif : notifications des applis (nouvelle sortie, message) affichées en grand sur l'accueil.
+             Accès donné par l'utilisateur (Accès aux notifications, ou ADB) ; lecture seule, rien n'est envoyé. -->
+        <service
+            android:name="com.lumen.launcher.NotifyService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
         </service>
         <!-- Résultat de l'installation d'une mise à jour (interne à Lumen) -->
         <receiver android:name="com.lumen.launcher.Updater$UpdateReceiver" android:exported="false" />

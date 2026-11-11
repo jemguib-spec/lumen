@@ -54,13 +54,43 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
 
     FrameLayout root, homeLayer, appsLayer;
     LinearLayout captionBox, clockBox, dots;
-    TextView captionTitle, captionCredit, focusLabel, notice;
+    TextView captionTitle, captionCredit, focusLabel, notice, buttonLabel;
     LinearLayout rowsBox, topButtons;
     FrameLayout wallLayer;
     View appsTint;
     Cinema cinema;
     private LinearLayout sceneBar;
-    Tile houseButton, profileButton, soundButton;
+    Tile houseButton, profileButton, soundButton, inputsButton, bellButton;
+    /** Notifications des applis affichées en grand (voir NotifyService). */
+    final NotifyUi notify = new NotifyUi(this);
+
+    /** Premier bouton rond affiché (certains sont masqués selon les réglages). */
+    View firstButton() {
+        if (topButtons == null) return null;
+        for (int i = 0; i < topButtons.getChildCount(); i++)
+            if (topButtons.getChildAt(i).getVisibility() == View.VISIBLE) return topButtons.getChildAt(i);
+        return null;
+    }
+
+    /** Un bouton qui disparaît alors qu'il est sélectionné passe la sélection au premier bouton. */
+    void moveFocusOff(View b) {
+        if (!b.hasFocus()) return;
+        b.setVisibility(View.GONE);
+        View f = firstButton();
+        if (f != null) f.requestFocus();
+    }
+
+    /**
+     * Bouton « Entrées » : seulement si la TV a des entrées (HDMI, chaînes). Sur un boîtier qui
+     * n'en a pas, il ne mènerait qu'à une liste vide ; les paramètres des entrées restent dans
+     * les réglages rapides de la TV.
+     */
+    void updateInputsButton() {
+        if (inputsButton == null) return;
+        boolean any = !InputsPanel.inputs(this).isEmpty();
+        if (!any) moveFocusOff(inputsButton);
+        inputsButton.setVisibility(any ? View.VISIBLE : View.GONE);
+    }
 
     /** Affiche ou masque le bouton « Maison » (Réglages › Accueil et applis). */
     /** Bouton « profil » de l'accueil : seulement quand il y a plusieurs profils. */
@@ -68,11 +98,18 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         if (profileButton != null) profileButton.setVisibility(prefs.hasProfiles() ? View.VISIBLE : View.GONE);
     }
 
-    /** Bouton Sons de l'accueil : haut-parleur, ou haut-parleur barré quand les sons sont coupés. */
+    /**
+     * Bouton Sons de l'accueil : haut-parleur, ou haut-parleur barré quand les sons sont coupés.
+     * Masqué par défaut (Réglages › Sons › Bouton Sons sur l'accueil).
+     */
     void updateSoundButton() {
         if (soundButton == null) return;
         boolean on = prefs.sounds();
         soundButton.setGlyph(on ? Glyph.SOUND : Glyph.SOUND_OFF, on ? L.t("Sons activés") : L.t("Sons coupés"));
+        boolean show = prefs.soundButton();
+        if (!show) moveFocusOff(soundButton);
+        soundButton.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (show && soundButton.isFocused()) showButtonLabel(soundButton, true); // le nom suit l'état (activés, coupés)
     }
 
     /** Coupe ou remet les sons de Lumen d'un seul appui (bouton de l'accueil, touche reliée). */
@@ -204,6 +241,9 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         h.postDelayed(new Runnable() { @Override public void run() { WhoPage.tryShow(MainActivity.this); } }, 400);
         firstResume = false;
         perf.setOn(prefs.showPerf());
+        updateInputsButton(); // une source HDMI a pu apparaître
+        NotifyService.setListener(notify);
+        notify.updateBell();
         fx.setRunning(true);
         updateWeatherFx();
         h.postDelayed(weatherTick, 30 * 60_000L);
@@ -225,6 +265,8 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         super.onPause();
         if (status != null) status.stop();
         resumedNow = false;
+        NotifyService.setListener(null); // les notifications reçues ailleurs attendent sous la cloche
+        notify.hideCard();
         h.removeCallbacks(houseTick);
         immersive.clear(false);
         h.removeCallbacks(afterShown);
@@ -541,6 +583,16 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
                 if (k.equals(focusKey)) toFocus = t;
             }
         }
+        // accueil presque vide (premier lancement) : dire comment le remplir, le geste ne se devine pas
+        if (favs.size() <= 3 && !prefs.isKidProfile()) {
+            TextView help = text(22, "sans-serif", Palette.TEXT_2);
+            help.setText(L.t("Ajoute tes applis ici : ▼ Toutes les applications, puis appui long sur OK › Ajouter aux favoris"));
+            help.setGravity(Gravity.CENTER);
+            help.setShadowLayer(u(8), 0, 0, Palette.SHADOW);
+            LinearLayout.LayoutParams hl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            hl.topMargin = u(4);
+            rowsBox.addView(help, hl);
+        }
         if (toFocus != null) toFocus.requestFocus();
         else if (overlay == null && !appsOpen) focusFirst();
     }
@@ -551,7 +603,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
             if (r.getChildAt(i) instanceof Tile) ((Tile) r.getChildAt(i)).setUsual(r.getChildAt(i) == usual);
         if (usual != null) { usual.requestFocus(); return; }
         if (!rows.isEmpty() && rows.get(0).getChildCount() > 0) rows.get(0).getChildAt(0).requestFocus();
-        else if (topButtons.getChildCount() > 0) topButtons.getChildAt(0).requestFocus();
+        else if (firstButton() != null) firstButton().requestFocus();
     }
 
     /** Le favori le plus ouvert à cette heure-ci (habitudes locales), pour le sélectionner d'emblée. */
@@ -572,6 +624,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
 
     final Tile.FocusListener homeFocus = new Tile.FocusListener() {
         @Override public void onTileFocus(final Tile t, boolean focused) {
+            if (t.getParent() == topButtons) showButtonLabel(t, focused);
             if (focused) glowOn(t);
             if (focused) parallax(t);
             if (focused) shelf.focusApp(!appsOpen && t.tag instanceof AppRepo.App ? (AppRepo.App) t.tag : null);
@@ -586,6 +639,46 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
             focusLabel.animate().alpha(1f).setDuration(Motion.FAST).start();
         }
     };
+
+    /**
+     * Nom du bouton rond sélectionné, centré sous lui. Il s'efface quand la sélection quitte les
+     * boutons ; d'un bouton à l'autre, il glisse au lieu de disparaître.
+     */
+    private void showButtonLabel(final Tile t, final boolean focused) {
+        if (buttonLabel == null) return;
+        if (!focused) {
+            buttonLabel.post(new Runnable() {
+                @Override public void run() {
+                    View f = getCurrentFocus();
+                    if (f == null || f.getParent() != topButtons) buttonLabel.animate().alpha(0f).setDuration(Motion.FAST).start();
+                }
+            });
+            return;
+        }
+        t.post(new Runnable() {
+            @Override public void run() {
+                if (!t.hasFocus() && !t.isFocused()) return;
+                buttonLabel.setText(t.title);
+                buttonLabel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+                int[] b = new int[2], l = new int[2];
+                t.getLocationOnScreen(b);
+                homeLayer.getLocationOnScreen(l);
+                int w = buttonLabel.getMeasuredWidth();
+                float x = b[0] - l[0] + t.getWidth() / 2f - w / 2f;
+                // ne déborde pas de l'écran (dernier bouton, près de l'horloge)
+                x = Math.max(u(48), Math.min(x, homeLayer.getWidth() - u(48) - w));
+                float y = b[1] - l[1] + t.getHeight() + u(4);
+                boolean shown = buttonLabel.getAlpha() > 0.05f;
+                buttonLabel.animate().cancel();
+                if (shown) buttonLabel.animate().translationX(x).translationY(y).alpha(1f).setDuration(Motion.FAST).setInterpolator(Motion.EASE).start();
+                else {
+                    buttonLabel.setTranslationX(x);
+                    buttonLabel.setTranslationY(y - u(6));
+                    buttonLabel.animate().translationY(y).alpha(1f).setDuration(Motion.FAST).setInterpolator(Motion.EASE).start();
+                }
+            }
+        });
+    }
 
     /**
      * Effet de profondeur : le fond glisse de quelques pixels à l'opposé de la sélection,
@@ -754,6 +847,10 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
         int code = e.getKeyCode();
         boolean down = e.getAction() == KeyEvent.ACTION_DOWN;
+        if (code == KeyEvent.KEYCODE_BACK && notify.visible()) {
+            if (!down) notify.hideCard();
+            return true; // Retour efface d'abord la notification affichée en grand
+        }
         if (ambiance != null) {
             if (ambiance.onKey(e)) return true;
             return super.dispatchKeyEvent(e); // navigation dans le menu des ambiances

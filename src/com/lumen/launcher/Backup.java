@@ -18,11 +18,11 @@ final class Backup {
 
     static final String[] BOOLS = {"ambiance_sound", "app_glow", "auto_update", "clock", "cosy_wanted", "follow_time", "idle", "immersive",
             "living_scenes", "seasonal", "shelf_posters", "show_icons", "show_perf", "sounds", "tint_tiles", "top_shelf", "remote_ask",
-            "video_4k", "weather_fx", "high_contrast", "habits_on", "greeting", "ha_button", "ha_cine_open"};
+            "video_4k", "weather_fx", "high_contrast", "habits_on", "greeting", "ha_button", "ha_cine_open", "sound_button", "notif_on"};
     static final String[] INTS = {"ambiance_kind", "ambient_min", "home_cols", "home_rows", "interval", "source", "tile_style",
-            "video_disk_gb", "video_theme", "text_scale", "veille_src", "night_hour", "sound_theme", "sound_volume"};
+            "video_disk_gb", "video_theme", "text_scale", "veille_src", "night_hour", "sound_theme", "sound_volume", "notif_secs"};
     static final String[] STRINGS = {"favorites", "habits", "ha_film", "ha_pause", "remote_keys"};
-    static final String[] SETS = {"cities", "hidden_apps", "hidden_walls", "video_ok", "locked_apps", "ha_pinned", "ha_home", "ha_cine_apps"};
+    static final String[] SETS = {"cities", "hidden_apps", "hidden_walls", "video_ok", "locked_apps", "ha_pinned", "ha_home", "ha_cine_apps", "notif_muted"};
 
     static int typeOf(String key) {
         if (key == null) return NONE;

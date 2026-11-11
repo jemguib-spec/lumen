@@ -855,6 +855,7 @@ function renderSettings() {
   h.appendChild(tgRow(t('Horloge'), 'clock'));
   h.appendChild(tgRow(t('Bouton Maison'), 'haButton'));
   h.appendChild(tgRow(t('Sons de l’interface'), 'sounds'));
+  if ('soundButton' in SET) h.appendChild(tgRow(t('Bouton Sons sur l’accueil'), 'soundButton'));
   if (SET.soundThemes) {
     h.appendChild(selRow(t('Jeu de sons'), 'soundTheme', SET.soundThemes.map((_, i) => i), SET.soundThemes));
     h.appendChild(selRow(t('Volume des sons'), 'soundVolume', SET.soundVolumes.map((_, i) => i), SET.soundVolumes));

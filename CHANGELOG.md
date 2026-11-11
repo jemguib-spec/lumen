@@ -2,6 +2,19 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.27.0
+
+- Notifications des applis en grand : quand une appli annonce une nouvelle sortie, un nouvel épisode ou un message, une grande carte de verre l'affiche en haut de l'accueil, avec l'icône et le nom de l'appli. Retour l'efface. Elle reste ensuite sous la cloche, un nouveau bouton qui n'apparaît que s'il y a des notifications : OK en ouvre une dans son appli.
+- Nouvelle rubrique Réglages › Notifications : activer ou couper, accès aux notifications (écran d'Android, ou commande ADB si la TV le cache), durée à l'écran (6, 10 ou 20 s), couper une appli, dernières notifications, « Essayer ». Les notifications ne sont ni enregistrées ni envoyées ; rien dans un profil enfant ; une appli verrouillée par code ne montre que son nom.
+- Nouveau bouton Paramètres de la TV en haut de l'accueil : réseau et Internet, télécommandes et accessoires Bluetooth, son, image, entrées et tous les paramètres, en un appui (code PIN demandé s'il y en a un). La touche de télécommande reliée à « Paramètres de la TV » ouvre aussi ce panneau.
+- Le bouton rond sélectionné affiche son nom juste dessous : plus besoin de deviner ce que font ✦ ou l'icône des entrées.
+- Le bouton Sons (haut-parleur) est masqué par défaut ; Réglages › Sons › Bouton Sons sur l'accueil le remet (réglable aussi depuis le téléphone).
+- Le bouton Entrées n'apparaît que si la TV a des entrées (HDMI, chaînes).
+- La date sous l'horloge et dans le mode veille suit la langue de Lumen (« Mercredi 11 novembre ») même si Android est réglé dans une autre langue.
+- Réglages : le nom d'une ligne n'est plus coupé par sa valeur ; c'est la valeur qui se raccourcit (« À jour · 4.27.0 »). Un petit chevron en bas des panneaux indique qu'il reste des lignes plus bas.
+- Profils : la phrase d'explication s'affiche en casse normale, plus lisible.
+- Accueil presque vide (premier lancement) : une ligne explique comment ajouter ses applis aux favoris.
+
 ## 4.26.3
 
 - Réglages : les pastilles d'icône devant les rubriques (Vignettes et disposition, Reprendre, Lisibilité, À l'affiche…) s'affichent en entier ; elles étaient coupées sur leur côté gauche.

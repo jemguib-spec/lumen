@@ -119,7 +119,7 @@ final class Updater {
         // paramètre unique : contourne le cache de GitHub (sinon une nouvelle version met jusqu'à 5 min à apparaître)
         JSONObject r = Net.getJson(UpdatePolicy.LATEST + "?t=" + (System.currentTimeMillis() / 1000));
         String v = UpdatePolicy.version(r.optString("version"));
-        if (v == null || UpdatePolicy.compare(v, mine) <= 0) return L.t("Lumen est à jour (") + mine + ")";
+        if (v == null || UpdatePolicy.compare(v, mine) <= 0) return L.t("À jour · ") + mine; // court : tient à droite de « Rechercher une mise à jour »
         if (ready() != null && v.equals(prefs.updateReadyVersion())) return "";
         String sha = r.optString("sha256").toLowerCase(java.util.Locale.ROOT);
         long size = r.optLong("size");
@@ -165,7 +165,7 @@ final class Updater {
         if (!ctx.getPackageName().equals(got.packageName)) return L.t("Fichier refusé (autre appli)");
         try {
             PackageInfo me = pm.getPackageInfo(ctx.getPackageName(), PackageManager.GET_SIGNATURES);
-            if (got.versionCode <= me.versionCode) return L.t("Lumen est à jour (") + me.versionName + ")";
+            if (got.versionCode <= me.versionCode) return L.t("À jour · ") + me.versionName;
             if (got.signatures == null || me.signatures == null || got.signatures.length == 0
                     || !sameSigners(got.signatures, me.signatures)) return L.t("Mise à jour refusée : signature différente");
         } catch (Exception e) { return L.t("Vérification impossible"); }

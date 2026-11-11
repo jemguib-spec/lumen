@@ -66,7 +66,8 @@
 - Aucune autorisation micro : la recherche vocale ouvre la fenêtre de reconnaissance d'Android (`RecognizerIntent`) ; c'est le service vocal de la TV qui écoute et transcrit, Lumen ne reçoit que le texte et ne l'envoie nulle part.
 - `REQUEST_DELETE_PACKAGES` : proposer la désinstallation d'une appli, que tu confirmes à chaque fois.
 - `PACKAGE_USAGE_STATS` (facultative, à accorder par ADB) : historique pour « Reprendre ».
-- `WRITE_SECURE_SETTINGS` (facultative, à accorder par ADB) : sert uniquement à choisir Lumen comme économiseur d'écran (`ScreenSaver`) ; aucun autre réglage de la TV n'est touché.
+- `WRITE_SECURE_SETTINGS` (facultative, à accorder par ADB) : sert uniquement à choisir Lumen comme économiseur d'écran (`ScreenSaver`) et, si tu le demandes dans Réglages › Notifications, à ajouter Lumen aux applis qui lisent les notifications (`NotifyService.grantSelf`, les autres applis autorisées le restent) ; aucun autre réglage de la TV n'est touché.
+- Accès aux notifications (facultatif, `NotifyService`, donné dans Android ou par ADB) : Lumen lit le titre et le texte des notifications des applis pour les afficher en grand sur l'accueil. Lecture seule et en mémoire : rien n'est écrit sur le disque ni envoyé, ni au téléphone ni sur Internet ; Lumen ne supprime jamais la notification d'une autre appli (« Tout effacer » ne vide que sa propre liste). Rien ne s'affiche dans un profil enfant ; pour une appli verrouillée par code, seul son nom apparaît et l'ouvrir redemande le code. Les notifications permanentes (lecture, téléchargements, services) et les recommandations sont ignorées.
 - `READ_TV_LISTINGS` : lire les épisodes en cours (« Reprendre ») et la liste des entrées HDMI, sur l'appareil.
 
 ## Profils (`Profiles`, `ProfilePrefs`, `ProfilePanel`, `WhoPage`)
@@ -99,7 +100,7 @@
 | `PhoneBridge` | Ce que la TV fait à la demande du téléphone (touches, applis, texte, ambiances, réglages, acceptation, pastille « connecté ») |
 | `Veille`, `UpdateFlow`, `DownloadPill` | Mode veille en cascade ; mises à jour et redémarrage ; indicateur de téléchargement |
 | `GlassUi`, `Palette`, `Motion` | Briques des panneaux en verre (carte, lignes, interrupteurs, choix, en-têtes) ; couleurs et durées nommées de l'interface |
-| `Tips` | Trois conseils sur les gestes, un par démarrage |
+| `Tips` | Quelques conseils sur les gestes, un par démarrage |
 | `TvStatus` | État de la TV sous l'horloge (réseau, pile de la télécommande, mise à jour) : lecture locale, rien d'envoyé |
 | `L`, `Lang` | Textes de l'interface et dictionnaires `assets/lang/*.tsv` (anglais, TV et page du téléphone ; `/app.lang` sert le dictionnaire de la page, fichier fixe) ; couverture vérifiée par `tools/i18n_check.py` |
 | `HomeBuilder`, `AppLauncher` | Construction de l'écran d'accueil ; ouverture et fermeture des applis, redémarrage |
@@ -128,6 +129,9 @@
 | `SafeFile` | Écriture sûre des index et catalogues (rien de corrompu si la TV est débranchée) |
 | `About`, `StoragePanel`, `Perf`, `CrashLog` | À propos et licences, stockage, mesures, journal d'erreurs local |
 | `ScreenSaver` | Lumen comme économiseur d'écran |
+| `NotifyService`, `NotifyPolicy`, `NotifyUi` | Notifications des applis en grand sur l'accueil (facultatif) : lecture locale et en mémoire, tri de ce qui mérite d'être montré, carte, cloche et liste |
+| `TvQuickPanel` | Paramètres de la TV en un appui (réseau, Bluetooth, son, image, entrées) : ouvre les écrans d'Android, ne change rien lui-même |
+| `DateLine`, `DateClock` | Date sous l'horloge et dans le mode veille, dans la langue de Lumen |
 | `Sky` | Lever / coucher du soleil, phase de lune, saisons (calcul local, sans réseau) |
 | `TopShelf`, `WatchNext`, `WatchNextFormat` | « Reprendre » au-dessus des applis : lecture des « en cours » publiés par les applis, affiches contrôlées |
 | `ApkProvider` | Prête le fichier de mise à jour déjà vérifié à l'installateur d'Android : non exporté, lecture seule, ce seul fichier, accès accordé le temps de l'installation |

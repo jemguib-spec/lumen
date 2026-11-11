@@ -14,7 +14,8 @@ import android.graphics.drawable.Drawable;
 final class Glyph extends Drawable {
     static final int GRID = 0, SLIDERS = 1, INPUT = 2, MOON = 3, IMAGE = 4, HOME = 5, PHONE = 6, GEAR = 7, INFO = 8, DOC = 9, SPARK = 10,
             MOVE = 11, STAR = 12, STAR_OFF = 13, HIDE = 14, LOCK = 15, TRASH = 16, UNLOCK = 17, CLOSE = 18, RESTART = 19, SEARCH = 20, PERSON = 21, MIC = 22, WIFI_OFF = 23, BATTERY_LOW = 24, UPDATE = 25,
-            BULB = 26, PLUG = 27, BLIND = 28, FAN = 29, PLAY = 30, SWITCH = 31, SOUND = 32, SOUND_OFF = 33;
+            BULB = 26, PLUG = 27, BLIND = 28, FAN = 29, PLAY = 30, SWITCH = 31, SOUND = 32, SOUND_OFF = 33,
+            CHEVRON_DOWN = 34, BELL = 35, TV = 36, WIFI = 37, BLUETOOTH = 38, PICTURE = 39;
     private int type;
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -180,6 +181,49 @@ final class Glyph extends Drawable {
             case SEARCH: { // loupe : rechercher
                 c.drawCircle(cx - s * .06f, cy - s * .06f, s * .24f, p);
                 c.drawLine(cx + s * .12f, cy + s * .12f, cx + s * .32f, cy + s * .32f, p);
+                break;
+            }
+            case CHEVRON_DOWN: { // chevron vers le bas : la liste continue plus bas
+                q.moveTo(cx - s * .26f, cy - s * .12f); q.lineTo(cx, cy + s * .14f); q.lineTo(cx + s * .26f, cy - s * .12f);
+                c.drawPath(q, p);
+                break;
+            }
+            case BELL: { // cloche : notifications des applis
+                q.moveTo(cx - s * .30f, cy + s * .20f);
+                q.quadTo(cx - s * .22f, cy + s * .10f, cx - s * .22f, cy - s * .04f);
+                q.quadTo(cx - s * .22f, cy - s * .32f, cx, cy - s * .32f);
+                q.quadTo(cx + s * .22f, cy - s * .32f, cx + s * .22f, cy - s * .04f);
+                q.quadTo(cx + s * .22f, cy + s * .10f, cx + s * .30f, cy + s * .20f);
+                q.close();
+                c.drawPath(q, p);
+                c.drawLine(cx - s * .08f, cy + s * .32f, cx + s * .08f, cy + s * .32f, p);
+                break;
+            }
+            case TV: { // écran sur son pied : réglages rapides de la TV
+                c.drawRoundRect(new RectF(cx - s * .38f, cy - s * .28f, cx + s * .38f, cy + s * .18f), s * .06f, s * .06f, p);
+                c.drawLine(cx - s * .16f, cy + s * .34f, cx + s * .16f, cy + s * .34f, p);
+                c.drawLine(cx, cy + s * .18f, cx, cy + s * .34f, p);
+                break;
+            }
+            case WIFI: { // ondes : réseau
+                c.drawArc(new RectF(cx - s * .40f, cy - s * .28f, cx + s * .40f, cy + s * .52f), 225f, 90f, false, p);
+                c.drawArc(new RectF(cx - s * .24f, cy - s * .12f, cx + s * .24f, cy + s * .36f), 225f, 90f, false, p);
+                c.drawCircle(cx, cy + s * .24f, s * .035f, p);
+                break;
+            }
+            case BLUETOOTH: { // rune Bluetooth : manettes, casques, enceintes
+                q.moveTo(cx - s * .18f, cy - s * .16f); q.lineTo(cx + s * .18f, cy + s * .16f); q.lineTo(cx, cy + s * .34f);
+                q.lineTo(cx, cy - s * .34f); q.lineTo(cx + s * .18f, cy - s * .16f); q.lineTo(cx - s * .18f, cy + s * .16f);
+                c.drawPath(q, p);
+                break;
+            }
+            case PICTURE: { // soleil à demi plein : image (luminosité, mode d'image)
+                c.drawCircle(cx, cy, s * .16f, p);
+                for (int k = 0; k < 8; k++) {
+                    double ang = Math.PI / 4 * k;
+                    float dx = (float) Math.cos(ang), dy = (float) Math.sin(ang);
+                    c.drawLine(cx + dx * s * .26f, cy + dy * s * .26f, cx + dx * s * .36f, cy + dy * s * .36f, p);
+                }
                 break;
             }
             case WIFI_OFF: { // ondes barrées : pas de réseau

@@ -105,7 +105,8 @@ jobs:
           arch: x86
           profile: tv_1080p
           disable-animations: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          # TV en français : noms des applis, dates et textes d'Android cohérents avec Lumen sur les captures
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -change-locale fr-FR
           script: |
             tools/smoke.sh build/Lumen.apk captures
             tools/captures.sh captures/visite || true

@@ -78,7 +78,7 @@ final class HomeBuilder {
         Tile amb = Tile.button(a, Glyph.SPARK, L.t("Ambiances"), bs); // la lune reste celle du mode veille
         amb.setFocusListener(a.homeFocus);
         amb.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { a.openAmbiance(); } });
-        Tile inputs = Tile.button(a, Glyph.INPUT, L.t("Entrées"), bs);
+        Tile inputs = a.inputsButton = Tile.button(a, Glyph.INPUT, L.t("Entrées"), bs);
         inputs.setFocusListener(a.homeFocus);
         inputs.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { InputsPanel.openInputs(a); } });
         Tile find = Tile.button(a, Glyph.SEARCH, L.t("Rechercher"), bs);
@@ -93,6 +93,15 @@ final class HomeBuilder {
         Tile all = Tile.button(a, Glyph.GRID, L.t("Toutes les applications"), bs);
         all.setFocusListener(a.homeFocus);
         all.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { a.openApps(); } });
+        // paramètres de la TV en un appui : réseau, Bluetooth, son, image, entrées
+        Tile tvSet = Tile.button(a, Glyph.TV, L.t("Paramètres de la TV"), bs);
+        tvSet.setFocusListener(a.homeFocus);
+        tvSet.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { TvQuickPanel.openLocked(a); } });
+        // cloche : les dernières notifications des applis, seulement quand il y en a
+        Tile bell = a.bellButton = Tile.button(a, Glyph.BELL, L.t("Notifications"), bs);
+        bell.setFocusListener(a.homeFocus);
+        bell.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { a.notify.openList(); } });
+        bell.setVisibility(View.GONE);
         // bouton Sons : un appui coupe ou remet les sons de Lumen (le jeu et le volume restent dans Réglages › Sons)
         Tile snd = a.soundButton = Tile.button(a, Glyph.SOUND, L.t("Sons activés"), bs);
         snd.setFocusListener(a.homeFocus);
@@ -100,7 +109,7 @@ final class HomeBuilder {
         Tile set = Tile.button(a, Glyph.SLIDERS, L.t("Réglages"), bs);
         set.setFocusListener(a.homeFocus);
         set.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { SettingsPanel.openSettings(a); } });
-        for (Tile b : new Tile[]{find, amb, inputs, house, who, all, snd, set}) {
+        for (Tile b : new Tile[]{bell, find, amb, inputs, house, who, all, tvSet, snd, set}) {
             LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             bl.leftMargin = a.u(18);
             a.topButtons.addView(b, bl);
@@ -108,10 +117,18 @@ final class HomeBuilder {
         house.setVisibility(a.prefs.haButton() ? View.VISIBLE : View.GONE);
         a.updateProfileButton();
         a.updateSoundButton();
+        a.updateInputsButton();
         FrameLayout.LayoutParams tbl = MainActivity.wrap(Gravity.TOP | Gravity.END);
         tbl.topMargin = a.u(56);
         tbl.rightMargin = a.u(420);
         a.homeLayer.addView(a.topButtons, tbl);
+        // nom du bouton rond sélectionné, juste dessous : les pictogrammes seuls ne disent pas tous ce qu'ils font
+        a.buttonLabel = a.text(22, "sans-serif-medium", Palette.TEXT);
+        a.buttonLabel.setShadowLayer(a.u(8), 0, 0, Palette.SHADOW);
+        a.buttonLabel.setSingleLine(true);
+        a.buttonLabel.setAlpha(0f);
+        a.buttonLabel.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO); // le bouton se nomme déjà
+        a.homeLayer.addView(a.buttonLabel, MainActivity.wrap(Gravity.TOP | Gravity.START));
 
         // ---- légende du fond, en haut à gauche
         a.captionBox = new LinearLayout(a);
@@ -158,9 +175,7 @@ final class HomeBuilder {
         time.setTextColor(Palette.TEXT);
         time.setIncludeFontPadding(false);
         time.setShadowLayer(a.u(12), 0, 0, Palette.SHADOW);
-        TextClock date = new TextClock(a);
-        date.setFormat24Hour("EEEE d MMMM");
-        date.setFormat12Hour("EEEE d MMMM");
+        DateClock date = new DateClock(a); // dans la langue de Lumen, pas celle d'Android
         date.setTextSize(TypedValue.COMPLEX_UNIT_PX, 22 * a.unit);
         date.setTypeface(Fonts.get("sans-serif", Typeface.NORMAL));
         date.setTextColor(0xB3FFFFFF);

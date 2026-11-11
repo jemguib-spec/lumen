@@ -174,6 +174,22 @@ final class Prefs {
     void setWeatherFx(boolean b) { sp.edit().putBoolean("weather_fx", b).apply(); }
 
     boolean sounds() { return sp.getBoolean("sounds", true); }
+    /** Notifications des applis affichées en grand sur l'accueil (dès que l'accès est donné). */
+    boolean notifyOn() { return sp.getBoolean("notif_on", true); }
+    void setNotifyOn(boolean b) { sp.edit().putBoolean("notif_on", b).apply(); }
+    /** Durée d'affichage de la grande carte, en secondes (NotifyPolicy.SECONDS). */
+    int notifySeconds() { return sp.getInt("notif_secs", NotifyPolicy.DEFAULT_SECONDS); }
+    void setNotifySeconds(int s) { sp.edit().putInt("notif_secs", s).apply(); }
+    /** Applis dont les notifications ne s'affichent pas. */
+    Set<String> notifyMuted() { return set("notif_muted"); }
+    void setNotifyMuted(String pkg, boolean muted) { Set<String> s = notifyMuted(); if (muted) s.add(pkg); else s.remove(pkg); put("notif_muted", s); }
+    /** Applis qui ont déjà envoyé une notification (liste du réglage par appli). */
+    Set<String> notifySeen() { return set("notif_seen"); }
+    void addNotifySeen(String pkg) { Set<String> s = notifySeen(); if (s.size() < 60 && s.add(pkg)) put("notif_seen", s); }
+
+    /** Bouton Sons (haut-parleur) parmi les boutons ronds de l'accueil : masqué par défaut. */
+    boolean soundButton() { return sp.getBoolean("sound_button", false); }
+    void setSoundButton(boolean b) { sp.edit().putBoolean("sound_button", b).apply(); }
     void setSounds(boolean b) { sp.edit().putBoolean("sounds", b).apply(); }
     /** Jeu de sons (SoundDesign.THEME_NAMES) et volume des sons de Lumen (SoundDesign.VOLUME_NAMES). */
     int soundTheme() { return SoundDesign.theme(sp.getInt("sound_theme", SoundDesign.CRISTAL)); }

@@ -285,7 +285,6 @@ Lumen 	Lumen
 Lumen a redémarré en mode sans échec après des erreurs	Lumen restarted in safe mode after errors
 Lumen est déjà l'économiseur d'écran	Lumen is already the screen saver
 Lumen est maintenant l'économiseur d'écran	Lumen is now the screen saver
-Lumen est à jour (	Lumen is up to date (
 Lumen est à jour · 	Lumen is up to date · 
 Lumen s'ouvre quand tu appuies sur Accueil.	Lumen opens when you press Home.
 Ma clé TMDB	My TMDB key
@@ -617,9 +616,56 @@ Très bas	Very low
 Très fort	Very loud
 Volume	Volume
 Écouter	Listen
-◀ ▶ pour changer de jeu ou de volume : le son se fait entendre aussitôt. Seuls les sons de Lumen changent, pas le volume de la TV, des applis ni des vidéos.	◀ ▶ to change the sound set or volume: you hear it right away. Only Lumen's sounds change, not the volume of the TV, apps or videos.
 Sons activés	Sounds on
 Sons coupés	Sounds off
 Sons activés · jeu et volume dans Réglages › Sons	Sounds on · sound set and volume in Settings › Sounds
 Couper ou remettre les sons	Turn sounds off or on
-Le haut-parleur en haut de l'accueil coupe ou remet les sons de Lumen	The speaker at the top of the home screen turns Lumen's sounds off or on
+# 4.27.0 : notifications, paramètres de la TV, bouton Sons
+ coupée	 muted
+ coupées	 muted
+ notifications	 notifications
+1 notification	1 notification
+Accès aux notifications	Notification access
+Accès aux notifications autorisé	Notification access granted
+Afficher les notifications en grand	Show notifications in large
+Ajoute tes applis ici : ▼ Toutes les applications, puis appui long sur OK › Ajouter aux favoris	Add your apps here: ▼ All apps, then long-press OK › Add to favourites
+Android doit d'abord autoriser Lumen à lire les notifications. Si la TV ne propose pas l'écran d'autorisation, depuis un ordinateur : 	Android must first allow Lumen to read notifications. If the TV doesn't offer the permission screen, from a computer: 
+Appli verrouillée par code	App locked with a code
+Applis qui notifient	Apps that notify
+Aucune notification	No notifications
+Autorisez « Lumen » dans la liste	Allow “Lumen” in the list
+Autorisé	Allowed
+Bluetooth	Bluetooth
+Bouton Sons sur l'accueil	Sounds button on the home screen
+Cette TV cache le réglage : voir la commande ci-dessous	This TV hides the setting: see the command below
+Cette notification ne s'ouvre pas	This notification can't be opened
+Chaque appli apparaît ici dès sa première notification : tu pourras alors la couper.	Each app shows up here after its first notification: you can then mute it.
+Dernières notifications	Latest notifications
+Durée à l'écran	Time on screen
+Désactivées	Off
+En grand	Large
+Essayer	Try it
+Exemple : c'est ainsi qu'une appli annonce une nouvelle sortie sur l'accueil.	Example: this is how an app announces a new release on the home screen.
+Image et écran	Picture and display
+Le bouton écran en haut de l'accueil ouvre les paramètres de la TV : réseau, Bluetooth, son, image	The screen button at the top of the home screen opens the TV settings: network, Bluetooth, sound, picture
+Lumen a déjà accès aux notifications	Lumen already has notification access
+Notifications	Notifications
+Notifications des applis	App notifications
+Nouvelle notification	New notification
+Nouvelle saison disponible	New season available
+Quand une appli annonce une nouvelle sortie, un épisode ou un message, Lumen l'affiche en grand en haut de l'écran, puis la garde sous la cloche de l'accueil. Retour l'efface. Rien n'est enregistré ni envoyé ; rien dans un profil enfant.	When an app announces a new release, an episode or a message, Lumen shows it in large at the top of the screen, then keeps it under the bell on the home screen. Back dismisses it. Nothing is stored or sent; nothing in a kids profile.
+Réglages › Notifications : les nouvelles sorties et messages des applis s'affichent en grand	Settings › Notifications: new releases and messages from apps are shown in large
+Réglages › Sons : le bouton haut-parleur de l'accueil coupe ou remet les sons d'un appui	Settings › Sounds: the speaker button on the home screen mutes or unmutes sounds in one press
+Réseau et Internet	Network and Internet
+Résolution, mode d'image	Resolution, picture mode
+Son	Sound
+Sortie audio, enceintes	Audio output, speakers
+Tous les paramètres	All settings
+Tout effacer de l'accueil	Clear all from the home screen
+Télécommandes et accessoires	Remotes and accessories
+Une appli coupée n'apparaît plus en grand ni sous la cloche.	A muted app no longer shows in large or under the bell.
+Wi-Fi, câble	Wi-Fi, cable
+À autoriser	To allow
+À autoriser · OK	To allow · OK
+À jour · 	Up to date · 
+◀ ▶ pour changer de jeu ou de volume : le son se fait entendre aussitôt. Seuls les sons de Lumen changent, pas le volume de la TV, des applis ni des vidéos. Le bouton Sons de l'accueil coupe ou remet les sons d'un appui.	◀ ▶ to change the sound set or volume: you hear it right away. Only Lumen's sounds change, not the volume of the TV, apps or videos. The Sounds button on the home screen mutes or unmutes in one press.

@@ -128,8 +128,10 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
     adb shell appops set fr.lumen.accueil GET_USAGE_STATS allow
 
 ## Accueil
-- **Bandeau d'accueil** : une ligne au-dessus des favoris — salutation selon l'heure, météo (si une ville est réglée) et dernier épisode en cours. Réglages › Accueil et applis › Bandeau d'accueil pour le masquer. Trois conseils sur les gestes s'affichent aux trois premiers démarrages (Réglages › Système › Diagnostic › Revoir les conseils pour les revoir).
+- **Bandeau d'accueil** : une ligne au-dessus des favoris — salutation selon l'heure, météo (si une ville est réglée) et dernier épisode en cours. Réglages › Accueil et applis › Bandeau d'accueil pour le masquer. Quelques conseils sur les gestes s'affichent aux premiers démarrages, un à la fois (Réglages › Système › Diagnostic › Revoir les conseils pour les revoir).
 - L'appli que tu ouvres d'habitude à cette heure est sélectionnée au démarrage et entourée d'un liseré qui respire doucement.
+- Les **boutons ronds** du haut affichent leur nom juste dessous quand on les sélectionne. Le bouton Sons (haut-parleur, pour couper les sons de Lumen d'un appui) est masqué par défaut : Réglages › Sons › Bouton Sons sur l'accueil. Le bouton Entrées n'apparaît que si la TV a des entrées (HDMI, chaînes).
+- La **date** sous l'horloge suit la langue de Lumen, même si Android est réglé dans une autre langue.
 - **État de la TV**, sous l'horloge, seulement quand quelque chose mérite un mot : pas de réseau, pile de la télécommande faible (Android 12 et plus, télécommandes Bluetooth qui l'annoncent), mise à jour prête. Rien quand tout va bien.
 
 ## À l'affiche
@@ -187,6 +189,18 @@ Bouton Réglages (ou touche Menu) : six rubriques — Fond d'écran, Accueil et 
 - **Économiseur d'écran de la TV** (le mode veille par-dessus n'importe quelle appli) : Réglages › Mode veille › Économiseur d'écran de la TV. Si Google TV cache ce choix, donne une seule fois l'autorisation depuis un ordinateur, puis appuie à nouveau sur cette ligne : Lumen se règle tout seul.
 
     adb shell pm grant fr.lumen.accueil android.permission.WRITE_SECURE_SETTINGS
+
+## Notifications des applis
+Quand une appli annonce une nouvelle sortie, un nouvel épisode ou un message, Lumen l'affiche en grand en haut de l'accueil (6, 10 ou 20 s), puis la garde sous le bouton cloche, qui n'apparaît que lorsqu'il y a des notifications. OK sur une notification de la liste l'ouvre dans son appli ; Retour efface la grande carte. Réglages › Notifications : activer ou couper, durée à l'écran, applis à faire taire une à une, « Essayer ».
+
+Android doit d'abord autoriser Lumen à lire les notifications : Réglages › Notifications › Accès aux notifications ouvre l'écran d'Android quand la TV le propose. Si Google TV le cache, depuis un ordinateur :
+
+    adb shell cmd notification allow_listener fr.lumen.accueil/com.lumen.launcher.NotifyService
+
+(ou, si `WRITE_SECURE_SETTINGS` a déjà été donnée pour l'économiseur d'écran, la ligne « Accès aux notifications » suffit : Lumen s'autorise tout seul). Pour retirer l'accès : `adb shell cmd notification disallow_listener fr.lumen.accueil/com.lumen.launcher.NotifyService`.
+
+## Paramètres de la TV
+Le bouton écran en haut de l'accueil ouvre en un appui les paramètres d'Android les plus utiles : réseau et Internet, télécommandes et accessoires Bluetooth, son et sortie audio, image et écran, entrées HDMI, puis tous les paramètres. Avec un code PIN, il est demandé d'abord.
 
 ## Sources HDMI
 Les entrées HDMI de la TV apparaissent sur l'accueil (ajoutées une seule fois) et dans la rangée « Sources (HDMI) » de la page Applications. On les déplace, retire ou masque comme une appli (appui long). OK ouvre directement la source.

@@ -21,7 +21,8 @@ final class InputsPanel {
     private InputsPanel() { }
 
 
-    static void openInputs(final MainActivity a) {
+    /** Entrées visibles de la TV (HDMI, chaînes, AV) ; liste vide sur un boîtier qui n'en a pas. */
+    static List<android.media.tv.TvInputInfo> inputs(Context a) {
         List<android.media.tv.TvInputInfo> list = new ArrayList<>();
         try {
             android.media.tv.TvInputManager tim = (android.media.tv.TvInputManager) a.getSystemService(Context.TV_INPUT_SERVICE);
@@ -30,6 +31,11 @@ final class InputsPanel {
                 list.add(i);
             }
         } catch (Throwable ignored) { }
+        return list;
+    }
+
+    static void openInputs(final MainActivity a) {
+        List<android.media.tv.TvInputInfo> list = inputs(a);
         FrameLayout o = a.openOverlay(null);
         LinearLayout card = a.menuCard(40);
         TextView title = a.text(44, "sans-serif-light", Palette.TEXT);

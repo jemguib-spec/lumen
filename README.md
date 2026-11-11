@@ -17,13 +17,16 @@ Installation et utilisation détaillée : [INSTALLATION.md](INSTALLATION.md) · 
 <img src="docs/captures/accueil-selection.jpg" width="49%" alt="Accueil : la vignette sélectionnée devient blanche et prend la couleur de l'appli">
 
 - **Favoris** en vignettes de verre, centrés, de 1 à 3 lignes de 3 à 7 applis. L'appli sélectionnée s'éclaire, une lueur de sa couleur monte en dessous.
-- **Boutons ronds** en haut : Rechercher, Ambiances, Entrées (HDMI, chaînes), Maison, Profils, Toutes les applications, Sons (coupés d'un appui), Réglages. À droite, l'horloge et la date.
+- **Boutons ronds** en haut : Rechercher, Ambiances, Entrées (si la TV a des entrées HDMI ou des chaînes), Maison, Profils, Toutes les applications, Paramètres de la TV, Réglages ; le bouton sélectionné affiche son nom juste dessous. La cloche apparaît quand une appli a envoyé une notification ; le bouton Sons (coupés d'un appui) est masqué par défaut. À droite, l'horloge et la date, dans la langue de Lumen.
+- **Notifications en grand** : quand une appli annonce une nouvelle sortie, un épisode ou un message, une grande carte de verre l'affiche en haut de l'écran, puis la notification reste sous la cloche ; OK l'ouvre dans son appli (accès aux notifications à autoriser une fois).
+- **Paramètres de la TV** en un appui : réseau, Bluetooth, son, image, entrées, puis tous les paramètres d'Android.
 - **Bandeau d'accueil** sous le nom du fond : salutation selon l'heure, météo de ta ville, dernier épisode en cours.
 - **État de la TV** sous l'horloge, seulement quand il y a quelque chose à dire : pas de réseau, pile de la télécommande faible, mise à jour prête.
 - **Applis selon l'heure** : l'appli que tu ouvres d'habitude à ce moment est déjà sélectionnée (calcul fait sur la TV, rien n'est envoyé).
 - **Reprendre** : sur une appli (Netflix, Prime Video, Plex…), ses épisodes en cours apparaissent juste au-dessus, avec l'affiche et la progression. ◀ depuis la première vignette : les dernières applis utilisées.
 - **À l'affiche** (▶ depuis la dernière vignette, clé TMDB facultative) : films et séries du moment, filtrés sur tes applis, avec « Regarder sur… », bande-annonce et titres similaires.
 - **Appui long sur OK** : déplacer, ajouter ou retirer des favoris, masquer, verrouiller par code, fermer, infos, désinstaller.
+- Accueil presque vide (premier lancement) : une ligne explique comment ajouter ses applis.
 - Au bout de 45 s sans toucher la télécommande, l'interface s'efface pour laisser le fond.
 
 ## Toutes les applications et la recherche
@@ -87,7 +90,7 @@ Bouton Maison de l'accueil, une fois Home Assistant relié depuis le téléphone
 
 ## Tous les réglages
 
-<img src="docs/captures/reglages.jpg" width="49%" alt="Les réglages : neuf rubriques"> <img src="docs/captures/accueil-et-applis.jpg" width="49%" alt="Réglages › Accueil et applis">
+<img src="docs/captures/reglages.jpg" width="49%" alt="Les réglages : les rubriques"> <img src="docs/captures/accueil-et-applis.jpg" width="49%" alt="Réglages › Accueil et applis">
 <img src="docs/captures/vignettes.jpg" width="49%" alt="Réglages › Vignettes et disposition"> <img src="docs/captures/sons.jpg" width="49%" alt="Réglages › Sons : jeu de sons et volume propres à Lumen">
 <img src="docs/captures/systeme.jpg" width="49%" alt="Réglages › Système : mises à jour, code PIN, sauvegarde, diagnostic">
 
@@ -99,7 +102,8 @@ Bouton Réglages ou touche Menu. Les réglages à deux états ont un interrupteu
 | **Accueil et applis** | Bandeau d'accueil, horloge, estomper l'interface au repos, applis selon l'heure ; Vignettes et disposition (nom, icône et nom, bannières officielles ; applis par ligne, nombre de lignes ; verre teinté, lueur, couleurs accordées au fond) ; Reprendre (affiches, fond de l'épisode en cours) ; Lisibilité (langue, taille du texte, contraste renforcé) ; bouton Maison ; À l'affiche (clé TMDB, plateformes, tri, historique) ; applis masquées |
 | **Mode veille** | Délai, images, écran de nuit, lancer le mode veille, ville pour la météo, économiseur d'écran de la TV |
 | **Ambiances** | Ouvrir, choisir les vidéos, son de la vidéo |
-| **Sons** | Sons de l'interface, jeu de sons (Cristal, Bois, Gouttes, Ouate), volume propre à Lumen, écouter |
+| **Sons** | Sons de l'interface, jeu de sons (Cristal, Bois, Gouttes, Ouate), volume propre à Lumen, écouter, bouton Sons sur l'accueil (masqué par défaut) |
+| **Notifications** | Afficher les notifications en grand, accès aux notifications, durée à l'écran (6, 10 ou 20 s), applis qui notifient (les couper une à une), dernières notifications, essayer |
 | **Profils** | Ajouter, renommer, supprimer, profil enfant, profil au démarrage |
 | **Réglages depuis le téléphone** | QR code, accès du téléphone (complet ou télécommande seulement), télécommande dans les autres applis |
 | **Télécommande** | Relier les touches sans rôle (Guide, Info, couleurs, chiffres…) à une fonction ou à une appli |
@@ -111,7 +115,7 @@ Français ou anglais (réglage par profil), trois tailles de texte, contraste re
 
 ## Vie privée
 
-Aucune publicité, aucun compte, aucune télémétrie. Internet sert seulement à télécharger, en HTTPS et depuis une liste fermée de serveurs (Wikimedia Commons, NASA, Open-Meteo ; TMDB et Pexels seulement avec ta clé), des contenus sous licence libre, vérifiés avant affichage. Les habitudes et l'historique restent sur la TV. Détails dans [SECURITE.md](SECURITE.md).
+Aucune publicité, aucun compte, aucune télémétrie. Internet sert seulement à télécharger, en HTTPS et depuis une liste fermée de serveurs (Wikimedia Commons, NASA, Open-Meteo ; TMDB et Pexels seulement avec ta clé), des contenus sous licence libre, vérifiés avant affichage. Les habitudes, l'historique et les notifications des applis restent sur la TV (les notifications ne sont même pas enregistrées). Détails dans [SECURITE.md](SECURITE.md).
 
 ## Installer
 

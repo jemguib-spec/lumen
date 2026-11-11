@@ -132,7 +132,28 @@ final class GlassUi {
         v.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         LinearLayout.LayoutParams vl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         vl.leftMargin = a.u(20);
+        v.setSingleLine(true);
+        v.setEllipsize(TextUtils.TruncateAt.END);
         r.addView(v, vl);
+        // Le nom de la ligne passe avant sa valeur : la valeur prend la place que le nom laisse,
+        // et au moins 40 % de la ligne ; c'est elle qui se raccourcit (« … ») si les deux sont longs.
+        r.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override public void onLayoutChange(View view, int left, int top, int right, int bottom, int ol, int ot, int or, int ob) {
+                int inner = (right - left) - r.getPaddingLeft() - r.getPaddingRight();
+                for (int i = 0; i < r.getChildCount(); i++) {
+                    View c = r.getChildAt(i);
+                    if (c == l || c == v || c.getVisibility() == View.GONE) continue;
+                    ViewGroup.MarginLayoutParams m = (ViewGroup.MarginLayoutParams) c.getLayoutParams();
+                    inner -= c.getWidth() + m.leftMargin + m.rightMargin;
+                }
+                int room = inner - vl.leftMargin;
+                int max = Math.max(room - (int) Math.ceil(l.getPaint().measureText(l.getText().toString())), (int) (room * 0.4f));
+                if (max > 0 && v.getMaxWidth() != max) {
+                    v.setMaxWidth(max);
+                    v.post(new Runnable() { @Override public void run() { v.requestLayout(); } });
+                }
+            }
+        });
         r.follow(new Row.Tint() {
             @Override public void at(float t) {
                 int selBg = danger ? Palette.DANGER_SELECTED : Palette.SELECTED; // lue ici : elle suit le fond d'écran
@@ -363,9 +384,17 @@ final class GlassUi {
         t.setEllipsize(TextUtils.TruncateAt.END);
         h.addView(t, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         if (sub != null && !sub.isEmpty()) {
-            TextView st = a.text(18, "sans-serif-medium", Palette.TEXT_3);
-            st.setText(sub.toUpperCase(java.util.Locale.FRANCE));
-            st.setLetterSpacing(0.14f);
+            // une étiquette courte en petites capitales ; une phrase reste en casse normale, bien plus lisible
+            boolean sentence = sub.length() > 32;
+            TextView st = sentence ? a.text(21, "sans-serif", Palette.TEXT_2) : a.text(18, "sans-serif-medium", Palette.TEXT_3);
+            if (sentence) {
+                st.setText(sub);
+                st.setLineSpacing(0, 1.2f);
+                st.setPadding(a.u(24), 0, a.u(24), 0);
+            } else {
+                st.setText(sub.toUpperCase(java.util.Locale.FRANCE));
+                st.setLetterSpacing(0.14f);
+            }
             st.setGravity(Gravity.CENTER);
             LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             sl.topMargin = a.u(8);
