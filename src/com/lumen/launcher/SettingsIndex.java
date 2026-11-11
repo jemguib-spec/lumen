@@ -50,7 +50,7 @@ final class SettingsIndex {
             new Entry("Bouton Sons sur l'accueil", A, BOUTONS, "bouton sons haut parleur masquer afficher accueil"),
             new Entry("Sons de l'interface", "Réglages", SONS, "sons son bip bips beep bruit bruits clic couper muet silence volume jeu timbre"),
             new Entry("Code PIN", S, SYSTEME, "code pin verrou enfant parental"),
-            new Entry("Copier les réglages vers une autre TV", S, SYNC, "synchro synchroniser synchronisation autres autre tv televiseur televiseurs copier envoyer recevoir reglages identiques pareils meme reseau maison"),
+            new Entry("Relier à une autre TV (réglages identiques)", S, SYNC, "synchro synchroniser synchronisation autres autre tv televiseur televiseurs relier lier delier copier envoyer recevoir reglages identiques pareils meme reseau maison"),
             new Entry("À propos et licences", S, ABOUT, "a propos version licences"),
             new Entry("Réglages d'À l'affiche", A, AFFICHE, "affiche tmdb films series plateformes selection type historique pour toi"),
             new Entry("Reprendre au-dessus des applis", A, REPRENDRE, "reprendre episodes en cours affiches historique"),

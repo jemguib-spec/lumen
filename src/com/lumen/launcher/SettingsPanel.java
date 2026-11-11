@@ -865,7 +865,7 @@ final class SettingsPanel {
                     @Override public void onClick(View v) { PhonePanel.openPhonePanel(a); }
                 }), a.rowLp());
                 col.addView(rubric(a, card, Glyph.TV, L.t("Autres TV"), new MainActivity.Value() {
-                    @Override public String get() { return L.t("Copier les réglages"); }
+                    @Override public String get() { return a.pair.paired() ? L.t("Reliée à « ") + a.pair.peerName() + L.t(" »") : L.t("Relier deux TV"); }
                 }, SYNC), a.rowLp());
                 col.addView(a.section(L.t("Informations")));
                 col.addView(a.listRow(L.t("Assistant de premier démarrage"), new MainActivity.Value() {

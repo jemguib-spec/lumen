@@ -29,21 +29,14 @@ final class Weather {
     String city() { return sp.getString("city", ""); }
     boolean hasCity() { return !city().isEmpty(); }
 
-    void clearCity() { sp.edit().clear().apply(); }
+    /** Retire la ville (clés une à une d'abord : la synchronisation entre TV voit la suppression). */
+    void clearCity() { sp.edit().remove("city").remove("lat").remove("lon").commit(); sp.edit().clear().apply(); }
 
     /** Coordonnées de la ville choisie, ou null. */
     double[] coords() { return hasCity() ? new double[]{sp.getFloat("lat", 0), sp.getFloat("lon", 0)} : null; }
 
     /** Dernier code météo connu (WMO), -1 si inconnu. */
     int lastCode() { return hasCity() ? sp.getInt("code", -1) : -1; }
-
-    /** Ville reçue d'une autre TV de la maison (nom et coordonnées déjà trouvés là-bas) ; false si refusée. */
-    boolean setPlace(String city, double lat, double lon) {
-        if (!TvSync.cityOk(city, lat, lon)) return false;
-        Sky.setLocation(lat, lon);
-        sp.edit().clear().putString("city", city.trim()).putFloat("lat", (float) lat).putFloat("lon", (float) lon).putLong("t", 0).apply();
-        return true;
-    }
 
     /** Cherche une ville par son nom ; rappelle avec le nom trouvé ou null. */
     void setCity(String raw, final Callback cb) {

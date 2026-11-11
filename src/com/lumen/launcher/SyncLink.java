@@ -40,8 +40,8 @@ final class SyncLink {
 
     // ------------------------------------------------------------------ réception
 
-    /** Envoi reçu et déchiffré (fil principal) : adresse de l'autre TV et contenu (JSON). */
-    interface Received { void on(String from, String json); }
+    /** Envoi reçu et déchiffré (fil principal) : adresse de l'autre TV, contenu (JSON), clé de l'échange. */
+    interface Received { void on(String from, String json, byte[] sessionKey); }
     /** Réception arrêtée d'elle-même (fil principal). */
     interface Stopped { void on(int why); }
     static final int TOO_MANY = 1, TIMEOUT = 2;
@@ -55,7 +55,7 @@ final class SyncLink {
      * Ouvre la réception ; renvoie {code, adresse affichable} ou null sans réseau. Les rappels ne
      * viennent plus une fois la réception arrêtée (stopReceiving).
      */
-    static synchronized String[] startReceiving(Context c, final String name, final Received received, final Stopped stopped) {
+    static synchronized String[] startReceiving(Context c, final String name, final String deviceId, final Received received, final Stopped stopped) {
         final Context app = c.getApplicationContext();
         stopReceiving(app);
         InetAddress ip = PhoneServer.localAddress();
@@ -80,7 +80,7 @@ final class SyncLink {
                         Socket sock = s.accept();
                         InetAddress from = sock.getInetAddress();
                         if (!(from instanceof Inet4Address) || !from.isSiteLocalAddress()) { sock.close(); continue; }
-                        serve(app, sock, g, name, received, stopped);
+                        serve(app, sock, g, name, deviceId, received, stopped);
                     } catch (Exception ignored) { }
                 }
             }
@@ -118,7 +118,7 @@ final class SyncLink {
     }
 
     /** Une connexion : « bonjour » (numéro aléatoire, valeur publique, nom), ou l'envoi chiffré. Une à la fois. */
-    private static void serve(final Context app, Socket sock, final TvSync.Gate g, String name, final Received received, final Stopped stopped) {
+    private static void serve(final Context app, Socket sock, final TvSync.Gate g, String name, String deviceId, final Received received, final Stopped stopped) {
         try {
             sock.setSoTimeout(5_000);
             InputStream in = new BufferedInputStream(sock.getInputStream());
@@ -127,7 +127,7 @@ final class SyncLink {
             try { r = HttpRequest.read(in); } catch (Exception bad) { reply(out, 400, ""); return; }
             if (r.method.equals("GET") && r.path.equals(TvSync.HELLO)) {
                 if (g.closed(System.currentTimeMillis())) { reply(out, 410, ""); return; }
-                reply(out, 200, TvSync.helloBody(g.nonce(), g.published(), name));
+                reply(out, 200, TvSync.helloBody(g.nonce(), g.published(), name, deviceId));
                 return;
             }
             if (!r.method.equals("POST") || !r.path.equals(TvSync.SEND)) { reply(out, 404, ""); return; }
@@ -145,11 +145,11 @@ final class SyncLink {
             }
             reply(out, 200, "ok");
             final String from = sock.getInetAddress().getHostAddress();
-            final byte[] plain = g.plain();
+            final byte[] plain = g.plain(), key = g.key();
             main.post(new Runnable() {
                 @Override public void run() {
                     if (!stopIfCurrent(app, g)) return; // réception annulée entre-temps
-                    try { received.on(from, new String(plain, "UTF-8")); } catch (Exception ignored) { }
+                    try { received.on(from, new String(plain, "UTF-8"), key); } catch (Exception ignored) { }
                 }
             });
         } catch (Exception ignored) {
@@ -297,20 +297,23 @@ final class SyncLink {
 
     static final int SENT = 0, BAD_CODE = 1, CLOSED = 2, UNREACHABLE = 3, NOT_LUMEN = 4, OLDER_PEER = 5;
 
-    /** {numéro, nom, valeur publique} de la TV en réception à cette adresse ; {"", "", ""} pour une TV en Lumen 4.31-4.32 ; null sinon. */
+    /** {numéro, nom, valeur publique, identifiant} de la TV en réception à cette adresse ; {"", "", "", ""} pour une TV en Lumen 4.31-4.33 ; null sinon. */
     static String[] hello(InetAddress ip, int port) {
         try {
             Object[] r = request(ip, port, "GET", TvSync.HELLO, null);
             if ((Integer) r[0] != 200) return null;
-            if (TvSync.olderPeer((String) r[1])) return new String[]{"", "", ""};
+            if (TvSync.olderPeer((String) r[1])) return new String[]{"", "", "", ""};
             return TvSync.parseHello((String) r[1]);
         } catch (Exception e) {
             return null;
         }
     }
 
-    /** Envoie le contenu (JSON), chiffré grâce au code tapé ; renvoie SENT, BAD_CODE… */
-    static int send(InetAddress ip, int port, String code, byte[] plain) {
+    /**
+     * Envoie le contenu (JSON), chiffré grâce au code tapé ; renvoie SENT, BAD_CODE… Après SENT :
+     * helloOut[0] = {numéro, nom, valeur publique, identifiant} de l'autre TV, keyOut[0] = clé de l'échange.
+     */
+    static int send(InetAddress ip, int port, String code, byte[] plain, String[][] helloOut, byte[][] keyOut) {
         if (!(ip instanceof Inet4Address) || !ip.isSiteLocalAddress() || !TvSync.codeOk(code)) return UNREACHABLE;
         String[] h;
         try {
@@ -323,12 +326,13 @@ final class SyncLink {
         }
         if (h == null) return NOT_LUMEN;
         byte[] body;
-        try { body = SyncCrypto.senderBody(code, h[0], SyncCrypto.parse(h[2]), plain, new SecureRandom()); }
+        try { body = SyncCrypto.senderBody(code, h[0], SyncCrypto.parse(h[2]), plain, new SecureRandom(), keyOut); }
         catch (Exception e) { return UNREACHABLE; }
         if (body.length > TvSync.MAX_BODY) return UNREACHABLE;
         try {
             Object[] r = request(ip, port, "POST", TvSync.SEND, body);
             int status = (Integer) r[0];
+            if (status == 200 && helloOut != null) helloOut[0] = h;
             return status == 200 ? SENT : status == 403 ? BAD_CODE : status == 410 ? CLOSED : UNREACHABLE;
         } catch (Exception e) {
             return UNREACHABLE;
@@ -337,11 +341,16 @@ final class SyncLink {
 
     /** Requête HTTP minimale, directe (sans proxy), vers une adresse du réseau privé uniquement. */
     private static Object[] request(InetAddress ip, int port, String method, String path, byte[] body) throws Exception {
+        return request(ip, port, method, path, body, 4096);
+    }
+
+    /** Pareil, réponse de max octets au plus (échanges des TV reliées : tout l'état, chiffré). */
+    static Object[] request(InetAddress ip, int port, String method, String path, byte[] body, int max) throws Exception {
         if (!(ip instanceof Inet4Address) || !ip.isSiteLocalAddress()) throw new java.io.IOException("Adresse hors du réseau local");
         Socket s = new Socket(Proxy.NO_PROXY);
         try {
             s.connect(new InetSocketAddress(ip, port), 4_000);
-            s.setSoTimeout(8_000);
+            s.setSoTimeout(12_000);
             StringBuilder h = new StringBuilder(method + " " + path + " HTTP/1.1\r\nHost: " + ip.getHostAddress() + ":" + port + "\r\nConnection: close\r\n");
             h.append("Content-Length: ").append(body == null ? 0 : body.length).append("\r\n");
             h.append("\r\n");
@@ -349,7 +358,7 @@ final class SyncLink {
             out.write(h.toString().getBytes("UTF-8"));
             if (body != null) out.write(body);
             out.flush();
-            return TvSync.readResponse(new BufferedInputStream(s.getInputStream()), 4096);
+            return TvSync.readResponse(new BufferedInputStream(s.getInputStream()), max);
         } finally {
             try { s.close(); } catch (Exception ignored) { }
         }

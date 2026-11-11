@@ -154,37 +154,63 @@ public class LumenTests {
 
     /** Copie des réglages entre TV : groupes, code, signature, essais, réponses (TvSync). */
     static void tvSync() throws Exception {
-        // chaque réglage de la sauvegarde a sa place : un groupe, ou propre à la TV (un nouveau réglage oblige à choisir)
+        // ce qui voyage : chaque réglage enregistré a sa place (copié ou propre à la TV) — voir aussi tools/sync_check.py
         java.util.List<String> all = new java.util.ArrayList<>();
         for (String[] t : new String[][]{Backup.BOOLS, Backup.INTS, Backup.STRINGS, Backup.SETS}) java.util.Collections.addAll(all, t);
+        all.addAll(Profiles.PERSONAL);
         boolean placed = true, once = true;
         for (String k : all) {
-            boolean g = TvSync.groupOf(k) >= 0, l = TvSync.local(k);
-            if (!g && !l) { placed = false; System.out.println("  copie entre TV : réglage sans place « " + k + " »"); }
-            if (g && l) once = false;
+            boolean y = SyncState.synced(k), l = SyncState.local(k);
+            if (!y && !l) { placed = false; System.out.println("  synchro entre TV : réglage sans place « " + k + " »"); }
+            if (y && l) once = false;
         }
-        check("copie entre TV : chaque réglage de la sauvegarde est classé", placed);
-        check("copie entre TV : un réglage est soit copié, soit propre à la TV", once);
-        boolean inBackup = true;
-        for (String k : TvSync.keysOf(new boolean[]{true, true, true, true})) if (Backup.typeOf(k) == Backup.NONE) inBackup = false;
-        check("copie entre TV : seulement des réglages de la sauvegarde (liste blanche)", inBackup);
-        check("copie entre TV : secrets hors des groupes de réglages (envoyés à part, chiffrés)", TvSync.groupOf("pin") < 0 && TvSync.groupOf("pexels_key") < 0 && TvSync.groupOf("ha_token") < 0
-                && TvSync.groupOf("tmdb_key") < 0 && TvSync.groupOf("trusted_phones") < 0 && TvSync.groupOf(null) < 0);
-        check("copie entre TV : habitudes, télécommande et vidéos restent sur la TV", TvSync.local("habits") && TvSync.local("remote_keys")
-                && TvSync.local("video_ok") && TvSync.local("video_disk_gb") && TvSync.groupOf("habits") < 0);
-        check("copie entre TV : un nom de groupe par groupe", TvSync.GROUP_NAMES.length == 5);
-        boolean[] onlyApps = {false, false, false, true};
-        check("copie entre TV : groupes choisis seulement", TvSync.keysOf(onlyApps).contains("favorites") && !TvSync.keysOf(onlyApps).contains("clock"));
-        java.util.Set<String> sent = new java.util.HashSet<>(java.util.Arrays.asList("source", "interval"));
-        java.util.List<String> reset = TvSync.resetKeys(new boolean[]{false, true, false, true}, sent);
-        check("copie entre TV : un réglage jamais changé sur l'autre TV revient par défaut", reset.contains("cities") && reset.contains("favorites"));
-        check("copie entre TV : réglages envoyés pas remis à zéro", !reset.contains("interval"));
-        check("copie entre TV : verrous jamais retirés, source gardée", !reset.contains("locked_apps") && !TvSync.resetKeys(new boolean[]{false, true, false, false},
-                new java.util.HashSet<String>()).contains("source"));
-        check("copie entre TV : groupe non choisi intouché", !reset.contains("clock") && !reset.contains("home_cols"));
-        check("copie entre TV : groupes écrits et relus", java.util.Arrays.equals(TvSync.parseGroups(TvSync.groupsText(new boolean[]{true, false, true, true, true})),
-                new boolean[]{true, false, true, true, true}));
-        check("copie entre TV : groupes inconnus ignorés", !TvSync.any(TvSync.parseGroups("9,a,-1,,01")) && !TvSync.any(TvSync.parseGroups(null)));
+        check("synchro entre TV : chaque réglage de la sauvegarde et des profils est classé", placed);
+        check("synchro entre TV : un réglage est soit synchronisé, soit propre à la TV", once);
+        check("synchro entre TV : propres à l'appareil (télécommande, place des vidéos, 4K)", SyncState.local("remote_keys") && SyncState.local("video_disk_gb")
+                && SyncState.local("video_4k") && !SyncState.synced("remote_keys") && !SyncState.synced("video_4k"));
+        check("synchro entre TV : tout le reste voyage (PIN, profils, habitudes, vidéos cochées, clés, météo)", SyncState.synced("pin") && SyncState.synced("profiles")
+                && SyncState.synced("habits") && SyncState.synced("video_ok") && SyncState.synced("tmdb_key") && SyncState.synced("ha_token")
+                && SyncState.synced("weather:city") && SyncState.synced("locked_apps"));
+        check("synchro entre TV : profil affiché, tentatives de code et téléphones restent sur la TV", !SyncState.synced("profile_active")
+                && !SyncState.synced("pin_fails") && !SyncState.synced("trusted_phones") && SyncState.local("refresh_space"));
+        check("synchro entre TV : réglages des profils (personnels seulement)", SyncState.synced("p3.favorites") && SyncState.base("p3.favorites").equals("favorites")
+                && !SyncState.synced("p3.pin") && !SyncState.synced("p3.remote_keys") && !SyncState.synced(null) && !SyncState.synced("inconnu"));
+        // valeurs
+        java.util.Set<String> set = new java.util.HashSet<>(java.util.Arrays.asList("b", "a", "c"));
+        boolean round = true;
+        for (Object v : new Object[]{true, false, 42, -7, 123456789012L, 4.5f, "texte\navec retour", "", set, new java.util.HashSet<String>()}) {
+            Object back = SyncState.decode(SyncState.encode(v));
+            if (!v.equals(back)) { round = false; System.out.println("  valeur mal relue : " + v + " → " + back); }
+        }
+        check("synchro entre TV : chaque type de valeur se relit à l'identique", round);
+        check("synchro entre TV : un ensemble s'écrit toujours pareil (ordre fixe)", SyncState.encode(set).equals(SyncState.encode(new java.util.TreeSet<>(set))));
+        check("synchro entre TV : valeurs mal formées refusées", SyncState.decode("x1") == null && SyncState.decode("iabc") == null && SyncState.decode("b2") == null
+                && SyncState.decode("fNaN") == null && SyncState.decode("") == null && SyncState.decode(null) == null);
+        check("synchro entre TV : contrôles des valeurs reçues", SyncState.acceptable("home_cols", 6) && !SyncState.acceptable("home_cols", 99)
+                && !SyncState.acceptable("clock", "oui") && !SyncState.acceptable("ha_url", "http://exemple.com") && SyncState.acceptable("ha_url", "http://192.168.1.20:8123")
+                && !SyncState.acceptable("tmdb_key", "pas une clé") && !SyncState.acceptable("pin", "1234") && SyncState.acceptable("weather:lat", 45.7f)
+                && !SyncState.acceptable("weather:lat", 95f) && !SyncState.acceptable("remote_keys", "x"));
+        // fusion : le plus récent gagne, les deux TV décident pareil
+        java.util.Map<String, SyncState.Entry> A = new java.util.HashMap<>(), B = new java.util.HashMap<>();
+        A.put("clock", new SyncState.Entry("b1", 100)); B.put("clock", new SyncState.Entry("b0", 200));
+        A.put("home_cols", new SyncState.Entry("i5", 300)); B.put("home_cols", new SyncState.Entry("i7", 100));
+        A.put("sounds", new SyncState.Entry("b1", 50)); B.put("sounds", new SyncState.Entry(null, 60));
+        A.put("greeting", new SyncState.Entry("b1", 70)); B.put("greeting", new SyncState.Entry("b0", 70));
+        B.put("remote_keys", new SyncState.Entry("sx", 999));
+        String ia = "00000000000000aa", ib = "00000000000000bb";
+        java.util.List<String> forA = SyncState.toApply(A, B, ia, ib, 1000), forB = SyncState.toApply(B, A, ib, ia, 1000);
+        check("synchro entre TV : le plus récent gagne, dans les deux sens", forA.contains("clock") && !forA.contains("home_cols") && forB.contains("home_cols") && !forB.contains("clock"));
+        check("synchro entre TV : une suppression plus récente l'emporte", forA.contains("sounds") && !forB.contains("sounds"));
+        check("synchro entre TV : à égalité, les deux TV choisissent la même valeur", forA.contains("greeting") != forB.contains("greeting"));
+        check("synchro entre TV : un réglage propre à l'autre TV n'est jamais pris", !forA.contains("remote_keys"));
+        java.util.Map<String, SyncState.Entry> F = new java.util.HashMap<>();
+        F.put("clock", new SyncState.Entry("b0", 1000 + 2 * 24 * 3600_000L));
+        check("synchro entre TV : une date dans le futur lointain est ignorée", SyncState.toApply(A, F, ia, ib, 1000).isEmpty());
+        java.util.Map<String, SyncState.Entry> AA = new java.util.HashMap<>(A);
+        for (String k : forA) AA.put(k, B.get(k));
+        check("synchro entre TV : après fusion, plus rien à échanger", SyncState.toApply(AA, B, ia, ib, 1000).isEmpty());
+        check("synchro entre TV : identifiant de TV", SyncState.deviceIdOk("0123456789abcdef") && !SyncState.deviceIdOk("0123") && !SyncState.deviceIdOk(null));
+        check("synchro entre TV : historique repris sans redessiner l'écran", SyncState.quiet("habits") && SyncState.quiet("p2.recents") && !SyncState.quiet("clock"));
         // code et chiffrement (SPAKE2 + AES-GCM)
         java.security.SecureRandom r = new java.security.SecureRandom();
         String code = TvSync.newCode(r), nonce = TvSync.newNonce(r);
@@ -231,19 +257,32 @@ public class LumenTests {
         TvSync.Gate g3 = new TvSync.Gate(code, nonce, 1000, r);
         check("copie entre TV : fermé après 3 min", g3.check(SyncCrypto.senderBody(code, nonce, SyncCrypto.parse(g3.published()), body, r), 1000 + TvSync.OPEN_MS + 1) == TvSync.Gate.CLOSED);
         // clés et météo reçues
-        check("copie entre TV : ville de la météo contrôlée", TvSync.cityOk("Lyon", 45.76, 4.84) && !TvSync.cityOk("", 0, 0) && !TvSync.cityOk("Lyon", 91, 0)
-                && !TvSync.cityOk("Lyon", Double.NaN, 4) && !TvSync.cityOk("a\u0000b", 1, 1) && !TvSync.cityOk(null, 1, 1));
         check("copie entre TV : empreinte de certificat Home Assistant contrôlée", TvSync.certOk("") && TvSync.certOk(Signer.hex(new byte[32]))
                 && !TvSync.certOk("zz") && !TvSync.certOk(null));
-        check("copie entre TV : un groupe « Clés et services », hors de la sauvegarde", TvSync.GROUP_NAMES.length == 5 && TvSync.keysOf(new boolean[]{false, false, false, false, true}).isEmpty());
         // « bonjour », noms, adresses
         String pub = SyncCrypto.hex(rx.published());
-        String[] hello = TvSync.parseHello(TvSync.helloBody(nonce, pub, "Salon"));
-        check("copie entre TV : bonjour relu", hello != null && hello[0].equals(nonce) && hello[1].equals("Salon") && hello[2].equals(pub));
-        check("copie entre TV : bonjour d'une autre appli refusé", TvSync.parseHello("HTTP ok") == null && TvSync.parseHello("lumen-sync 3\n" + nonce + "\n" + pub + "\nX") == null
-                && TvSync.parseHello("lumen-sync 2\nabc\n" + pub + "\nX") == null && TvSync.parseHello(null) == null
-                && TvSync.parseHello("lumen-sync 2\n" + nonce + "\n" + SyncCrypto.hex(java.math.BigInteger.ONE) + "\nX") == null);
-        check("copie entre TV : TV en Lumen 4.31-4.32 reconnue (à mettre à jour)", TvSync.olderPeer("lumen-sync 1\n" + nonce + "\nSalon") && !TvSync.olderPeer(TvSync.helloBody(nonce, pub, "Salon")));
+        String[] hello = TvSync.parseHello(TvSync.helloBody(nonce, pub, "Salon", "0123456789abcdef"));
+        check("copie entre TV : bonjour relu", hello != null && hello[0].equals(nonce) && hello[1].equals("Salon") && hello[2].equals(pub) && hello[3].equals("0123456789abcdef"));
+        check("copie entre TV : bonjour d'une autre appli refusé", TvSync.parseHello("HTTP ok") == null && TvSync.parseHello("lumen-sync 4\n" + nonce + "\n" + pub + "\nX\n0123456789abcdef") == null
+                && TvSync.parseHello("lumen-sync 3\nabc\n" + pub + "\nX\n0123456789abcdef") == null && TvSync.parseHello(null) == null
+                && TvSync.parseHello("lumen-sync 3\n" + nonce + "\n" + pub + "\nX\nzz") == null
+                && TvSync.parseHello("lumen-sync 3\n" + nonce + "\n" + SyncCrypto.hex(java.math.BigInteger.ONE) + "\nX\n0123456789abcdef") == null);
+        check("copie entre TV : TV en Lumen 4.31 à 4.33 reconnue (à mettre à jour)", TvSync.olderPeer("lumen-sync 1\n" + nonce + "\nSalon")
+                && TvSync.olderPeer("lumen-sync 2\n" + nonce + "\n" + pub + "\nSalon") && !TvSync.olderPeer(TvSync.helloBody(nonce, pub, "Salon", "0123456789abcdef")));
+        // liaison : clé tirée de l'échange, messages de l'une à l'autre
+        byte[] sk = rx.key();
+        byte[][] skOut = new byte[1][];
+        SyncCrypto.Receiver rx2 = new SyncCrypto.Receiver(code, nonce, r);
+        rx2.open(SyncCrypto.senderBody(code, nonce, rx2.published(), body, r, skOut));
+        check("liaison : les deux TV obtiennent la même clé", skOut[0] != null && java.util.Arrays.equals(skOut[0], rx2.key()));
+        byte[] pk = SyncCrypto.pairKey(skOut[0]);
+        check("liaison : clé de liaison différente de la clé de l'échange", pk.length == 32 && !java.util.Arrays.equals(pk, skOut[0]));
+        byte[] msg = "{\"entries\":{}}".getBytes("UTF-8");
+        byte[] sealedMsg = SyncCrypto.pairSeal(pk, msg, ia, ib, r);
+        check("liaison : message relu par l'autre TV", java.util.Arrays.equals(SyncCrypto.pairOpen(pk, sealedMsg, ia, ib), msg));
+        check("liaison : message renvoyé à l'envers refusé", SyncCrypto.pairOpen(pk, sealedMsg, ib, ia) == null);
+        check("liaison : autre clé refusée", SyncCrypto.pairOpen(SyncCrypto.pairKey(sk == null ? new byte[32] : sk), sealedMsg, ia, ib) == null);
+        check("liaison : message abîmé refusé", SyncCrypto.pairOpen(pk, "zz".getBytes("UTF-8"), ia, ib) == null && SyncCrypto.pairOpen(null, sealedMsg, ia, ib) == null);
         check("copie entre TV : nom nettoyé et borné", TvSync.cleanName("  Salon\u0000 \n TV ").equals("Salon TV") && TvSync.cleanName("").equals("TV")
                 && TvSync.cleanName("abcdefghijklmnopqrstuvwxyz0123456789").length() == 30);
         Object[] ad = TvSync.address(" 192.168.1.20 ");
@@ -281,9 +320,9 @@ public class LumenTests {
                 && SetupFlow.prev(SetupFlow.PROFILE) == SetupFlow.WELCOME && SetupFlow.prev(SetupFlow.WELCOME) == SetupFlow.WELCOME);
         check("assistant : « Étape n sur 4 » seulement pour les étapes de zéro", SetupFlow.number(SetupFlow.WELCOME) == 0 && SetupFlow.number(SetupFlow.PROFILE) == 1
                 && SetupFlow.number(SetupFlow.KEYS) == SetupFlow.count() && SetupFlow.number(SetupFlow.READY) == 0);
-        check("assistant : après la copie depuis une autre TV, on vérifie les clés reçues", SetupFlow.afterSync() == SetupFlow.KEYS
-                && TvSync.groupOf("tmdb_key") < 0 && TvSync.groupOf("pexels_key") < 0);
-        check("assistant : l'étape n'est pas dans la sauvegarde ni copiée", Backup.typeOf("setup_step") == Backup.NONE && TvSync.groupOf("setup_step") < 0);
+        check("assistant : après la liaison avec une autre TV, on vérifie les clés reçues", SetupFlow.afterSync() == SetupFlow.KEYS
+                && SyncState.synced("tmdb_key") && SyncState.synced("pexels_key"));
+        check("assistant : l'étape n'est pas dans la sauvegarde ni copiée", Backup.typeOf("setup_step") == Backup.NONE && !SyncState.synced("setup_step") && SyncState.local("setup_step"));
     }
 
     public static void main(String[] args) throws Exception {

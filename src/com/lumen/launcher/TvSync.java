@@ -6,18 +6,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 /**
- * Copie des réglages d'une TV à une autre sur le même réseau : règles pures (Java pur, testé).
- * Quels réglages voyagent (par groupe, à cocher), lesquels restent propres à chaque TV, le code à
- * 6 chiffres affiché par la TV qui reçoit, et les essais permis. L'envoi est chiffré avec une clé
- * établie grâce au code (SyncCrypto) ; le transport est dans SyncLink.
+ * Liaison de deux TV de la maison : règles pures de la mise en relation (Java pur, testé). Le code
+ * à 6 chiffres affiché par la TV qui reçoit, les essais permis, le « bonjour » qu'elle répond, les
+ * adresses tapées à la main. L'échange est chiffré avec une clé établie grâce au code (SyncCrypto) ;
+ * ce qui voyage et la fusion sont dans SyncState, le transport dans SyncLink et PairLink.
  */
 final class TvSync {
     private TvSync() { }
@@ -30,97 +25,14 @@ final class TvSync {
     static final int MAX_TRIES = 5;
     /** La TV qui reçoit attend au plus ce temps. */
     static final long OPEN_MS = 3 * 60_000L;
-    static final int MAX_BODY = 256 * 1024;
+    static final int MAX_BODY = 1024 * 1024;
     static final String FORMAT = "lumen-sync";
-    /** 2 : envoi chiffré (SyncCrypto), clés et météo comprises. 1 (Lumen 4.31 et 4.32) : signé seulement. */
-    static final int VERSION = 2;
+    /**
+     * 3 : liaison permanente (tout l'état, identifiants des TV). 2 (Lumen 4.33) : copie ponctuelle
+     * chiffrée. 1 (4.31-4.32) : copie signée seulement. Les anciennes versions sont reconnues.
+     */
+    static final int VERSION = 3;
     static final String HELLO = "/lumen-sync/hello", SEND = "/lumen-sync/send";
-
-    // groupes proposés à la TV qui envoie (tous cochés par défaut)
-    static final int LOOK = 0, WALL = 1, HOME = 2, APPS = 3, KEYS = 4;
-    static final String[] GROUP_NAMES = {"Apparence et sons", "Fond d'écran, veille et météo", "Accueil et boutons", "Favoris et applis masquées",
-            "Clés et services (TMDB, Pexels, Home Assistant)"};
-
-    private static final String[][] GROUPS = {
-            // apparence et sons
-            {"app_glow", "show_icons", "tint_tiles", "tile_style", "text_scale", "high_contrast", "clock", "immersive",
-             "sounds", "sound_theme", "sound_volume", "ambiance_sound", "ambiance_kind"},
-            // fond d'écran et veille
-            {"source", "interval", "follow_time", "living_scenes", "seasonal", "weather_fx", "video_theme", "cities", "hidden_walls",
-             "idle", "ambient_min", "veille_src", "night_hour"},
-            // accueil et boutons
-            {"home_cols", "home_rows", "greeting", "top_shelf", "shelf_posters", "habits_on", "notif_on", "notif_secs", "notif_muted",
-             "btn_notifs", "btn_search", "btn_ambiances", "btn_inputs", "btn_profiles", "btn_apps", "btn_tv", "btn_settings", "sound_button",
-             "ha_button", "ha_cine_open", "ha_film", "ha_pause", "ha_pinned", "ha_home", "ha_cine_apps"},
-            // favoris et applis
-            {"favorites", "hidden_apps", "locked_apps"},
-            // clés et services : hors de la sauvegarde, envoyés à part (voir SyncPanel), jamais en clair
-            {},
-    };
-
-    /**
-     * Réglages de la sauvegarde qui restent propres à chaque TV : habitudes de cette TV, touches de
-     * sa télécommande, vidéos téléchargées et place qu'elles prennent, qualité selon l'écran,
-     * mises à jour et mesures de diagnostic.
-     */
-    static final String[] LOCAL = {"habits", "remote_keys", "remote_ask", "video_ok", "video_disk_gb", "video_4k", "cosy_wanted",
-            "auto_update", "show_perf"};
-
-    /** Groupe d'un réglage, ou -1 s'il ne voyage jamais (propre à la TV, secret, inconnu). */
-    static int groupOf(String key) {
-        if (key == null) return -1;
-        for (int g = 0; g < GROUPS.length; g++) for (String k : GROUPS[g]) if (k.equals(key)) return g;
-        return -1;
-    }
-
-    static boolean local(String key) {
-        for (String k : LOCAL) if (k.equals(key)) return true;
-        return false;
-    }
-
-    private static final Set<String> NEVER_RESET = new java.util.HashSet<>(java.util.Arrays.asList("locked_apps", "source"));
-
-    /** Tous les réglages des groupes choisis (doublons et groupes inconnus ignorés). */
-    static Set<String> keysOf(boolean[] groups) {
-        Set<String> out = new LinkedHashSet<>();
-        if (groups == null) return out;
-        for (int g = 0; g < GROUPS.length && g < groups.length; g++) if (groups[g]) Collections.addAll(out, GROUPS[g]);
-        return out;
-    }
-
-    /**
-     * Réglages à remettre par défaut sur la TV qui reçoit : ceux des groupes choisis que la TV qui
-     * envoie n'a jamais changés (absents de l'envoi). Sinon un réglage changé ici seulement resterait
-     * différent. Jamais remis à zéro : les applis verrouillées (un envoi ajoute des verrous, n'en
-     * enlève pas) et la source du fond (toujours envoyée, sauf « Mes photos et vidéos », qui ne sont
-     * que sur l'autre TV : la TV qui reçoit garde alors la sienne).
-     */
-    static List<String> resetKeys(boolean[] groups, Set<String> sent) {
-        List<String> out = new ArrayList<>();
-        for (String k : keysOf(groups)) if (!sent.contains(k) && !NEVER_RESET.contains(k)) out.add(k);
-        return out;
-    }
-
-    /** Groupes écrits « 0,1,3 » dans l'envoi. */
-    static String groupsText(boolean[] groups) {
-        StringBuilder b = new StringBuilder();
-        for (int g = 0; g < GROUPS.length && g < groups.length; g++) if (groups[g]) b.append(b.length() == 0 ? "" : ",").append(g);
-        return b.toString();
-    }
-
-    static boolean[] parseGroups(String s) {
-        boolean[] out = new boolean[GROUPS.length];
-        if (s == null || s.length() > 20) return out;
-        for (String p : s.split(",")) {
-            if (p.length() == 1 && p.charAt(0) >= '0' && p.charAt(0) < '0' + GROUPS.length) out[p.charAt(0) - '0'] = true;
-        }
-        return out;
-    }
-
-    static boolean any(boolean[] groups) {
-        for (boolean b : groups) if (b) return true;
-        return false;
-    }
 
     // ------------------------------------------------------------------ code et signature
 
@@ -177,33 +89,33 @@ final class TvSync {
         String nonce() { return rx.nonce; }
         String code() { return rx.code; }
         String published() { return SyncCrypto.hex(rx.published()); }
+        /** Clé de l'échange réussi (null avant). */
+        byte[] key() { return rx.key(); }
     }
 
     // ------------------------------------------------------------------ « bonjour » de la TV qui reçoit
 
-    /** Réponse à HELLO : « lumen-sync 2 », le numéro aléatoire, la valeur publique (SyncCrypto), le nom de la TV. */
-    static String helloBody(String nonce, String published, String name) {
-        return FORMAT + " " + VERSION + "\n" + nonce + "\n" + published + "\n" + cleanName(name);
+    /**
+     * Réponse à HELLO : « lumen-sync 3 », le numéro aléatoire, la valeur publique (SyncCrypto), le nom
+     * de la TV et son identifiant (pour la retrouver ensuite sur le réseau).
+     */
+    static String helloBody(String nonce, String published, String name, String deviceId) {
+        return FORMAT + " " + VERSION + "\n" + nonce + "\n" + published + "\n" + cleanName(name) + "\n" + deviceId;
     }
 
-    /** {numéro, nom, valeur publique} ou null si ce n'est pas une TV Lumen compatible. */
+    /** {numéro, nom, valeur publique, identifiant} ou null si ce n'est pas une TV Lumen compatible. */
     static String[] parseHello(String s) {
         if (s == null || s.length() > 800) return null;
         String[] l = s.split("\n", -1);
-        if (l.length != 4 || !l[0].equals(FORMAT + " " + VERSION) || !nonceOk(l[1]) || !SyncCrypto.valid(SyncCrypto.parse(l[2]))) return null;
-        return new String[]{l[1], cleanName(l[3]), l[2]};
+        if (l.length != 5 || !l[0].equals(FORMAT + " " + VERSION) || !nonceOk(l[1]) || !SyncCrypto.valid(SyncCrypto.parse(l[2]))
+                || !SyncState.deviceIdOk(l[4])) return null;
+        return new String[]{l[1], cleanName(l[3]), l[2], l[4]};
     }
 
-    /** Une TV en Lumen 4.31 ou 4.32 (envoi non chiffré, sans les clés) : il faut la mettre à jour. */
-    static boolean olderPeer(String s) { return s != null && s.startsWith(FORMAT + " 1\n"); }
+    /** Une TV en Lumen 4.31 à 4.33 (copie ponctuelle) : il faut la mettre à jour. */
+    static boolean olderPeer(String s) { return s != null && (s.startsWith(FORMAT + " 1\n") || s.startsWith(FORMAT + " 2\n")); }
 
-    // ------------------------------------------------------------------ clés et météo reçues
-
-    /** Ville de la météo reçue : texte court, sans caractère de contrôle ; coordonnées sur la Terre. */
-    static boolean cityOk(String city, double lat, double lon) {
-        return city != null && !city.trim().isEmpty() && Backup.textOk(city, 80)
-                && !Double.isNaN(lat) && !Double.isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
-    }
+    // ------------------------------------------------------------------ Home Assistant reçu
 
     /** Empreinte de certificat Home Assistant : vide (certificat reconnu, ou http) ou SHA-256 en hexadécimal. */
     static boolean certOk(String pin) { return pin != null && (pin.isEmpty() || pin.matches("[0-9a-f]{64}")); }

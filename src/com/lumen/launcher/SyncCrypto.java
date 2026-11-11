@@ -156,12 +156,44 @@ final class SyncCrypto {
 
     /** Corps de l'envoi : « X en hexadécimal » + « \n » + contenu chiffré en hexadécimal. */
     static byte[] senderBody(String code, String nonce, BigInteger y, byte[] plain, SecureRandom r) throws Exception {
+        return senderBody(code, nonce, y, plain, r, null);
+    }
+
+    /** Pareil, et range la clé de l'échange dans keyOut[0] (pour la liaison permanente des deux TV). */
+    static byte[] senderBody(String code, String nonce, BigInteger y, byte[] plain, SecureRandom r, byte[][] keyOut) throws Exception {
         BigInteger w = w(code, nonce);
         BigInteger x = secret(r);
         BigInteger bx = blind(x, w, M);
         BigInteger k = shared(y, w, N, x);
-        byte[] sealed = seal(sessionKey(nonce, bx, y, k, w), plain, aad(nonce, bx, y), r);
+        byte[] key = sessionKey(nonce, bx, y, k, w);
+        if (keyOut != null) keyOut[0] = key;
+        byte[] sealed = seal(key, plain, aad(nonce, bx, y), r);
         return (hex(bx) + "\n" + Signer.hex(sealed)).getBytes("UTF-8");
+    }
+
+    /** Clé de liaison des deux TV, tirée de la clé de l'échange réussi (jamais la même que celle-ci). */
+    static byte[] pairKey(byte[] sessionKey) {
+        try { return MessageDigest.getInstance("SHA-256").digest(("lumen-pair\n" + Signer.hex(sessionKey)).getBytes("UTF-8")); }
+        catch (Exception e) { throw new IllegalStateException(e); }
+    }
+
+    // ------------------------------------------------------------------ échanges des TV reliées
+
+    /** Données associées d'un échange entre TV reliées : de qui, pour qui (un message ne peut pas être renvoyé à l'envers). */
+    static byte[] pairAad(String from, String to) {
+        try { return ("lumen-pair 1\n" + from + "\n" + to).getBytes("UTF-8"); }
+        catch (Exception e) { throw new IllegalStateException(e); }
+    }
+
+    /** Message chiffré avec la clé de liaison, écrit en hexadécimal. */
+    static byte[] pairSeal(byte[] pairKey, byte[] plain, String from, String to, SecureRandom r) throws Exception {
+        return Signer.hex(seal(pairKey, plain, pairAad(from, to), r)).getBytes("UTF-8");
+    }
+
+    /** Message en clair, ou null s'il ne vient pas de l'autre TV reliée, ou a été modifié. */
+    static byte[] pairOpen(byte[] pairKey, byte[] body, String from, String to) {
+        try { return pairKey == null ? null : open(pairKey, unhex(new String(body, "UTF-8").trim()), pairAad(from, to)); }
+        catch (Exception e) { return null; }
     }
 
     // ------------------------------------------------------------------ côté qui reçoit
@@ -171,6 +203,7 @@ final class SyncCrypto {
         final String code, nonce;
         private final BigInteger w;
         private BigInteger y, by;
+        private byte[] key;
         private final SecureRandom r;
 
         Receiver(String code, String nonce, SecureRandom r) {
@@ -183,6 +216,8 @@ final class SyncCrypto {
 
         synchronized void renew() { y = secret(r); by = blind(y, w, N); }
         synchronized BigInteger published() { return by; }
+        /** Clé du dernier échange réussi (null avant). */
+        synchronized byte[] key() { return key; }
 
         /** Contenu en clair si le code est le bon et que rien n'a été modifié, sinon null. */
         synchronized byte[] open(byte[] body) {
@@ -194,7 +229,10 @@ final class SyncCrypto {
                 byte[] sealed = unhex(s.substring(nl + 1));
                 if (!valid(bx) || sealed == null) return null;
                 BigInteger k = shared(bx, w, M, y);
-                return SyncCrypto.open(sessionKey(nonce, bx, by, k, w), sealed, aad(nonce, bx, by));
+                byte[] sk = sessionKey(nonce, bx, by, k, w);
+                byte[] plain = SyncCrypto.open(sk, sealed, aad(nonce, bx, by));
+                if (plain != null) key = sk;
+                return plain;
             } catch (Exception e) {
                 return null;
             }

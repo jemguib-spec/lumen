@@ -176,7 +176,7 @@ final class Onboarding {
         }, new View.OnClickListener() {
             @Override public void onClick(View v) { syncFromOtherTv(a); }
         }, false), a.rowLp());
-        hint(a, col, L.t("Se synchroniser : sur une TV de la maison qui a déjà Lumen, ouvre Réglages › Système › Autres TV, choisis cette TV et tape le code qu'elle va afficher. Fond, accueil, boutons, favoris, sons, ville de la météo et clés arrivent d'un coup, chiffrés."));
+        hint(a, col, L.t("Se synchroniser : sur une TV de la maison qui a déjà Lumen, ouvre Réglages › Système › Autres TV, choisis cette TV et tape le code qu'elle va afficher. Cette TV prend tous ses réglages (profils, fonds, favoris, météo, clés…), puis les deux restent identiques."));
         col.addView(a.menuDivider());
         col.addView(a.listRow(L.t("Plus tard"), null, new View.OnClickListener() {
             @Override public void onClick(View v) {
@@ -446,7 +446,7 @@ final class Onboarding {
             @Override public String get() { return a.phone.connected() ? L.t("✓ Connecté") : L.t("En attente"); }
         }, NOTHING), a.rowLp());
         LinearLayout next = nextRow(a, col, L.t("Continuer"), null);
-        hint(a, col, L.t("Les clés restent sur la TV, chiffrées, et ne sont jamais renvoyées au téléphone ; vers une autre TV de la maison, seulement dans un envoi chiffré, si tu le choisis. Tout se change plus tard dans Réglages."));
+        hint(a, col, L.t("Les clés restent sur la TV, chiffrées, et ne sont jamais renvoyées au téléphone ; une TV reliée les reçoit, chiffrées pendant l'échange. Tout se change plus tard dans Réglages."));
         // l'état se met à jour pendant qu'on règle les clés sur le téléphone
         ticker = new Runnable() {
             @Override public void run() {
@@ -489,7 +489,7 @@ final class Onboarding {
             col.addView(end, a.rowLp());
             focus = end;
         }
-        hint(a, col, L.t("L'assistant se relance depuis Réglages › Système. Une autre TV de la maison ? Réglages › Système › Autres TV copie tout vers elle."));
+        hint(a, col, L.t("L'assistant se relance depuis Réglages › Système. Une autre TV de la maison ? Réglages › Système › Autres TV la relie à celle-ci : elles resteront identiques."));
         return focus;
     }
 

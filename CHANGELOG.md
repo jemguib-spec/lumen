@@ -2,6 +2,15 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.34.0
+
+- Deux TV reliées restent identiques, en permanence. Réglages › Système › Autres TV : sur la TV qui doit suivre, « Recevoir » affiche un code ; sur la TV de référence, choisis-la et tape le code. Elle prend tous les réglages, puis chaque changement fait sur l'une arrive sur l'autre en quelques secondes (dès que Lumen revient à l'écran si l'une était éteinte ou dans une appli).
+- Tout est synchronisé : tous les profils, favoris, applis masquées et verrouillées, fonds, boutons, sons, vidéos cochées, ville de la météo, clés TMDB et Pexels, Home Assistant, code PIN, habitudes et historique. Restent propres à chaque TV : touches de la télécommande, place réservée aux vidéos, qualité 4K.
+- Si les deux TV changent le même réglage, le changement le plus récent gagne. Un réglage changé ailleurs pendant qu'un panneau est ouvert s'affiche à sa fermeture.
+- La page Autres TV montre l'état (« Synchronisées il y a 2 min », « Injoignable »), « Synchroniser maintenant » et « Délier les deux TV » (chaque TV garde alors ses réglages).
+- Échanges chiffrés avec une clé de liaison établie grâce au code. Il faut Lumen 4.34 sur les deux TV ; une TV plus ancienne le dit.
+- L'ancienne copie ponctuelle (groupes à cocher) est remplacée par la liaison.
+
 ## 4.33.0
 
 - Copie des réglages entre TV : la ville de la météo part maintenant avec le fond d'écran (groupe « Fond d'écran, veille et météo »).

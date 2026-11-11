@@ -20,47 +20,70 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Réglages › Système › Autres TV : copier les réglages de cette TV vers une autre TV Lumen du même
- * réseau. L'autre TV ouvre « Recevoir » et affiche un code ; ici on choisit ce qui part, la TV, puis
- * on tape le code. L'autre TV demande confirmation avant d'appliquer. Règles dans TvSync, réseau
- * dans SyncLink.
+ * Réglages › Système › Autres TV : relier deux TV Lumen du même réseau pour qu'elles restent
+ * identiques. L'une ouvre « Recevoir » et affiche un code ; sur l'autre, qui sert de modèle, on la
+ * choisit et on tape le code. La TV qui reçoit montre ce qui va se passer et ne fait rien sans
+ * « Relier ». Ensuite, PairLink garde les deux TV pareilles. Règles dans TvSync et SyncState,
+ * réseau dans SyncLink et PairLink.
  */
 final class SyncPanel {
     private SyncPanel() { }
-
-    /** Groupes à envoyer (tous par défaut, le temps que Lumen reste ouvert). */
-    static final boolean[] groups = {true, true, true, true, true};
 
     private static LinearLayout tvBox;
     private static View addressRow;
     private static boolean sending;
 
     /** Nom de cette TV (celui choisi dans les paramètres d'Android, sinon le modèle). */
-    static String tvName(MainActivity a) {
-        String n = null;
-        try { n = android.provider.Settings.Global.getString(a.getContentResolver(), "device_name"); } catch (Exception ignored) { }
-        if (n == null || n.trim().isEmpty()) n = Build.MODEL;
-        return TvSync.cleanName(n);
+    static String tvName(MainActivity a) { return PairLink.deviceName(a); }
+
+    /** « il y a 2 min », « En attente de l'autre TV », « Injoignable »… */
+    static String status(MainActivity a) {
+        long ok = a.pair.lastOk();
+        if (a.pair.unreachable()) return L.t("Injoignable · Lumen éteint sur l'autre TV ?");
+        if (ok <= 0) return L.t("En attente de l'autre TV");
+        long min = (System.currentTimeMillis() - ok) / 60_000L;
+        return min < 1 ? L.t("Synchronisées") : L.t("Synchronisées il y a ") + (min < 60 ? min + L.t(" min") : (min / 60) + L.t(" h"));
     }
 
     // ------------------------------------------------------------------ page des réglages
 
     static void fill(final MainActivity a, final LinearLayout col) {
+        if (a.pair.paired()) {
+            final LinearLayout st = a.listRow(L.t("Reliée à « ") + a.pair.peerName() + L.t(" »"), new MainActivity.Value() {
+                @Override public String get() { return status(a); }
+            }, new View.OnClickListener() {
+                @Override public void onClick(View v) { a.pair.syncNow(); a.showNotice(L.t("Synchronisation…")); }
+            });
+            col.addView(st, a.rowLp());
+            col.addView(a.listRow(L.t("Synchroniser maintenant"), null, new View.OnClickListener() {
+                @Override public void onClick(View v) { a.pair.syncNow(); a.showNotice(L.t("Synchronisation…")); }
+            }), a.rowLp());
+            col.addView(a.menuDivider());
+            col.addView(a.iconRow(Glyph.CLOSE, L.t("Délier les deux TV"), null, new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    String name = a.pair.peerName();
+                    a.pair.unpair(true);
+                    a.showNotice(L.t("Plus reliée à « ") + name + L.t(" » · chaque TV garde ses réglages"), 4000);
+                    SettingsPanel.page(a, (LinearLayout) col.getParent().getParent().getParent(), SettingsPanel.SYNC);
+                }
+            }, true), a.rowLp());
+            hint(a, col, L.t("Les deux TV restent identiques : profils, favoris, fonds, boutons, sons, météo, clés, Home Assistant, code PIN, habitudes. Un changement sur l'une arrive sur l'autre en quelques secondes quand Lumen est à l'écran sur les deux, sinon dès qu'il y revient. Restent propres à chaque TV : touches de la télécommande, place pour les vidéos, qualité 4K. Tout est chiffré."));
+            // l'état se met à jour pendant qu'on regarde la page
+            a.h.postDelayed(new Runnable() {
+                @Override public void run() {
+                    if (!st.isAttachedToWindow()) return;
+                    for (Runnable r : new ArrayList<>(a.rowRefreshers)) r.run();
+                    a.h.postDelayed(this, 2000);
+                }
+            }, 2000);
+            return;
+        }
         col.addView(a.listRow(L.t("Recevoir les réglages d'une autre TV"), new MainActivity.Value() {
             @Override public String get() { return L.t("Afficher un code"); }
         }, new View.OnClickListener() {
             @Override public void onClick(View v) { openReceive(a, null); }
         }), a.rowLp());
-        col.addView(a.section(L.t("Envoyer les réglages de cette TV")));
-        for (int i = 0; i < groups.length; i++) {
-            final int g = i;
-            col.addView(a.ui.toggleRow(L.t(TvSync.GROUP_NAMES[g]), new GlassUi.Bool() {
-                @Override public boolean get() { return groups[g]; }
-            }, new View.OnClickListener() {
-                @Override public void onClick(View v) { groups[g] = !groups[g]; }
-            }), a.rowLp());
-        }
-        col.addView(a.section(L.t("Vers la TV")));
+        col.addView(a.section(L.t("Ou relier à cette TV, qui sert de modèle")));
         tvBox = new LinearLayout(a);
         tvBox.setOrientation(LinearLayout.VERTICAL);
         tvBox.setClipChildren(false);
@@ -70,15 +93,19 @@ final class SyncPanel {
         });
         addressRow = addr;
         col.addView(addr, a.rowLp());
-        TextView t = a.text(21, "sans-serif", Palette.TEXT_3);
-        t.setText(L.t("Sur l'autre TV : Réglages › Système › Autres TV › Recevoir. Elle apparaît ici ; choisis-la puis tape le code qu'elle affiche. L'envoi est chiffré grâce à ce code. Le code PIN, les habitudes, la télécommande et les vidéos téléchargées restent propres à chaque TV. Les réglages vont au profil ouvert sur l'autre TV."));
-        t.setLineSpacing(0, 1.25f);
-        t.setPadding(a.u(32), a.u(28), a.u(32), 0);
-        col.addView(t);
+        hint(a, col, L.t("Deux TV reliées restent identiques, en permanence. Sur l'autre TV : Réglages › Système › Autres TV › Recevoir. Elle apparaît ici ; choisis-la puis tape le code qu'elle affiche : elle prend tous les réglages de cette TV, puis chaque changement passe de l'une à l'autre. Tout est chiffré grâce au code."));
         showTvs(a, new ArrayList<SyncLink.Tv>());
         SyncLink.startFinding(a, new SyncLink.Found() {
             @Override public void on(List<SyncLink.Tv> tvs) { if (tvBox != null && tvBox.isAttachedToWindow()) showTvs(a, tvs); }
         });
+    }
+
+    private static void hint(MainActivity a, LinearLayout col, String text) {
+        TextView t = a.text(21, "sans-serif", Palette.TEXT_3);
+        t.setText(text);
+        t.setLineSpacing(0, 1.25f);
+        t.setPadding(a.u(32), a.u(28), a.u(32), 0);
+        col.addView(t);
     }
 
     /** Liste des TV trouvées ; la TV sélectionnée le reste quand la liste change. */
@@ -147,7 +174,7 @@ final class SyncPanel {
                         a.h.post(new Runnable() {
                             @Override public void run() {
                                 if (fh == null) { a.showNotice(L.t("Aucune TV en réception à cette adresse"), 3500); return; }
-                                if (fh[0].isEmpty()) { a.showNotice(L.t("Mets d'abord Lumen à jour sur l'autre TV (4.33 ou plus)"), 4000); return; }
+                                if (fh[0].isEmpty()) { a.showNotice(L.t("Mets d'abord Lumen à jour sur l'autre TV (4.34 ou plus)"), 4000); return; }
                                 askCode(a, fip, (Integer) ad[1], fh[1]);
                             }
                         });
@@ -174,28 +201,26 @@ final class SyncPanel {
         in.requestFocus();
     }
 
-    /** Code affiché par l'autre TV, puis envoi. Le pavé reste ouvert tant que l'envoi n'a pas réussi. */
+    /**
+     * Code affiché par l'autre TV, puis envoi de tout l'état de cette TV (le modèle). Le pavé reste
+     * ouvert tant que l'envoi n'a pas réussi ; réussi, les deux TV sont reliées.
+     */
     private static void askCode(final MainActivity a, final InetAddress ip, final int port, final String name) {
-        if (!TvSync.any(groups)) { a.showNotice(L.t("Coche au moins un groupe de réglages")); return; }
         final byte[] body;
         try {
             JSONObject o = new JSONObject();
             o.put("format", TvSync.FORMAT);
             o.put("version", TvSync.VERSION);
             o.put("from", tvName(a));
-            o.put("groups", TvSync.groupsText(groups));
-            o.put("settings", a.prefs.exportSync(groups));
-            if (groups[TvSync.WALL] && a.weather.hasCity()) {
-                double[] c = a.weather.coords();
-                o.put("weather", new JSONObject().put("city", a.weather.city()).put("lat", c[0]).put("lon", c[1]));
-            }
-            if (groups[TvSync.KEYS]) o.put("keys", a.prefs.exportKeys());
+            o.put("device", a.pair.myId());
+            o.put("port", a.pair.prepare()); // l'autre TV répondra ici
+            o.put("entries", a.pair.state());
             body = o.toString().getBytes("UTF-8");
         } catch (Exception e) {
             a.showNotice(L.t("Réglages illisibles"));
             return;
         }
-        if (body.length > TvSync.MAX_BODY) { a.showNotice(L.t("Trop de réglages à envoyer")); return; }
+        if (body.length > TvSync.MAX_BODY / 2) { a.showNotice(L.t("Trop de réglages à envoyer")); return; }
         sending = false;
         PinDialog.code(a, L.t("Code affiché sur « ") + name + L.t(" »"), TvSync.CODE_LENGTH, new PinDialog.Entered() {
             @Override public boolean on(final String code, final TextView msg) {
@@ -204,19 +229,22 @@ final class SyncPanel {
                 msg.setText(L.t("Envoi…"));
                 new Thread(new Runnable() {
                     @Override public void run() {
-                        final int r = SyncLink.send(ip, port, code, body);
+                        final String[][] hello = new String[1][];
+                        final byte[][] key = new byte[1][];
+                        final int r = SyncLink.send(ip, port, code, body, hello, key);
                         a.h.post(new Runnable() {
                             @Override public void run() {
                                 sending = false;
                                 switch (r) {
                                     case SyncLink.SENT:
+                                        a.pair.pair(hello[0][3], hello[0][1], ip.getHostAddress(), 0, key[0]);
                                         a.closeOverlay(true);
-                                        a.showNotice(L.t("Réglages envoyés · à accepter sur « ") + name + L.t(" »"), 4500);
+                                        a.showNotice(L.t("Reliée à « ") + name + L.t(" » · accepte sur l'autre TV"), 4500);
                                         break;
                                     case SyncLink.BAD_CODE: msg.setText(L.t("Code incorrect")); break;
                                     case SyncLink.CLOSED: msg.setText(L.t("Cette TV n'attend plus · relance « Recevoir » sur elle")); break;
                                     case SyncLink.NOT_LUMEN: msg.setText(L.t("Cette TV n'est plus en réception")); break;
-                                    case SyncLink.OLDER_PEER: msg.setText(L.t("Mets d'abord Lumen à jour sur l'autre TV (4.33 ou plus)")); break;
+                                    case SyncLink.OLDER_PEER: msg.setText(L.t("Mets d'abord Lumen à jour sur l'autre TV (4.34 ou plus)")); break;
                                     default: msg.setText(L.t("TV injoignable · sur le même réseau ?")); break;
                                 }
                             }
@@ -251,8 +279,8 @@ final class SyncPanel {
         final Done done = once(a, whenDone);
         final String name = tvName(a);
         final boolean[] received = {false};
-        final String[] got = SyncLink.startReceiving(a, name, new SyncLink.Received() {
-            @Override public void on(String fromIp, String json) { received[0] = true; a.closeOverlay(false); confirm(a, fromIp, json, done); }
+        final String[] got = SyncLink.startReceiving(a, name, a.pair.myId(), new SyncLink.Received() {
+            @Override public void on(String fromIp, String json, byte[] key) { received[0] = true; a.closeOverlay(false); confirm(a, fromIp, json, key, done); }
         }, new SyncLink.Stopped() {
             @Override public void on(int why) {
                 a.closeOverlay(true);
@@ -279,7 +307,7 @@ final class SyncPanel {
         where.setText(name + "  ·  " + got[1]);
         card.addView(where);
         TextView how = a.text(22, "sans-serif", Palette.TEXT_3);
-        how.setText(L.t("Sur l'autre TV : Réglages › Système › Autres TV, choisis cette TV puis tape ce code. Rien n'est appliqué sans ton accord ; la réception s'arrête après 3 min."));
+        how.setText(L.t("Sur l'autre TV : Réglages › Système › Autres TV, choisis cette TV puis tape ce code. Rien ne change sans ton accord ; la réception s'arrête après 3 min."));
         how.setGravity(Gravity.CENTER);
         how.setLineSpacing(0, 1.25f);
         LinearLayout.LayoutParams hl = new LinearLayout.LayoutParams(a.u(720), ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -295,58 +323,51 @@ final class SyncPanel {
         cancel.requestFocus();
     }
 
-    /** Envoi reçu et déchiffré : on montre d'où il vient et ce qu'il change, rien n'est appliqué sans « Appliquer ». */
-    private static void confirm(final MainActivity a, String fromIp, String json, final Done done) {
-        final JSONObject settings, keys, weather;
-        final boolean[] g;
-        String from;
+    /**
+     * Envoi reçu et déchiffré : on dit d'où il vient et ce qui va se passer (cette TV prend tout l'état
+     * de l'autre, puis elles restent pareilles) ; rien ne change sans « Relier ».
+     */
+    private static void confirm(final MainActivity a, final String fromIp, String json, final byte[] key, final Done done) {
+        final java.util.Map<String, SyncState.Entry> entries;
+        final String from, device;
+        final int port;
         try {
             JSONObject o = new JSONObject(json);
             if (!TvSync.FORMAT.equals(o.optString("format")) || o.optInt("version") != TvSync.VERSION) throw new Exception("format");
-            settings = o.getJSONObject("settings");
-            g = TvSync.parseGroups(o.optString("groups"));
-            if (!TvSync.any(g)) throw new Exception("groupes");
+            entries = PairLink.entriesFrom(o.getJSONObject("entries"));
+            device = o.optString("device");
+            if (entries == null || !SyncState.deviceIdOk(device) || key == null) throw new Exception("contenu");
             from = TvSync.cleanName(o.optString("from", fromIp));
-            keys = g[TvSync.KEYS] ? o.optJSONObject("keys") : null;
-            weather = g[TvSync.WALL] ? o.optJSONObject("weather") : null;
+            int p = o.optInt("port", 0);
+            port = p > 0 && p <= 65535 ? p : 0;
         } catch (Exception e) {
             a.showNotice(L.t("Réglages reçus illisibles"));
             if (done != null) done.on(false);
             return;
         }
-        StringBuilder what = new StringBuilder();
-        for (int i = 0; i < g.length; i++) if (g[i]) what.append(what.length() == 0 ? "" : ", ").append(L.t(TvSync.GROUP_NAMES[i]));
         final boolean[] answered = {false};
         FrameLayout o = a.openOverlay(new Runnable() {
             @Override public void run() { if (!answered[0] && done != null) done.on(false); } // Retour = refusé
         });
         LinearLayout card = a.menuCard(40);
-        card.addView(a.menuHeader(null, false, L.t("Réglages reçus"), L.t("De « ") + from + L.t(" »") + " (" + fromIp + ")"));
+        card.addView(a.menuHeader(null, false, L.t("Relier à « ") + from + L.t(" » ?"), fromIp));
         TextView why = a.text(22, "sans-serif", Palette.TEXT_2);
-        String profile = a.prefs.hasProfiles() ? L.t(" Profil : ") + a.prefs.activeProfileName() + "." : "";
-        StringBuilder extra = new StringBuilder();
-        if (weather != null) extra.append("\n").append(L.t("Météo : ")).append(TvSync.cleanName(weather.optString("city")));
-        String keyNames = Prefs.keyNames(keys);
-        if (!keyNames.isEmpty()) extra.append("\n").append(L.t("Clés : ")).append(keyNames).append(L.t(" (remplacent celles de cette TV)"));
-        why.setText(what + "." + profile + extra + "\n" + L.t("Les réglages de ces groupes que l'autre TV n'a jamais changés reviennent à leur valeur par défaut."));
+        String profile = a.prefs.hasProfiles() ? "\n" + L.t("Les profils de cette TV sont remplacés par ceux de l'autre.") : "";
+        why.setText(L.t("Cette TV prend tous les réglages de l'autre : profils, favoris, fonds, boutons, sons, météo, clés, Home Assistant, code PIN, habitudes. Ensuite, les deux restent identiques : un changement sur l'une arrive sur l'autre.")
+                + profile + "\n" + L.t("Restent propres à chaque TV : touches de la télécommande, place pour les vidéos, qualité 4K."));
         why.setGravity(Gravity.CENTER);
         why.setLineSpacing(0, 1.2f);
         why.setPadding(a.u(24), 0, a.u(24), a.u(24));
         card.addView(why);
-        LinearLayout apply = a.iconRow(Glyph.UPDATE, L.t("Appliquer sur cette TV"), null, new View.OnClickListener() {
+        LinearLayout apply = a.iconRow(Glyph.UPDATE, L.t("Relier et prendre ses réglages"), null, new View.OnClickListener() {
             @Override public void onClick(View v) {
                 answered[0] = true;
                 if (done != null) done.on(true); // avant la reconstruction de l'écran
                 a.closeOverlay(true);
-                try {
-                    int n = a.prefs.importSync(settings, g);
-                    if (keys != null) n += a.prefs.importKeys(keys);
-                    if (weather != null && a.weather.setPlace(weather.optString("city"), weather.optDouble("lat", Double.NaN), weather.optDouble("lon", Double.NaN))) n++;
-                    a.showNotice(n + L.t(" réglages copiés"));
-                    a.h.postDelayed(new Runnable() { @Override public void run() { a.recreate(); } }, 1200); // tout est relu proprement
-                } catch (Exception e) {
-                    a.showNotice(L.t("Réglages reçus illisibles"));
-                }
+                a.pair.adopt(entries);
+                a.pair.pair(device, from, fromIp, port, key);
+                a.showNotice(L.t("Reliée à « ") + from + L.t(" » · les deux TV sont identiques"), 4000);
+                a.h.postDelayed(new Runnable() { @Override public void run() { a.recreate(); } }, 1200); // tout est relu proprement
             }
         }, false);
         card.addView(apply, a.rowLp());
@@ -354,7 +375,7 @@ final class SyncPanel {
         card.addView(a.iconRow(Glyph.CLOSE, L.t("Refuser"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { a.closeOverlay(true); a.showNotice(L.t("Réglages refusés")); }
         }, true), a.rowLp());
-        o.addView(card, new FrameLayout.LayoutParams(a.u(760), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        o.addView(card, new FrameLayout.LayoutParams(a.u(820), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         apply.requestFocus();
     }
 }

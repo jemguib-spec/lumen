@@ -161,6 +161,10 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     Immersive immersive;
     FrameLayout zoomView;
     PhoneServer phone;
+    /** Liaison avec une autre TV de la maison : les deux restent identiques (voir PairLink). */
+    PairLink pair;
+    /** Des réglages sont arrivés de l'autre TV pendant qu'un panneau était ouvert : l'écran sera relu à sa fermeture. */
+    private boolean reloadAfterOverlay;
     /** Ce que la TV fait à la demande du téléphone. */
     final PhoneBridge phoneHost = new PhoneBridge(this);
     final AppLauncher launcher = new AppLauncher(this);
@@ -205,6 +209,10 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         online.setListener(this);
         weather = new Weather(this);
         phone = new PhoneServer(this, phoneHost);
+        pair = new PairLink(this, new PairLink.Listener() {
+            @Override public void applied(int visible, String peerName) { syncedFromPeer(visible, peerName); }
+            @Override public void unpaired(String peerName) { showNotice(L.t("« ") + peerName + L.t(" » a délié les deux TV · chaque TV garde ses réglages"), 4000); }
+        });
         double[] c = weather.coords();
         if (c != null) Sky.setLocation(c[0], c[1]);
         Sounds.get(this).apply(prefs);
@@ -309,6 +317,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         phone.onBackground();
         if (SyncLink.receiving()) closeOverlay(false); // l'écran « Recevoir » ne reste pas avec un code mort
         SyncLink.stopAll(this); // copie entre TV : rien n'écoute ni ne cherche hors de l'écran
+        pair.stop();            // TV reliée : idem ; l'autre TV sera mise à jour au retour de Lumen
         online.setActive(false);
         closeAmbiance();
     }
@@ -317,6 +326,21 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         super.onStart();
         online.setActive(true);
         if (prefs.cosyWanted()) online.refreshCosy();
+        pair.start(); // TV reliée : on échange les changements faits pendant l'absence
+    }
+
+    /**
+     * Réglages arrivés de l'autre TV reliée. S'ils se voient, l'écran est relu : tout de suite sur
+     * l'accueil, sinon à la fermeture du panneau ouvert (on ne coupe personne au milieu d'un réglage).
+     */
+    void syncedFromPeer(int visible, String peerName) {
+        if (visible <= 0) return;
+        if (overlay == null && resumedNow) {
+            showNotice(L.t("Réglages synchronisés avec « ") + peerName + L.t(" »"));
+            h.postDelayed(new Runnable() { @Override public void run() { if (!isFinishing() && overlay == null) recreate(); else reloadAfterOverlay = true; } }, 900);
+        } else {
+            reloadAfterOverlay = true;
+        }
     }
 
     @Override protected void onDestroy() {
@@ -325,6 +349,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         try { unregisterReceiver(screenOn); } catch (Exception ignored) { }
         phone.stop();
         SyncLink.stopAll(this);
+        pair.close();
         super.onDestroy();
     }
 
@@ -1501,6 +1526,10 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
             root.removeView(o);
         }
         wake();
+        if (reloadAfterOverlay && overlay == null) {
+            reloadAfterOverlay = false;
+            h.postDelayed(new Runnable() { @Override public void run() { if (!isFinishing() && overlay == null) recreate(); else reloadAfterOverlay = true; } }, 400);
+        }
     }
 
     interface Value { String get(); }

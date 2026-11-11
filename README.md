@@ -90,11 +90,9 @@ Bouton Maison de l'accueil, une fois Home Assistant relié depuis le téléphone
 
 ## Plusieurs TV dans la maison
 
-Une TV neuve peut tout récupérer dès l'installation : l'assistant du premier démarrage propose « Me synchroniser avec une autre TV du foyer ». Plus tard, c'est la page ci-dessous.
+Deux TV **reliées** restent identiques, en permanence. Pour les relier : sur la TV qui doit suivre, Réglages › Système › Autres TV › **Recevoir** affiche un code à 6 chiffres ; sur la TV de référence, même page, choisis l'autre TV dans la liste (trouvée toute seule sur le Wi-Fi, ou par son adresse) et tape le code. L'autre TV prend tous ses réglages, puis chaque changement fait sur l'une arrive sur l'autre en quelques secondes quand Lumen est à l'écran sur les deux, sinon dès qu'il y revient. Une TV neuve peut le faire dès l'installation : l'assistant du premier démarrage propose « Me synchroniser avec une autre TV du foyer ».
 
-Pour que toutes les TV aient les mêmes réglages : sur la TV qui doit les recevoir, Réglages › Système › Autres TV › **Recevoir** affiche un code à 6 chiffres. Sur la TV de référence, même page : coche ce qui part (**Apparence et sons**, **Fond d'écran, veille et météo**, **Accueil et boutons**, **Favoris et applis masquées**, **Clés et services**), choisis l'autre TV dans la liste (trouvée toute seule sur le Wi-Fi, ou par son adresse) et tape le code. L'autre TV montre ce qu'elle reçoit et attend « Appliquer ». Les deux TV doivent avoir Lumen 4.33 ou plus et être sur le même réseau.
-
-Les réglages des groupes cochés que la TV de référence n'a jamais changés reviennent aussi à leur valeur par défaut sur l'autre TV : les deux sont vraiment pareilles. La ville de la météo part avec le fond d'écran, et le groupe **Clés et services** emporte les clés TMDB et Pexels et la liaison Home Assistant. Tout l'envoi est chiffré grâce au code (personne sur le Wi-Fi ne peut le lire ni retrouver le code). Le code PIN, les habitudes, les touches de la télécommande et les vidéos téléchargées restent propres à chaque TV. Les réglages vont au profil ouvert sur la TV qui reçoit.
+Tout est synchronisé : profils, favoris, applis masquées et verrouillées, fonds, boutons, sons, vidéos cochées, ville de la météo, clés TMDB et Pexels, Home Assistant, code PIN, habitudes. Restent propres à chaque TV : les touches de la télécommande, la place réservée aux vidéos et la qualité 4K. Les échanges sont chiffrés (personne sur le Wi-Fi ne peut les lire ni retrouver le code). « Délier les deux TV » les sépare ; chacune garde alors ses réglages. Il faut Lumen 4.34 ou plus sur les deux TV.
 
 ## Tous les réglages
 
@@ -115,7 +113,7 @@ Bouton Réglages ou touche Menu. Les réglages à deux états ont un interrupteu
 | **Profils** | Ajouter, renommer, supprimer, profil enfant, profil au démarrage |
 | **Réglages depuis le téléphone** | QR code, accès du téléphone (complet ou télécommande seulement), télécommande dans les autres applis |
 | **Télécommande** | Relier les touches sans rôle (Guide, Info, couleurs, chiffres…) à une fonction ou à une appli |
-| **Système** | Mises à jour (automatiques, nouveautés), stockage, code PIN, sauvegarde des réglages, autres TV (copier les réglages), assistant de premier démarrage, assistant d'installation, diagnostic (mesures à l'écran, journal d'erreurs, redémarrer Lumen), à propos, licences |
+| **Système** | Mises à jour (automatiques, nouveautés), stockage, code PIN, sauvegarde des réglages, autres TV (relier deux TV pour qu'elles restent identiques), assistant de premier démarrage, assistant d'installation, diagnostic (mesures à l'écran, journal d'erreurs, redémarrer Lumen), à propos, licences |
 
 ## Accessibilité
 
