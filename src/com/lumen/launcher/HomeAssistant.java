@@ -258,8 +258,100 @@ final class HomeAssistant {
         return http(u.getHost(), u.getPort() > 0 ? u.getPort() : 80, path, token, method, body);
     }
 
+    // ------------------------------------------------------------------ certificat auto-signé
+
+    /**
+     * Certificats auto-signés acceptés, par adresse : empreinte SHA-256 du certificat vu à la
+     * configuration. Seul ce certificat-là est accepté ensuite (un autre = connexion refusée).
+     */
+    private static final java.util.Map<String, String> PINS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Retient (ou oublie, si vide) l'empreinte du certificat accepté pour cette adresse. */
+    static void trust(String base, String pin) {
+        if (base == null || base.isEmpty()) return;
+        if (pin == null || pin.isEmpty()) PINS.remove(base); else PINS.put(base, pin);
+    }
+
+    static String fingerprint(byte[] der) {
+        try {
+            byte[] d = java.security.MessageDigest.getInstance("SHA-256").digest(der);
+            StringBuilder b = new StringBuilder();
+            for (byte x : d) b.append(String.format(Locale.ROOT, "%02x", x & 0xff));
+            return b.toString();
+        } catch (Exception e) { return ""; }
+    }
+
+    /**
+     * Home Assistant en HTTPS sur le réseau local avec un certificat que la TV ne reconnaît pas
+     * (auto-signé) : lit ce certificat, sans rien envoyer, et rend son empreinte. null si l'adresse
+     * n'est pas en HTTPS ou n'est pas sur le réseau local (sur Internet, un vrai certificat est exigé).
+     */
+    static String localCertPin(String base) {
+        try {
+            String b = normalizeUrl(base);
+            if (b == null || !b.startsWith("https://")) return null;
+            URL u = new URL(b);
+            if (!localHostName(u.getHost())) return null;
+            InetAddress ip = InetAddress.getByName(u.getHost());
+            if (!(ip instanceof Inet4Address) || !(ip.isSiteLocalAddress() || ip.isLinkLocalAddress())) return null;
+            final String[] seen = new String[1];
+            javax.net.ssl.SSLContext ctx = javax.net.ssl.SSLContext.getInstance("TLS");
+            ctx.init(null, new javax.net.ssl.TrustManager[]{new javax.net.ssl.X509TrustManager() {
+                @Override public void checkClientTrusted(java.security.cert.X509Certificate[] c, String t) throws java.security.cert.CertificateException { throw new java.security.cert.CertificateException(); }
+                @Override public void checkServerTrusted(java.security.cert.X509Certificate[] c, String t) throws java.security.cert.CertificateException {
+                    if (c == null || c.length == 0) throw new java.security.cert.CertificateException();
+                    seen[0] = fingerprint(c[0].getEncoded());
+                }
+                @Override public java.security.cert.X509Certificate[] getAcceptedIssuers() { return new java.security.cert.X509Certificate[0]; }
+            }}, null);
+            try (Socket raw = new Socket()) {
+                raw.connect(new InetSocketAddress(ip, u.getPort() > 0 ? u.getPort() : 443), TIMEOUT_MS);
+                raw.setSoTimeout(TIMEOUT_MS);
+                try (javax.net.ssl.SSLSocket s = (javax.net.ssl.SSLSocket) ctx.getSocketFactory().createSocket(raw, u.getHost(), raw.getPort(), true)) {
+                    s.startHandshake(); // poignée de main seulement : ni jeton ni requête
+                }
+            }
+            return seen[0] == null || seen[0].isEmpty() ? null : seen[0];
+        } catch (Exception e) { return null; }
+    }
+
+    /** Validation habituelle, sauf pour le certificat exact retenu à la configuration. */
+    private static javax.net.ssl.SSLSocketFactory pinnedFactory(final String pin) throws Exception {
+        javax.net.ssl.TrustManagerFactory f = javax.net.ssl.TrustManagerFactory.getInstance(javax.net.ssl.TrustManagerFactory.getDefaultAlgorithm());
+        f.init((java.security.KeyStore) null);
+        javax.net.ssl.X509TrustManager found = null;
+        for (javax.net.ssl.TrustManager t : f.getTrustManagers()) if (t instanceof javax.net.ssl.X509TrustManager) { found = (javax.net.ssl.X509TrustManager) t; break; }
+        final javax.net.ssl.X509TrustManager def = found;
+        javax.net.ssl.SSLContext ctx = javax.net.ssl.SSLContext.getInstance("TLS");
+        ctx.init(null, new javax.net.ssl.TrustManager[]{new javax.net.ssl.X509TrustManager() {
+            @Override public void checkClientTrusted(java.security.cert.X509Certificate[] c, String t) throws java.security.cert.CertificateException { throw new java.security.cert.CertificateException(); }
+            @Override public void checkServerTrusted(java.security.cert.X509Certificate[] c, String t) throws java.security.cert.CertificateException {
+                if (c != null && c.length > 0 && pin.equals(fingerprint(c[0].getEncoded()))) return;
+                if (def == null) throw new java.security.cert.CertificateException();
+                def.checkServerTrusted(c, t);
+            }
+            @Override public java.security.cert.X509Certificate[] getAcceptedIssuers() { return def == null ? new java.security.cert.X509Certificate[0] : def.getAcceptedIssuers(); }
+        }}, null);
+        return ctx.getSocketFactory();
+    }
+
     private static String https(String url, String token, String method, String body) throws IOException {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+        final String pin = PINS.get(normalizeUrl(url.substring(0, url.indexOf('/', 8))));
+        if (pin != null && c instanceof javax.net.ssl.HttpsURLConnection) {
+            javax.net.ssl.HttpsURLConnection hc = (javax.net.ssl.HttpsURLConnection) c;
+            try { hc.setSSLSocketFactory(pinnedFactory(pin)); } catch (Exception e) { throw new IOException("Connexion chiffrée impossible"); }
+            final javax.net.ssl.HostnameVerifier def = javax.net.ssl.HttpsURLConnection.getDefaultHostnameVerifier();
+            hc.setHostnameVerifier(new javax.net.ssl.HostnameVerifier() {
+                @Override public boolean verify(String host, javax.net.ssl.SSLSession s) {
+                    try { // un certificat auto-signé pour une adresse IP n'a souvent pas le bon nom : l'empreinte fait foi
+                        java.security.cert.Certificate[] chain = s.getPeerCertificates();
+                        if (chain.length > 0 && pin.equals(fingerprint(chain[0].getEncoded()))) return true;
+                    } catch (Exception ignored) { }
+                    return def.verify(host, s);
+                }
+            });
+        }
         c.setInstanceFollowRedirects(false);
         c.setConnectTimeout(TIMEOUT_MS);
         c.setReadTimeout(TIMEOUT_MS);
@@ -393,6 +485,7 @@ final class HomeAssistant {
         String m = e.getMessage() == null ? "" : e.getMessage();
         if (m.startsWith("Jeton") || m.startsWith("Adresse") || m.startsWith("Redirection") || m.startsWith("Home Assistant")) return m;
         if (e instanceof java.net.UnknownHostException) return "Home Assistant introuvable sur le réseau";
+        if (e instanceof javax.net.ssl.SSLException) return "Certificat de Home Assistant refusé : refais la liaison depuis le téléphone";
         if (e instanceof java.net.SocketTimeoutException || e instanceof java.net.ConnectException) return "Home Assistant ne répond pas";
         return "Connexion à Home Assistant impossible";
     }

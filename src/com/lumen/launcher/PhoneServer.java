@@ -812,7 +812,7 @@ final class PhoneServer {
      */
     private String setHa(byte[] body) throws Exception {
         String raw = new String(body, "UTF-8").trim();
-        if (raw.isEmpty()) { host.prefs().setHa("", ""); return "{\"ok\":true}"; }
+        if (raw.isEmpty()) { HomeAssistant.trust(host.prefs().haUrl(), ""); host.prefs().setHa("", "", ""); return "{\"ok\":true}"; }
         JSONObject o;
         try { o = new JSONObject(raw); } catch (Exception e) { return "{\"ok\":false}"; }
         String url = HomeAssistant.normalizeUrl(o.optString("url"));
@@ -820,9 +820,20 @@ final class PhoneServer {
         if (token.isEmpty()) token = host.prefs().haToken(); // changer seulement l'adresse
         if (url == null) return err("Adresse refusée : en http, seulement une adresse du réseau local (ex. 192.168.1.20:8123)");
         if (!HomeAssistant.validToken(token)) return err("Jeton invalide : crée un « jeton d'accès longue durée » dans ton profil Home Assistant");
+        String cert = "";
+        HomeAssistant.trust(url, ""); // nouvelle liaison : on repart de la validation habituelle
         try { HomeAssistant.ping(url, token); }
-        catch (Exception e) { CrashLog.note(ctx, "Home Assistant : " + e); return err(HomeAssistant.human(e)); }
-        host.prefs().setHa(url, token);
+        catch (Exception e) {
+            CrashLog.note(ctx, "Home Assistant : " + e);
+            // HTTPS sur le réseau local avec un certificat auto-signé : on retient ce certificat, et lui seul
+            String pin = e instanceof javax.net.ssl.SSLException ? HomeAssistant.localCertPin(url) : null;
+            if (pin == null) return err(HomeAssistant.human(e));
+            HomeAssistant.trust(url, pin);
+            try { HomeAssistant.ping(url, token); }
+            catch (Exception e2) { HomeAssistant.trust(url, ""); CrashLog.note(ctx, "Home Assistant : " + e2); return err(HomeAssistant.human(e2)); }
+            cert = pin;
+        }
+        host.prefs().setHa(url, token, cert);
         main.post(new Runnable() { @Override public void run() { host.onHaLinked(); } });
         return "{\"ok\":true}";
     }

@@ -277,13 +277,15 @@ final class Prefs {
     }
 
     /** Home Assistant : adresse, jeton (jamais renvoyé au téléphone, absent de la sauvegarde), appareils choisis. */
-    String haUrl() { return sp.getString("ha_url", ""); }
+    /** Adresse de Home Assistant ; rappelle au passage le certificat auto-signé accepté pour elle. */
+    String haUrl() { String u = sp.getString("ha_url", ""); HomeAssistant.trust(u, sp.getString("ha_cert", "")); return u; }
     String haToken() { return secret("ha_token"); }
     /** Bouton « Maison » sur l'accueil : masqué par défaut. */
     boolean haButton() { return sp.getBoolean("ha_button", false); }
     void setHaButton(boolean b) { sp.edit().putBoolean("ha_button", b).apply(); }
     boolean haConfigured() { return !haUrl().isEmpty() && !haToken().isEmpty(); }
-    void setHa(String url, String token) { sp.edit().putString("ha_url", url).putString("ha_token", Vault.seal(token)).apply(); }
+    /** cert : empreinte du certificat auto-signé accepté à la liaison (vide = certificat reconnu ou http). */
+    void setHa(String url, String token, String cert) { sp.edit().putString("ha_url", url).putString("ha_token", Vault.seal(token)).putString("ha_cert", cert).apply(); }
     Set<String> haPinned() { return set("ha_pinned"); }
     void setHaPinned(String id, boolean on) { Set<String> s = haPinned(); if (on) s.add(id); else s.remove(id); put("ha_pinned", s); }
 

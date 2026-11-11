@@ -376,6 +376,9 @@ public class LumenTests {
         check("https Wikimedia autorisé", NetPolicy.allowed("https://upload.wikimedia.org/a.jpg"));
         check("HA : adresse locale complétée", "http://192.168.1.20:8123".equals(HomeAssistant.normalizeUrl("192.168.1.20:8123"))
                 && "http://homeassistant.local:8123".equals(HomeAssistant.normalizeUrl(" homeassistant.local:8123/ ")));
+        check("HA : empreinte de certificat (SHA-256)", "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad".equals(HomeAssistant.fingerprint("abc".getBytes())));
+        check("HA : certificat auto-signé jamais accepté hors du réseau local", HomeAssistant.localCertPin("https://maison.ui.nabu.casa") == null
+                && HomeAssistant.localCertPin("http://192.168.1.20:8123") == null);
         check("HA : HTTPS distant accepté", "https://maison.ui.nabu.casa".equals(HomeAssistant.normalizeUrl("https://maison.ui.nabu.casa")));
         check("HA : jamais de jeton en clair sur Internet", HomeAssistant.normalizeUrl("http://exemple.com:8123") == null
                 && HomeAssistant.normalizeUrl("http://8.8.8.8:8123") == null && HomeAssistant.normalizeUrl("http://172.32.0.1") == null);

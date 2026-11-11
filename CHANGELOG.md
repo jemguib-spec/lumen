@@ -2,6 +2,10 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.24.2
+
+- Home Assistant en https sur le réseau local avec un certificat auto-signé (ex. https://192.168.1.20:8123) : la liaison fonctionne. Lumen retient ce certificat à la liaison et n'accepte ensuite que lui ; refais la liaison depuis le téléphone (Plus › Home Assistant) pour en profiter.
+
 ## 4.24.1
 
 - Fond immersif : avec plusieurs films ou épisodes en cours dans une appli, le fond suit maintenant celui qui est sélectionné dans « Reprendre » (avant, il restait sur le premier).
