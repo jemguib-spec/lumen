@@ -15,7 +15,8 @@ final class Glyph extends Drawable {
     static final int GRID = 0, SLIDERS = 1, INPUT = 2, MOON = 3, IMAGE = 4, HOME = 5, PHONE = 6, GEAR = 7, INFO = 8, DOC = 9, SPARK = 10,
             MOVE = 11, STAR = 12, STAR_OFF = 13, HIDE = 14, LOCK = 15, TRASH = 16, UNLOCK = 17, CLOSE = 18, RESTART = 19, SEARCH = 20, PERSON = 21, MIC = 22, WIFI_OFF = 23, BATTERY_LOW = 24, UPDATE = 25,
             BULB = 26, PLUG = 27, BLIND = 28, FAN = 29, PLAY = 30, SWITCH = 31, SOUND = 32, SOUND_OFF = 33,
-            CHEVRON_DOWN = 34, BELL = 35, TV = 36, WIFI = 37, BLUETOOTH = 38, PICTURE = 39;
+            CHEVRON_DOWN = 34, BELL = 35, TV = 36, WIFI = 37, BLUETOOTH = 38, PICTURE = 39,
+            SUN = 40, PARTLY = 41, CLOUD = 42, RAIN = 43, SNOW = 44, STORM = 45, FOG = 46;
     private int type;
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -226,6 +227,59 @@ final class Glyph extends Drawable {
                 }
                 break;
             }
+            case SUN: { // soleil : ciel dégagé
+                c.drawCircle(cx, cy, s * .15f, p);
+                for (int k = 0; k < 8; k++) {
+                    double ang = Math.PI / 4 * k;
+                    float dx = (float) Math.cos(ang), dy = (float) Math.sin(ang);
+                    c.drawLine(cx + dx * s * .26f, cy + dy * s * .26f, cx + dx * s * .36f, cy + dy * s * .36f, p);
+                }
+                break;
+            }
+            case PARTLY: { // soleil à demi caché derrière un nuage : peu nuageux, éclaircies
+                float sx = cx - s * .12f, sy = cy - s * .12f;
+                c.drawArc(new RectF(sx - s * .12f, sy - s * .12f, sx + s * .12f, sy + s * .12f), 115f, 220f, false, p);
+                for (int k = 3; k <= 7; k++) { // rayons du côté visible (gauche et haut)
+                    double ang = Math.PI / 4 * k;
+                    float dx = (float) Math.cos(ang), dy = (float) Math.sin(ang);
+                    c.drawLine(sx + dx * s * .20f, sy + dy * s * .20f, sx + dx * s * .28f, sy + dy * s * .28f, p);
+                }
+                cloud(c, s * .82f, cx + s * .07f, cy + s * .09f);
+                break;
+            }
+            case CLOUD: { // nuage : couvert
+                cloud(c, s, cx, cy + s * .04f);
+                break;
+            }
+            case RAIN: { // nuage et gouttes : pluie, bruine, averses
+                cloud(c, s * .9f, cx, cy - s * .08f);
+                for (int k = -1; k <= 1; k++) {
+                    float x = cx + k * s * .14f;
+                    c.drawLine(x + s * .03f, cy + s * .18f, x - s * .03f, cy + s * .32f, p);
+                }
+                break;
+            }
+            case SNOW: { // nuage et flocons : neige
+                cloud(c, s * .9f, cx, cy - s * .08f);
+                Paint.Style st = p.getStyle();
+                p.setStyle(Paint.Style.FILL);
+                for (int k = -1; k <= 1; k++) c.drawCircle(cx + k * s * .14f, cy + s * (k == 0 ? .30f : .24f), s * .035f, p);
+                p.setStyle(st);
+                break;
+            }
+            case STORM: { // nuage et éclair : orage
+                cloud(c, s * .9f, cx, cy - s * .08f);
+                q.moveTo(cx + s * .04f, cy + s * .12f); q.lineTo(cx - s * .06f, cy + s * .26f); q.lineTo(cx + s * .04f, cy + s * .26f);
+                q.lineTo(cx - s * .05f, cy + s * .40f);
+                c.drawPath(q, p);
+                break;
+            }
+            case FOG: { // trois traits : brouillard
+                c.drawLine(cx - s * .30f, cy - s * .14f, cx + s * .22f, cy - s * .14f, p);
+                c.drawLine(cx - s * .22f, cy, cx + s * .30f, cy, p);
+                c.drawLine(cx - s * .30f, cy + s * .14f, cx + s * .16f, cy + s * .14f, p);
+                break;
+            }
             case WIFI_OFF: { // ondes barrées : pas de réseau
                 android.graphics.RectF w1 = new android.graphics.RectF(cx - s * .40f, cy - s * .28f, cx + s * .40f, cy + s * .52f);
                 android.graphics.RectF w2 = new android.graphics.RectF(cx - s * .24f, cy - s * .12f, cx + s * .24f, cy + s * .36f);
@@ -352,6 +406,21 @@ final class Glyph extends Drawable {
                 c.drawPath(q, p);
             }
         }
+    }
+
+    /** Contour d'un nuage (trois bosses et une base plate), au trait, centré en (cx, cy). */
+    private void cloud(Canvas c, float s, float cx, float cy) {
+        android.graphics.Path body = new android.graphics.Path();
+        body.addCircle(cx - s * .17f, cy + s * .04f, s * .12f, android.graphics.Path.Direction.CW);
+        body.addCircle(cx + s * .02f, cy - s * .06f, s * .17f, android.graphics.Path.Direction.CW);
+        body.addCircle(cx + s * .20f, cy + s * .05f, s * .11f, android.graphics.Path.Direction.CW);
+        android.graphics.Path base = new android.graphics.Path();
+        base.addRoundRect(new RectF(cx - s * .29f, cy + s * .02f, cx + s * .31f, cy + s * .16f), s * .07f, s * .07f, android.graphics.Path.Direction.CW);
+        body.op(base, android.graphics.Path.Op.UNION);
+        // une seule forme : les cercles qui se chevauchent ne laissent pas de traits à l'intérieur
+        android.graphics.Path out = new android.graphics.Path();
+        out.op(body, android.graphics.Path.Op.UNION);
+        c.drawPath(out, p);
     }
 
     @Override public void setAlpha(int a) { p.setAlpha(a); }

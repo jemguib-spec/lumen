@@ -2,6 +2,13 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.30.0
+
+- Météo dans le volet de l'accueil (▲ depuis les boutons du haut), à gauche des notifications et dans le même verre : pictogramme au trait et température en grand, le ciel, les extrêmes du jour, les trois jours suivants et le lever et coucher du soleil. Sans ville réglée, OK permet d'en choisir une.
+- Le volet s'ouvre aussi quand les notifications sont coupées, pour la météo ; son en-tête donne la date du jour et le nombre de notifications.
+- Nouveaux pictogrammes météo dans le style de Lumen : soleil, éclaircies, nuages, pluie, neige, orage, brouillard.
+- Les mots de la météo (« Éclaircies », « Averses »…) sont traduits en anglais.
+
 ## 4.29.0
 
 - Volet des notifications : depuis les boutons ronds du haut de l'accueil, ▲ fait descendre une bande de verre avec toutes les notifications côte à côte, la plus récente à gauche (icône, appli, heure, titre, deux lignes de texte). ◀ ▶ pour passer de l'une à l'autre, OK l'ouvre dans son appli, ▼ ou Retour referme. « Tout effacer » vide la liste de l'accueil (les notifications restent dans Android).

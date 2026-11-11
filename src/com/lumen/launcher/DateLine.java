@@ -19,6 +19,15 @@ final class DateLine {
     private static final String[] MONTHS = {"January", "February", "March", "April", "May", "June", "July",
             "August", "September", "October", "November", "December"};
 
+    private static final String[] JOURS_COURTS = {"Dim.", "Lun.", "Mar.", "Mer.", "Jeu.", "Ven.", "Sam."};
+    private static final String[] DAYS_SHORT = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
+    /** Jour court (« Jeu. », « Thu ») pour la prévision des jours suivants. */
+    static String shortDay(Calendar c, String lang) {
+        int dow = c.get(Calendar.DAY_OF_WEEK) - 1;
+        return "fr".equals(lang) ? JOURS_COURTS[dow] : DAYS_SHORT[dow];
+    }
+
     /** « Mercredi 11 novembre » (fr), « Wednesday 11 November » (en, et toute autre langue). */
     static String format(Calendar c, String lang) {
         int dow = c.get(Calendar.DAY_OF_WEEK) - 1, day = c.get(Calendar.DAY_OF_MONTH), month = c.get(Calendar.MONTH);

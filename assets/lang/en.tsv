@@ -682,3 +682,17 @@ OK : autoriser Lumen à lire les notifications	OK: allow Lumen to read notificat
 OK pour ouvrir · ▼ pour fermer	OK to open · ▼ to close
 Seulement de l'accueil	From the home screen only
 Tout effacer	Clear all
+# 4.30.0 : météo dans le volet
+Averses	Showers
+Averses de neige	Snow showers
+Brouillard	Fog
+Bruine	Drizzle
+Choisir une ville	Choose a city
+Ciel dégagé	Clear sky
+Couvert	Overcast
+OK : la météo et les prochains jours s'afficheront ici	OK: the weather and the next days will show here
+Orage	Thunderstorm
+Peu nuageux	Mostly clear
+Soleil	Sun
+Ville de la météo : Réglages › Mode veille › Météo	Weather city: Settings › Sleep mode › Weather
+Éclaircies	Sunny spells

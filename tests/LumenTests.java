@@ -713,6 +713,19 @@ public class LumenTests {
         check("boutons de l'accueil : ordre à l'écran", HomeButtons.index(HomeButtons.NOTIFS) == 0 && HomeButtons.index(HomeButtons.SETTINGS) == HomeButtons.IDS.length - 1 && HomeButtons.index("x") == -1);
         check("recherche : « boutons » mène à la page des boutons de l'accueil", !SettingsIndex.search("boutons", 6).isEmpty() && SettingsIndex.search("boutons", 6).get(0).page == SettingsIndex.BOUTONS);
         check("recherche : « réglages » ouvre les réglages même sans leur bouton", !SettingsIndex.search("reglages", 6).isEmpty());
+        check("météo : mot et pictogramme selon le code", Forecast.describe(0).equals("Ciel dégagé") && Forecast.kind(0) == Forecast.CLEAR
+                && Forecast.kind(2) == Forecast.PARTLY && Forecast.kind(3) == Forecast.CLOUDY && Forecast.kind(45) == Forecast.FOG
+                && Forecast.kind(63) == Forecast.RAIN && Forecast.kind(81) == Forecast.RAIN && Forecast.kind(73) == Forecast.SNOW
+                && Forecast.kind(95) == Forecast.STORM && Forecast.describe(-1).equals("—") && Forecast.kind(-1) == Forecast.CLOUDY);
+        check("météo : chaque code connu a son mot", Forecast.condition(86) == 9 && Forecast.CONDITIONS[Forecast.condition(99)].equals("Orage"));
+        check("météo : degrés arrondis, sans « -0° »", Forecast.degrees(13.6).equals("14°") && Forecast.degrees(-0.4).equals("0°") && Forecast.degrees(-3.5).equals("-3°"));
+        Forecast fc = new Forecast(12, 2, new int[]{14, 15, 9, 8}, new int[]{6, 7, 3, 1}, new int[]{2, 61, 3, 0}, 123456789L);
+        Forecast fc2 = Forecast.parse(fc.compact());
+        check("météo : le cache se relit à l'identique", fc2 != null && fc2.temp == 12 && fc2.code == 2 && fc2.max[3] == 8 && fc2.min[1] == 7
+                && fc2.codes[1] == 61 && fc2.time == 123456789L);
+        check("météo : cache abîmé ignoré", Forecast.parse("") == null && Forecast.parse("x;y") == null && Forecast.parse("1;2;3,4;5;6;7") == null && Forecast.parse(null) == null);
+        check("date : jour court pour la prévision", DateLine.shortDay(new java.util.GregorianCalendar(2026, java.util.Calendar.NOVEMBER, 12), "fr").equals("Jeu.")
+                && DateLine.shortDay(new java.util.GregorianCalendar(2026, java.util.Calendar.NOVEMBER, 12), "en").equals("Thu"));
         check("écran de nuit : minuit et désactivé", Greeting.night(0, 0) && !Greeting.night(23, 0) && !Greeting.night(2, -1));
         check("messages : jamais technique", !Messages.download("Hôte non autorisé : thumb.wikimedia.org").contains("Hôte")
                 && Messages.download("java.net.UnknownHostException").startsWith("Pas d'accès"));

@@ -113,19 +113,44 @@ final class Weather {
         return "Demain " + Math.round(max) + "° / " + Math.round(min) + "° · " + describe(code);
     }
 
-    static String describe(int c) {
-        if (c == 0) return "Ciel dégagé";
-        if (c == 1) return "Peu nuageux";
-        if (c == 2) return "Éclaircies";
-        if (c == 3) return "Couvert";
-        if (c == 45 || c == 48) return "Brouillard";
-        if (c >= 51 && c <= 57) return "Bruine";
-        if (c >= 61 && c <= 67) return "Pluie";
-        if (c >= 71 && c <= 77) return "Neige";
-        if (c >= 80 && c <= 82) return "Averses";
-        if (c == 85 || c == 86) return "Averses de neige";
-        if (c >= 95) return "Orage";
-        return "—";
+    static String describe(int c) { return Forecast.describe(c); }
+
+    interface ForecastCallback { void onForecast(Forecast f); }
+
+    /**
+     * Prévision du volet de l'accueil : maintenant et les jours suivants (même serveur et même
+     * ville que le reste, une requête toutes les 30 min au plus). Rappelle d'abord avec le cache,
+     * puis avec la version fraîche ; jamais sans ville.
+     */
+    void forecast(final ForecastCallback cb) {
+        if (!hasCity()) return;
+        final Forecast cached = Forecast.parse(sp.getString("forecast", ""));
+        if (cached != null) cb.onForecast(cached);
+        if (cached != null && System.currentTimeMillis() - cached.time < TTL) return;
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try {
+                    JSONObject r = get(String.format(Locale.US,
+                            "https://api.open-meteo.com/v1/forecast?latitude=%.3f&longitude=%.3f&current=temperature_2m,weather_code"
+                                    + "&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=4&timezone=auto",
+                            sp.getFloat("lat", 0), sp.getFloat("lon", 0)));
+                    JSONObject cur = r.getJSONObject("current");
+                    JSONObject d = r.getJSONObject("daily");
+                    JSONArray mx = d.getJSONArray("temperature_2m_max"), mn = d.getJSONArray("temperature_2m_min"), wc = d.getJSONArray("weather_code");
+                    int n = Math.min(4, Math.min(mx.length(), Math.min(mn.length(), wc.length())));
+                    int[] max = new int[n], min = new int[n], codes = new int[n];
+                    for (int i = 0; i < n; i++) {
+                        max[i] = (int) Math.round(mx.getDouble(i));
+                        min[i] = (int) Math.round(mn.getDouble(i));
+                        codes[i] = wc.getInt(i);
+                    }
+                    final Forecast f = new Forecast((int) Math.round(cur.getDouble("temperature_2m")), cur.optInt("weather_code", -1),
+                            max, min, codes, System.currentTimeMillis());
+                    sp.edit().putString("forecast", f.compact()).apply();
+                    main.post(new Runnable() { @Override public void run() { cb.onForecast(f); } });
+                } catch (Exception ignored) { }
+            }
+        }, "lumen-forecast").start();
     }
 
     private static JSONObject get(String url) throws Exception {

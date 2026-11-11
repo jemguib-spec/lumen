@@ -183,6 +183,9 @@ final class NotifyUi implements NotifyService.Listener {
 
     private boolean shadeOpen;
 
+    /** Le volet a quelque chose à montrer : des notifications permises, ou la météo d'une ville. */
+    boolean shadeUseful() { return on() || a.weather.hasCity(); }
+
     /** Le volet est ouvert (▼ le referme quand rien n'est plus bas). */
     boolean shadeOpen() { return shadeOpen && a.overlay != null; }
 
@@ -205,12 +208,13 @@ final class NotifyUi implements NotifyService.Listener {
         head.setOrientation(LinearLayout.HORIZONTAL);
         head.setGravity(Gravity.CENTER_VERTICAL);
         head.setPadding(a.u(16), 0, a.u(16), a.u(18));
+        // la date du jour, comme en tête d'un agenda ; le nombre de notifications à côté
         TextView title = a.text(32, "sans-serif-light", Palette.TEXT);
-        title.setText(L.t("Notifications"));
+        title.setText(DateLine.format(java.util.Calendar.getInstance(), L.lang()));
         head.addView(title);
         final List<NotifyService.Item> items = visibleItems();
-        TextView count = a.text(22, "sans-serif-medium", Palette.TEXT_3);
-        count.setText(items.isEmpty() ? "" : String.valueOf(items.size()));
+        TextView count = a.text(22, "sans-serif", Palette.TEXT_3);
+        count.setText(items.isEmpty() ? "" : "·   " + (items.size() == 1 ? L.t("1 notification") : items.size() + L.t(" notifications")));
         LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         cl.leftMargin = a.u(14);
         head.addView(count, cl);
@@ -229,6 +233,9 @@ final class NotifyUi implements NotifyService.Listener {
         band.addView(hs, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         View first = null;
+        // la météo d'abord, à gauche ; les notifications à côté
+        View wx = weatherCell();
+        if (wx != null) row.addView(wx, cellLp(row));
         for (final NotifyService.Item it : items) {
             boolean hidden = locked(it.pkg);
             String appName = Install.label(a, it.pkg);
@@ -242,7 +249,7 @@ final class NotifyUi implements NotifyService.Listener {
             row.addView(c, cellLp(row));
             if (first == null) first = c;
         }
-        if (items.isEmpty()) {
+        if (items.isEmpty() && on()) {
             boolean granted = NotifyService.granted(a);
             first = cell(null, "", L.t("Aucune notification"),
                     granted ? L.t("Les nouvelles sorties et messages des applis apparaîtront ici.") : L.t("OK : autoriser Lumen à lire les notifications"),
@@ -254,7 +261,7 @@ final class NotifyUi implements NotifyService.Listener {
                         }
                     });
             row.addView(first, cellLp(row));
-        } else {
+        } else if (!items.isEmpty()) {
             row.addView(cell(null, "", L.t("Tout effacer"), L.t("Seulement de l'accueil"), a.u(260), new View.OnClickListener() {
                 @Override public void onClick(View v) { NotifyService.forgetAll(); a.closeOverlay(true); }
             }), cellLp(row));
@@ -264,7 +271,169 @@ final class NotifyUi implements NotifyService.Listener {
         bl.leftMargin = bl.rightMargin = a.u(48);
         bl.topMargin = a.u(36);
         o.addView(band, bl);
+        if (first == null) first = wx;
         if (first != null) first.requestFocus();
+    }
+
+    // ------------------------------------------------------------------ météo du volet
+
+    /** Texte qui passe du blanc au sombre quand sa carte est sélectionnée. */
+    private static void tint(GlassUi.Row c, final TextView t, final int rest, final int selected) {
+        c.follow(new GlassUi.Row.Tint() { @Override public void at(float k) { t.setTextColor(Palette.mix(rest, selected, k)); } });
+    }
+
+    private static void tint(GlassUi.Row c, final Glyph g) {
+        c.follow(new GlassUi.Row.Tint() { @Override public void at(float k) { g.setColor(Palette.mix(Palette.TEXT, Palette.ON_SELECTED, k)); } });
+    }
+
+    private static int glyphFor(int code) {
+        switch (Forecast.kind(code)) {
+            case Forecast.CLEAR: return Glyph.SUN;
+            case Forecast.PARTLY: return Glyph.PARTLY;
+            case Forecast.FOG: return Glyph.FOG;
+            case Forecast.RAIN: return Glyph.RAIN;
+            case Forecast.SNOW: return Glyph.SNOW;
+            case Forecast.STORM: return Glyph.STORM;
+            default: return Glyph.CLOUD;
+        }
+    }
+
+    private ImageView glyphView(Glyph g) {
+        ImageView iv = new ImageView(a);
+        iv.setImageDrawable(g);
+        return iv;
+    }
+
+    /**
+     * Météo du volet, dans le style des cartes de notification : grand pictogramme au trait et
+     * température, le ciel et les extrêmes du jour, puis les trois jours suivants et le soleil
+     * (lever, coucher, calculés sur la TV). Sans ville : OK pour en choisir une. Remplie depuis le
+     * cache tout de suite, puis mise à jour si une prévision plus fraîche arrive.
+     */
+    private View weatherCell() {
+        if (!a.weather.hasCity()) {
+            if (a.prefs.isKidProfile()) return null;
+            return cell(null, L.t("Météo"), L.t("Choisir une ville"), L.t("OK : la météo et les prochains jours s'afficheront ici"), a.u(440),
+                    new View.OnClickListener() {
+                        @Override public void onClick(View v) { a.closeOverlay(false); CityPanel.openCityInput(a); }
+                    });
+        }
+        final GlassUi.Row c = new GlassUi.Row(a);
+        c.setOrientation(LinearLayout.VERTICAL);
+        c.setFocusable(true);
+        c.setClickable(true);
+        c.setSoundEffectsEnabled(false);
+        final int pad = a.u(Radius.NOTE_PAD);
+        c.setPadding(pad, pad, pad, pad);
+        c.setMinimumWidth(a.u(600));
+        final GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(a.u(Radius.ROW)); // posée à PAD des bords de la bande : rayon externe = interne + marge
+        c.setBackground(bg);
+        c.follow(new GlassUi.Row.Tint() { @Override public void at(float k) { bg.setColor(Palette.mix(0x14FFFFFF, Palette.SELECTED, k)); } });
+        c.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override public void onFocusChange(View v, boolean f) { if (f) Sounds.get(a).tick(); c.select(f); }
+        });
+        c.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { Sounds.get(a).tock(); a.showNotice(L.t("Ville de la météo : Réglages › Mode veille › Météo")); }
+        });
+
+        final TextView meta = a.text(15, "sans-serif-medium", Palette.TEXT_3);
+        meta.setLetterSpacing(0.08f);
+        meta.setSingleLine(true);
+        meta.setEllipsize(TextUtils.TruncateAt.END);
+        meta.setText((L.t("Météo") + " · " + a.weather.city()).toUpperCase(java.util.Locale.FRANCE));
+        tint(c, meta, Palette.TEXT_3, Palette.ON_SELECTED_2);
+        c.addView(meta);
+
+        // maintenant : pictogramme, température en grand, ciel et extrêmes du jour
+        LinearLayout now = new LinearLayout(a);
+        now.setOrientation(LinearLayout.HORIZONTAL);
+        now.setGravity(Gravity.CENTER_VERTICAL);
+        final Glyph big = new Glyph(Glyph.CLOUD, Palette.TEXT);
+        tint(c, big);
+        LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(a.u(64), a.u(64));
+        bl.rightMargin = a.u(16);
+        now.addView(glyphView(big), bl);
+        final TextView temp = a.text(58, "sans-serif-light", Palette.TEXT);
+        temp.setText("—");
+        tint(c, temp, Palette.TEXT, Palette.ON_SELECTED);
+        now.addView(temp);
+        LinearLayout sky = new LinearLayout(a);
+        sky.setOrientation(LinearLayout.VERTICAL);
+        final TextView cond = a.text(21, "sans-serif-medium", Palette.TEXT);
+        cond.setSingleLine(true);
+        cond.setEllipsize(TextUtils.TruncateAt.END);
+        tint(c, cond, Palette.TEXT, Palette.ON_SELECTED);
+        sky.addView(cond);
+        final TextView range = a.text(18, "sans-serif", Palette.TEXT_2);
+        tint(c, range, Palette.TEXT_2, Palette.ON_SELECTED_2);
+        LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rl.topMargin = a.u(4);
+        sky.addView(range, rl);
+        LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        sl.leftMargin = a.u(20);
+        now.addView(sky, sl);
+        LinearLayout.LayoutParams nl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        nl.topMargin = a.u(6);
+        c.addView(now, nl);
+
+        // les trois jours suivants, côte à côte ; le soleil dessous
+        final LinearLayout days = new LinearLayout(a);
+        days.setOrientation(LinearLayout.HORIZONTAL);
+        days.setVisibility(View.GONE);
+        final TextView[] dayName = new TextView[3], dayTemp = new TextView[3];
+        final Glyph[] dayGlyph = new Glyph[3];
+        for (int i = 0; i < 3; i++) {
+            LinearLayout col = new LinearLayout(a);
+            col.setOrientation(LinearLayout.HORIZONTAL);
+            col.setGravity(Gravity.CENTER_VERTICAL);
+            dayName[i] = a.text(16, "sans-serif-medium", Palette.TEXT_3);
+            tint(c, dayName[i], Palette.TEXT_3, Palette.ON_SELECTED_2);
+            col.addView(dayName[i]);
+            dayGlyph[i] = new Glyph(Glyph.CLOUD, Palette.TEXT);
+            tint(c, dayGlyph[i]);
+            LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(a.u(30), a.u(30));
+            il.leftMargin = il.rightMargin = a.u(8);
+            col.addView(glyphView(dayGlyph[i]), il);
+            dayTemp[i] = a.text(17, "sans-serif", Palette.TEXT_2);
+            tint(c, dayTemp[i], Palette.TEXT_2, Palette.ON_SELECTED_2);
+            col.addView(dayTemp[i]);
+            days.addView(col, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        }
+        LinearLayout.LayoutParams dl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dl.topMargin = a.u(16);
+        c.addView(days, dl);
+        final TextView sun = a.text(17, "sans-serif", Palette.TEXT_3);
+        java.util.Calendar today = java.util.Calendar.getInstance();
+        int rise = Sky.sunrise(today), set = Sky.sunset(today);
+        sun.setText(rise >= 0 && set >= 0 ? L.t("Soleil") + "   ↑ " + Sky.hhmm(rise) + "   ↓ " + Sky.hhmm(set) : "");
+        sun.setVisibility(sun.getText().length() == 0 ? View.GONE : View.VISIBLE);
+        tint(c, sun, Palette.TEXT_3, Palette.ON_SELECTED_2);
+        LinearLayout.LayoutParams ul = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        ul.topMargin = a.u(12);
+        c.addView(sun, ul);
+
+        c.setContentDescription(L.t("Météo") + " " + a.weather.city());
+        a.weather.forecast(new Weather.ForecastCallback() {
+            @Override public void onForecast(Forecast f) {
+                big.setType(glyphFor(f.code));
+                temp.setText(Forecast.degrees(f.temp));
+                cond.setText(L.t(Forecast.describe(f.code)));
+                if (f.max.length > 0) range.setText("↑ " + Forecast.degrees(f.max[0]) + "    ↓ " + Forecast.degrees(f.min[0]));
+                java.util.Calendar day = java.util.Calendar.getInstance();
+                int shown = 0;
+                for (int i = 0; i < 3 && i + 1 < f.codes.length; i++) {
+                    day.add(java.util.Calendar.DAY_OF_MONTH, 1);
+                    dayName[i].setText(DateLine.shortDay(day, L.lang()).toUpperCase(java.util.Locale.FRANCE));
+                    dayGlyph[i].setType(glyphFor(f.codes[i + 1]));
+                    dayTemp[i].setText(Forecast.degrees(f.max[i + 1]) + "  " + Forecast.degrees(f.min[i + 1]));
+                    shown++;
+                }
+                days.setVisibility(shown > 0 ? View.VISIBLE : View.GONE);
+                c.setContentDescription(L.t("Météo") + " " + a.weather.city() + ". " + temp.getText() + ", " + cond.getText() + ". " + range.getText());
+            }
+        });
+        return c;
     }
 
     private List<NotifyService.Item> visibleItems() {

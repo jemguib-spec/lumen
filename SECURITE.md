@@ -15,7 +15,7 @@
 
 ## Réseau sortant (`NetPolicy`, `Net`)
 - HTTPS obligatoire, port 443 uniquement, pas d'identifiants dans les adresses.
-- Liste blanche stricte : `raw.githubusercontent.com` (mise à jour : `dist/latest.json` du dépôt, toutes les 6 heures au plus ou à l'ouverture de Réglages › Système, désactivable), `github.com` **uniquement** pour un fichier sous `/jemguib-spec/lumen/releases/download/` (l'APK de la Release ; l'adresse est recomposée par Lumen à partir du numéro de version, jamais reprise telle quelle du fichier) et ses redirections `objects.githubusercontent.com` / `release-assets.githubusercontent.com`, `commons.wikimedia.org`, `upload.wikimedia.org`, `thumb.wikimedia.org` (aperçus), `api.open-meteo.com`, `geocoding-api.open-meteo.com` (météo seulement si une ville est réglée). `api.pexels.com`, `videos.pexels.com`, `images.pexels.com` ne sont joignables que si l'utilisateur a réglé sa propre clé Pexels ; la clé n'est envoyée qu'à `api.pexels.com`, jamais après une redirection, et n'est jamais renvoyée au téléphone.
+- Liste blanche stricte : `raw.githubusercontent.com` (mise à jour : `dist/latest.json` du dépôt, toutes les 6 heures au plus ou à l'ouverture de Réglages › Système, désactivable), `github.com` **uniquement** pour un fichier sous `/jemguib-spec/lumen/releases/download/` (l'APK de la Release ; l'adresse est recomposée par Lumen à partir du numéro de version, jamais reprise telle quelle du fichier) et ses redirections `objects.githubusercontent.com` / `release-assets.githubusercontent.com`, `commons.wikimedia.org`, `upload.wikimedia.org`, `thumb.wikimedia.org` (aperçus), `api.open-meteo.com`, `geocoding-api.open-meteo.com` (météo et prévision des jours suivants, au plus toutes les 30 min, seulement si une ville est réglée). `api.pexels.com`, `videos.pexels.com`, `images.pexels.com` ne sont joignables que si l'utilisateur a réglé sa propre clé Pexels ; la clé n'est envoyée qu'à `api.pexels.com`, jamais après une redirection, et n'est jamais renvoyée au téléphone.
 - Les redirections sont suivies à la main et chaque destination est revérifiée.
 - Certificats validés par le magasin système d'Android ; les certificats ajoutés par l'utilisateur ne sont pas acceptés (cible Android 29). Le trafic en clair est interdit (`usesCleartextTraffic=false`).
 - Réponses et fichiers plafonnés en taille.
@@ -131,6 +131,7 @@
 | `ScreenSaver` | Lumen comme économiseur d'écran |
 | `NotifyService`, `NotifyPolicy`, `NotifyUi` | Notifications des applis sur l'accueil (facultatif) : lecture locale et en mémoire, tri de ce qui mérite d'être montré, carte, cloche et liste |
 | `TvQuickPanel` | Paramètres de la TV en un appui (réseau, Bluetooth, son, image, entrées) : ouvre les écrans d'Android, ne change rien lui-même |
+| `Forecast` | Prévision du volet (maintenant et trois jours) : mots et pictogrammes du ciel, cache texte |
 | `DateLine`, `DateClock` | Date sous l'horloge et dans le mode veille, dans la langue de Lumen |
 | `Sky` | Lever / coucher du soleil, phase de lune, saisons (calcul local, sans réseau) |
 | `TopShelf`, `WatchNext`, `WatchNextFormat` | « Reprendre » au-dessus des applis : lecture des « en cours » publiés par les applis, affiches contrôlées |

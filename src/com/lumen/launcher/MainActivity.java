@@ -909,8 +909,8 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
                 // au bout de la ligne : une carte de « Reprendre » ou une scène, plus haut, ne compte pas comme voisine
                 if (next == null || !(f.getParent() instanceof View) || !isInside(next, (View) f.getParent())) { RecoPanel.open(MainActivity.this); return true; }
             }
-            // Geste haut depuis le haut de l'accueil (boutons ronds) → volet des notifications
-            if (!appsOpen && code == KeyEvent.KEYCODE_DPAD_UP && f != null && isInside(f, homeLayer) && notify.on()) {
+            // Geste haut depuis le haut de l'accueil (boutons ronds) → volet : météo et notifications
+            if (!appsOpen && code == KeyEvent.KEYCODE_DPAD_UP && f != null && isInside(f, homeLayer) && notify.shadeUseful()) {
                 View next = f.focusSearch(View.FOCUS_UP);
                 if (next == null || !isInside(next, homeLayer)) { notify.openShade(); return true; }
             }
