@@ -1,7 +1,7 @@
 {
-  "version": "4.25.1",
-  "size": 4072960,
-  "sha256": "ecb72c1a7bf29a3485379daf23ff66214b671bbbd921a9e238b82217c1628229",
-  "file": "Lumen-4.25.1.apk",
-  "notes": "- Mise à jour : Android ne rouvre plus la dernière appli lancée pendant que Lumen se remplace. L'installation passe par l'écran d'installation d'Android, qui reste affiché (« Installation… ») jusqu'au retour de Lumen.\n- Si cet écran ne s'ouvre pas ou n'aboutit pas sur ta TV, l'essai suivant reprend l'ancienne méthode : une mise à jour ne peut pas rester bloquée."
+  "version": "4.26.0",
+  "size": 4077056,
+  "sha256": "224587184c677be6b2cc6705529e55051270848f16fd5e287b4c27a4b108054f",
+  "file": "Lumen-4.26.0.apk",
+  "notes": "- Nouveau bouton haut-parleur en haut de l'accueil, à côté de Réglages : un appui coupe les sons de Lumen (le haut-parleur est alors barré), un autre les remet.\n- Nouvelle rubrique Réglages › Sons : couper les sons de Lumen, choisir leur jeu et leur volume.\n- Une touche de la télécommande sans rôle peut aussi être reliée à « Couper ou remettre les sons ».\n- Quatre jeux de sons : Cristal (les sons d'origine), Bois (marimba), Gouttes (gouttes d'eau) et Ouate (très doux, plus grave). ◀ ▶ sur « Jeu de sons » ou « Volume » fait entendre le changement aussitôt ; « Écouter » le rejoue.\n- Volume en cinq crans, de « Très bas » à « Très fort ». Seuls les sons de Lumen changent : le volume de la TV, des applis et des vidéos reste le même.\n- Réglable aussi depuis le téléphone (Réglages › Accueil), par profil, et repris dans la sauvegarde des réglages. La recherche trouve la page avec « sons », « bip », « volume » ou « muet »."
 }
