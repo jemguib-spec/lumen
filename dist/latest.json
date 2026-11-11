@@ -1,7 +1,7 @@
 {
-  "version": "4.26.0",
+  "version": "4.26.1",
   "size": 4077056,
-  "sha256": "224587184c677be6b2cc6705529e55051270848f16fd5e287b4c27a4b108054f",
-  "file": "Lumen-4.26.0.apk",
-  "notes": "- Nouveau bouton haut-parleur en haut de l'accueil, à côté de Réglages : un appui coupe les sons de Lumen (le haut-parleur est alors barré), un autre les remet.\n- Nouvelle rubrique Réglages › Sons : couper les sons de Lumen, choisir leur jeu et leur volume.\n- Une touche de la télécommande sans rôle peut aussi être reliée à « Couper ou remettre les sons ».\n- Quatre jeux de sons : Cristal (les sons d'origine), Bois (marimba), Gouttes (gouttes d'eau) et Ouate (très doux, plus grave). ◀ ▶ sur « Jeu de sons » ou « Volume » fait entendre le changement aussitôt ; « Écouter » le rejoue.\n- Volume en cinq crans, de « Très bas » à « Très fort ». Seuls les sons de Lumen changent : le volume de la TV, des applis et des vidéos reste le même.\n- Réglable aussi depuis le téléphone (Réglages › Accueil), par profil, et repris dans la sauvegarde des réglages. La recherche trouve la page avec « sons », « bip », « volume » ou « muet »."
+  "sha256": "0135612b3904ec7cb08ad88dfee31fc0067e3a1e780ac2c342a4cdf56bd7d74d",
+  "file": "Lumen-4.26.1.apk",
+  "notes": "- Une seule règle pour tous les coins arrondis, partout : quand un élément arrondi est posé dans un autre, son coin suit celui qui l'entoure (rayon extérieur = rayon intérieur + marge). Menus, réglages et leurs pastilles de rubrique, fenêtres de saisie, code PIN, À l'affiche, tuiles Maison, vignettes à cocher, barre de progression des programmes.\n- Page du téléphone : même règle pour les listes et tout ce qui touche leur bord (icônes, cases, boutons, menus déroulants, interrupteurs), les onglets, les vignettes et leurs pastilles.\n- Les pastilles (puces, notifications, recherche) sont arrondies en entier ; plus aucun rayon n'est choisi au cas par cas.\n- Code PIN : les touches occupent toute la largeur de la fenêtre."
 }
