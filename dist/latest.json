@@ -1,7 +1,7 @@
 {
-  "version": "4.24.1",
-  "size": 4060672,
-  "sha256": "1ae2a17512f7226de3a1a712d5583262919c77ce4ea856ef97966504cbfd3b0e",
-  "file": "Lumen-4.24.1.apk",
-  "notes": "- Fond immersif : avec plusieurs films ou épisodes en cours dans une appli, le fond suit maintenant celui qui est sélectionné dans « Reprendre » (avant, il restait sur le premier).\n- ▶ sur la dernière appli d'une ligne ouvre bien « À l'affiche » (et ◀ sur la première, « Reprendre »), même quand les cartes « Reprendre » de l'appli sont affichées au-dessus : la sélection ne part plus dans ces cartes."
+  "version": "4.24.2",
+  "size": 4064768,
+  "sha256": "b3850e15e5e5690d5ac4215671152f143303483c8b48a8a196cf860a009809ef",
+  "file": "Lumen-4.24.2.apk",
+  "notes": "- Home Assistant en https sur le réseau local avec un certificat auto-signé (ex. https://192.168.1.20:8123) : la liaison fonctionne. Lumen retient ce certificat à la liaison et n'accepte ensuite que lui ; refais la liaison depuis le téléphone (Plus › Home Assistant) pour en profiter."
 }
