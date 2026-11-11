@@ -1,7 +1,7 @@
 {
-  "version": "4.26.3",
-  "size": 4077056,
-  "sha256": "a5a60af0d192af67cb609ad20a717eaf3c4ecd3900cf6238baedb9e4cc3da096",
-  "file": "Lumen-4.26.3.apk",
-  "notes": "- Réglages : les pastilles d'icône devant les rubriques (Vignettes et disposition, Reprendre, Lisibilité, À l'affiche…) s'affichent en entier ; elles étaient coupées sur leur côté gauche."
+  "version": "4.27.0",
+  "size": 4093440,
+  "sha256": "8956a388a9f92cb18b7b38fd7acc23a51a21c0b923151db16c0af7d5224909b7",
+  "file": "Lumen-4.27.0.apk",
+  "notes": "- Notifications des applis en grand : quand une appli annonce une nouvelle sortie, un nouvel épisode ou un message, une grande carte de verre l'affiche en haut de l'accueil, avec l'icône et le nom de l'appli. Retour l'efface. Elle reste ensuite sous la cloche, un nouveau bouton qui n'apparaît que s'il y a des notifications : OK en ouvre une dans son appli.\n- Nouvelle rubrique Réglages › Notifications : activer ou couper, accès aux notifications (écran d'Android, ou commande ADB si la TV le cache), durée à l'écran (6, 10 ou 20 s), couper une appli, dernières notifications, « Essayer ». Les notifications ne sont ni enregistrées ni envoyées ; rien dans un profil enfant ; une appli verrouillée par code ne montre que son nom.\n- Nouveau bouton Paramètres de la TV en haut de l'accueil : réseau et Internet, télécommandes et accessoires Bluetooth, son, image, entrées et tous les paramètres, en un appui (code PIN demandé s'il y en a un). La touche de télécommande reliée à « Paramètres de la TV » ouvre aussi ce panneau.\n- Le bouton rond sélectionné affiche son nom juste dessous : plus besoin de deviner ce que font ✦ ou l'icône des entrées.\n- Le bouton Sons (haut-parleur) est masqué par défaut ; Réglages › Sons › Bouton Sons sur l'accueil le remet (réglable aussi depuis le téléphone).\n- Le bouton Entrées n'apparaît que si la TV a des entrées (HDMI, chaînes).\n- La date sous l'horloge et dans le mode veille suit la langue de Lumen (« Mercredi 11 novembre ») même si Android est réglé dans une autre langue.\n- Réglages : le nom d'une ligne n'est plus coupé par sa valeur ; c'est la valeur qui se raccourcit (« À jour · 4.27.0 »). Un petit chevron en bas des panneaux indique qu'il reste des lignes plus bas.\n- Profils : la phrase d'explication s'affiche en casse normale, plus lisible.\n- Accueil presque vide (premier lancement) : une ligne explique comment ajouter ses applis aux favoris."
 }
