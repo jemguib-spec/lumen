@@ -1,7 +1,7 @@
 {
-  "version": "4.28.0",
+  "version": "4.28.1",
   "size": 4097536,
-  "sha256": "65d3277ae8e09f36c2e8cbfce35db5c86705f2b4088fdf6db3322449f6e0dda4",
-  "file": "Lumen-4.28.0.apk",
-  "notes": "- Tous les boutons ronds de l'accueil se masquent ou s'affichent, chacun avec son interrupteur, au même endroit : Réglages › Accueil et applis › Boutons de l'accueil. Notifications, Rechercher, Ambiances, Entrées, Maison, Profils, Toutes les applications, Paramètres de la TV, Sons et Réglages ; par profil, repris dans la sauvegarde des réglages.\n- La cloche, Entrées et Profils gardent en plus leur condition (une notification qui attend, une TV qui a des entrées, au moins deux profils) ; Maison et Sons restent masqués par défaut.\n- Bouton Réglages masqué : les réglages restent accessibles par la touche Menu, ou ▼ puis la recherche « réglages ».\n- Les réglages des boutons Maison et Sons quittent leurs anciennes pages pour cette page unique (rien n'est perdu : ils gardent leur état)."
+  "sha256": "7f8d9bb5a1f9b22b3eaf16b33d5ef42e2a0f4365ae24784d1502de0b0e8b5d2a",
+  "file": "Lumen-4.28.1.apk",
+  "notes": "- Notifications des applis plus discrètes : une petite carte de verre à gauche de l'accueil, sous le nom du fond, au lieu de la grande carte au milieu en haut. Icône, nom de l'appli, titre et deux lignes de texte au plus ; elle glisse depuis la gauche.\n- Réglages › Notifications : « Afficher les notifications sur l'accueil »."
 }
