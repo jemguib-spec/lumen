@@ -25,7 +25,7 @@ final class PhoneBridge implements PhoneServer.Host {
 
     @Override public void onSettingsChangedFromPhone(boolean wallChanged) {
         if (wallChanged) a.wall.restart();
-        Sounds.get(a).setEnabled(a.prefs.sounds());
+        Sounds.get(a).apply(a.prefs);
         a.clockBox.setVisibility(a.prefs.showClock() ? View.VISIBLE : View.GONE);
         if (a.houseButton != null) a.houseButton.setVisibility(a.prefs.haButton() ? View.VISIBLE : View.GONE);
         a.refreshGreeting();

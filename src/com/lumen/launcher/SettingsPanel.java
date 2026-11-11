@@ -34,7 +34,7 @@ final class SettingsPanel {
         FrameLayout o = a.openOverlay(new Runnable() {
             @Override public void run() {
                 a.clockBox.setVisibility(a.prefs.showClock() ? View.VISIBLE : View.GONE);
-                Sounds.get(a).setEnabled(a.prefs.sounds());
+                Sounds.get(a).apply(a.prefs);
                 if (!a.prefs.appGlow()) a.glow.fade();
                 if (!a.prefs.immersive()) a.immersive.clear(true);
                 a.backdropChanged(); // « Couleurs accordées au fond » a pu changer
@@ -85,12 +85,12 @@ final class SettingsPanel {
     // numéros repris dans SettingsIndex (recherche) : à garder identiques
     static final int ROOT = 0, FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5,
             ABOUT = 6, LICENCES = 7, CREDITS = 8, LICENCE_INTER = 9, CITIES = 10, HIDDEN = 11, SCREENSAVER = 12, LICENCE_GPL = 13, INSTALL = 14,
-            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21, TOUCHES = 22, TOUCHE = 23;
+            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21, TOUCHES = 22, TOUCHE = 23, SONS = 24;
     private static final String[] TITLES = {"Réglages", "Fond d'écran", "Accueil et applis", "Mode veille", "Ambiances",
             "Système", "À propos", "Licences", "Crédits des fonds", "Police Inter", "Villes", "Applis masquées", "Économiseur d'écran", "Licence de Lumen", "Installation",
-            "Paysages Lumen", "Avancé", "Vignettes et disposition", "Reprendre", "Lisibilité", "Diagnostic", "À l'affiche", "Télécommande", "Fonction de la touche"};
+            "Paysages Lumen", "Avancé", "Vignettes et disposition", "Reprendre", "Lisibilité", "Diagnostic", "À l'affiche", "Télécommande", "Fonction de la touche", "Sons"};
     private static final int[] PARENT = {ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, SYSTEME, SYSTEME, LICENCES, LICENCES, FOND, ACCUEIL, VEILLE, LICENCES, SYSTEME,
-            FOND, FOND, ACCUEIL, ACCUEIL, ACCUEIL, SYSTEME, ACCUEIL, ROOT, TOUCHES};
+            FOND, FOND, ACCUEIL, ACCUEIL, ACCUEIL, SYSTEME, ACCUEIL, ROOT, TOUCHES, ROOT};
     private static boolean[] citiesChanged;
     private static int page = ROOT, lastRubric = -1;
     private static LinearLayout openCard;
@@ -213,13 +213,15 @@ final class SettingsPanel {
                     rubric(a, card, Glyph.MOON, "Mode veille", new MainActivity.Value() { @Override public String get() {
                         int m = a.prefs.ambientMinutes(); return m <= 0 ? L.t("Jamais") : m + L.t(" min"); } }, VEILLE),
                     rubric(a, card, Glyph.SPARK, L.t("Ambiances"), null, AMBIANCES),
+                    rubric(a, card, Glyph.SOUND, L.t("Sons"), new MainActivity.Value() { @Override public String get() {
+                        return a.prefs.sounds() ? L.t(SoundDesign.THEME_NAMES[a.prefs.soundTheme()]) + " · " + L.t(SoundDesign.VOLUME_NAMES[a.prefs.soundVolume()]) : L.t("Coupés"); } }, SONS),
                     null,
                     null,
                     rubric(a, card, Glyph.SWITCH, L.t("Télécommande"), new MainActivity.Value() { @Override public String get() {
                         int n = linkedKeys(a); return n == 0 ? "" : n + (n > 1 ? L.t(" touches reliées") : L.t(" touche reliée")); } }, TOUCHES),
                     rubric(a, card, Glyph.GEAR, "Système", new MainActivity.Value() { @Override public String get() {
                         return a.updater.ready() != null ? L.t("Mise à jour prête") : L.t("Lumen ") + a.updater.currentVersion(); } }, SYSTEME)};
-                int[] targets = {FOND, ACCUEIL, VEILLE, AMBIANCES, -3, -2, TOUCHES, SYSTEME};
+                int[] targets = {FOND, ACCUEIL, VEILLE, AMBIANCES, SONS, -3, -2, TOUCHES, SYSTEME};
                 for (int i = 0; i < rows.length; i++) {
                     if (rows[i] == null && targets[i] == -3) {
                         col.addView(a.listRow(L.t("Profils"), new MainActivity.Value() {
@@ -598,12 +600,29 @@ final class SettingsPanel {
                 }, new Runnable() {
                     @Override public void run() { a.prefs.setHighContrast(!a.prefs.highContrast()); a.restyle(); }
                 }), a.rowLp());
+                hint(a, col, L.t("Avec TalkBack (Paramètres de la TV › Accessibilité), chaque élément est annoncé avec sa valeur."));
+                break;
+            }
+            case SONS: {
                 col.addView(toggle(a, L.t("Sons de l'interface"), new GlassUi.Bool() {
                     @Override public boolean get() { return a.prefs.sounds(); }
                 }, new Runnable() {
-                    @Override public void run() { a.prefs.setSounds(!a.prefs.sounds()); Sounds.get(a).setEnabled(a.prefs.sounds()); }
+                    @Override public void run() { a.prefs.setSounds(!a.prefs.sounds()); Sounds.get(a).apply(a.prefs); }
                 }), a.rowLp());
-                hint(a, col, L.t("Avec TalkBack (Paramètres de la TV › Accessibilité), chaque élément est annoncé avec sa valeur."));
+                col.addView(a.ui.choiceRow(L.t("Jeu de sons"), L.all(SoundDesign.THEME_NAMES), new GlassUi.IntValue() {
+                    @Override public int get() { return a.prefs.soundTheme(); }
+                }, new GlassUi.IntSetter() {
+                    @Override public void set(int i) { a.prefs.setSoundTheme(i); Sounds.get(a).apply(a.prefs); Sounds.get(a).preview(); }
+                }), a.rowLp());
+                col.addView(a.ui.choiceRow(L.t("Volume"), L.all(SoundDesign.VOLUME_NAMES), new GlassUi.IntValue() {
+                    @Override public int get() { return a.prefs.soundVolume(); }
+                }, new GlassUi.IntSetter() {
+                    @Override public void set(int i) { a.prefs.setSoundVolume(i); Sounds.get(a).apply(a.prefs); Sounds.get(a).preview(); }
+                }), a.rowLp());
+                col.addView(a.listRow(L.t("Écouter"), null, new View.OnClickListener() {
+                    @Override public void onClick(View v) { Sounds.get(a).preview(); }
+                }), a.rowLp());
+                hint(a, col, L.t("◀ ▶ pour changer de jeu ou de volume : le son se fait entendre aussitôt. Seuls les sons de Lumen changent, pas le volume de la TV, des applis ni des vidéos."));
                 break;
             }
             case VEILLE: {

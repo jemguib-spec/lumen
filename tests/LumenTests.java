@@ -549,6 +549,32 @@ public class LumenTests {
         check("télécommande : liaisons reprises dans la sauvegarde", Backup.typeOf("remote_keys") == Backup.STRING && Backup.typeOf("remote_ask") == Backup.BOOL);
         check("recherche : « télécommande » mène à la page des touches", !SettingsIndex.search("telecommande", 6).isEmpty()
                 && SettingsIndex.search("touches", 6).get(0).page == SettingsIndex.TOUCHES);
+        // ---- sons de l'interface : jeux et volume
+        boolean sndOk = true;
+        for (int th = 0; th < SoundDesign.THEME_NAMES.length; th++)
+            for (int sd = 0; sd < SoundDesign.COUNT; sd++) {
+                short[] pcm = SoundDesign.synth(th, sd);
+                int peak = 0;
+                for (short x : pcm) peak = Math.max(peak, Math.abs(x));
+                // un son audible, jamais saturé, qui finit en silence (pas de clic), en moins de 2 s
+                sndOk &= pcm.length > 0 && pcm.length < 2 * SoundDesign.RATE && peak > 500 && peak < 16000
+                        && Math.abs(pcm[pcm.length - 1]) < 100 && SoundDesign.fileName(th, sd).endsWith(".wav");
+            }
+        check("sons : chaque jeu a ses cinq sons, doux et sans clic", sndOk);
+        check("sons : le jeu d'origine est inchangé", java.util.Arrays.equals(SoundDesign.synth(SoundDesign.CRISTAL, SoundDesign.TICK),
+                SoundDesign.tone(0.03f, 0.002f, 70f, 0.055f, 1760f)));
+        check("sons : jeux distincts (fichiers et timbres)", !SoundDesign.fileName(0, 1).equals(SoundDesign.fileName(1, 1))
+                && !java.util.Arrays.equals(SoundDesign.synth(0, 1), SoundDesign.synth(2, 1)));
+        boolean rising = true;
+        for (int v = 1; v < SoundDesign.VOLUME_NAMES.length; v++) rising &= SoundDesign.gain(SoundDesign.TOCK, v) > SoundDesign.gain(SoundDesign.TOCK, v - 1);
+        check("sons : le volume monte d'un cran à l'autre, sans dépasser 1", rising && SoundDesign.gain(SoundDesign.TOCK, 4) <= 1f
+                && SoundDesign.gain(SoundDesign.TOCK, SoundDesign.DEFAULT_VOLUME) == 0.6f && SoundDesign.gain(SoundDesign.TICK, 0) > 0f);
+        check("sons : valeurs inconnues ramenées au défaut", SoundDesign.theme(99) == SoundDesign.CRISTAL && SoundDesign.theme(-1) == SoundDesign.CRISTAL
+                && SoundDesign.volume(99) == SoundDesign.DEFAULT_VOLUME && SoundDesign.volume(3) == 3);
+        check("sons : jeu et volume repris dans la sauvegarde, bornés", Backup.typeOf("sound_theme") == Backup.INT && Backup.intOk("sound_volume", 4)
+                && !Backup.intOk("sound_volume", 5) && !Backup.intOk("sound_theme", -1));
+        check("recherche : « volume » et « muet » mènent à la page des sons", !SettingsIndex.search("volume", 6).isEmpty()
+                && SettingsIndex.search("volume", 6).get(0).page == SettingsIndex.SONS && SettingsIndex.search("muet", 6).get(0).page == SettingsIndex.SONS);
         check("bandeau : salutation selon l'heure", Greeting.hello(8).equals("Bonjour") && Greeting.hello(14).equals("Bon après-midi")
                 && Greeting.hello(20).equals("Bonsoir") && Greeting.hello(23).equals("Bonne nuit") && Greeting.hello(3).equals("Bonne nuit"));
         check("bandeau : ligne complète", Greeting.line(21, "", "12° · Pluie · Paris", "The Bear")

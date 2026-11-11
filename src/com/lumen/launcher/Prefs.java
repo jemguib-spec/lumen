@@ -175,6 +175,11 @@ final class Prefs {
 
     boolean sounds() { return sp.getBoolean("sounds", true); }
     void setSounds(boolean b) { sp.edit().putBoolean("sounds", b).apply(); }
+    /** Jeu de sons (SoundDesign.THEME_NAMES) et volume des sons de Lumen (SoundDesign.VOLUME_NAMES). */
+    int soundTheme() { return SoundDesign.theme(sp.getInt("sound_theme", SoundDesign.CRISTAL)); }
+    void setSoundTheme(int t) { sp.edit().putInt("sound_theme", SoundDesign.theme(t)).apply(); }
+    int soundVolume() { return SoundDesign.volume(sp.getInt("sound_volume", SoundDesign.DEFAULT_VOLUME)); }
+    void setSoundVolume(int v) { sp.edit().putInt("sound_volume", SoundDesign.volume(v)).apply(); }
 
     /** Mesures affichées en haut à gauche (diagnostic). */
     boolean showPerf() { return sp.getBoolean("show_perf", false); }

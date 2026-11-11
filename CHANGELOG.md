@@ -2,6 +2,13 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.26.0
+
+- Nouvelle rubrique Réglages › Sons : couper les sons de Lumen, choisir leur jeu et leur volume.
+- Quatre jeux de sons : Cristal (les sons d'origine), Bois (marimba), Gouttes (gouttes d'eau) et Ouate (très doux, plus grave). ◀ ▶ sur « Jeu de sons » ou « Volume » fait entendre le changement aussitôt ; « Écouter » le rejoue.
+- Volume en cinq crans, de « Très bas » à « Très fort ». Seuls les sons de Lumen changent : le volume de la TV, des applis et des vidéos reste le même.
+- Réglable aussi depuis le téléphone (Réglages › Accueil), par profil, et repris dans la sauvegarde des réglages. La recherche trouve la page avec « sons », « volume » ou « muet ».
+
 ## 4.25.1
 
 - Mise à jour : Android ne rouvre plus la dernière appli lancée pendant que Lumen se remplace. L'installation passe par l'écran d'installation d'Android, qui reste affiché (« Installation… ») jusqu'au retour de Lumen.

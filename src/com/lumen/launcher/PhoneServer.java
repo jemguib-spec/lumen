@@ -1029,6 +1029,8 @@ final class PhoneServer {
         o.put("night", pr.nightHour()).put("nights", ints(Prefs.NIGHT_HOURS));
         o.put("greeting", pr.greeting()).put("clock", pr.showClock()).put("sounds", pr.sounds())
                 .put("living", pr.livingScenes()).put("weatherFx", pr.weatherFx()).put("haButton", pr.haButton());
+        o.put("soundTheme", pr.soundTheme()).put("soundThemes", new JSONArray(java.util.Arrays.asList(L.all(SoundDesign.THEME_NAMES))));
+        o.put("soundVolume", pr.soundVolume()).put("soundVolumes", new JSONArray(java.util.Arrays.asList(L.all(SoundDesign.VOLUME_NAMES))));
         return o;
     }
 
@@ -1047,6 +1049,8 @@ final class PhoneServer {
             case "veille": okv = in(v, Prefs.VEILLE_CHOICES); break;
             case "ambient": okv = in(v, Prefs.AMBIENT_MIN); break;
             case "night": okv = in(v, Prefs.NIGHT_HOURS); break;
+            case "soundTheme": okv = v >= 0 && v < SoundDesign.THEME_NAMES.length; break;
+            case "soundVolume": okv = v >= 0 && v < SoundDesign.VOLUME_NAMES.length; break;
             case "follow": case "greeting": case "clock": case "sounds": case "living": case "weatherFx": case "haButton": okv = v == 0 || v == 1; break;
             default: return false;
         }
@@ -1064,11 +1068,14 @@ final class PhoneServer {
                     case "greeting": pr.setGreeting(b); break;
                     case "clock": pr.setShowClock(b); break;
                     case "sounds": pr.setSounds(b); break;
+                    case "soundTheme": pr.setSoundTheme(v); break;
+                    case "soundVolume": pr.setSoundVolume(v); break;
                     case "living": pr.setLivingScenes(b); wall = true; break;
                     case "weatherFx": pr.setWeatherFx(b); break;
                     case "haButton": pr.setHaButton(b); break;
                 }
                 host.onSettingsChangedFromPhone(wall);
+                if (k.equals("soundTheme") || k.equals("soundVolume")) Sounds.get(ctx).preview(); // entendu sur la TV
                 return true;
             }
         });

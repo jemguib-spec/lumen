@@ -855,6 +855,10 @@ function renderSettings() {
   h.appendChild(tgRow(t('Horloge'), 'clock'));
   h.appendChild(tgRow(t('Bouton Maison'), 'haButton'));
   h.appendChild(tgRow(t('Sons de l’interface'), 'sounds'));
+  if (SET.soundThemes) {
+    h.appendChild(selRow(t('Jeu de sons'), 'soundTheme', SET.soundThemes.map((_, i) => i), SET.soundThemes));
+    h.appendChild(selRow(t('Volume des sons'), 'soundVolume', SET.soundVolumes.map((_, i) => i), SET.soundVolumes));
+  }
   h.appendChild(tgRow(t('Icônes monochromes ici'), null, set => {
     let m = true; try { m = localStorage.getItem('lumen-mono') !== '0'; } catch (e) { }
     if (set) { m = !m; try { localStorage.setItem('lumen-mono', m ? '1' : '0'); } catch (e) { } document.body.classList.toggle('mono', m); }

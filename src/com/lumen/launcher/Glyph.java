@@ -14,7 +14,7 @@ import android.graphics.drawable.Drawable;
 final class Glyph extends Drawable {
     static final int GRID = 0, SLIDERS = 1, INPUT = 2, MOON = 3, IMAGE = 4, HOME = 5, PHONE = 6, GEAR = 7, INFO = 8, DOC = 9, SPARK = 10,
             MOVE = 11, STAR = 12, STAR_OFF = 13, HIDE = 14, LOCK = 15, TRASH = 16, UNLOCK = 17, CLOSE = 18, RESTART = 19, SEARCH = 20, PERSON = 21, MIC = 22, WIFI_OFF = 23, BATTERY_LOW = 24, UPDATE = 25,
-            BULB = 26, PLUG = 27, BLIND = 28, FAN = 29, PLAY = 30, SWITCH = 31;
+            BULB = 26, PLUG = 27, BLIND = 28, FAN = 29, PLAY = 30, SWITCH = 31, SOUND = 32;
     private final int type;
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -250,6 +250,14 @@ final class Glyph extends Drawable {
                 c.drawRoundRect(new RectF(cx - s * .36f, cy - s * .18f, cx + s * .36f, cy + s * .18f), s * .18f, s * .18f, p);
                 p.setStyle(Paint.Style.FILL);
                 c.drawCircle(cx + s * .17f, cy, s * .07f, p);
+                break;
+            }
+            case SOUND: { // haut-parleur et deux ondes : sons
+                q.moveTo(cx - s * .34f, cy - s * .10f); q.lineTo(cx - s * .20f, cy - s * .10f); q.lineTo(cx - s * .02f, cy - s * .28f);
+                q.lineTo(cx - s * .02f, cy + s * .28f); q.lineTo(cx - s * .20f, cy + s * .10f); q.lineTo(cx - s * .34f, cy + s * .10f); q.close();
+                c.drawPath(q, p);
+                c.drawArc(new RectF(cx - s * .10f, cy - s * .16f, cx + s * .22f, cy + s * .16f), -50f, 100f, false, p);
+                c.drawArc(new RectF(cx - s * .12f, cy - s * .32f, cx + s * .38f, cy + s * .32f), -50f, 100f, false, p);
                 break;
             }
             case MIC: { // micro : recherche vocale

@@ -138,7 +138,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         phone = new PhoneServer(this, phoneHost);
         double[] c = weather.coords();
         if (c != null) Sky.setLocation(c[0], c[1]);
-        Sounds.get(this).setEnabled(prefs.sounds());
+        Sounds.get(this).apply(prefs);
         ensureDefaultFavorites();
         addInputsOnce();
         builder.buildUi();
