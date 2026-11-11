@@ -181,10 +181,36 @@ final class Updater {
         return Arrays.equals(x, y);
     }
 
+    /**
+     * Installation par l'écran d'installation d'Android (celui qui sert pour un fichier APK ouvert
+     * à la main). Sa fenêtre « Installation… » appartient au système : elle reste à l'écran pendant
+     * qu'Android arrête et remplace Lumen. Sans elle, plus rien ne couvre l'écran à ce moment-là et
+     * Android rouvre la dernière appli lancée, jusqu'au retour de Lumen.
+     * Une seule tentative par version : si elle n'aboutit pas, l'essai suivant reprend l'ancienne voie.
+     */
+    private boolean installWithSystemScreen(String v) {
+        if (android.os.Build.VERSION.SDK_INT < 24 || v.equals(prefs.updateSystemScreenTried())) return false;
+        try {
+            Intent i = new Intent(Intent.ACTION_INSTALL_PACKAGE)
+                    .setData(ApkProvider.uri(ctx))
+                    .putExtra(Intent.EXTRA_INSTALLER_PACKAGE_NAME, ctx.getPackageName())
+                    // sa propre tâche : sinon elle serait fermée avec Lumen au moment du remplacement
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            if (ctx.getPackageManager().resolveActivity(i, 0) == null) return false;
+            prefs.setUpdateSystemScreenTried(v);
+            ctx.startActivity(i);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     /** Lance l'installation : Android affiche sa fenêtre de confirmation. */
     boolean install() {
         File f = ready();
         if (f == null) return false;
+        if (installWithSystemScreen(prefs.updateReadyVersion())) return true;
         try {
             PackageInstaller pi = ctx.getPackageManager().getPackageInstaller();
             PackageInstaller.SessionParams sp = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);

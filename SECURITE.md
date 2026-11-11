@@ -130,6 +130,7 @@
 | `ScreenSaver` | Lumen comme économiseur d'écran |
 | `Sky` | Lever / coucher du soleil, phase de lune, saisons (calcul local, sans réseau) |
 | `TopShelf`, `WatchNext`, `WatchNextFormat` | « Reprendre » au-dessus des applis : lecture des « en cours » publiés par les applis, affiches contrôlées |
+| `ApkProvider` | Prête le fichier de mise à jour déjà vérifié à l'installateur d'Android : non exporté, lecture seule, ce seul fichier, accès accordé le temps de l'installation |
 | `Updater`, `UpdatePolicy` | Mise à jour automatique : `dist/latest.json` du dépôt, APK de la GitHub Release de la version (adresse recomposée par Lumen, jamais reprise du fichier), vérification de l'empreinte et de la signature ; nouveautés nettoyées avant affichage |
 | `Install`, `InstallPolicy` | Assistant d'installation : état de l'accueil (lecture seule, `PackageManager`), commandes ADB à recopier ; Lumen ne désactive rien lui-même |
 | `LivingScene` | Animation des paysages Lumen (dessinée sur l'appareil) |

@@ -213,6 +213,10 @@ final class Prefs {
     boolean restarting() { return sp.getBoolean("restarting", false); }
     void setRestarting(boolean b) { sp.edit().putBoolean("restarting", b).commit(); }
 
+    /** Version déjà confiée une fois à l'écran d'installation d'Android (l'essai suivant prend l'autre voie). */
+    String updateSystemScreenTried() { return sp.getString("update_system_tried", ""); }
+    void setUpdateSystemScreenTried(String v) { sp.edit().putString("update_system_tried", v).commit(); }
+
     String updatePrompted() { return sp.getString("update_prompted", ""); }
     void setUpdatePrompted(String v) { sp.edit().putString("update_prompted", v).apply(); }
 

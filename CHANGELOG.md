@@ -2,6 +2,11 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.25.1
+
+- Mise à jour : Android ne rouvre plus la dernière appli lancée pendant que Lumen se remplace. L'installation passe par l'écran d'installation d'Android, qui reste affiché (« Installation… ») jusqu'au retour de Lumen.
+- Si cet écran ne s'ouvre pas ou n'aboutit pas sur ta TV, l'essai suivant reprend l'ancienne méthode : une mise à jour ne peut pas rester bloquée.
+
 ## 4.25.0
 
 - Touches de la télécommande sans rôle (Guide, Info, boutons de couleur, chiffres, boutons d'appli…) : quand tu appuies sur l'une d'elles depuis l'accueil, Lumen demande « Veux-tu la relier à une fonction ? ». Au choix : réglages de Lumen, retour, toutes les applis, recherche vocale, Reprendre, À l'affiche, Maison, mode veille, ambiances, paramètres de la TV, ou ouvrir l'appli de ton choix. « Ne rien faire » : Lumen ne redemande plus pour cette touche.

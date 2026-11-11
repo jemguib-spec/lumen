@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="fr.lumen.accueil"
-    android:versionCode="89"
-    android:versionName="4.25.0">
+    android:versionCode="90"
+    android:versionName="4.25.1">
 
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="29" />
 
@@ -78,6 +78,12 @@
         </service>
         <!-- Résultat de l'installation d'une mise à jour (interne à Lumen) -->
         <receiver android:name="com.lumen.launcher.Updater$UpdateReceiver" android:exported="false" />
+        <!-- Prête le fichier de mise à jour vérifié à l'installateur d'Android (lecture seule, accès accordé au cas par cas) -->
+        <provider
+            android:name="com.lumen.launcher.ApkProvider"
+            android:authorities="fr.lumen.accueil.update"
+            android:exported="false"
+            android:grantUriPermissions="true" />
         <!-- Après une mise à jour de Lumen : retour immédiat sur Lumen (pas sur l'accueil d'origine de la TV) -->
         <receiver android:name="com.lumen.launcher.Updater$ReplacedReceiver" android:exported="false">
             <intent-filter>
