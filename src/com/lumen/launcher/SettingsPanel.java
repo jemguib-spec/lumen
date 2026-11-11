@@ -151,14 +151,17 @@ final class SettingsPanel {
     static LinearLayout withIcon(final MainActivity a, final LinearLayout row, int glyphType) {
         final FrameLayout chip = new FrameLayout(a);
         final GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(a.u(12));
+        bg.setCornerRadius(a.u(Radius.CHIP)); // ligne (ROW) − marge (CHIP_PAD)
         bg.setColor(0x24FFFFFF);
         chip.setBackground(bg);
         final Glyph g = new Glyph(glyphType, 0xE6FFFFFF);
         ImageView iv = new ImageView(a);
         iv.setImageDrawable(g);
-        chip.addView(iv, new FrameLayout.LayoutParams(a.u(26), a.u(26), Gravity.CENTER));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(a.u(46), a.u(46));
+        chip.addView(iv, new FrameLayout.LayoutParams(a.u(30), a.u(30), Gravity.CENTER));
+        // carrée, à CHIP_PAD du haut, du bas et du bord gauche de la ligne (qui a 32 de marge à gauche)
+        int pad = a.u(Radius.CHIP_PAD), side = a.u(88 * a.textScale) - 2 * pad;
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(side, side);
+        lp.leftMargin = pad - row.getPaddingLeft();
         lp.rightMargin = a.u(22);
         row.addView(chip, 0, lp);
         if (row instanceof GlassUi.Row) ((GlassUi.Row) row).follow(new GlassUi.Row.Tint() {

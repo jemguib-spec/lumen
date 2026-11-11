@@ -147,7 +147,7 @@ final class RecoPanel {
             c.setSoundEffectsEnabled(false);
             c.setPadding(a.u(26), a.u(12), a.u(26), a.u(12));
             final GradientDrawable bg = new GradientDrawable();
-            bg.setCornerRadius(a.u(36));
+            bg.setCornerRadius(a.u(Radius.PILL));
             c.setBackground(bg);
             c.setTag(f[0]);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -264,7 +264,7 @@ final class RecoPanel {
     private static void styleMode(MainActivity a, TextView v, boolean selected, boolean focused) {
         v.setTextColor(focused ? Palette.ON_SELECTED : selected ? 0xFFFFFFFF : Palette.TEXT_3);
         GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(a.u(20));
+        bg.setCornerRadius(a.u(Radius.PILL));
         bg.setColor(focused ? Palette.SELECTED : 0x00FFFFFF);
         // trait fin sous le mode choisi
         android.graphics.drawable.LayerDrawable ld = new android.graphics.drawable.LayerDrawable(new android.graphics.drawable.Drawable[]{bg, line(a, selected && !focused)});
@@ -279,7 +279,8 @@ final class RecoPanel {
                 if (!on) return;
                 p.setColor(0xFFFFFFFF);
                 android.graphics.Rect b = getBounds();
-                c.drawRoundRect(new android.graphics.RectF(b.left, b.bottom - a.u(3), b.right, b.bottom), a.u(2), a.u(2), p);
+                float lh = a.u(3), lr = lh / 2f; // trait arrondi en entier : rayon = moitié de sa hauteur
+                c.drawRoundRect(new android.graphics.RectF(b.left, b.bottom - lh, b.right, b.bottom), lr, lr, p);
             }
             @Override public void setAlpha(int x) { }
             @Override public void setColorFilter(android.graphics.ColorFilter cf) { }
@@ -444,7 +445,7 @@ final class RecoPanel {
             ImageView ic = new ImageView(a);
             ic.setImageDrawable(owner.icon(a.getPackageManager()));
             ic.setOutlineProvider(new android.view.ViewOutlineProvider() {
-                @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), a.u(6)); }
+                @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), a.u(Radius.ICON_SMALL)); }
             });
             ic.setClipToOutline(true);
             LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(a.u(26), a.u(26));

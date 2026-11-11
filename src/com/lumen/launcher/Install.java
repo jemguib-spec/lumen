@@ -139,7 +139,7 @@ final class Install {
         qr.setImageBitmap(PhonePanel.qrBitmap(a, GUIDE, a.u(200)));
         qr.setContentDescription(L.t("QR code vers le guide d'installation"));
         qr.setOutlineProvider(new android.view.ViewOutlineProvider() {
-            @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), a.u(16)); }
+            @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), a.u(Radius.IMAGE)); }
         });
         qr.setClipToOutline(true);
         LinearLayout.LayoutParams ql = new LinearLayout.LayoutParams(a.u(200), a.u(200));
@@ -170,7 +170,8 @@ final class Install {
         box.setOrientation(LinearLayout.VERTICAL);
         box.setFocusable(true);
         android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
-        bg.setCornerRadius(a.u(20));
+        // bloc sur toute la largeur de la colonne : à PAD des bords de la carte, comme les lignes
+        bg.setCornerRadius(a.u(Radius.ROW));
         bg.setColor(Palette.SHADOW);
         box.setBackground(bg);
         box.setPadding(a.u(28), a.u(20), a.u(28), a.u(20));

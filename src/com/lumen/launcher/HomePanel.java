@@ -228,7 +228,7 @@ final class HomePanel {
         c.setTag(value);
         c.setPadding(a.u(26), a.u(12), a.u(26), a.u(12));
         GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(a.u(30));
+        bg.setCornerRadius(a.u(Radius.PILL));
         c.setBackground(bg);
         styleChip(c, false);
         c.setOnFocusChangeListener(new View.OnFocusChangeListener() {

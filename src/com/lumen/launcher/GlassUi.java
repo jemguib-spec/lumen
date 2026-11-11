@@ -346,7 +346,7 @@ final class GlassUi {
             ImageView iv = new ImageView(a);
             iv.setImageDrawable(art);
             iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            final int rad = a.u(wide ? 16 : 22);
+            final int rad = a.u(wide ? Radius.IMAGE : Radius.ICON);
             iv.setOutlineProvider(new android.view.ViewOutlineProvider() {
                 @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), rad); }
             });

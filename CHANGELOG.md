@@ -4,7 +4,9 @@ Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte
 
 ## 4.26.1
 
-- Coins arrondis harmonisés partout : quand un élément arrondi est posé dans un autre, son coin suit celui qui l'entoure (rayon extérieur = rayon intérieur + marge). Menus, réglages, fenêtres de saisie, code PIN, À l'affiche, tuiles Maison, vignettes à cocher et barre de progression des programmes, ainsi que la page du téléphone (listes, onglets, vignettes et leurs pastilles).
+- Une seule règle pour tous les coins arrondis, partout : quand un élément arrondi est posé dans un autre, son coin suit celui qui l'entoure (rayon extérieur = rayon intérieur + marge). Menus, réglages et leurs pastilles de rubrique, fenêtres de saisie, code PIN, À l'affiche, tuiles Maison, vignettes à cocher, barre de progression des programmes.
+- Page du téléphone : même règle pour les listes et tout ce qui touche leur bord (icônes, cases, boutons, menus déroulants, interrupteurs), les onglets, les vignettes et leurs pastilles.
+- Les pastilles (puces, notifications, recherche) sont arrondies en entier ; plus aucun rayon n'est choisi au cas par cas.
 - Code PIN : les touches occupent toute la largeur de la fenêtre.
 
 ## 4.26.0

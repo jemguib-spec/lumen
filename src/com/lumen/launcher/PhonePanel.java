@@ -77,7 +77,7 @@ final class PhonePanel {
         ql.topMargin = a.u(36);
         ql.bottomMargin = a.u(28);
         qr.setOutlineProvider(new android.view.ViewOutlineProvider() {
-            @Override public void getOutline(View v, android.graphics.Outline ol) { ol.setRoundRect(0, 0, v.getWidth(), v.getHeight(), a.u(28)); }
+            @Override public void getOutline(View v, android.graphics.Outline ol) { ol.setRoundRect(0, 0, v.getWidth(), v.getHeight(), a.u(Radius.QR)); }
         });
         qr.setClipToOutline(true);
         card.addView(qr, ql);

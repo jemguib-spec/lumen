@@ -371,7 +371,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         for (int i = 0; i < n; i++) {
             View d = new View(this);
             GradientDrawable g = new GradientDrawable();
-            g.setCornerRadius(u(3));
+            g.setCornerRadius(u(Radius.PILL));
             g.setColor(i == active ? 0xE6FFFFFF : 0x59FFFFFF);
             d.setBackground(g);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(i == active ? u(22) : u(6), u(6));

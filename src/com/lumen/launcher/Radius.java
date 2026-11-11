@@ -26,6 +26,12 @@ final class Radius {
     /** Marge à laisser entre un élément de rayon inner et le bord d'un conteneur de rayon outer. */
     static float pad(float outer, float inner) { return Math.max(0f, outer - inner); }
 
+    /**
+     * Arrondi complet (pastilles, puces, notifications) : Android le ramène à la moitié de la hauteur.
+     * Une pastille dans une pastille reste concentrique d'elle-même.
+     */
+    static final float PILL = 999;
+
     // ---- panneaux de verre et leurs lignes
 
     /** Lignes de menu et de réglage, lignes d'information, champs de saisie, touches du code PIN. */
@@ -42,6 +48,22 @@ final class Radius {
     static final float FORM = outer(ROW, FORM_PAD);
     /** Écart autour de chaque touche du code PIN ; la carte garde FORM_PAD jusqu'aux touches. */
     static final float KEY_GAP = 8;
+
+    /** Pastille à pictogramme d'une rubrique des réglages, posée à CHIP_PAD des bords de sa ligne. */
+    static final float CHIP_PAD = 12;
+    /** Pastille de rubrique : 24 − 12. */
+    static final float CHIP = inner(ROW, CHIP_PAD);
+
+    // ---- images seules (aucun conteneur arrondi autour : leur rayon est un jeton, pas un nombre en dur)
+
+    /** Bannière d'appli et QR code du guide. */
+    static final float IMAGE = 16;
+    /** Icône d'appli en tête de menu. */
+    static final float ICON = 22;
+    /** Petite icône d'appli dans une ligne d'À l'affiche. */
+    static final float ICON_SMALL = 6;
+    /** Grand QR code de connexion du téléphone. */
+    static final float QR = 28;
 
     // ---- À l'affiche
 

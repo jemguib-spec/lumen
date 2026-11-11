@@ -228,7 +228,7 @@ final class Tile extends FrameLayout {
             badge.setGravity(Gravity.CENTER);
             badge.setIncludeFontPadding(false);
             GradientDrawable d = new GradientDrawable();
-            d.setCornerRadius(size);
+            d.setCornerRadius(size); // arrondi complet (Radius.PILL)
             d.setColor(Palette.SELECTED_NEUTRAL);
             badge.setBackground(d);
             int h = Math.round(size * 0.32f);

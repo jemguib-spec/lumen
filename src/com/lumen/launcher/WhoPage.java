@@ -129,7 +129,7 @@ final class WhoPage {
             manage.setFocusable(true);
             manage.setClickable(true);
             final GradientDrawable mb = new GradientDrawable();
-            mb.setCornerRadius(a.u(30));
+            mb.setCornerRadius(a.u(Radius.PILL));
             mb.setColor(0x00FFFFFF);
             manage.setBackground(mb);
             manage.setOnFocusChangeListener(new View.OnFocusChangeListener() {

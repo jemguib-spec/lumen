@@ -199,7 +199,7 @@ final class AppsPage {
         e.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH | android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);
         e.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         final GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(a.u(38));
+        bg.setCornerRadius(a.u(Radius.PILL));
         bg.setColor(0x26FFFFFF);
         bg.setStroke(Math.max(1, a.u(1.5f)), 0x33FFFFFF);
         e.setBackground(bg);

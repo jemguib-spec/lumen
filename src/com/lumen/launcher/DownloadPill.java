@@ -29,7 +29,7 @@ final class DownloadPill {
                 dlPill.setSingleLine(true);
                 dlPill.setPadding(a.u(22), a.u(10), a.u(22), a.u(10));
                 GradientDrawable bg = new GradientDrawable();
-                bg.setCornerRadius(a.u(30));
+                bg.setCornerRadius(a.u(Radius.PILL));
                 bg.setColor(0x80101218);
                 bg.setStroke(Math.max(1, a.u(1.5f)), 0x26FFFFFF);
                 dlPill.setBackground(bg);

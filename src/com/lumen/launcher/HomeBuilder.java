@@ -211,7 +211,7 @@ final class HomeBuilder {
         a.notice = a.text(24, "sans-serif-medium", Palette.ON_SELECTED);
         GradientDrawable nb = new GradientDrawable();
         nb.setColor(0xF5F5F5F7);
-        nb.setCornerRadius(a.u(40));
+        nb.setCornerRadius(a.u(Radius.PILL));
         a.notice.setBackground(nb);
         a.notice.setPadding(a.u(36), a.u(18), a.u(36), a.u(18));
         a.notice.setAlpha(0f);

@@ -598,13 +598,18 @@ public class LumenTests {
         check("arrondis : tuile Maison = pastille + marge", Radius.HA_TILE == Radius.HA_ICON / 2 + Radius.HA_INSET);
         check("arrondis : vignette à cocher = coche + marge", Radius.CHECK_CELL == Radius.CHECK / 2 + Radius.CHECK_INSET);
         check("arrondis : barre de progression = vignette − marge", Radius.SHELF_BAR / 2 + Radius.SHELF_BAR_INSET == Radius.SHELF);
-        boolean noLiteralCard = true;
-        java.util.regex.Pattern literalCard = java.util.regex.Pattern.compile("glassCard\\(\\s*\\d");
+        check("arrondis : pastille de rubrique = ligne − marge", Radius.CHIP + Radius.CHIP_PAD == Radius.ROW);
+        // la même règle partout : aucun rayon écrit en dur dans l'interface (cartes, fonds, contours, dessins)
+        boolean noLiteral = true;
+        java.util.regex.Pattern literal = java.util.regex.Pattern.compile(
+                "glassCard\\(\\s*\\d|setCornerRadius\\(\\s*(a\\.)?u\\(\\s*\\d|(setRoundRect|drawRoundRect)\\([^;]*\\bu\\(\\s*\\d");
         try (java.util.stream.Stream<java.nio.file.Path> files = Files.list(new File("src/com/lumen/launcher").toPath())) {
-            for (java.nio.file.Path f : (Iterable<java.nio.file.Path>) files::iterator)
-                if (literalCard.matcher(new String(Files.readAllBytes(f), StandardCharsets.UTF_8)).find()) { noLiteralCard = false; System.out.println("  rayon en dur : " + f); }
-        } catch (java.io.IOException e) { noLiteralCard = false; }
-        check("arrondis : aucune carte de verre avec un rayon en dur (passer par Radius)", noLiteralCard);
+            for (java.nio.file.Path f : (Iterable<java.nio.file.Path>) files::iterator) {
+                java.util.regex.Matcher m = literal.matcher(new String(Files.readAllBytes(f), StandardCharsets.UTF_8));
+                while (m.find()) { noLiteral = false; System.out.println("  rayon en dur : " + f.getFileName() + " : " + m.group()); }
+            }
+        } catch (java.io.IOException e) { noLiteral = false; }
+        check("arrondis : aucun rayon en dur dans l'interface (passer par Radius)", noLiteral);
         String css;
         try { css = new String(Files.readAllBytes(new File("assets/phone.css").toPath()), StandardCharsets.UTF_8); }
         catch (java.io.IOException e) { css = ""; }
@@ -619,6 +624,16 @@ public class LumenTests {
         nested &= cssRule(css, ".seg button").contains("border-radius:var(--in)") && cssRule(css, ".tabs button").contains("border-radius:var(--in)")
                 && cssRule(css, ".tg").contains("border-radius:calc(var(--in) + var(--pad))") && cssRule(css, ".tg::after").contains("left:var(--pad)");
         check("arrondis (téléphone) : rails, onglets, interrupteurs, envois = intérieur + marge", nested);
+        boolean cssNoLiteral = true;
+        java.util.regex.Matcher rad = java.util.regex.Pattern.compile("border-radius:([^;}]*)").matcher(css);
+        while (rad.find()) if (java.util.regex.Pattern.compile("(?<![\\w.-])(?!0px)\\d+(\\.\\d+)?px").matcher(rad.group(1)).find()) {
+            cssNoLiteral = false; System.out.println("  rayon en dur (phone.css) : " + rad.group());
+        }
+        check("arrondis (téléphone) : aucun rayon en dur, tout passe par les jetons de :root", cssNoLiteral && cssRule(css, ":root").contains("--pill:"));
+        check("arrondis (téléphone) : éléments au bord d'une ligne de liste = liste − marge",
+                cssRule(css, ".row.ha .ck").contains("border-radius:var(--r-ic)") && cssRule(css, ".row.ha .hm").contains("border-radius:var(--r-ic)")
+                && cssRule(css, ".set select").contains("border-radius:var(--r-ic)") && cssRule(css, ".tg").contains("--in:calc(var(--r-ic) - var(--pad))")
+                && cssRule(css, ".set .row").contains("padding:var(--pad-row)"));
         check("arrondis (téléphone) : vignettes = rond ou pastille du coin + marge",
                 cssRule(css, ".thumb").contains("border-radius:calc(var(--ring) + var(--gap))") && cssRule(css, ".thumb .ring").contains("top:var(--gap)")
                 && cssRule(css, ".tile").contains("border-radius:calc(var(--x) + var(--gap))") && cssRule(css, ".tile .x").contains("top:var(--gap)")
