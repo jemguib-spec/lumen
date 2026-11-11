@@ -26,9 +26,11 @@ import java.util.Map;
 /**
  * Transport de la copie des réglages entre TV (règles dans TvSync) :
  * - la TV qui reçoit ouvre, à la demande et pour 3 minutes au plus, un petit serveur sur son
- *   adresse du réseau local et s'annonce sur le réseau (DNS-SD) ; un seul envoi est accepté, signé
- *   avec le code qu'elle affiche, et elle demande confirmation avant d'appliquer quoi que ce soit ;
- * - la TV qui envoie cherche les TV annoncées et leur envoie ses réglages (liste blanche).
+ *   adresse du réseau local et s'annonce sur le réseau (DNS-SD) ; un seul envoi est accepté,
+ *   chiffré grâce au code qu'elle affiche (SyncCrypto), et elle demande confirmation avant
+ *   d'appliquer quoi que ce soit ;
+ * - la TV qui envoie cherche les TV annoncées et leur envoie ses réglages (liste blanche), ses clés
+ *   et sa ville de météo si on le veut.
  * Rien n'écoute en dehors de l'écran « Recevoir » ; adresses du réseau privé uniquement.
  */
 final class SyncLink {
@@ -38,7 +40,7 @@ final class SyncLink {
 
     // ------------------------------------------------------------------ réception
 
-    /** Envoi reçu et signé (fil principal) : nom de l'autre TV et contenu (JSON). */
+    /** Envoi reçu et déchiffré (fil principal) : adresse de l'autre TV et contenu (JSON). */
     interface Received { void on(String from, String json); }
     /** Réception arrêtée d'elle-même (fil principal). */
     interface Stopped { void on(int why); }
@@ -68,7 +70,7 @@ final class SyncLink {
             return null;
         }
         SecureRandom r = new SecureRandom();
-        final TvSync.Gate g = new TvSync.Gate(TvSync.newCode(r), TvSync.newNonce(r), System.currentTimeMillis());
+        final TvSync.Gate g = new TvSync.Gate(TvSync.newCode(r), TvSync.newNonce(r), System.currentTimeMillis(), r);
         server = s;
         gate = g;
         Thread t = new Thread(new Runnable() {
@@ -115,7 +117,7 @@ final class SyncLink {
         return true;
     }
 
-    /** Une connexion : « bonjour » (numéro aléatoire et nom), ou l'envoi signé. Une à la fois. */
+    /** Une connexion : « bonjour » (numéro aléatoire, valeur publique, nom), ou l'envoi chiffré. Une à la fois. */
     private static void serve(final Context app, Socket sock, final TvSync.Gate g, String name, final Received received, final Stopped stopped) {
         try {
             sock.setSoTimeout(5_000);
@@ -123,12 +125,16 @@ final class SyncLink {
             OutputStream out = sock.getOutputStream();
             HttpRequest r;
             try { r = HttpRequest.read(in); } catch (Exception bad) { reply(out, 400, ""); return; }
-            if (r.method.equals("GET") && r.path.equals(TvSync.HELLO)) { reply(out, 200, TvSync.helloBody(g.nonce(), name)); return; }
+            if (r.method.equals("GET") && r.path.equals(TvSync.HELLO)) {
+                if (g.closed(System.currentTimeMillis())) { reply(out, 410, ""); return; }
+                reply(out, 200, TvSync.helloBody(g.nonce(), g.published(), name));
+                return;
+            }
             if (!r.method.equals("POST") || !r.path.equals(TvSync.SEND)) { reply(out, 404, ""); return; }
             if (r.contentLength > TvSync.MAX_BODY) { reply(out, 413, ""); return; }
             sock.setSoTimeout(15_000);
-            final byte[] body = HttpRequest.readBody(in, r.contentLength, TvSync.MAX_BODY);
-            int verdict = g.check(body, r.header(TvSync.SIG_HEADER), System.currentTimeMillis());
+            byte[] body = HttpRequest.readBody(in, r.contentLength, TvSync.MAX_BODY);
+            int verdict = g.check(body, System.currentTimeMillis());
             if (verdict == TvSync.Gate.CLOSED) { reply(out, 410, ""); return; }
             if (verdict == TvSync.Gate.BAD_CODE) {
                 reply(out, 403, "code");
@@ -139,10 +145,11 @@ final class SyncLink {
             }
             reply(out, 200, "ok");
             final String from = sock.getInetAddress().getHostAddress();
+            final byte[] plain = g.plain();
             main.post(new Runnable() {
                 @Override public void run() {
                     if (!stopIfCurrent(app, g)) return; // réception annulée entre-temps
-                    try { received.on(from, new String(body, "UTF-8")); } catch (Exception ignored) { }
+                    try { received.on(from, new String(plain, "UTF-8")); } catch (Exception ignored) { }
                 }
             });
         } catch (Exception ignored) {
@@ -288,32 +295,39 @@ final class SyncLink {
 
     // ------------------------------------------------------------------ envoi (hors du fil principal)
 
-    static final int SENT = 0, BAD_CODE = 1, CLOSED = 2, UNREACHABLE = 3, NOT_LUMEN = 4;
+    static final int SENT = 0, BAD_CODE = 1, CLOSED = 2, UNREACHABLE = 3, NOT_LUMEN = 4, OLDER_PEER = 5;
 
-    /** {numéro, nom} de la TV en réception à cette adresse, ou null. */
+    /** {numéro, nom, valeur publique} de la TV en réception à cette adresse ; {"", "", ""} pour une TV en Lumen 4.31-4.32 ; null sinon. */
     static String[] hello(InetAddress ip, int port) {
         try {
-            Object[] r = request(ip, port, "GET", TvSync.HELLO, null, null);
-            return (Integer) r[0] == 200 ? TvSync.parseHello((String) r[1]) : null;
+            Object[] r = request(ip, port, "GET", TvSync.HELLO, null);
+            if ((Integer) r[0] != 200) return null;
+            if (TvSync.olderPeer((String) r[1])) return new String[]{"", "", ""};
+            return TvSync.parseHello((String) r[1]);
         } catch (Exception e) {
             return null;
         }
     }
 
-    /** Envoie les réglages (JSON) signés avec le code tapé ; renvoie SENT, BAD_CODE… */
-    static int send(InetAddress ip, int port, String code, byte[] body) {
-        if (!(ip instanceof Inet4Address) || !ip.isSiteLocalAddress()) return UNREACHABLE;
+    /** Envoie le contenu (JSON), chiffré grâce au code tapé ; renvoie SENT, BAD_CODE… */
+    static int send(InetAddress ip, int port, String code, byte[] plain) {
+        if (!(ip instanceof Inet4Address) || !ip.isSiteLocalAddress() || !TvSync.codeOk(code)) return UNREACHABLE;
         String[] h;
         try {
-            Object[] r = request(ip, port, "GET", TvSync.HELLO, null, null);
+            Object[] r = request(ip, port, "GET", TvSync.HELLO, null);
             if ((Integer) r[0] == 410) return CLOSED;
+            if ((Integer) r[0] == 200 && TvSync.olderPeer((String) r[1])) return OLDER_PEER;
             h = (Integer) r[0] == 200 ? TvSync.parseHello((String) r[1]) : null;
         } catch (Exception e) {
             return UNREACHABLE;
         }
         if (h == null) return NOT_LUMEN;
+        byte[] body;
+        try { body = SyncCrypto.senderBody(code, h[0], SyncCrypto.parse(h[2]), plain, new SecureRandom()); }
+        catch (Exception e) { return UNREACHABLE; }
+        if (body.length > TvSync.MAX_BODY) return UNREACHABLE;
         try {
-            Object[] r = request(ip, port, "POST", TvSync.SEND, body, TvSync.sign(code, h[0], body));
+            Object[] r = request(ip, port, "POST", TvSync.SEND, body);
             int status = (Integer) r[0];
             return status == 200 ? SENT : status == 403 ? BAD_CODE : status == 410 ? CLOSED : UNREACHABLE;
         } catch (Exception e) {
@@ -322,7 +336,7 @@ final class SyncLink {
     }
 
     /** Requête HTTP minimale, directe (sans proxy), vers une adresse du réseau privé uniquement. */
-    private static Object[] request(InetAddress ip, int port, String method, String path, byte[] body, String sig) throws Exception {
+    private static Object[] request(InetAddress ip, int port, String method, String path, byte[] body) throws Exception {
         if (!(ip instanceof Inet4Address) || !ip.isSiteLocalAddress()) throw new java.io.IOException("Adresse hors du réseau local");
         Socket s = new Socket(Proxy.NO_PROXY);
         try {
@@ -330,7 +344,6 @@ final class SyncLink {
             s.setSoTimeout(8_000);
             StringBuilder h = new StringBuilder(method + " " + path + " HTTP/1.1\r\nHost: " + ip.getHostAddress() + ":" + port + "\r\nConnection: close\r\n");
             h.append("Content-Length: ").append(body == null ? 0 : body.length).append("\r\n");
-            if (sig != null) h.append(TvSync.SIG_HEADER).append(": ").append(sig).append("\r\n");
             h.append("\r\n");
             OutputStream out = s.getOutputStream();
             out.write(h.toString().getBytes("UTF-8"));

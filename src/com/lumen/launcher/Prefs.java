@@ -627,6 +627,54 @@ final class Prefs {
         }
     }
 
+    /** cert : empreinte du certificat Home Assistant auto-signé accepté (vide sinon). */
+    String haCert() { return sp.getString("ha_cert", ""); }
+
+    /**
+     * Clés et services envoyés à une autre TV de la maison (groupe « Clés et services ») : seulement
+     * dans un envoi chiffré (SyncCrypto), jamais dans la sauvegarde ni vers le téléphone.
+     */
+    org.json.JSONObject exportKeys() throws org.json.JSONException {
+        org.json.JSONObject k = new org.json.JSONObject();
+        if (!tmdbOwnKey().isEmpty()) k.put("tmdb", tmdbOwnKey());
+        if (tmdbSharedOk()) k.put("tmdb_shared", true);
+        if (!pexelsKey().isEmpty()) k.put("pexels", pexelsKey());
+        if (haConfigured()) k.put("ha_url", haUrl()).put("ha_token", haToken()).put("ha_cert", haCert());
+        return k;
+    }
+
+    /** Noms des clés présentes dans un envoi (« TMDB, Pexels, Home Assistant »), pour la confirmation. */
+    static String keyNames(org.json.JSONObject k) {
+        if (k == null) return "";
+        StringBuilder b = new StringBuilder();
+        if (TmdbPolicy.validKey(k.optString("tmdb")) || k.optBoolean("tmdb_shared")) b.append("TMDB");
+        if (Pexels.validKey(k.optString("pexels"))) b.append(b.length() == 0 ? "" : ", ").append("Pexels");
+        if (HomeAssistant.normalizeUrl(k.optString("ha_url")) != null && HomeAssistant.validToken(k.optString("ha_token"))) b.append(b.length() == 0 ? "" : ", ").append("Home Assistant");
+        return b.toString();
+    }
+
+    /**
+     * Applique les clés reçues d'une autre TV, après les mêmes contrôles que depuis le téléphone.
+     * Elles remplacent celles d'ici ; une clé absente de l'envoi n'efface rien. Renvoie le nombre repris.
+     */
+    int importKeys(org.json.JSONObject k) {
+        int n = 0;
+        String tmdb = k.optString("tmdb");
+        if (TmdbPolicy.validKey(tmdb)) { setTmdbKey(tmdb); n++; }
+        if (k.optBoolean("tmdb_shared")) { setTmdbSharedOk(true); n++; }
+        String px = k.optString("pexels");
+        if (Pexels.validKey(px)) { setPexelsKey(px); n++; }
+        String url = HomeAssistant.normalizeUrl(k.optString("ha_url"));
+        String token = k.optString("ha_token"), cert = k.optString("ha_cert");
+        if (url != null && HomeAssistant.validToken(token) && TvSync.certOk(cert)) {
+            HomeAssistant.trust(haUrl(), "");
+            HomeAssistant.trust(url, cert);
+            setHa(url, token, cert);
+            n++;
+        }
+        return n;
+    }
+
     /** Restaure une sauvegarde : seules les clés connues, du bon type et dans les bornes, sont reprises. Renvoie le nombre de réglages repris. */
     int importBackup(org.json.JSONObject o) throws java.io.IOException {
         if (o == null || !Backup.FORMAT.equals(o.optString("format")) || o.optInt("version", 0) != Backup.VERSION)

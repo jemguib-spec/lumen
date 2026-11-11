@@ -721,7 +721,6 @@ Envoi…	Sending…
 Envoyer les réglages de cette TV	Send this TV's settings
 Ex. 192.168.1.20	E.g. 192.168.1.20
 Favoris et applis masquées	Favourites and hidden apps
-Fond d'écran et veille	Wallpaper and ambient mode
 Les réglages de ces groupes que l'autre TV n'a jamais changés reviennent à leur valeur par défaut.	Settings in these groups that the other TV never changed go back to their default value.
 Recevoir des réglages	Receive settings
 Recevoir les réglages d'une autre TV	Receive settings from another TV
@@ -734,7 +733,6 @@ Réglages refusés	Settings declined
 Réglages reçus	Settings received
 Réglages reçus illisibles	The received settings are unreadable
 Saisir l'adresse d'une TV	Enter a TV's address
-Sur l'autre TV : Réglages › Système › Autres TV › Recevoir. Elle apparaît ici ; choisis-la puis tape le code qu'elle affiche. Le code PIN, Home Assistant, les clés, les habitudes, la télécommande et les vidéos téléchargées restent propres à chaque TV. Les réglages vont au profil ouvert sur l'autre TV.	On the other TV: Settings › System › Other TVs › Receive. It shows up here; pick it, then type the code it displays. The PIN code, Home Assistant, keys, habits, remote control and downloaded videos stay specific to each TV. Settings go to the profile open on the other TV.
 Sur l'autre TV : Réglages › Système › Autres TV, choisis cette TV puis tape ce code. Rien n'est appliqué sans ton accord ; la réception s'arrête après 3 min.	On the other TV: Settings › System › Other TVs, pick this TV, then type this code. Nothing is applied without your OK; receiving stops after 3 min.
 TV injoignable · sur le même réseau ?	TV unreachable · on the same network?
 Trop de codes faux · réception arrêtée	Too many wrong codes · receiving stopped
@@ -762,7 +760,6 @@ Faire de Lumen l'accueil de la TV	Make Lumen the TV's home screen
 L'assistant reste dans Réglages › Système	The assistant stays in Settings › System
 L'assistant se relance depuis Réglages › Système. Une autre TV de la maison ? Réglages › Système › Autres TV copie tout vers elle.	Restart the assistant from Settings › System. Another TV at home? Settings › System › Other TVs copies everything to it.
 Les boutons ronds du haut de l'accueil : garde ceux qui te servent.	The round buttons at the top of the home screen: keep the ones you use.
-Les clés restent sur la TV, chiffrées ; elles ne sont jamais renvoyées au téléphone ni copiées vers une autre TV. Tout se change plus tard dans Réglages.	Keys stay on the TV, encrypted; they are never sent back to the phone or copied to another TV. Everything can be changed later in Settings.
 Me synchroniser avec une autre TV du foyer	Sync with another TV at home
 Même Wi-Fi que la TV. Accepte le téléphone quand la TV le demande, puis dans « Plus » :\n• TMDB pour « À l'affiche » (films et séries du moment)\n• Pexels pour plus de vidéos de fond\n• Home Assistant pour les lumières de la maison\n	Same Wi-Fi as the TV. Accept the phone when the TV asks, then in “More”:\n• TMDB for “Now showing” (current films and series)\n• Pexels for more background videos\n• Home Assistant for the lights at home\n
 Nombre maximal de profils atteint	Maximum number of profiles reached
@@ -778,7 +775,6 @@ QR code pour le téléphone	QR code for the phone
 Qui regarde cette TV ?	Who watches this TV?
 Recommencer	Start again
 Sans le bouton Réglages, les réglages restent là : touche Menu de la télécommande, ou ▼ puis rechercher « réglages ».	Without the Settings button, settings are still there: Menu key on the remote, or ▼ then search “settings”.
-Se synchroniser : sur une TV de la maison qui a déjà Lumen, ouvre Réglages › Système › Autres TV, choisis cette TV et tape le code qu'elle va afficher. Fond, accueil, boutons, favoris et sons arrivent d'un coup ; il ne restera que les clés à renseigner.	To sync: on a TV at home that already has Lumen, open Settings › System › Other TVs, pick this TV and type the code it will show. Wallpaper, home screen, buttons, favourites and sounds arrive at once; only the keys will be left to fill in.
 Son prénom : elle aura ses propres favoris et réglages. Au démarrage, Lumen demandera « Qui regarde ? ».	Their first name: they get their own favourites and settings. At start-up, Lumen will ask “Who's watching?”.
 Tant que Lumen n'est pas l'accueil, la touche Accueil ramène l'écran d'origine de la TV. La page Installation explique comment faire, pas à pas.	Until Lumen is the home screen, the Home key brings back the TV's original screen. The Installation page explains how, step by step.
 Tape un prénom	Type a first name
@@ -796,3 +792,11 @@ Une autre personne	Another person
 ✓ Connecté	✓ Connected
 ✓ Relié	✓ Linked
 ✓ Ta clé	✓ Your key
+ (remplacent celles de cette TV)	 (replace this TV's)
+Clés : 	Keys: 
+Clés et services (TMDB, Pexels, Home Assistant)	Keys and services (TMDB, Pexels, Home Assistant)
+Fond d'écran, veille et météo	Wallpaper, ambient mode and weather
+Mets d'abord Lumen à jour sur l'autre TV (4.33 ou plus)	Update Lumen on the other TV first (4.33 or later)
+Sur l'autre TV : Réglages › Système › Autres TV › Recevoir. Elle apparaît ici ; choisis-la puis tape le code qu'elle affiche. L'envoi est chiffré grâce à ce code. Le code PIN, les habitudes, la télécommande et les vidéos téléchargées restent propres à chaque TV. Les réglages vont au profil ouvert sur l'autre TV.	On the other TV: Settings › System › Other TVs › Receive. It shows up here; pick it, then type the code it displays. The transfer is encrypted thanks to that code. The PIN code, habits, remote control and downloaded videos stay specific to each TV. Settings go to the profile open on the other TV.
+Se synchroniser : sur une TV de la maison qui a déjà Lumen, ouvre Réglages › Système › Autres TV, choisis cette TV et tape le code qu'elle va afficher. Fond, accueil, boutons, favoris, sons, ville de la météo et clés arrivent d'un coup, chiffrés.	To sync: on a TV at home that already has Lumen, open Settings › System › Other TVs, pick this TV and type the code it will show. Wallpaper, home screen, buttons, favourites, sounds, weather city and keys arrive at once, encrypted.
+Les clés restent sur la TV, chiffrées, et ne sont jamais renvoyées au téléphone ; vers une autre TV de la maison, seulement dans un envoi chiffré, si tu le choisis. Tout se change plus tard dans Réglages.	Keys stay on the TV, encrypted, and are never sent back to the phone; to another TV at home, only in an encrypted transfer, if you choose so. Everything can be changed later in Settings.

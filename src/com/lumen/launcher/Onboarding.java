@@ -176,7 +176,7 @@ final class Onboarding {
         }, new View.OnClickListener() {
             @Override public void onClick(View v) { syncFromOtherTv(a); }
         }, false), a.rowLp());
-        hint(a, col, L.t("Se synchroniser : sur une TV de la maison qui a déjà Lumen, ouvre Réglages › Système › Autres TV, choisis cette TV et tape le code qu'elle va afficher. Fond, accueil, boutons, favoris et sons arrivent d'un coup ; il ne restera que les clés à renseigner."));
+        hint(a, col, L.t("Se synchroniser : sur une TV de la maison qui a déjà Lumen, ouvre Réglages › Système › Autres TV, choisis cette TV et tape le code qu'elle va afficher. Fond, accueil, boutons, favoris, sons, ville de la météo et clés arrivent d'un coup, chiffrés."));
         col.addView(a.menuDivider());
         col.addView(a.listRow(L.t("Plus tard"), null, new View.OnClickListener() {
             @Override public void onClick(View v) {
@@ -446,7 +446,7 @@ final class Onboarding {
             @Override public String get() { return a.phone.connected() ? L.t("✓ Connecté") : L.t("En attente"); }
         }, NOTHING), a.rowLp());
         LinearLayout next = nextRow(a, col, L.t("Continuer"), null);
-        hint(a, col, L.t("Les clés restent sur la TV, chiffrées ; elles ne sont jamais renvoyées au téléphone ni copiées vers une autre TV. Tout se change plus tard dans Réglages."));
+        hint(a, col, L.t("Les clés restent sur la TV, chiffrées, et ne sont jamais renvoyées au téléphone ; vers une autre TV de la maison, seulement dans un envoi chiffré, si tu le choisis. Tout se change plus tard dans Réglages."));
         // l'état se met à jour pendant qu'on règle les clés sur le téléphone
         ticker = new Runnable() {
             @Override public void run() {

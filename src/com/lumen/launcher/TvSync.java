@@ -5,7 +5,6 @@ package com.lumen.launcher;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,8 +16,8 @@ import java.util.Set;
 /**
  * Copie des réglages d'une TV à une autre sur le même réseau : règles pures (Java pur, testé).
  * Quels réglages voyagent (par groupe, à cocher), lesquels restent propres à chaque TV, le code à
- * 6 chiffres affiché par la TV qui reçoit, et la signature de l'envoi (HMAC-SHA256 avec une clé
- * tirée du code et d'un numéro aléatoire de la TV qui reçoit). Le transport est dans SyncLink.
+ * 6 chiffres affiché par la TV qui reçoit, et les essais permis. L'envoi est chiffré avec une clé
+ * établie grâce au code (SyncCrypto) ; le transport est dans SyncLink.
  */
 final class TvSync {
     private TvSync() { }
@@ -33,12 +32,14 @@ final class TvSync {
     static final long OPEN_MS = 3 * 60_000L;
     static final int MAX_BODY = 256 * 1024;
     static final String FORMAT = "lumen-sync";
-    static final int VERSION = 1;
-    static final String HELLO = "/lumen-sync/hello", SEND = "/lumen-sync/send", SIG_HEADER = "X-Lumen-Sync-Sig";
+    /** 2 : envoi chiffré (SyncCrypto), clés et météo comprises. 1 (Lumen 4.31 et 4.32) : signé seulement. */
+    static final int VERSION = 2;
+    static final String HELLO = "/lumen-sync/hello", SEND = "/lumen-sync/send";
 
     // groupes proposés à la TV qui envoie (tous cochés par défaut)
-    static final int LOOK = 0, WALL = 1, HOME = 2, APPS = 3;
-    static final String[] GROUP_NAMES = {"Apparence et sons", "Fond d'écran et veille", "Accueil et boutons", "Favoris et applis masquées"};
+    static final int LOOK = 0, WALL = 1, HOME = 2, APPS = 3, KEYS = 4;
+    static final String[] GROUP_NAMES = {"Apparence et sons", "Fond d'écran, veille et météo", "Accueil et boutons", "Favoris et applis masquées",
+            "Clés et services (TMDB, Pexels, Home Assistant)"};
 
     private static final String[][] GROUPS = {
             // apparence et sons
@@ -53,6 +54,8 @@ final class TvSync {
              "ha_button", "ha_cine_open", "ha_film", "ha_pause", "ha_pinned", "ha_home", "ha_cine_apps"},
             // favoris et applis
             {"favorites", "hidden_apps", "locked_apps"},
+            // clés et services : hors de la sauvegarde, envoyés à part (voir SyncPanel), jamais en clair
+            {},
     };
 
     /**
@@ -142,60 +145,68 @@ final class TvSync {
         return code == null || code.length() != CODE_LENGTH ? String.valueOf(code) : code.substring(0, 3) + " " + code.substring(3);
     }
 
-    static String sign(String code, String nonce, byte[] body) throws Exception {
-        byte[] key = MessageDigest.getInstance("SHA-256").digest(("lumen-sync\n" + code + "\n" + nonce).getBytes("UTF-8"));
-        return Signer.hmacHex(key, "send\n" + nonce + "\n" + Signer.sha256Hex(body));
-    }
-
-    /** Signature juste (comparaison en temps constant). */
-    static boolean verify(String code, String nonce, byte[] body, String sig) {
-        try {
-            if (!codeOk(code) || !nonceOk(nonce) || sig == null || !sig.matches("[0-9a-f]{64}")) return false;
-            return MessageDigest.isEqual(sign(code, nonce, body).getBytes("UTF-8"), sig.getBytes("UTF-8"));
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
     /**
      * Essais de code de la TV qui reçoit : au bout de MAX_TRIES mauvais codes, ou après OPEN_MS, elle
-     * n'accepte plus rien ; un seul envoi réussi la ferme aussi.
+     * n'accepte plus rien ; un seul envoi réussi la ferme aussi. Après chaque mauvais code, sa valeur
+     * publique change (l'autre TV la relit avant chaque essai).
      */
     static final class Gate {
-        private final String code, nonce;
+        private final SyncCrypto.Receiver rx;
         private final long until;
         private int fails;
         private boolean done;
+        private byte[] plain;
 
-        Gate(String code, String nonce, long now) { this.code = code; this.nonce = nonce; this.until = now + OPEN_MS; }
+        Gate(String code, String nonce, long now, SecureRandom r) { this.rx = new SyncCrypto.Receiver(code, nonce, r); this.until = now + OPEN_MS; }
 
         static final int OK = 0, BAD_CODE = 1, CLOSED = 2;
 
-        synchronized int check(byte[] body, String sig, long now) {
+        synchronized int check(byte[] body, long now) {
             if (done || now > until || fails >= MAX_TRIES) return CLOSED;
-            if (verify(code, nonce, body, sig)) { done = true; return OK; }
+            byte[] p = rx.open(body);
+            if (p != null) { done = true; plain = p; return OK; }
             fails++;
+            rx.renew();
             return BAD_CODE;
         }
 
+        /** Contenu déchiffré après OK. */
+        synchronized byte[] plain() { return plain; }
         synchronized boolean closed(long now) { return done || now > until || fails >= MAX_TRIES; }
         synchronized int fails() { return fails; }
-        String nonce() { return nonce; }
-        String code() { return code; }
+        String nonce() { return rx.nonce; }
+        String code() { return rx.code; }
+        String published() { return SyncCrypto.hex(rx.published()); }
     }
 
     // ------------------------------------------------------------------ « bonjour » de la TV qui reçoit
 
-    /** Réponse à HELLO : trois lignes, « lumen-sync 1 », le numéro aléatoire, le nom de la TV. */
-    static String helloBody(String nonce, String name) { return FORMAT + " " + VERSION + "\n" + nonce + "\n" + cleanName(name); }
-
-    /** {numéro, nom} ou null si ce n'est pas une TV Lumen compatible. */
-    static String[] parseHello(String s) {
-        if (s == null || s.length() > 200) return null;
-        String[] l = s.split("\n", -1);
-        if (l.length != 3 || !l[0].equals(FORMAT + " " + VERSION) || !nonceOk(l[1])) return null;
-        return new String[]{l[1], cleanName(l[2])};
+    /** Réponse à HELLO : « lumen-sync 2 », le numéro aléatoire, la valeur publique (SyncCrypto), le nom de la TV. */
+    static String helloBody(String nonce, String published, String name) {
+        return FORMAT + " " + VERSION + "\n" + nonce + "\n" + published + "\n" + cleanName(name);
     }
+
+    /** {numéro, nom, valeur publique} ou null si ce n'est pas une TV Lumen compatible. */
+    static String[] parseHello(String s) {
+        if (s == null || s.length() > 800) return null;
+        String[] l = s.split("\n", -1);
+        if (l.length != 4 || !l[0].equals(FORMAT + " " + VERSION) || !nonceOk(l[1]) || !SyncCrypto.valid(SyncCrypto.parse(l[2]))) return null;
+        return new String[]{l[1], cleanName(l[3]), l[2]};
+    }
+
+    /** Une TV en Lumen 4.31 ou 4.32 (envoi non chiffré, sans les clés) : il faut la mettre à jour. */
+    static boolean olderPeer(String s) { return s != null && s.startsWith(FORMAT + " 1\n"); }
+
+    // ------------------------------------------------------------------ clés et météo reçues
+
+    /** Ville de la météo reçue : texte court, sans caractère de contrôle ; coordonnées sur la Terre. */
+    static boolean cityOk(String city, double lat, double lon) {
+        return city != null && !city.trim().isEmpty() && Backup.textOk(city, 80)
+                && !Double.isNaN(lat) && !Double.isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+    }
+
+    /** Empreinte de certificat Home Assistant : vide (certificat reconnu, ou http) ou SHA-256 en hexadécimal. */
+    static boolean certOk(String pin) { return pin != null && (pin.isEmpty() || pin.matches("[0-9a-f]{64}")); }
 
     /** Nom de TV affichable : court, sans caractère de contrôle. */
     static String cleanName(String s) {

@@ -37,6 +37,14 @@ final class Weather {
     /** Dernier code météo connu (WMO), -1 si inconnu. */
     int lastCode() { return hasCity() ? sp.getInt("code", -1) : -1; }
 
+    /** Ville reçue d'une autre TV de la maison (nom et coordonnées déjà trouvés là-bas) ; false si refusée. */
+    boolean setPlace(String city, double lat, double lon) {
+        if (!TvSync.cityOk(city, lat, lon)) return false;
+        Sky.setLocation(lat, lon);
+        sp.edit().clear().putString("city", city.trim()).putFloat("lat", (float) lat).putFloat("lon", (float) lon).putLong("t", 0).apply();
+        return true;
+    }
+
     /** Cherche une ville par son nom ; rappelle avec le nom trouvé ou null. */
     void setCity(String raw, final Callback cb) {
         // nom de ville uniquement : lettres, espaces, tirets, apostrophes ; 60 caractères au plus

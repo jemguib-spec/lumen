@@ -29,7 +29,7 @@ final class SyncPanel {
     private SyncPanel() { }
 
     /** Groupes à envoyer (tous par défaut, le temps que Lumen reste ouvert). */
-    static final boolean[] groups = {true, true, true, true};
+    static final boolean[] groups = {true, true, true, true, true};
 
     private static LinearLayout tvBox;
     private static View addressRow;
@@ -71,7 +71,7 @@ final class SyncPanel {
         addressRow = addr;
         col.addView(addr, a.rowLp());
         TextView t = a.text(21, "sans-serif", Palette.TEXT_3);
-        t.setText(L.t("Sur l'autre TV : Réglages › Système › Autres TV › Recevoir. Elle apparaît ici ; choisis-la puis tape le code qu'elle affiche. Le code PIN, Home Assistant, les clés, les habitudes, la télécommande et les vidéos téléchargées restent propres à chaque TV. Les réglages vont au profil ouvert sur l'autre TV."));
+        t.setText(L.t("Sur l'autre TV : Réglages › Système › Autres TV › Recevoir. Elle apparaît ici ; choisis-la puis tape le code qu'elle affiche. L'envoi est chiffré grâce à ce code. Le code PIN, les habitudes, la télécommande et les vidéos téléchargées restent propres à chaque TV. Les réglages vont au profil ouvert sur l'autre TV."));
         t.setLineSpacing(0, 1.25f);
         t.setPadding(a.u(32), a.u(28), a.u(32), 0);
         col.addView(t);
@@ -147,6 +147,7 @@ final class SyncPanel {
                         a.h.post(new Runnable() {
                             @Override public void run() {
                                 if (fh == null) { a.showNotice(L.t("Aucune TV en réception à cette adresse"), 3500); return; }
+                                if (fh[0].isEmpty()) { a.showNotice(L.t("Mets d'abord Lumen à jour sur l'autre TV (4.33 ou plus)"), 4000); return; }
                                 askCode(a, fip, (Integer) ad[1], fh[1]);
                             }
                         });
@@ -184,6 +185,11 @@ final class SyncPanel {
             o.put("from", tvName(a));
             o.put("groups", TvSync.groupsText(groups));
             o.put("settings", a.prefs.exportSync(groups));
+            if (groups[TvSync.WALL] && a.weather.hasCity()) {
+                double[] c = a.weather.coords();
+                o.put("weather", new JSONObject().put("city", a.weather.city()).put("lat", c[0]).put("lon", c[1]));
+            }
+            if (groups[TvSync.KEYS]) o.put("keys", a.prefs.exportKeys());
             body = o.toString().getBytes("UTF-8");
         } catch (Exception e) {
             a.showNotice(L.t("Réglages illisibles"));
@@ -210,6 +216,7 @@ final class SyncPanel {
                                     case SyncLink.BAD_CODE: msg.setText(L.t("Code incorrect")); break;
                                     case SyncLink.CLOSED: msg.setText(L.t("Cette TV n'attend plus · relance « Recevoir » sur elle")); break;
                                     case SyncLink.NOT_LUMEN: msg.setText(L.t("Cette TV n'est plus en réception")); break;
+                                    case SyncLink.OLDER_PEER: msg.setText(L.t("Mets d'abord Lumen à jour sur l'autre TV (4.33 ou plus)")); break;
                                     default: msg.setText(L.t("TV injoignable · sur le même réseau ?")); break;
                                 }
                             }
@@ -288,9 +295,9 @@ final class SyncPanel {
         cancel.requestFocus();
     }
 
-    /** Envoi reçu et signé : on montre d'où il vient et ce qu'il change, rien n'est appliqué sans « Appliquer ». */
+    /** Envoi reçu et déchiffré : on montre d'où il vient et ce qu'il change, rien n'est appliqué sans « Appliquer ». */
     private static void confirm(final MainActivity a, String fromIp, String json, final Done done) {
-        final JSONObject settings;
+        final JSONObject settings, keys, weather;
         final boolean[] g;
         String from;
         try {
@@ -300,6 +307,8 @@ final class SyncPanel {
             g = TvSync.parseGroups(o.optString("groups"));
             if (!TvSync.any(g)) throw new Exception("groupes");
             from = TvSync.cleanName(o.optString("from", fromIp));
+            keys = g[TvSync.KEYS] ? o.optJSONObject("keys") : null;
+            weather = g[TvSync.WALL] ? o.optJSONObject("weather") : null;
         } catch (Exception e) {
             a.showNotice(L.t("Réglages reçus illisibles"));
             if (done != null) done.on(false);
@@ -315,7 +324,11 @@ final class SyncPanel {
         card.addView(a.menuHeader(null, false, L.t("Réglages reçus"), L.t("De « ") + from + L.t(" »") + " (" + fromIp + ")"));
         TextView why = a.text(22, "sans-serif", Palette.TEXT_2);
         String profile = a.prefs.hasProfiles() ? L.t(" Profil : ") + a.prefs.activeProfileName() + "." : "";
-        why.setText(what + "." + profile + "\n" + L.t("Les réglages de ces groupes que l'autre TV n'a jamais changés reviennent à leur valeur par défaut."));
+        StringBuilder extra = new StringBuilder();
+        if (weather != null) extra.append("\n").append(L.t("Météo : ")).append(TvSync.cleanName(weather.optString("city")));
+        String keyNames = Prefs.keyNames(keys);
+        if (!keyNames.isEmpty()) extra.append("\n").append(L.t("Clés : ")).append(keyNames).append(L.t(" (remplacent celles de cette TV)"));
+        why.setText(what + "." + profile + extra + "\n" + L.t("Les réglages de ces groupes que l'autre TV n'a jamais changés reviennent à leur valeur par défaut."));
         why.setGravity(Gravity.CENTER);
         why.setLineSpacing(0, 1.2f);
         why.setPadding(a.u(24), 0, a.u(24), a.u(24));
@@ -327,6 +340,8 @@ final class SyncPanel {
                 a.closeOverlay(true);
                 try {
                     int n = a.prefs.importSync(settings, g);
+                    if (keys != null) n += a.prefs.importKeys(keys);
+                    if (weather != null && a.weather.setPlace(weather.optString("city"), weather.optDouble("lat", Double.NaN), weather.optDouble("lon", Double.NaN))) n++;
                     a.showNotice(n + L.t(" réglages copiés"));
                     a.h.postDelayed(new Runnable() { @Override public void run() { a.recreate(); } }, 1200); // tout est relu proprement
                 } catch (Exception e) {

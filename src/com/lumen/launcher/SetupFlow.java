@@ -37,6 +37,6 @@ final class SetupFlow {
     static int number(int step) { return step >= PROFILE && step <= KEYS ? step : 0; }
     static int count() { return KEYS; }
 
-    /** Après la copie depuis une autre TV : il ne reste que les clés (jamais copiées) et la fin. */
+    /** Après la copie depuis une autre TV : l'étape des clés, pour voir ce qui est arrivé (ou les taper), puis la fin. */
     static int afterSync() { return KEYS; }
 }

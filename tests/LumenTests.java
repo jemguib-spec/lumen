@@ -168,11 +168,11 @@ public class LumenTests {
         boolean inBackup = true;
         for (String k : TvSync.keysOf(new boolean[]{true, true, true, true})) if (Backup.typeOf(k) == Backup.NONE) inBackup = false;
         check("copie entre TV : seulement des réglages de la sauvegarde (liste blanche)", inBackup);
-        check("copie entre TV : secrets jamais copiés", TvSync.groupOf("pin") < 0 && TvSync.groupOf("pexels_key") < 0 && TvSync.groupOf("ha_token") < 0
+        check("copie entre TV : secrets hors des groupes de réglages (envoyés à part, chiffrés)", TvSync.groupOf("pin") < 0 && TvSync.groupOf("pexels_key") < 0 && TvSync.groupOf("ha_token") < 0
                 && TvSync.groupOf("tmdb_key") < 0 && TvSync.groupOf("trusted_phones") < 0 && TvSync.groupOf(null) < 0);
         check("copie entre TV : habitudes, télécommande et vidéos restent sur la TV", TvSync.local("habits") && TvSync.local("remote_keys")
                 && TvSync.local("video_ok") && TvSync.local("video_disk_gb") && TvSync.groupOf("habits") < 0);
-        check("copie entre TV : un nom de groupe par groupe", TvSync.GROUP_NAMES.length == 4);
+        check("copie entre TV : un nom de groupe par groupe", TvSync.GROUP_NAMES.length == 5);
         boolean[] onlyApps = {false, false, false, true};
         check("copie entre TV : groupes choisis seulement", TvSync.keysOf(onlyApps).contains("favorites") && !TvSync.keysOf(onlyApps).contains("clock"));
         java.util.Set<String> sent = new java.util.HashSet<>(java.util.Arrays.asList("source", "interval"));
@@ -182,38 +182,68 @@ public class LumenTests {
         check("copie entre TV : verrous jamais retirés, source gardée", !reset.contains("locked_apps") && !TvSync.resetKeys(new boolean[]{false, true, false, false},
                 new java.util.HashSet<String>()).contains("source"));
         check("copie entre TV : groupe non choisi intouché", !reset.contains("clock") && !reset.contains("home_cols"));
-        check("copie entre TV : groupes écrits et relus", java.util.Arrays.equals(TvSync.parseGroups(TvSync.groupsText(new boolean[]{true, false, true, true})),
-                new boolean[]{true, false, true, true}));
+        check("copie entre TV : groupes écrits et relus", java.util.Arrays.equals(TvSync.parseGroups(TvSync.groupsText(new boolean[]{true, false, true, true, true})),
+                new boolean[]{true, false, true, true, true}));
         check("copie entre TV : groupes inconnus ignorés", !TvSync.any(TvSync.parseGroups("9,a,-1,,01")) && !TvSync.any(TvSync.parseGroups(null)));
-        // code et signature
+        // code et chiffrement (SPAKE2 + AES-GCM)
         java.security.SecureRandom r = new java.security.SecureRandom();
         String code = TvSync.newCode(r), nonce = TvSync.newNonce(r);
         String other = code.equals("000000") ? "000001" : "000000";
         check("copie entre TV : code à 6 chiffres", TvSync.codeOk(code) && !TvSync.codeOk("12345") && !TvSync.codeOk("12a456") && !TvSync.codeOk(null));
         check("copie entre TV : code affiché en deux blocs", TvSync.spaced("427913").equals("427 913"));
         check("copie entre TV : numéro aléatoire bien formé", TvSync.nonceOk(nonce) && !nonce.equals(TvSync.newNonce(r)));
-        byte[] body = "{\"settings\":{}}".getBytes("UTF-8");
-        String sig = TvSync.sign(code, nonce, body);
-        check("copie entre TV : envoi signé avec le bon code accepté", TvSync.verify(code, nonce, body, sig));
-        check("copie entre TV : signature d'un autre code refusée", !TvSync.verify(code, nonce, body, TvSync.sign(other, nonce, body)));
-        check("copie entre TV : contenu modifié refusé", !TvSync.verify(code, nonce, "{\"settings\":{\"x\":1}}".getBytes("UTF-8"), sig));
-        check("copie entre TV : rejeu sur une autre réception refusé", !TvSync.verify(code, TvSync.newNonce(r), body, sig));
-        check("copie entre TV : signature absente ou mal formée refusée", !TvSync.verify(code, nonce, body, null) && !TvSync.verify(code, nonce, body, "zz"));
+        java.math.BigInteger P = SyncCrypto.P, Q = SyncCrypto.Q;
+        check("chiffrement entre TV : groupe RFC 3526 (p et q premiers, 2048 bits)", P.bitLength() == 2048 && P.isProbablePrime(40) && Q.isProbablePrime(40));
+        check("chiffrement entre TV : g, M et N dans le sous-groupe, M ≠ N", SyncCrypto.valid(SyncCrypto.G) && SyncCrypto.valid(SyncCrypto.M)
+                && SyncCrypto.valid(SyncCrypto.N) && !SyncCrypto.M.equals(SyncCrypto.N));
+        byte[] body = "{\"settings\":{},\"keys\":{\"tmdb\":\"secret\"}}".getBytes("UTF-8");
+        SyncCrypto.Receiver rx = new SyncCrypto.Receiver(code, nonce, r);
+        byte[] wire = SyncCrypto.senderBody(code, nonce, rx.published(), body, r);
+        byte[] got = rx.open(wire);
+        check("chiffrement entre TV : bon code, contenu retrouvé", got != null && java.util.Arrays.equals(got, body));
+        check("chiffrement entre TV : rien de lisible sur le réseau", !new String(wire, "UTF-8").contains("secret") && !new String(wire, "UTF-8").contains(code));
+        check("chiffrement entre TV : mauvais code, rien n'est lisible", rx.open(SyncCrypto.senderBody(other, nonce, rx.published(), body, r)) == null);
+        byte[] tampered = wire.clone();
+        tampered[tampered.length - 3] = (byte) (tampered[tampered.length - 3] == '0' ? '1' : '0');
+        check("chiffrement entre TV : contenu modifié refusé", rx.open(tampered) == null);
+        check("chiffrement entre TV : envoi pour une autre réception refusé", new SyncCrypto.Receiver(code, TvSync.newNonce(r), r).open(wire) == null);
+        String sealedPart = new String(wire, "UTF-8").substring(SyncCrypto.HEX);
+        boolean traps = true;
+        for (java.math.BigInteger bad : new java.math.BigInteger[]{java.math.BigInteger.ZERO, java.math.BigInteger.ONE, P.subtract(java.math.BigInteger.ONE), P.subtract(java.math.BigInteger.valueOf(2))})
+            if (rx.open((SyncCrypto.hex(bad) + sealedPart).getBytes("UTF-8")) != null || SyncCrypto.valid(bad)) traps = false;
+        check("chiffrement entre TV : valeurs piégées refusées (0, 1, p − 1, hors du sous-groupe)", traps);
+        check("chiffrement entre TV : envoi mal formé refusé", rx.open("abc".getBytes("UTF-8")) == null && rx.open(new byte[0]) == null);
+        rx.renew();
+        check("chiffrement entre TV : après un mauvais code, l'ancien envoi ne passe plus", rx.open(wire) == null);
+        check("chiffrement entre TV : même calcul avec la nouvelle valeur publique", rx.open(SyncCrypto.senderBody(code, nonce, rx.published(), body, r)) != null);
         // essais
-        TvSync.Gate g = new TvSync.Gate(code, nonce, 1000);
-        for (int i = 0; i < TvSync.MAX_TRIES - 1; i++) g.check(body, TvSync.sign(other, nonce, body), 1000);
-        check("copie entre TV : 4 mauvais codes, encore ouvert", !g.closed(1000) && g.check(body, sig, 1000) == TvSync.Gate.OK);
-        check("copie entre TV : un seul envoi accepté", g.check(body, sig, 1000) == TvSync.Gate.CLOSED);
-        TvSync.Gate g2 = new TvSync.Gate(code, nonce, 1000);
-        for (int i = 0; i < TvSync.MAX_TRIES; i++) g2.check(body, TvSync.sign(other, nonce, body), 1000);
-        check("copie entre TV : fermé après 5 mauvais codes, même avec le bon", g2.closed(1000) && g2.check(body, sig, 1000) == TvSync.Gate.CLOSED);
-        TvSync.Gate g3 = new TvSync.Gate(code, nonce, 1000);
-        check("copie entre TV : fermé après 3 min", g3.check(body, sig, 1000 + TvSync.OPEN_MS + 1) == TvSync.Gate.CLOSED);
+        TvSync.Gate g = new TvSync.Gate(code, nonce, 1000, r);
+        for (int i = 0; i < TvSync.MAX_TRIES - 1; i++)
+            g.check(SyncCrypto.senderBody(other, nonce, SyncCrypto.parse(g.published()), body, r), 1000);
+        check("copie entre TV : 4 mauvais codes, encore ouvert", !g.closed(1000)
+                && g.check(SyncCrypto.senderBody(code, nonce, SyncCrypto.parse(g.published()), body, r), 1000) == TvSync.Gate.OK
+                && java.util.Arrays.equals(g.plain(), body));
+        check("copie entre TV : un seul envoi accepté", g.check(SyncCrypto.senderBody(code, nonce, SyncCrypto.parse(g.published()), body, r), 1000) == TvSync.Gate.CLOSED);
+        TvSync.Gate g2 = new TvSync.Gate(code, nonce, 1000, r);
+        for (int i = 0; i < TvSync.MAX_TRIES; i++) g2.check(SyncCrypto.senderBody(other, nonce, SyncCrypto.parse(g2.published()), body, r), 1000);
+        check("copie entre TV : fermé après 5 mauvais codes, même avec le bon", g2.closed(1000)
+                && g2.check(SyncCrypto.senderBody(code, nonce, SyncCrypto.parse(g2.published()), body, r), 1000) == TvSync.Gate.CLOSED);
+        TvSync.Gate g3 = new TvSync.Gate(code, nonce, 1000, r);
+        check("copie entre TV : fermé après 3 min", g3.check(SyncCrypto.senderBody(code, nonce, SyncCrypto.parse(g3.published()), body, r), 1000 + TvSync.OPEN_MS + 1) == TvSync.Gate.CLOSED);
+        // clés et météo reçues
+        check("copie entre TV : ville de la météo contrôlée", TvSync.cityOk("Lyon", 45.76, 4.84) && !TvSync.cityOk("", 0, 0) && !TvSync.cityOk("Lyon", 91, 0)
+                && !TvSync.cityOk("Lyon", Double.NaN, 4) && !TvSync.cityOk("a\u0000b", 1, 1) && !TvSync.cityOk(null, 1, 1));
+        check("copie entre TV : empreinte de certificat Home Assistant contrôlée", TvSync.certOk("") && TvSync.certOk(Signer.hex(new byte[32]))
+                && !TvSync.certOk("zz") && !TvSync.certOk(null));
+        check("copie entre TV : un groupe « Clés et services », hors de la sauvegarde", TvSync.GROUP_NAMES.length == 5 && TvSync.keysOf(new boolean[]{false, false, false, false, true}).isEmpty());
         // « bonjour », noms, adresses
-        String[] hello = TvSync.parseHello(TvSync.helloBody(nonce, "Salon"));
-        check("copie entre TV : bonjour relu", hello != null && hello[0].equals(nonce) && hello[1].equals("Salon"));
-        check("copie entre TV : bonjour d'une autre appli refusé", TvSync.parseHello("HTTP ok") == null && TvSync.parseHello("lumen-sync 2\n" + nonce + "\nX") == null
-                && TvSync.parseHello("lumen-sync 1\nabc\nX") == null && TvSync.parseHello(null) == null);
+        String pub = SyncCrypto.hex(rx.published());
+        String[] hello = TvSync.parseHello(TvSync.helloBody(nonce, pub, "Salon"));
+        check("copie entre TV : bonjour relu", hello != null && hello[0].equals(nonce) && hello[1].equals("Salon") && hello[2].equals(pub));
+        check("copie entre TV : bonjour d'une autre appli refusé", TvSync.parseHello("HTTP ok") == null && TvSync.parseHello("lumen-sync 3\n" + nonce + "\n" + pub + "\nX") == null
+                && TvSync.parseHello("lumen-sync 2\nabc\n" + pub + "\nX") == null && TvSync.parseHello(null) == null
+                && TvSync.parseHello("lumen-sync 2\n" + nonce + "\n" + SyncCrypto.hex(java.math.BigInteger.ONE) + "\nX") == null);
+        check("copie entre TV : TV en Lumen 4.31-4.32 reconnue (à mettre à jour)", TvSync.olderPeer("lumen-sync 1\n" + nonce + "\nSalon") && !TvSync.olderPeer(TvSync.helloBody(nonce, pub, "Salon")));
         check("copie entre TV : nom nettoyé et borné", TvSync.cleanName("  Salon\u0000 \n TV ").equals("Salon TV") && TvSync.cleanName("").equals("TV")
                 && TvSync.cleanName("abcdefghijklmnopqrstuvwxyz0123456789").length() == 30);
         Object[] ad = TvSync.address(" 192.168.1.20 ");
@@ -251,7 +281,7 @@ public class LumenTests {
                 && SetupFlow.prev(SetupFlow.PROFILE) == SetupFlow.WELCOME && SetupFlow.prev(SetupFlow.WELCOME) == SetupFlow.WELCOME);
         check("assistant : « Étape n sur 4 » seulement pour les étapes de zéro", SetupFlow.number(SetupFlow.WELCOME) == 0 && SetupFlow.number(SetupFlow.PROFILE) == 1
                 && SetupFlow.number(SetupFlow.KEYS) == SetupFlow.count() && SetupFlow.number(SetupFlow.READY) == 0);
-        check("assistant : après la copie depuis une autre TV, il ne reste que les clés", SetupFlow.afterSync() == SetupFlow.KEYS
+        check("assistant : après la copie depuis une autre TV, on vérifie les clés reçues", SetupFlow.afterSync() == SetupFlow.KEYS
                 && TvSync.groupOf("tmdb_key") < 0 && TvSync.groupOf("pexels_key") < 0);
         check("assistant : l'étape n'est pas dans la sauvegarde ni copiée", Backup.typeOf("setup_step") == Backup.NONE && TvSync.groupOf("setup_step") < 0);
     }

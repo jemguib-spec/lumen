@@ -2,6 +2,13 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.33.0
+
+- Copie des réglages entre TV : la ville de la météo part maintenant avec le fond d'écran (groupe « Fond d'écran, veille et météo »).
+- Nouveau groupe « Clés et services », coché d'office : la clé TMDB (ou l'accord pour la clé partagée), la clé Pexels et la liaison Home Assistant arrivent aussi sur l'autre TV, qui les nomme avant « Appliquer ». Elles remplacent celles de l'autre TV ; une clé que la TV de référence n'a pas n'efface rien.
+- Tout l'envoi est désormais chiffré grâce au code à 6 chiffres : personne sur le Wi-Fi ne peut le lire ni retrouver le code, même en enregistrant l'échange. Les deux TV doivent avoir Lumen 4.33 ; une TV plus ancienne le dit (« Mets d'abord Lumen à jour sur l'autre TV »).
+- Assistant du premier démarrage : « Me synchroniser avec une autre TV du foyer » récupère donc aussi la météo et les clés ; l'étape « Clés et services » montre ensuite ce qui est arrivé.
+
 ## 4.32.0
 
 - Assistant du premier démarrage, juste après l'installation. Première page : « Démarrer de zéro » ou « Me synchroniser avec une autre TV du foyer ».
