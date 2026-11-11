@@ -67,7 +67,7 @@
 - `REQUEST_DELETE_PACKAGES` : proposer la désinstallation d'une appli, que tu confirmes à chaque fois.
 - `PACKAGE_USAGE_STATS` (facultative, à accorder par ADB) : historique pour « Reprendre ».
 - `WRITE_SECURE_SETTINGS` (facultative, à accorder par ADB) : sert uniquement à choisir Lumen comme économiseur d'écran (`ScreenSaver`) et, si tu le demandes dans Réglages › Notifications, à ajouter Lumen aux applis qui lisent les notifications (`NotifyService.grantSelf`, les autres applis autorisées le restent) ; aucun autre réglage de la TV n'est touché.
-- Accès aux notifications (facultatif, `NotifyService`, donné dans Android ou par ADB) : Lumen lit le titre et le texte des notifications des applis pour les afficher en grand sur l'accueil. Lecture seule et en mémoire : rien n'est écrit sur le disque ni envoyé, ni au téléphone ni sur Internet ; Lumen ne supprime jamais la notification d'une autre appli (« Tout effacer » ne vide que sa propre liste). Rien ne s'affiche dans un profil enfant ; pour une appli verrouillée par code, seul son nom apparaît et l'ouvrir redemande le code. Les notifications permanentes (lecture, téléchargements, services) et les recommandations sont ignorées.
+- Accès aux notifications (facultatif, `NotifyService`, donné dans Android ou par ADB) : Lumen lit le titre et le texte des notifications des applis pour les afficher sur l'accueil. Lecture seule et en mémoire : rien n'est écrit sur le disque ni envoyé, ni au téléphone ni sur Internet ; Lumen ne supprime jamais la notification d'une autre appli (« Tout effacer » ne vide que sa propre liste). Rien ne s'affiche dans un profil enfant ; pour une appli verrouillée par code, seul son nom apparaît et l'ouvrir redemande le code. Les notifications permanentes (lecture, téléchargements, services) et les recommandations sont ignorées.
 - `READ_TV_LISTINGS` : lire les épisodes en cours (« Reprendre ») et la liste des entrées HDMI, sur l'appareil.
 
 ## Profils (`Profiles`, `ProfilePrefs`, `ProfilePanel`, `WhoPage`)
@@ -129,7 +129,7 @@
 | `SafeFile` | Écriture sûre des index et catalogues (rien de corrompu si la TV est débranchée) |
 | `About`, `StoragePanel`, `Perf`, `CrashLog` | À propos et licences, stockage, mesures, journal d'erreurs local |
 | `ScreenSaver` | Lumen comme économiseur d'écran |
-| `NotifyService`, `NotifyPolicy`, `NotifyUi` | Notifications des applis en grand sur l'accueil (facultatif) : lecture locale et en mémoire, tri de ce qui mérite d'être montré, carte, cloche et liste |
+| `NotifyService`, `NotifyPolicy`, `NotifyUi` | Notifications des applis sur l'accueil (facultatif) : lecture locale et en mémoire, tri de ce qui mérite d'être montré, carte, cloche et liste |
 | `TvQuickPanel` | Paramètres de la TV en un appui (réseau, Bluetooth, son, image, entrées) : ouvre les écrans d'Android, ne change rien lui-même |
 | `DateLine`, `DateClock` | Date sous l'horloge et dans le mode veille, dans la langue de Lumen |
 | `Sky` | Lever / coucher du soleil, phase de lune, saisons (calcul local, sans réseau) |

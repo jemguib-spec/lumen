@@ -174,7 +174,7 @@ final class Prefs {
     void setWeatherFx(boolean b) { sp.edit().putBoolean("weather_fx", b).apply(); }
 
     boolean sounds() { return sp.getBoolean("sounds", true); }
-    /** Notifications des applis affichées en grand sur l'accueil (dès que l'accès est donné). */
+    /** Notifications des applis affichées sur l'accueil (dès que l'accès est donné). */
     boolean notifyOn() { return sp.getBoolean("notif_on", true); }
     void setNotifyOn(boolean b) { sp.edit().putBoolean("notif_on", b).apply(); }
     /** Durée d'affichage de la grande carte, en secondes (NotifyPolicy.SECONDS). */

@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Règles des notifications affichées en grand sur l'accueil : lesquelles montrer (une nouvelle
+ * Règles des notifications affichées sur l'accueil : lesquelles montrer (une nouvelle
  * sortie, un message, un rappel) et lesquelles laisser de côté (lecture en cours, téléchargements,
  * services, recommandations de l'ancien Android TV, mises à jour silencieuses d'une même
  * notification). Rien ne quitte la TV. Java pur, testé.
@@ -38,7 +38,7 @@ final class NotifyPolicy {
 
     /**
      * Même contenu qu'une notification déjà montrée : une appli qui met à jour sa notification
-     * (compteur, heure) ne doit pas la refaire surgir en grand.
+     * (compteur, heure) ne doit pas la refaire surgir.
      */
     static String fingerprint(String pkg, String title, String text) {
         return pkg + "\n" + clean(title) + "\n" + clean(text);

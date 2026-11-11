@@ -2,6 +2,11 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.28.1
+
+- Notifications des applis plus discrètes : une petite carte de verre à gauche de l'accueil, sous le nom du fond, au lieu de la grande carte au milieu en haut. Icône, nom de l'appli, titre et deux lignes de texte au plus ; elle glisse depuis la gauche.
+- Réglages › Notifications : « Afficher les notifications sur l'accueil ».
+
 ## 4.28.0
 
 - Tous les boutons ronds de l'accueil se masquent ou s'affichent, chacun avec son interrupteur, au même endroit : Réglages › Accueil et applis › Boutons de l'accueil. Notifications, Rechercher, Ambiances, Entrées, Maison, Profils, Toutes les applications, Paramètres de la TV, Sons et Réglages ; par profil, repris dans la sauvegarde des réglages.

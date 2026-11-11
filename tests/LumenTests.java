@@ -600,6 +600,7 @@ public class LumenTests {
         check("arrondis : barre de progression = vignette − marge", Radius.SHELF_BAR / 2 + Radius.SHELF_BAR_INSET == Radius.SHELF);
         check("arrondis : contour tracé au bord = rayon − demi-épaisseur", Radius.stroke(18, 4) == 16 && Radius.stroke(1, 4) == 0);
         check("arrondis : pastille de rubrique = ligne − marge", Radius.CHIP + Radius.CHIP_PAD == Radius.ROW);
+        check("arrondis : carte de notification = icône + marge", Radius.NOTE == Radius.NOTE_ICON + Radius.NOTE_PAD);
         // la même règle partout : aucun rayon écrit en dur dans l'interface (cartes, fonds, contours, dessins)
         boolean noLiteral = true;
         java.util.regex.Pattern literal = java.util.regex.Pattern.compile(

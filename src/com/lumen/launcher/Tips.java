@@ -13,7 +13,7 @@ final class Tips {
             "Une touche de la télécommande sans rôle ? Appuie dessus : Lumen propose de la relier à une fonction",
             "Réglages › Accueil et applis › Boutons de l'accueil : afficher ou masquer chaque bouton rond",
             "Le bouton écran en haut de l'accueil ouvre les paramètres de la TV : réseau, Bluetooth, son, image",
-            "Réglages › Notifications : les nouvelles sorties et messages des applis s'affichent en grand",
+            "Réglages › Notifications : les nouvelles sorties et messages des applis s'affichent sur l'accueil",
     };
 
     static void showNext(MainActivity a) {

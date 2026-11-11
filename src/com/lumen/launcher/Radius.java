@@ -98,6 +98,12 @@ final class Radius {
     /** Vignette à cocher : 20 + 12. */
     static final float CHECK_CELL = outer(CHECK / 2, CHECK_INSET);
 
+    /** Notification d'une appli (petite carte à gauche de l'accueil) : icône posée dans le coin. */
+    static final float NOTE_ICON = 12;
+    static final float NOTE_PAD = 18;
+    /** Carte de notification : 12 + 18. */
+    static final float NOTE = outer(NOTE_ICON, NOTE_PAD);
+
     /** Vignette du haut de l'accueil (programmes) et sa barre de progression, arrondie en entier. */
     static final float SHELF = 16;
     static final float SHELF_BAR = 6;

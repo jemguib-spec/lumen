@@ -627,7 +627,7 @@ Couper ou remettre les sons	Turn sounds off or on
 1 notification	1 notification
 Accès aux notifications	Notification access
 Accès aux notifications autorisé	Notification access granted
-Afficher les notifications en grand	Show notifications in large
+Afficher les notifications sur l'accueil	Show notifications on the home screen
 Ajoute tes applis ici : ▼ Toutes les applications, puis appui long sur OK › Ajouter aux favoris	Add your apps here: ▼ All apps, then long-press OK › Add to favourites
 Android doit d'abord autoriser Lumen à lire les notifications. Si la TV ne propose pas l'écran d'autorisation, depuis un ordinateur : 	Android must first allow Lumen to read notifications. If the TV doesn't offer the permission screen, from a computer: 
 Appli verrouillée par code	App locked with a code
@@ -643,7 +643,6 @@ Chaque appli apparaît ici dès sa première notification : tu pourras alors la 
 Dernières notifications	Latest notifications
 Durée à l'écran	Time on screen
 Désactivées	Off
-En grand	Large
 Essayer	Try it
 Exemple : c'est ainsi qu'une appli annonce une nouvelle sortie sur l'accueil.	Example: this is how an app announces a new release on the home screen.
 Image et écran	Picture and display
@@ -653,8 +652,8 @@ Notifications	Notifications
 Notifications des applis	App notifications
 Nouvelle notification	New notification
 Nouvelle saison disponible	New season available
-Quand une appli annonce une nouvelle sortie, un épisode ou un message, Lumen l'affiche en grand en haut de l'écran, puis la garde sous la cloche de l'accueil. Retour l'efface. Rien n'est enregistré ni envoyé ; rien dans un profil enfant.	When an app announces a new release, an episode or a message, Lumen shows it in large at the top of the screen, then keeps it under the bell on the home screen. Back dismisses it. Nothing is stored or sent; nothing in a kids profile.
-Réglages › Notifications : les nouvelles sorties et messages des applis s'affichent en grand	Settings › Notifications: new releases and messages from apps are shown in large
+Quand une appli annonce une nouvelle sortie, un épisode ou un message, Lumen l'affiche dans une petite carte à gauche de l'accueil, puis la garde sous la cloche. Retour l'efface. Rien n'est enregistré ni envoyé ; rien dans un profil enfant.	When an app announces a new release, an episode or a message, Lumen shows it in a small card on the left of the home screen, then keeps it under the bell. Back dismisses it. Nothing is stored or sent; nothing in a kids profile.
+Réglages › Notifications : les nouvelles sorties et messages des applis s'affichent sur l'accueil	Settings › Notifications: new releases and messages from apps show up on the home screen
 Réseau et Internet	Network and Internet
 Résolution, mode d'image	Resolution, picture mode
 Son	Sound
@@ -662,7 +661,7 @@ Sortie audio, enceintes	Audio output, speakers
 Tous les paramètres	All settings
 Tout effacer de l'accueil	Clear all from the home screen
 Télécommandes et accessoires	Remotes and accessories
-Une appli coupée n'apparaît plus en grand ni sous la cloche.	A muted app no longer shows in large or under the bell.
+Une appli coupée n'apparaît plus sur l'accueil ni sous la cloche.	A muted app no longer shows on the home screen or under the bell.
 Wi-Fi, câble	Wi-Fi, cable
 À autoriser	To allow
 À autoriser · OK	To allow · OK
@@ -677,3 +676,4 @@ dès deux profils	from two profiles
 quand une appli en envoie	when an app sends one
 si la TV en a	if the TV has any
 ◀ ▶ pour changer de jeu ou de volume : le son se fait entendre aussitôt. Seuls les sons de Lumen changent, pas le volume de la TV, des applis ni des vidéos. Le bouton Sons de l'accueil (Accueil et applis › Boutons de l'accueil) coupe ou remet les sons d'un appui.	◀ ▶ to change the sound set or volume: you hear it right away. Only Lumen's sounds change, not the volume of the TV, apps or videos. The Sounds button on the home screen (Home and apps › Home screen buttons) mutes or unmutes in one press.
+Activées	On

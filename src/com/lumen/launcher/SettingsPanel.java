@@ -254,7 +254,7 @@ final class SettingsPanel {
                     rubric(a, card, Glyph.SOUND, L.t("Sons"), new MainActivity.Value() { @Override public String get() {
                         return a.prefs.sounds() ? L.t(SoundDesign.THEME_NAMES[a.prefs.soundTheme()]) + " · " + L.t(SoundDesign.VOLUME_NAMES[a.prefs.soundVolume()]) : L.t("Coupés"); } }, SONS),
                     rubric(a, card, Glyph.BELL, L.t("Notifications"), new MainActivity.Value() { @Override public String get() {
-                        return !a.prefs.notifyOn() ? L.t("Désactivées") : NotifyService.granted(a) ? L.t("En grand") : L.t("À autoriser"); } }, NOTIFS),
+                        return !a.prefs.notifyOn() ? L.t("Désactivées") : NotifyService.granted(a) ? L.t("Activées") : L.t("À autoriser"); } }, NOTIFS),
                     null,
                     null,
                     rubric(a, card, Glyph.SWITCH, L.t("Télécommande"), new MainActivity.Value() { @Override public String get() {
@@ -689,7 +689,7 @@ final class SettingsPanel {
                 break;
             }
             case NOTIFS: {
-                col.addView(toggle(a, L.t("Afficher les notifications en grand"), new GlassUi.Bool() {
+                col.addView(toggle(a, L.t("Afficher les notifications sur l'accueil"), new GlassUi.Bool() {
                     @Override public boolean get() { return a.prefs.notifyOn(); }
                 }, new Runnable() {
                     @Override public void run() { a.prefs.setNotifyOn(!a.prefs.notifyOn()); a.notify.updateBell(); if (!a.prefs.notifyOn()) a.notify.hideCard(); }
@@ -724,7 +724,7 @@ final class SettingsPanel {
                     @Override public void onClick(View v) { a.notify.sample(); }
                 }), a.rowLp());
                 hint(a, col, granted
-                        ? L.t("Quand une appli annonce une nouvelle sortie, un épisode ou un message, Lumen l'affiche en grand en haut de l'écran, puis la garde sous la cloche de l'accueil. Retour l'efface. Rien n'est enregistré ni envoyé ; rien dans un profil enfant.")
+                        ? L.t("Quand une appli annonce une nouvelle sortie, un épisode ou un message, Lumen l'affiche dans une petite carte à gauche de l'accueil, puis la garde sous la cloche. Retour l'efface. Rien n'est enregistré ni envoyé ; rien dans un profil enfant.")
                         : L.t("Android doit d'abord autoriser Lumen à lire les notifications. Si la TV ne propose pas l'écran d'autorisation, depuis un ordinateur : ") + NotifyService.adbCommand(a));
                 break;
             }
@@ -743,7 +743,7 @@ final class SettingsPanel {
                     }), a.rowLp());
                 }
                 hint(a, col, pkgs.isEmpty() ? L.t("Chaque appli apparaît ici dès sa première notification : tu pourras alors la couper.")
-                        : L.t("Une appli coupée n'apparaît plus en grand ni sous la cloche."));
+                        : L.t("Une appli coupée n'apparaît plus sur l'accueil ni sous la cloche."));
                 break;
             }
             case VEILLE: {

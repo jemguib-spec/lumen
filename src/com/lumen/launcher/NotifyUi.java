@@ -18,7 +18,7 @@ import android.widget.TextView;
 import java.util.List;
 
 /**
- * Notifications des applis sur l'accueil : une grande carte de verre en haut de l'écran quand une
+ * Notifications des applis sur l'accueil : une petite carte de verre à gauche de l'écran quand une
  * appli annonce quelque chose (nouvelle sortie, nouvel épisode, message), puis le bouton cloche
  * qui garde les dernières et les rouvre dans leur appli. Rien dans un profil enfant ; une appli
  * verrouillée par code ne montre que son nom.
@@ -63,48 +63,54 @@ final class NotifyUi implements NotifyService.Listener {
         return false;
     }
 
+    /**
+     * Petite carte de verre à gauche, sous le nom du fond : discrète, alignée sur la légende. L'icône
+     * est posée dans le coin haut gauche, à NOTE_PAD des bords : son arrondi suit celui de la carte.
+     */
     private void build() {
-        card = a.glassCard(Radius.CARD);
+        card = a.glassCard(Radius.NOTE);
         card.setOrientation(LinearLayout.HORIZONTAL);
-        card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setPadding(a.u(Radius.PAD + 12), a.u(Radius.PAD + 8), a.u(Radius.PAD + 20), a.u(Radius.PAD + 8));
+        card.setGravity(Gravity.TOP);
+        int pad = a.u(Radius.NOTE_PAD);
+        card.setPadding(pad, pad, a.u(Radius.NOTE_PAD + 8), pad);
         card.setAlpha(0f);
         card.setVisibility(View.GONE);
         icon = new ImageView(a);
         icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        // l'icône est posée à PAD + 12 du bord gauche : son arrondi suit celui de la carte (rayon externe = interne + marge)
         icon.setOutlineProvider(new ViewOutlineProvider() {
-            @Override public void getOutline(View v, Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), a.u(Radius.inner(Radius.CARD, Radius.PAD + 12))); }
+            @Override public void getOutline(View v, Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), a.u(Radius.NOTE_ICON)); }
         });
         icon.setClipToOutline(true);
-        LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(a.u(112), a.u(112));
-        il.rightMargin = a.u(36);
+        LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(a.u(56), a.u(56));
+        il.rightMargin = a.u(18);
         card.addView(icon, il);
         LinearLayout col = new LinearLayout(a);
         col.setOrientation(LinearLayout.VERTICAL);
-        app = a.text(20, "sans-serif-medium", Palette.TEXT_2);
-        app.setLetterSpacing(0.1f);
+        app = a.text(16, "sans-serif-medium", Palette.TEXT_3);
+        app.setLetterSpacing(0.08f);
         app.setSingleLine(true);
         app.setEllipsize(TextUtils.TruncateAt.END);
         col.addView(app);
-        title = a.text(40, "sans-serif-medium", Palette.TEXT);
+        title = a.text(25, "sans-serif-medium", Palette.TEXT);
         title.setMaxLines(2);
         title.setEllipsize(TextUtils.TruncateAt.END);
         LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        tl.topMargin = a.u(10);
+        tl.topMargin = a.u(6);
         col.addView(title, tl);
-        text = a.text(27, "sans-serif", Palette.TEXT_2);
-        text.setMaxLines(3);
+        text = a.text(20, "sans-serif", Palette.TEXT_2);
+        text.setMaxLines(2);
         text.setEllipsize(TextUtils.TruncateAt.END);
-        text.setLineSpacing(0, 1.15f);
+        text.setLineSpacing(0, 1.12f);
         LinearLayout.LayoutParams xl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        xl.topMargin = a.u(10);
+        xl.topMargin = a.u(4);
         col.addView(text, xl);
         card.addView(col, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         card.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
         card.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE); // TalkBack la lit à son arrivée
-        FrameLayout.LayoutParams cl = new FrameLayout.LayoutParams(a.u(1120), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        cl.topMargin = a.u(170);
+        // à gauche, alignée sur le nom du fond et le bandeau d'accueil, juste dessous
+        FrameLayout.LayoutParams cl = new FrameLayout.LayoutParams(a.u(580), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
+        cl.leftMargin = a.u(112);
+        cl.topMargin = a.u(214);
         a.root.addView(card, cl);
     }
 
@@ -125,8 +131,8 @@ final class NotifyUi implements NotifyService.Listener {
         card.bringToFront(); // au-dessus des panneaux ouverts et du mode veille
         card.setVisibility(View.VISIBLE);
         card.animate().cancel();
-        if (card.getAlpha() < 0.05f) card.setTranslationY(-a.u(40));
-        card.animate().alpha(1f).translationY(0).setDuration(Motion.MEDIUM).setInterpolator(Motion.EASE).start();
+        if (card.getAlpha() < 0.05f) card.setTranslationX(-a.u(28)); // glisse depuis la gauche
+        card.animate().alpha(1f).translationX(0).setDuration(Motion.MEDIUM).setInterpolator(Motion.EASE).start();
         Sounds.get(a).tock();
         a.h.removeCallbacks(hide);
         a.h.postDelayed(hide, NotifyPolicy.displayMs(a.prefs.notifySeconds(), item.title, item.text));
@@ -143,7 +149,7 @@ final class NotifyUi implements NotifyService.Listener {
         current = null;
         if (card == null || card.getVisibility() != View.VISIBLE) return;
         card.animate().cancel();
-        card.animate().alpha(0f).translationY(-a.u(30)).setDuration(Motion.MEDIUM).setInterpolator(Motion.EASE).withEndAction(new Runnable() {
+        card.animate().alpha(0f).translationX(-a.u(20)).setDuration(Motion.MEDIUM).setInterpolator(Motion.EASE).withEndAction(new Runnable() {
             @Override public void run() { if (current == null) card.setVisibility(View.GONE); }
         }).start();
     }

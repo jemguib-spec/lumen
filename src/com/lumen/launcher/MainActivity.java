@@ -61,7 +61,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     Cinema cinema;
     private LinearLayout sceneBar;
     Tile houseButton, profileButton, soundButton, inputsButton, bellButton;
-    /** Notifications des applis affichées en grand (voir NotifyService). */
+    /** Notifications des applis affichées sur l'accueil (voir NotifyService). */
     final NotifyUi notify = new NotifyUi(this);
 
     /** Premier bouton rond affiché (certains sont masqués selon les réglages). */
@@ -865,7 +865,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         boolean down = e.getAction() == KeyEvent.ACTION_DOWN;
         if (code == KeyEvent.KEYCODE_BACK && notify.visible()) {
             if (!down) notify.hideCard();
-            return true; // Retour efface d'abord la notification affichée en grand
+            return true; // Retour efface d'abord la notification affichée
         }
         if (ambiance != null) {
             if (ambiance.onKey(e)) return true;

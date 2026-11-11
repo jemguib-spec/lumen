@@ -20,7 +20,7 @@ import java.util.List;
 
 /**
  * Lit les notifications des applis (nouvel épisode, nouvelle sortie, message…) pour que Lumen les
- * affiche en grand sur l'accueil. Facultatif : Android demande d'autoriser l'accès aux
+ * affiche sur l'accueil. Facultatif : Android demande d'autoriser l'accès aux
  * notifications (ou une commande ADB, voir INSTALLATION.md). Lecture seule, en mémoire : rien
  * n'est enregistré ni envoyé, Lumen ne supprime jamais la notification d'une autre appli.
  */
@@ -39,13 +39,13 @@ public final class NotifyService extends NotificationListenerService {
 
     /** L'accueil, quand il est à l'écran. */
     interface Listener {
-        /** fresh : vient d'arriver (à montrer en grand) ; false : la liste a seulement changé. */
+        /** fresh : vient d'arriver (à montrer sur l'accueil) ; false : la liste a seulement changé. */
         void onNotify(Item item, boolean fresh);
     }
 
     private static final Object LOCK = new Object();
     private static List<Item> items = new ArrayList<>();
-    private static final List<String> shown = new ArrayList<>(); // empreintes déjà montrées en grand
+    private static final List<String> shown = new ArrayList<>(); // empreintes déjà montrées
     private static volatile Listener listener;
     private static volatile boolean connected;
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
@@ -73,7 +73,7 @@ public final class NotifyService extends NotificationListenerService {
 
     @Override public void onListenerConnected() {
         connected = true;
-        // celles qui sont déjà là rejoignent la liste, sans surgir en grand
+        // celles qui sont déjà là rejoignent la liste, sans surgir
         try {
             StatusBarNotification[] all = getActiveNotifications();
             if (all != null) for (StatusBarNotification sbn : all) {
