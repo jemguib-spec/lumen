@@ -87,7 +87,7 @@ final class Onboarding {
 
     private static void go(MainActivity a, int s) {
         a.prefs.setSetupStep(s);
-        if (s == SetupFlow.DONE) { a.closeOverlay(true); return; }
+        if (s == SetupFlow.DONE) { android.util.Log.i("Lumen", "assistant: fin"); a.closeOverlay(true); return; }
         show(a, s);
     }
 
@@ -97,6 +97,8 @@ final class Onboarding {
         if (which < SetupFlow.WELCOME || which > SetupFlow.LAST) return;
         if (which != SetupFlow.PROFILE) addingPerson = false;
         step = which;
+        // repère pour le parcours automatique (tools/smoke.sh) : rien de personnel, juste le numéro d'étape
+        android.util.Log.i("Lumen", "assistant: etape " + which);
         a.rowRefreshers.clear();
         if (ticker != null) a.h.removeCallbacks(ticker);
         FrameLayout o = a.openOverlay(new Runnable() {

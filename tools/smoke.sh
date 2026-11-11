@@ -19,11 +19,28 @@ adb logcat -c
 adb shell am start -W -n $PKG/com.lumen.launcher.MainActivity >/dev/null
 sleep 8
 alive || { echo "ÉCHEC : Lumen ne tourne plus après le démarrage"; adb logcat -d | tail -80; exit 1; }
-# installation neuve : l'assistant du premier démarrage s'affiche. Capture, puis « Plus tard »
-# (troisième choix) ; seulement s'il est bien à l'écran, pour ne rien lancer par erreur sinon.
-if adb shell uiautomator dump /sdcard/lumen-ui.xml >/dev/null 2>&1 && adb shell cat /sdcard/lumen-ui.xml | grep -qE 'Plus tard|"Later"'; then
-  shot 00-assistant
-  key DPAD_DOWN; key DPAD_DOWN; key DPAD_CENTER 2
+# installation neuve : l'assistant du premier démarrage s'affiche. Lumen écrit chaque étape dans le
+# journal (« assistant: etape N », « assistant: fin ») : uiautomator ne sait pas lire un écran
+# toujours animé. On ne touche à rien si l'assistant n'est pas à l'écran (TV déjà installée).
+etape() { adb logcat -d -s Lumen:I | grep -q "assistant: $1"; }
+# tout l'assistant, de zéro : chaque étape est vérifiée dans le journal avant d'avancer
+assistant() {
+  shot 00-assistant;                                            key DPAD_CENTER 2    # Démarrer de zéro
+  etape "etape 1" || return; shot 00-assistant-1-profil;         key DPAD_DOWN; key DPAD_DOWN; key DPAD_CENTER 2   # Continuer (prénom vide)
+  etape "etape 2" || return; shot 00-assistant-2-accueil;        for i in 1 2 3 4 5 6 7; do key DPAD_DOWN 0.4; done; key DPAD_CENTER 2
+  etape "etape 3" || return; shot 00-assistant-3-boutons;        for i in 1 2 3 4 5 6 7 8 9 10; do key DPAD_DOWN 0.4; done; key DPAD_CENTER 2
+  etape "etape 4" || return; shot 00-assistant-4-cles;           key DPAD_CENTER 2    # Continuer (sélectionné d'office)
+  etape "etape 5" || return; shot 00-assistant-5-pret;           key DPAD_DOWN; key DPAD_CENTER 2   # Terminer
+}
+if etape "etape 0"; then
+  assistant
+  # pas allé au bout (écran différent de prévu) : retour à la première page, puis « Plus tard »
+  if ! etape "fin"; then
+    echo "assistant : parcours incomplet, « Plus tard »"
+    for i in 1 2 3 4 5 6; do key BACK 0.6; done
+    key DPAD_DOWN; key DPAD_DOWN; key DPAD_CENTER 2
+  fi
+  etape "fin" && echo "assistant du premier démarrage parcouru jusqu'au bout" || echo "assistant : refermé avec « Plus tard »"
 fi
 shot 01-accueil
 key DPAD_RIGHT; key DPAD_RIGHT
