@@ -552,3 +552,54 @@ Afficher seulement les groupes de lumières	Show light groups only
 Toutes les lumières sont éteintes	All lights are off
 1 lumière allumée	1 light on
  lumières allumées	 lights on
+Touche inconnue	Unknown key
+Touche spéciale 	Special key 
+Touche 	Key 
+Bouton 	Button 
+Bouton d'appli 	App button 
+Bouton macro 	Macro button 
+Touche étoile	Star key
+Touche dièse	Hash key
+Touche Info	Info key
+Touche Chaîne +	Channel + key
+Touche Chaîne −	Channel − key
+Touche TV	TV key
+Touche Guide	Guide key
+Touche Favoris	Bookmark key
+Touche Sous-titres	Subtitles key
+Touche Paramètres	Settings key
+Touche Source	Input key
+Bouton rouge	Red button
+Bouton vert	Green button
+Bouton jaune	Yellow button
+Bouton bleu	Blue button
+Touche Piste audio	Audio track key
+Touche Chaîne précédente	Previous channel key
+Touche Télétexte	Teletext key
+Touche Aide	Help key
+Touche Toutes les applis	All apps key
+Touche Profil	Profile key
+Touche n° 	Key no. 
+Réglages de Lumen	Lumen settings
+Toutes les applis	All apps
+Ne rien faire	Do nothing
+Ouvrir une appli	Open an app
+Cette touche n'a pas encore de rôle dans Lumen. Veux-tu la relier à une fonction ?	This key has no role in Lumen yet. Do you want to link it to a function?
+Reliée à : 	Linked to: 
+ne plus demander	don't ask again
+Oublier cette touche	Forget this key
+À changer quand tu veux dans Réglages › Télécommande.	Change it any time in Settings › Remote.
+ : oubliée	: forgotten
+ : Lumen ne demandera plus	: Lumen won't ask again
+Appli désinstallée	App uninstalled
+Cette appli n'est plus disponible · Réglages › Télécommande	This app is no longer available · Settings › Remote
+Home Assistant n'est pas relié	Home Assistant is not linked
+Télécommande	Remote
+Fonction de la touche	Key function
+ touches reliées	 keys linked
+ touche reliée	 key linked
+Proposer de relier une touche inconnue	Offer to link an unknown key
+Touches connues	Known keys
+Depuis l'accueil, appuie sur une touche que Lumen ne connaît pas (Guide, Info, bouton de couleur, chiffre…) : Lumen propose de la relier à une fonction ou à une appli. Les touches que la TV garde pour elle (Accueil, volume, boutons Netflix de certaines télécommandes) n'arrivent pas jusqu'à Lumen.	From the home screen, press a key Lumen doesn't know (Guide, Info, colour button, digit…): Lumen offers to link it to a function or an app. Keys the TV keeps for itself (Home, volume, the Netflix buttons of some remotes) never reach Lumen.
+Touches de la télécommande	Remote control keys
+Une touche de la télécommande sans rôle ? Appuie dessus : Lumen propose de la relier à une fonction	A remote key with no role? Press it: Lumen offers to link it to a function

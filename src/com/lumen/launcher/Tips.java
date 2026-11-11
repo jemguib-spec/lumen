@@ -2,7 +2,7 @@
 // Copyright (C) 2026 jemguib-spec — Lumen, lanceur pour Android TV (voir LICENSE)
 package com.lumen.launcher;
 
-/** Trois conseils pour apprendre les gestes, un par démarrage, jamais plus. Réglages › Système › Revoir les conseils les remet. */
+/** Quelques conseils pour apprendre les gestes, un par démarrage, jamais plus. Réglages › Système › Revoir les conseils les remet. */
 final class Tips {
     private Tips() { }
 
@@ -10,6 +10,7 @@ final class Tips {
             "▼ toutes les applis  ·  ◀ Reprendre  ·  ▶ À l'affiche",
             "Appui long sur une appli : déplacer, favoris, masquer, infos",
             "Touche Menu : réglages  ·  micro de la télécommande : recherche vocale",
+            "Une touche de la télécommande sans rôle ? Appuie dessus : Lumen propose de la relier à une fonction",
     };
 
     static void showNext(MainActivity a) {

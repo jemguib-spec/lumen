@@ -514,6 +514,41 @@ public class LumenTests {
                 && !SettingsIndex.search("ecran de nuit", 6).isEmpty() && SettingsIndex.search("x", 6).isEmpty()
                 && SettingsIndex.search("zzzz", 6).isEmpty());
         check("recherche : au plus N réglages", SettingsIndex.search("ve", 3).size() <= 3);
+
+        // ---- touches de la télécommande à relier
+        check("télécommande : Guide, Info, couleurs, chiffres et boutons d'appli se relient",
+                "k172".equals(RemoteKeys.id(172, 0)) && RemoteKeys.id(165, 0) != null && RemoteKeys.id(183, 0) != null
+                && RemoteKeys.id(7, 0) != null && RemoteKeys.id(176, 0) != null && RemoteKeys.id(289, 0) != null);
+        boolean kept = true;
+        // flèches, OK, Retour, Accueil, volume, alimentation, Menu, recherche, lecture, micro : jamais proposées
+        for (int c : new int[]{3, 4, 19, 20, 21, 22, 23, 24, 25, 26, 66, 82, 84, 85, 86, 87, 88, 89, 90, 126, 127, 164, 219, 231, 29, 54, 62, 67, 111})
+            kept &= RemoteKeys.id(c, 0) == null;
+        check("télécommande : navigation, volume, lecture et clavier gardent leur rôle", kept);
+        check("télécommande : touche inconnue d'Android repérée par son code matériel", "s412".equals(RemoteKeys.id(0, 412)) && RemoteKeys.id(0, 0) == null);
+        String rk = RemoteKeys.with("", "k172", RemoteKeys.SETTINGS);
+        rk = RemoteKeys.with(rk, "s412", RemoteKeys.APP_PREFIX + "com.exemple.tv/.Main");
+        rk = RemoteKeys.with(rk, "k183", RemoteKeys.NONE);
+        java.util.Map<String, String> rm = RemoteKeys.parse(rk);
+        check("télécommande : liaisons relues telles qu'enregistrées", rm.size() == 3 && RemoteKeys.SETTINGS.equals(rm.get("k172"))
+                && "com.exemple.tv/.Main".equals(RemoteKeys.appKey(rm.get("s412"))) && RemoteKeys.NONE.equals(rm.get("k183")));
+        check("télécommande : oublier une touche la retire", !RemoteKeys.parse(RemoteKeys.with(rk, "k172", null)).containsKey("k172"));
+        check("télécommande : changer une liaison remplace l'ancienne", RemoteKeys.BACK.equals(RemoteKeys.parse(RemoteKeys.with(rk, "k172", RemoteKeys.BACK)).get("k172")));
+        check("télécommande : fonction inconnue ou touche de navigation refusée",
+                RemoteKeys.with("", "k172", "formater").isEmpty() && RemoteKeys.with("", "k4", RemoteKeys.SETTINGS).isEmpty()
+                && RemoteKeys.with("", "k172", "app:").isEmpty() && RemoteKeys.with("", "k172", "app:a;k4=back").isEmpty());
+        check("télécommande : réglage abîmé ignoré sans erreur", RemoteKeys.parse("k172;=x;k4=back;kx=apps;k99999999999=apps;k172=reco;;").size() == 1
+                && RemoteKeys.parse(null).isEmpty());
+        StringBuilder manyKeys = new StringBuilder();
+        for (int i = 1; i <= 200; i++) manyKeys.append("s").append(i).append("=apps;");
+        check("télécommande : nombre de liaisons borné", RemoteKeys.parse(manyKeys.toString()).size() == RemoteKeys.MAX_KEYS);
+        boolean named = true;
+        for (String act : RemoteKeys.ACTIONS) named &= RemoteKeys.validAction(act) && !RemoteKeys.actionName(act).isEmpty();
+        check("télécommande : chaque fonction a un nom", named && !RemoteKeys.actionName(RemoteKeys.NONE).isEmpty());
+        check("télécommande : nom des touches", RemoteKeys.name("k172").equals("Touche Guide") && RemoteKeys.name("k12").equals("Touche 5")
+                && RemoteKeys.name("k185").equals("Bouton jaune") && RemoteKeys.name("s412").equals("Touche spéciale 412") && RemoteKeys.name("k240").equals("Touche n° 240"));
+        check("télécommande : liaisons reprises dans la sauvegarde", Backup.typeOf("remote_keys") == Backup.STRING && Backup.typeOf("remote_ask") == Backup.BOOL);
+        check("recherche : « télécommande » mène à la page des touches", !SettingsIndex.search("telecommande", 6).isEmpty()
+                && SettingsIndex.search("touches", 6).get(0).page == SettingsIndex.TOUCHES);
         check("bandeau : salutation selon l'heure", Greeting.hello(8).equals("Bonjour") && Greeting.hello(14).equals("Bon après-midi")
                 && Greeting.hello(20).equals("Bonsoir") && Greeting.hello(23).equals("Bonne nuit") && Greeting.hello(3).equals("Bonne nuit"));
         check("bandeau : ligne complète", Greeting.line(21, "", "12° · Pluie · Paris", "The Bear")

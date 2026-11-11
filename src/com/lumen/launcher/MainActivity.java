@@ -799,11 +799,44 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         if (down && code == KeyEvent.KEYCODE_DPAD_LEFT && overlay != null && e.getRepeatCount() == 0
                 && SettingsPanel.inSubPage() && !(getCurrentFocus() instanceof android.widget.EditText)
                 && !(getCurrentFocus() != null && "choice".equals(getCurrentFocus().getTag()))) { SettingsPanel.back(this); return true; }
+        // touche sans rôle dans Lumen (Guide, couleurs, chiffres…) : sa fonction reliée, ou la proposition d'en relier une
+        String remoteKey = getCurrentFocus() instanceof android.widget.EditText ? null : RemoteKeys.id(code, e.getScanCode());
+        if (remoteKey != null) return onRemoteKey(remoteKey, e, down);
         if (!down && code == KeyEvent.KEYCODE_MENU && overlay == null) { SettingsPanel.openSettings(MainActivity.this); return true; }
         // micro de la télécommande : recherche vocale (si Android laisse la touche arriver jusqu'à Lumen)
         if (!down && (code == KeyEvent.KEYCODE_SEARCH || code == KeyEvent.KEYCODE_VOICE_ASSIST || code == KeyEvent.KEYCODE_ASSIST)
                 && !(getCurrentFocus() instanceof android.widget.EditText)) { startVoiceSearch(); return true; }
         return super.dispatchKeyEvent(e);
+    }
+
+    /** Touche enfoncée dans Lumen dont on attend le relâchement (un relâchement seul, venu d'une autre appli, ne compte pas). */
+    private String pendingRemoteKey;
+
+    private boolean onRemoteKey(String id, KeyEvent e, boolean down) {
+        String action = prefs.remoteKeys().get(id);
+        boolean linked = action != null && !RemoteKeys.NONE.equals(action);
+        // touche non reliée, ou panneau ouvert (le code PIN se tape aux touches chiffrées) : l'écran en cours passe d'abord
+        if ((!linked || overlay != null) && super.dispatchKeyEvent(e)) {
+            if (down) pendingRemoteKey = null;
+            return true;
+        }
+        if (down) {
+            if (e.getRepeatCount() == 0) pendingRemoteKey = id;
+            return linked;
+        }
+        if (!id.equals(pendingRemoteKey)) return false;
+        pendingRemoteKey = null;
+        if (linked) {
+            // par-dessus un panneau, seule « Retour » a un sens
+            if (overlay == null || RemoteKeys.BACK.equals(action)) RemoteKeyPanel.run(this, action);
+            return true;
+        }
+        // relier une touche est un réglage : jamais proposé dans un profil enfant
+        if (action == null && overlay == null && movingTile == null && prefs.remoteAsk() && !prefs.isKidProfile()) {
+            RemoteKeyPanel.ask(this, id);
+            return true;
+        }
+        return false;
     }
 
     static boolean isInside(View v, View parent) {

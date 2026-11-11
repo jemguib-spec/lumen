@@ -190,6 +190,12 @@ final class Prefs {
     /** Langue de l'interface : "" = celle de la TV, sinon "fr" ou "en" (réglage personnel). */
     String lang() { return sp.getString("lang", ""); }
     void setLang(String l) { sp.edit().putString("lang", l == null ? "" : l).apply(); }
+    /** Touches de la télécommande reliées à une fonction (voir RemoteKeys) ; communes à tous les profils. */
+    java.util.Map<String, String> remoteKeys() { return RemoteKeys.parse(sp.getString("remote_keys", "")); }
+    void setRemoteKey(String id, String action) { sp.edit().putString("remote_keys", RemoteKeys.with(sp.getString("remote_keys", ""), id, action)).apply(); }
+    /** Proposer de relier une touche inconnue quand on appuie dessus. */
+    boolean remoteAsk() { return sp.getBoolean("remote_ask", true); }
+    void setRemoteAsk(boolean b) { sp.edit().putBoolean("remote_ask", b).apply(); }
     /** Conseils déjà montrés au démarrage (un par démarrage). */
     int tipStep() { return sp.getInt("tip_step", 0); }
     void setTipStep(int n) { sp.edit().putInt("tip_step", n).apply(); }

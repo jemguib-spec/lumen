@@ -18,6 +18,7 @@
 - Applis habituelles selon l'heure, calculées sur la TV uniquement
 - Taille du texte et contraste réglables, lecteur d'écran (TalkBack) pris en charge
 - Recherche vocale (micro de la télécommande ou bouton micro de la recherche)
+- Touches de la télécommande sans rôle (Guide, Info, couleurs, chiffres…) : Lumen propose de les relier à une fonction ou à une appli
 - Assistant d'installation sur la TV : état de l'accueil, commandes à copier, QR code vers le guide
 - Télécommande, choix des vidéos, envois et sauvegarde depuis le téléphone par QR code (réseau local, un seul téléphone, actions en liste fermée)
 

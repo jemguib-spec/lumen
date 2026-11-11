@@ -16,7 +16,7 @@ final class SettingsIndex {
     static final int PHONE = -2, STORAGE = -3, HOME = -4, RECO = -5;
     /** Rubriques (mêmes numéros que SettingsPanel). */
     static final int FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5, ABOUT = 6, INSTALL = 14,
-            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21;
+            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21, TOUCHES = 22;
 
     static final class Entry {
         final String label, where, keywords;
@@ -54,6 +54,7 @@ final class SettingsIndex {
             new Entry("Journal d'erreurs et mesures", S, DIAG, "journal erreurs mesures diagnostic redemarrer parametres tv conseils"),
             new Entry("Installation", S, INSTALL, "installation installer adb accueil par defaut google launcher desactiver commandes"),
             new Entry("Nouveautés de la version", S, SYSTEME, "nouveautes version changements quoi de neuf"),
+            new Entry("Touches de la télécommande", "Réglages", TOUCHES, "telecommande touche touches bouton boutons relier raccourci guide info couleur chiffre"),
             new Entry("Réglages depuis le téléphone", "Réglages", PHONE, "telephone qr code smartphone telecommande"),
             new Entry("Maison", "Home Assistant", HOME, "maison home assistant lumieres scenes volets"),
             new Entry("À l'affiche", "Films et séries du moment", RECO, "affiche films series tendances populaire recommandations nouveautes top"),

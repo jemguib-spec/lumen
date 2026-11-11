@@ -2,6 +2,12 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.25.0
+
+- Touches de la télécommande sans rôle (Guide, Info, boutons de couleur, chiffres, boutons d'appli…) : quand tu appuies sur l'une d'elles depuis l'accueil, Lumen demande « Veux-tu la relier à une fonction ? ». Au choix : réglages de Lumen, retour, toutes les applis, recherche vocale, Reprendre, À l'affiche, Maison, mode veille, ambiances, paramètres de la TV, ou ouvrir l'appli de ton choix. « Ne rien faire » : Lumen ne redemande plus pour cette touche.
+- Réglages › Télécommande : la liste des touches reliées, pour changer leur fonction ou les oublier, et un interrupteur pour ne plus recevoir la proposition.
+- Les touches de navigation, de volume et de lecture gardent leur rôle ; celles que la TV garde pour elle (Accueil, boutons Netflix de certaines télécommandes) n'arrivent pas jusqu'à Lumen et ne peuvent pas être reliées. Avec un code PIN, il est demandé avant de relier une touche ; rien n'est proposé dans un profil enfant.
+
 ## 4.24.4
 
 - Page Maison : un onglet pour chaque pièce de Home Assistant qui a un appareil pilotable, même si tu n'as choisi aucun appareil de cette pièce sur le téléphone ; la pièce montre alors tout ce qu'elle contient (ses groupes de lumières avant ses ampoules).

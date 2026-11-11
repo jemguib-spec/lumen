@@ -85,12 +85,12 @@ final class SettingsPanel {
     // numéros repris dans SettingsIndex (recherche) : à garder identiques
     static final int ROOT = 0, FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5,
             ABOUT = 6, LICENCES = 7, CREDITS = 8, LICENCE_INTER = 9, CITIES = 10, HIDDEN = 11, SCREENSAVER = 12, LICENCE_GPL = 13, INSTALL = 14,
-            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21;
+            PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21, TOUCHES = 22, TOUCHE = 23;
     private static final String[] TITLES = {"Réglages", "Fond d'écran", "Accueil et applis", "Mode veille", "Ambiances",
             "Système", "À propos", "Licences", "Crédits des fonds", "Police Inter", "Villes", "Applis masquées", "Économiseur d'écran", "Licence de Lumen", "Installation",
-            "Paysages Lumen", "Avancé", "Vignettes et disposition", "Reprendre", "Lisibilité", "Diagnostic", "À l'affiche"};
+            "Paysages Lumen", "Avancé", "Vignettes et disposition", "Reprendre", "Lisibilité", "Diagnostic", "À l'affiche", "Télécommande", "Fonction de la touche"};
     private static final int[] PARENT = {ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, SYSTEME, SYSTEME, LICENCES, LICENCES, FOND, ACCUEIL, VEILLE, LICENCES, SYSTEME,
-            FOND, FOND, ACCUEIL, ACCUEIL, ACCUEIL, SYSTEME, ACCUEIL};
+            FOND, FOND, ACCUEIL, ACCUEIL, ACCUEIL, SYSTEME, ACCUEIL, ROOT, TOUCHES};
     private static boolean[] citiesChanged;
     private static int page = ROOT, lastRubric = -1;
     private static LinearLayout openCard;
@@ -106,7 +106,7 @@ final class SettingsPanel {
     static boolean inSubPage() { return openCard != null && openCard.isAttachedToWindow() && page != ROOT; }
 
     /** Colonne qui défile (sans barre, bords estompés) remplissant la carte des réglages. */
-    private static LinearLayout scrollColumn(MainActivity a, LinearLayout card, int top) {
+    static LinearLayout scrollColumn(MainActivity a, LinearLayout card, int top) {
         ScrollView sv = new ScrollView(a);
         sv.setVerticalScrollBarEnabled(false);
         sv.setOverScrollMode(View.OVER_SCROLL_NEVER);
@@ -215,9 +215,11 @@ final class SettingsPanel {
                     rubric(a, card, Glyph.SPARK, L.t("Ambiances"), null, AMBIANCES),
                     null,
                     null,
+                    rubric(a, card, Glyph.SWITCH, L.t("Télécommande"), new MainActivity.Value() { @Override public String get() {
+                        int n = linkedKeys(a); return n == 0 ? "" : n + (n > 1 ? L.t(" touches reliées") : L.t(" touche reliée")); } }, TOUCHES),
                     rubric(a, card, Glyph.GEAR, "Système", new MainActivity.Value() { @Override public String get() {
                         return a.updater.ready() != null ? L.t("Mise à jour prête") : L.t("Lumen ") + a.updater.currentVersion(); } }, SYSTEME)};
-                int[] targets = {FOND, ACCUEIL, VEILLE, AMBIANCES, -3, -2, SYSTEME};
+                int[] targets = {FOND, ACCUEIL, VEILLE, AMBIANCES, -3, -2, TOUCHES, SYSTEME};
                 for (int i = 0; i < rows.length; i++) {
                     if (rows[i] == null && targets[i] == -3) {
                         col.addView(a.listRow(L.t("Profils"), new MainActivity.Value() {
@@ -731,6 +733,27 @@ final class SettingsPanel {
                 col.addView(rubric(a, card, Glyph.DOC, L.t("Licences"), null, LICENCES), a.rowLp());
                 break;
             }
+            case TOUCHES: {
+                col.addView(toggle(a, L.t("Proposer de relier une touche inconnue"), new GlassUi.Bool() {
+                    @Override public boolean get() { return a.prefs.remoteAsk(); }
+                }, new Runnable() {
+                    @Override public void run() { a.prefs.setRemoteAsk(!a.prefs.remoteAsk()); }
+                }), a.rowLp());
+                java.util.Map<String, String> keys = a.prefs.remoteKeys();
+                if (!keys.isEmpty()) col.addView(a.section(L.t("Touches connues")));
+                for (final java.util.Map.Entry<String, String> k : keys.entrySet()) {
+                    col.addView(a.listRow(RemoteKeys.name(k.getKey()), new MainActivity.Value() {
+                        @Override public String get() { return RemoteKeyPanel.label(a, k.getValue()) + "   ›"; }
+                    }, new View.OnClickListener() {
+                        @Override public void onClick(View v) {
+                            page = TOUCHE; // sous-page : Retour (ou ◀) revient à la liste des touches
+                            RemoteKeyPanel.actions(a, card, k.getKey(), true);
+                        }
+                    }), a.rowLp());
+                }
+                hint(a, col, L.t("Depuis l'accueil, appuie sur une touche que Lumen ne connaît pas (Guide, Info, bouton de couleur, chiffre…) : Lumen propose de la relier à une fonction ou à une appli. Les touches que la TV garde pour elle (Accueil, volume, boutons Netflix de certaines télécommandes) n'arrivent pas jusqu'à Lumen."));
+                break;
+            }
             case DIAG: {
                 col.addView(a.listRow(L.t("Redémarrer Lumen"), null, new View.OnClickListener() {
                     @Override public void onClick(View v) { a.restartLumenNicely(); }
@@ -774,6 +797,13 @@ final class SettingsPanel {
             case SCREENSAVER: About.fillText(a, col, "docs/economiseur.txt"); break;
         }
         focusFirst(col, focus);
+    }
+
+    /** Nombre de touches de la télécommande reliées à une fonction (celles laissées sans rôle ne comptent pas). */
+    private static int linkedKeys(MainActivity a) {
+        int n = 0;
+        for (String action : a.prefs.remoteKeys().values()) if (!RemoteKeys.NONE.equals(action)) n++;
+        return n;
     }
 
     /** Choix des villes pour les vidéos aériennes. */
