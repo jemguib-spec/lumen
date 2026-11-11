@@ -5,6 +5,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch: # à la main (onglet Actions) : refaire les captures sur une branche
 
 permissions:
   contents: read
@@ -105,7 +106,9 @@ jobs:
           profile: tv_1080p
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: tools/smoke.sh build/Lumen.apk captures
+          script: |
+            tools/smoke.sh build/Lumen.apk captures
+            tools/captures.sh captures/visite || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
