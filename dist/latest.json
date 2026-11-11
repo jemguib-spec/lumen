@@ -1,7 +1,7 @@
 {
-  "version": "4.30.0",
-  "size": 4101632,
-  "sha256": "33721ce8747063fb160530e08588325ddff04915c7564bce4129b6d6ee739533",
-  "file": "Lumen-4.30.0.apk",
-  "notes": "- Météo dans le volet de l'accueil (▲ depuis les boutons du haut), à gauche des notifications et dans le même verre : pictogramme au trait et température en grand, le ciel, les extrêmes du jour, les trois jours suivants et le lever et coucher du soleil. Sans ville réglée, OK permet d'en choisir une.\n- Le volet s'ouvre aussi quand les notifications sont coupées, pour la météo ; son en-tête donne la date du jour et le nombre de notifications.\n- Nouveaux pictogrammes météo dans le style de Lumen : soleil, éclaircies, nuages, pluie, neige, orage, brouillard.\n- Les mots de la météo (« Éclaircies », « Averses »…) sont traduits en anglais."
+  "version": "4.30.1",
+  "size": 4105728,
+  "sha256": "1fbc33b58f86a8fa60145bf234b1d1fa8b81e2549759663a445b0cd0bf90d266",
+  "file": "Lumen-4.30.1.apk",
+  "notes": "- Ville de la météo : la fenêtre a maintenant une ligne « Valider » sous le champ. Avant, seule la touche « Terminé » du clavier validait, et beaucoup de claviers de TV ne l'envoient pas : on ne pouvait pas enregistrer la ville. Tape la ville, Retour pour fermer le clavier, ▼ puis OK sur « Valider ». La touche Entrée d'un clavier branché valide aussi."
 }
