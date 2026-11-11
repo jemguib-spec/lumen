@@ -101,7 +101,6 @@ final class HomeBuilder {
         Tile bell = a.bellButton = Tile.button(a, Glyph.BELL, L.t("Notifications"), bs);
         bell.setFocusListener(a.homeFocus);
         bell.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { a.notify.openList(); } });
-        bell.setVisibility(View.GONE);
         // bouton Sons : un appui coupe ou remet les sons de Lumen (le jeu et le volume restent dans Réglages › Sons)
         Tile snd = a.soundButton = Tile.button(a, Glyph.SOUND, L.t("Sons activés"), bs);
         snd.setFocusListener(a.homeFocus);
@@ -114,10 +113,12 @@ final class HomeBuilder {
             bl.leftMargin = a.u(18);
             a.topButtons.addView(b, bl);
         }
-        house.setVisibility(a.prefs.haButton() ? View.VISIBLE : View.GONE);
-        a.updateProfileButton();
-        a.updateSoundButton();
-        a.updateInputsButton();
+        String[] ids = {HomeButtons.NOTIFS, HomeButtons.SEARCH, HomeButtons.AMBIANCES, HomeButtons.INPUTS, HomeButtons.HOUSE,
+                HomeButtons.PROFILES, HomeButtons.APPS, HomeButtons.TV, HomeButtons.SOUNDS, HomeButtons.SETTINGS};
+        Tile[] tiles = {bell, find, amb, inputs, house, who, all, tvSet, snd, set};
+        for (int i = 0; i < ids.length; i++) a.buttons.put(ids[i], tiles[i]);
+        a.updateSoundButton();  // pictogramme selon l'état des sons
+        a.updateInputsButton(); // puis chaque bouton : activé dans les réglages, et utile en ce moment
         FrameLayout.LayoutParams tbl = MainActivity.wrap(Gravity.TOP | Gravity.END);
         tbl.topMargin = a.u(56);
         tbl.rightMargin = a.u(420);

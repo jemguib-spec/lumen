@@ -18,7 +18,8 @@ final class Backup {
 
     static final String[] BOOLS = {"ambiance_sound", "app_glow", "auto_update", "clock", "cosy_wanted", "follow_time", "idle", "immersive",
             "living_scenes", "seasonal", "shelf_posters", "show_icons", "show_perf", "sounds", "tint_tiles", "top_shelf", "remote_ask",
-            "video_4k", "weather_fx", "high_contrast", "habits_on", "greeting", "ha_button", "ha_cine_open", "sound_button", "notif_on"};
+            "video_4k", "weather_fx", "high_contrast", "habits_on", "greeting", "ha_button", "ha_cine_open", "sound_button", "notif_on",
+            "btn_notifs", "btn_search", "btn_ambiances", "btn_inputs", "btn_profiles", "btn_apps", "btn_tv", "btn_settings"};
     static final String[] INTS = {"ambiance_kind", "ambient_min", "home_cols", "home_rows", "interval", "source", "tile_style",
             "video_disk_gb", "video_theme", "text_scale", "veille_src", "night_hour", "sound_theme", "sound_volume", "notif_secs"};
     static final String[] STRINGS = {"favorites", "habits", "ha_film", "ha_pause", "remote_keys"};

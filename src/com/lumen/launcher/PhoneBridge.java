@@ -28,7 +28,7 @@ final class PhoneBridge implements PhoneServer.Host {
         Sounds.get(a).apply(a.prefs);
         a.updateSoundButton();
         a.clockBox.setVisibility(a.prefs.showClock() ? View.VISIBLE : View.GONE);
-        if (a.houseButton != null) a.houseButton.setVisibility(a.prefs.haButton() ? View.VISIBLE : View.GONE);
+        a.updateButtons(); // Maison, Sons : réglables aussi depuis le téléphone
         a.refreshGreeting();
         a.updateWeatherFx();
         a.wake(); // le délai du mode veille repart avec le nouveau réglage

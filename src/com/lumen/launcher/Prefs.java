@@ -188,8 +188,8 @@ final class Prefs {
     void addNotifySeen(String pkg) { Set<String> s = notifySeen(); if (s.size() < 60 && s.add(pkg)) put("notif_seen", s); }
 
     /** Bouton Sons (haut-parleur) parmi les boutons ronds de l'accueil : masqué par défaut. */
-    boolean soundButton() { return sp.getBoolean("sound_button", false); }
-    void setSoundButton(boolean b) { sp.edit().putBoolean("sound_button", b).apply(); }
+    boolean soundButton() { return button(HomeButtons.SOUNDS); }
+    void setSoundButton(boolean b) { setButton(HomeButtons.SOUNDS, b); }
     void setSounds(boolean b) { sp.edit().putBoolean("sounds", b).apply(); }
     /** Jeu de sons (SoundDesign.THEME_NAMES) et volume des sons de Lumen (SoundDesign.VOLUME_NAMES). */
     int soundTheme() { return SoundDesign.theme(sp.getInt("sound_theme", SoundDesign.CRISTAL)); }
@@ -312,8 +312,11 @@ final class Prefs {
     String haUrl() { String u = sp.getString("ha_url", ""); HomeAssistant.trust(u, sp.getString("ha_cert", "")); return u; }
     String haToken() { return secret("ha_token"); }
     /** Bouton « Maison » sur l'accueil : masqué par défaut. */
-    boolean haButton() { return sp.getBoolean("ha_button", false); }
-    void setHaButton(boolean b) { sp.edit().putBoolean("ha_button", b).apply(); }
+    boolean haButton() { return button(HomeButtons.HOUSE); }
+    void setHaButton(boolean b) { setButton(HomeButtons.HOUSE, b); }
+    /** Bouton rond de l'accueil activé (Réglages › Accueil et applis › Boutons de l'accueil). */
+    boolean button(String id) { return sp.getBoolean(HomeButtons.prefKey(id), HomeButtons.byDefault(id)); }
+    void setButton(String id, boolean b) { sp.edit().putBoolean(HomeButtons.prefKey(id), b).apply(); }
     boolean haConfigured() { return !haUrl().isEmpty() && !haToken().isEmpty(); }
     /** cert : empreinte du certificat auto-signé accepté à la liaison (vide = certificat reconnu ou http). */
     void setHa(String url, String token, String cert) { sp.edit().putString("ha_url", url).putString("ha_token", Vault.seal(token)).putString("ha_cert", cert).apply(); }

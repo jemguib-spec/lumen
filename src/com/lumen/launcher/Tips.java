@@ -11,7 +11,7 @@ final class Tips {
             "Appui long sur une appli : déplacer, favoris, masquer, infos",
             "Touche Menu : réglages  ·  micro de la télécommande : recherche vocale",
             "Une touche de la télécommande sans rôle ? Appuie dessus : Lumen propose de la relier à une fonction",
-            "Réglages › Sons : le bouton haut-parleur de l'accueil coupe ou remet les sons d'un appui",
+            "Réglages › Accueil et applis › Boutons de l'accueil : afficher ou masquer chaque bouton rond",
             "Le bouton écran en haut de l'accueil ouvre les paramètres de la TV : réseau, Bluetooth, son, image",
             "Réglages › Notifications : les nouvelles sorties et messages des applis s'affichent en grand",
     };

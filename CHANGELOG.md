@@ -2,6 +2,13 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.28.0
+
+- Tous les boutons ronds de l'accueil se masquent ou s'affichent, chacun avec son interrupteur, au même endroit : Réglages › Accueil et applis › Boutons de l'accueil. Notifications, Rechercher, Ambiances, Entrées, Maison, Profils, Toutes les applications, Paramètres de la TV, Sons et Réglages ; par profil, repris dans la sauvegarde des réglages.
+- La cloche, Entrées et Profils gardent en plus leur condition (une notification qui attend, une TV qui a des entrées, au moins deux profils) ; Maison et Sons restent masqués par défaut.
+- Bouton Réglages masqué : les réglages restent accessibles par la touche Menu, ou ▼ puis la recherche « réglages ».
+- Les réglages des boutons Maison et Sons quittent leurs anciennes pages pour cette page unique (rien n'est perdu : ils gardent leur état).
+
 ## 4.27.0
 
 - Notifications des applis en grand : quand une appli annonce une nouvelle sortie, un nouvel épisode ou un message, une grande carte de verre l'affiche en haut de l'accueil, avec l'icône et le nom de l'appli. Retour l'efface. Elle reste ensuite sous la cloche, un nouveau bouton qui n'apparaît que s'il y a des notifications : OK en ouvre une dans son appli.

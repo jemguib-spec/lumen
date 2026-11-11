@@ -36,7 +36,8 @@ final class Profiles {
             "weather_fx", "living_scenes", "sounds", "text_scale", "high_contrast", "home_cols", "home_rows",
             "recents", "searches", "habits", "habits_on", "ambiance_kind", "ambiance_sound",
             "reco_filter", "reco_mode", "reco_type", "reco_hist", "top_shelf", "shelf_posters",
-            "ha_button", "sound_button", "ha_home", "ha_pinned", "inputs_home_v1", "lang")));
+            "ha_button", "sound_button", "btn_notifs", "btn_search", "btn_ambiances",
+            "btn_inputs", "btn_profiles", "btn_apps", "btn_tv", "btn_settings", "ha_home", "ha_pinned", "inputs_home_v1", "lang")));
 
     static boolean personal(String key) { return key != null && PERSONAL.contains(key); }
 

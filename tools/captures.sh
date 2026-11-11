@@ -30,7 +30,7 @@ seld() { fresh; keys DPAD_UP 3; keys DPAD_RIGHT 10; keys DPAD_LEFT "$1"; }
 boutond() { seld "$1"; key DPAD_CENTER 3; }
 
 # Interface en français : Réglages › Accueil et applis › Lisibilité › Langue → Français
-rubrique 1; keys DPAD_DOWN 6; key DPAD_CENTER 2
+rubrique 1; keys DPAD_DOWN 7; key DPAD_CENTER 2
 key DPAD_CENTER 3 # « Système » → « Français » (la page se reconstruit) ; à ne lancer qu'une fois par TV
 
 fresh 14;              shot 01-accueil
@@ -44,7 +44,8 @@ menu;                  shot 07-reglages
 rubrique 0;            shot 08-fond
 keys DPAD_DOWN 4; key DPAD_CENTER; shot 09-galerie 12
 rubrique 1;            shot 10-accueil-et-applis
-keys DPAD_DOWN 4; key DPAD_CENTER; shot 11-vignettes
+keys DPAD_DOWN 4; key DPAD_CENTER; shot 11-boutons-accueil
+rubrique 1; keys DPAD_DOWN 5; key DPAD_CENTER; shot 11-vignettes
 rubrique 2;            shot 12-veille-reglages
 keys DPAD_DOWN 3; key DPAD_CENTER; shot 13-mode-veille 6
 rubrique 4;            shot 14-sons

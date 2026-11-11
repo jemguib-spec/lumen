@@ -80,36 +80,52 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         if (f != null) f.requestFocus();
     }
 
+    /** Boutons ronds de l'accueil, par identifiant (HomeButtons). */
+    final java.util.Map<String, Tile> buttons = new java.util.HashMap<>();
+    /** La TV a des entrées (HDMI, chaînes) : relu au retour sur l'accueil (appel système, pas à chaque image). */
+    private boolean hasInputs;
+
+    /** Le bouton sert-il en ce moment ? (en plus d'être activé dans les réglages) */
+    private boolean useful(String id) {
+        switch (id) {
+            case HomeButtons.NOTIFS: return notify.pending() > 0;
+            case HomeButtons.INPUTS: return hasInputs;
+            case HomeButtons.PROFILES: return prefs.hasProfiles();
+            default: return true;
+        }
+    }
+
     /**
-     * Bouton « Entrées » : seulement si la TV a des entrées (HDMI, chaînes). Sur un boîtier qui
-     * n'en a pas, il ne mènerait qu'à une liste vide ; les paramètres des entrées restent dans
-     * les réglages rapides de la TV.
+     * Affiche ou masque chaque bouton rond : activé dans Réglages › Accueil et applis › Boutons de
+     * l'accueil, et utile en ce moment (cloche, Entrées, Profils). Un bouton qui disparaît alors
+     * qu'il est sélectionné passe la sélection au premier bouton restant.
      */
+    void updateButtons() {
+        for (String id : HomeButtons.IDS) {
+            Tile t = buttons.get(id);
+            if (t == null) continue;
+            boolean show = HomeButtons.shown(prefs.button(id), useful(id));
+            if (!show) moveFocusOff(t);
+            t.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    /** Entrées de la TV relues (une source HDMI a pu apparaître), puis boutons mis à jour. */
     void updateInputsButton() {
-        if (inputsButton == null) return;
-        boolean any = !InputsPanel.inputs(this).isEmpty();
-        if (!any) moveFocusOff(inputsButton);
-        inputsButton.setVisibility(any ? View.VISIBLE : View.GONE);
+        hasInputs = !InputsPanel.inputs(this).isEmpty();
+        updateButtons();
     }
 
-    /** Affiche ou masque le bouton « Maison » (Réglages › Accueil et applis). */
-    /** Bouton « profil » de l'accueil : seulement quand il y a plusieurs profils. */
-    void updateProfileButton() {
-        if (profileButton != null) profileButton.setVisibility(prefs.hasProfiles() ? View.VISIBLE : View.GONE);
-    }
+    /** Bouton Profils : dès qu'il y a plusieurs profils (et s'il est activé). */
+    void updateProfileButton() { updateButtons(); }
 
-    /**
-     * Bouton Sons de l'accueil : haut-parleur, ou haut-parleur barré quand les sons sont coupés.
-     * Masqué par défaut (Réglages › Sons › Bouton Sons sur l'accueil).
-     */
+    /** Bouton Sons de l'accueil : haut-parleur, ou haut-parleur barré quand les sons sont coupés. */
     void updateSoundButton() {
         if (soundButton == null) return;
         boolean on = prefs.sounds();
         soundButton.setGlyph(on ? Glyph.SOUND : Glyph.SOUND_OFF, on ? L.t("Sons activés") : L.t("Sons coupés"));
-        boolean show = prefs.soundButton();
-        if (!show) moveFocusOff(soundButton);
-        soundButton.setVisibility(show ? View.VISIBLE : View.GONE);
-        if (show && soundButton.isFocused()) showButtonLabel(soundButton, true); // le nom suit l'état (activés, coupés)
+        updateButtons();
+        if (soundButton.getVisibility() == View.VISIBLE && soundButton.isFocused()) showButtonLabel(soundButton, true); // le nom suit l'état
     }
 
     /** Coupe ou remet les sons de Lumen d'un seul appui (bouton de l'accueil, touche reliée). */
@@ -123,7 +139,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
 
     void setHouseButton(boolean on) {
         prefs.setHaButton(on);
-        if (houseButton != null) houseButton.setVisibility(on ? View.VISIBLE : View.GONE);
+        updateButtons();
         refreshHouse();
     }
     TextView greet;

@@ -87,14 +87,14 @@ final class SettingsPanel {
     static final int ROOT = 0, FOND = 1, ACCUEIL = 2, VEILLE = 3, AMBIANCES = 4, SYSTEME = 5,
             ABOUT = 6, LICENCES = 7, CREDITS = 8, LICENCE_INTER = 9, CITIES = 10, HIDDEN = 11, SCREENSAVER = 12, LICENCE_GPL = 13, INSTALL = 14,
             PAYSAGES = 15, FOND_AVANCE = 16, VIGNETTES = 17, REPRENDRE = 18, LISIBILITE = 19, DIAG = 20, AFFICHE = 21, TOUCHES = 22, TOUCHE = 23, SONS = 24,
-            NOTIFS = 25, NOTIF_APPS = 26;
+            NOTIFS = 25, NOTIF_APPS = 26, BOUTONS = 27;
     private static final String[] TITLES = {"Réglages", "Fond d'écran", "Accueil et applis", "Mode veille", "Ambiances",
             "Système", "À propos", "Licences", "Crédits des fonds", "Police Inter", "Villes", "Applis masquées", "Économiseur d'écran", "Licence de Lumen", "Installation",
             "Paysages Lumen", "Avancé", "Vignettes et disposition", "Reprendre", "Lisibilité", "Diagnostic", "À l'affiche", "Télécommande", "Fonction de la touche", "Sons",
-            "Notifications", "Applis qui notifient"};
+            "Notifications", "Applis qui notifient", "Boutons de l'accueil"};
     private static final int[] PARENT = {ROOT, ROOT, ROOT, ROOT, ROOT, ROOT, SYSTEME, SYSTEME, LICENCES, LICENCES, FOND, ACCUEIL, VEILLE, LICENCES, SYSTEME,
             FOND, FOND, ACCUEIL, ACCUEIL, ACCUEIL, SYSTEME, ACCUEIL, ROOT, TOUCHES, ROOT,
-            ROOT, NOTIFS};
+            ROOT, NOTIFS, ACCUEIL};
     private static boolean[] citiesChanged;
     private static int page = ROOT, lastRubric = -1;
     private static LinearLayout openCard;
@@ -456,6 +456,13 @@ final class SettingsPanel {
                     @Override public void run() { a.prefs.setHabitsOn(!a.prefs.habitsOn()); a.markAppsDirty(); }
                 }), a.rowLp());
                 col.addView(a.section(L.t("Rubriques")));
+                col.addView(rubric(a, card, Glyph.SLIDERS, L.t("Boutons de l'accueil"), new MainActivity.Value() {
+                    @Override public String get() {
+                        int n = 0;
+                        for (String id : HomeButtons.IDS) if (a.prefs.button(id)) n++;
+                        return n + L.t(" sur ") + HomeButtons.IDS.length;
+                    }
+                }, BOUTONS), a.rowLp());
                 col.addView(rubric(a, card, Glyph.GRID, L.t("Vignettes et disposition"), new MainActivity.Value() {
                     @Override public String get() { return a.prefs.homeCols() + " × " + a.prefs.homeRows(); }
                 }, VIGNETTES), a.rowLp());
@@ -466,15 +473,6 @@ final class SettingsPanel {
                     @Override public String get() { return L.t(Prefs.TEXT_SCALE_NAMES[a.prefs.textScale()]) + (a.prefs.highContrast() ? " · contraste" : ""); }
                 }, LISIBILITE), a.rowLp());
                 col.addView(a.section(L.t("Services")));
-                col.addView(toggle(a, L.t("Bouton Maison (Home Assistant)"), new GlassUi.Bool() {
-                    @Override public boolean get() { return a.prefs.haButton(); }
-                }, new Runnable() {
-                    @Override public void run() {
-                        boolean on = !a.prefs.haButton();
-                        a.setHouseButton(on);
-                        if (on && !a.prefs.haConfigured()) a.showNotice(L.t("À relier depuis le téléphone : Plus › Home Assistant"));
-                    }
-                }), a.rowLp());
                 col.addView(rubric(a, card, Glyph.SPARK, L.t("À l'affiche"), new MainActivity.Value() {
                     @Override public String get() { return a.prefs.tmdbKey().isEmpty() ? "Désactivé" : a.prefs.tmdbOwnKey().isEmpty() ? "Clé partagée" : "Ma clé"; }
                 }, AFFICHE), a.rowLp());
@@ -662,12 +660,32 @@ final class SettingsPanel {
                 col.addView(a.listRow(L.t("Écouter"), null, new View.OnClickListener() {
                     @Override public void onClick(View v) { Sounds.get(a).preview(); }
                 }), a.rowLp());
-                col.addView(toggle(a, L.t("Bouton Sons sur l'accueil"), new GlassUi.Bool() {
-                    @Override public boolean get() { return a.prefs.soundButton(); }
-                }, new Runnable() {
-                    @Override public void run() { a.prefs.setSoundButton(!a.prefs.soundButton()); a.updateSoundButton(); }
-                }), a.rowLp());
-                hint(a, col, L.t("◀ ▶ pour changer de jeu ou de volume : le son se fait entendre aussitôt. Seuls les sons de Lumen changent, pas le volume de la TV, des applis ni des vidéos. Le bouton Sons de l'accueil coupe ou remet les sons d'un appui."));
+                hint(a, col, L.t("◀ ▶ pour changer de jeu ou de volume : le son se fait entendre aussitôt. Seuls les sons de Lumen changent, pas le volume de la TV, des applis ni des vidéos. Le bouton Sons de l'accueil (Accueil et applis › Boutons de l'accueil) coupe ou remet les sons d'un appui."));
+                break;
+            }
+            case BOUTONS: {
+                for (int i = 0; i < HomeButtons.IDS.length; i++) {
+                    final String id = HomeButtons.IDS[i];
+                    String when = HomeButtons.WHEN[i];
+                    String label = L.t(HomeButtons.NAMES[i]) + (when.isEmpty() ? "" : " · " + L.t(when));
+                    col.addView(toggle(a, label, new GlassUi.Bool() {
+                        @Override public boolean get() { return a.prefs.button(id); }
+                    }, new Runnable() {
+                        @Override public void run() {
+                            boolean on = !a.prefs.button(id);
+                            if (HomeButtons.HOUSE.equals(id)) {
+                                a.setHouseButton(on);
+                                if (on && !a.prefs.haConfigured()) a.showNotice(L.t("À relier depuis le téléphone : Plus › Home Assistant"));
+                            } else {
+                                a.prefs.setButton(id, on);
+                                a.updateSoundButton(); // pictogramme du haut-parleur, puis tous les boutons
+                            }
+                            if (HomeButtons.SETTINGS.equals(id) && !on)
+                                a.showNotice(L.t("Réglages toujours là : touche Menu, ou ▼ puis rechercher « réglages »"), 5000);
+                        }
+                    }), a.rowLp());
+                }
+                hint(a, col, L.t("Chaque bouton rond du haut de l'accueil s'affiche ou se masque ici, pour ce profil. Les réglages restent accessibles par la touche Menu de la télécommande, ou ▼ puis la recherche « réglages »."));
                 break;
             }
             case NOTIFS: {

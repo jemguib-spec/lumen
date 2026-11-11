@@ -18,8 +18,9 @@ def array(file, name):
     return re.findall(r'"((?:[^"\\]|\\.)*)"', m.group(1)) if m else []
 for file, name in [('Prefs.java', 'SRC_NAMES'), ('Prefs.java', 'VT_NAMES'), ('Prefs.java', 'TEXT_SCALE_NAMES'),
                    ('AppCategory.java', 'NAMES'), ('CosyCatalog.java', 'NAMES'), ('SettingsPanel.java', 'TITLES'), ('Tips.java', 'ALL'), ('HomeAssistant.java', 'DOMAIN_NAMES'),
-                   ('SoundDesign.java', 'THEME_NAMES'), ('SoundDesign.java', 'VOLUME_NAMES')]:
-    keys.update(unescape(x) for x in array(file, name))
+                   ('SoundDesign.java', 'THEME_NAMES'), ('SoundDesign.java', 'VOLUME_NAMES'),
+                   ('HomeButtons.java', 'NAMES'), ('HomeButtons.java', 'WHEN')]:
+    keys.update(unescape(x) for x in array(file, name) if x)
 idx = open(os.path.join(src, 'SettingsIndex.java'), encoding='utf-8').read()
 keys.update(m.group(1) for m in re.finditer(r'new Entry\("([^"]+)",', idx))
 m = re.search(r'String F = "([^"]+)", A = "([^"]+)", V = "([^"]+)", AM = "([^"]+)", S = "([^"]+)"', idx)

@@ -4,7 +4,7 @@ set -e
 cd "$(dirname "$0")/.."
 OUT=$(mktemp -d)
 S=src/com/lumen/launcher
-javac -encoding UTF-8 -d "$OUT" $S/NetPolicy.java $S/MediaSniff.java $S/HttpRequest.java $S/PhoneAuth.java $S/QrCode.java $S/Sky.java $S/CosyCatalog.java $S/VideoCatalog.java $S/Pexels.java $S/WatchNextFormat.java $S/CommonsThumb.java $S/AppCategory.java $S/UpdatePolicy.java $S/Pin.java $S/Habits.java $S/Backup.java $S/RateLimit.java $S/Greeting.java $S/DateLine.java $S/NotifyPolicy.java $S/Messages.java $S/DeviceName.java $S/HomeAssistant.java $S/SettingsIndex.java $S/SmartSearch.java $S/TmdbPolicy.java $S/WsFrames.java $S/Signer.java $S/PhoneGate.java $S/SafeFile.java $S/Seal.java $S/Profiles.java $S/InstallPolicy.java $S/VaultCrypto.java $S/L.java $S/Palette.java $S/RemoteKeys.java $S/SoundDesign.java $S/Radius.java tests/LumenTests.java
+javac -encoding UTF-8 -d "$OUT" $S/NetPolicy.java $S/MediaSniff.java $S/HttpRequest.java $S/PhoneAuth.java $S/QrCode.java $S/Sky.java $S/CosyCatalog.java $S/VideoCatalog.java $S/Pexels.java $S/WatchNextFormat.java $S/CommonsThumb.java $S/AppCategory.java $S/UpdatePolicy.java $S/Pin.java $S/Habits.java $S/Backup.java $S/RateLimit.java $S/Greeting.java $S/DateLine.java $S/NotifyPolicy.java $S/HomeButtons.java $S/Messages.java $S/DeviceName.java $S/HomeAssistant.java $S/SettingsIndex.java $S/SmartSearch.java $S/TmdbPolicy.java $S/WsFrames.java $S/Signer.java $S/PhoneGate.java $S/SafeFile.java $S/Seal.java $S/Profiles.java $S/InstallPolicy.java $S/VaultCrypto.java $S/L.java $S/Palette.java $S/RemoteKeys.java $S/SoundDesign.java $S/Radius.java tests/LumenTests.java
 RES=$(java -cp "$OUT" com.lumen.launcher.LumenTests)
 echo "$RES" | grep -v '^QR_FILE'
 QR=$(echo "$RES" | sed -n 's/^QR_FILE=\([^ ]*\) QR_EXPECT=\(.*\)$/\1/p')

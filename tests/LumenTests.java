@@ -699,6 +699,19 @@ public class LumenTests {
         check("notifications : « il y a »", NotifyPolicy.ago(0, 30000, true).equals("à l'instant") && NotifyPolicy.ago(0, 5 * 60000, true).equals("il y a 5 min")
                 && NotifyPolicy.ago(0, 3 * 3600000L, true).equals("il y a 3 h") && NotifyPolicy.ago(0, 30 * 3600000L, false).equals("yesterday"));
         check("notifications : durée inconnue → 10 s", NotifyPolicy.SECONDS[NotifyPolicy.secondsIndex(42)] == 10 && NotifyPolicy.SECONDS[NotifyPolicy.secondsIndex(20)] == 20);
+        boolean btnOk = HomeButtons.IDS.length == HomeButtons.NAMES.length && HomeButtons.IDS.length == HomeButtons.WHEN.length;
+        java.util.Set<String> btnKeys = new java.util.HashSet<>(java.util.Arrays.asList(HomeButtons.prefKeys()));
+        java.util.Set<String> backupBools = new java.util.HashSet<>(java.util.Arrays.asList(Backup.BOOLS));
+        for (String k : HomeButtons.prefKeys()) if (!Profiles.personal(k) || !backupBools.contains(k)) btnOk = false;
+        check("boutons de l'accueil : un nom et un réglage par bouton, propres au profil et sauvegardés", btnOk && btnKeys.size() == HomeButtons.IDS.length);
+        check("boutons de l'accueil : Maison et Sons gardent leur ancien réglage, masqués par défaut",
+                HomeButtons.prefKey(HomeButtons.HOUSE).equals("ha_button") && HomeButtons.prefKey(HomeButtons.SOUNDS).equals("sound_button")
+                && !HomeButtons.byDefault(HomeButtons.HOUSE) && !HomeButtons.byDefault(HomeButtons.SOUNDS)
+                && HomeButtons.byDefault(HomeButtons.TV) && HomeButtons.byDefault(HomeButtons.PROFILES) && HomeButtons.byDefault(HomeButtons.SETTINGS));
+        check("boutons de l'accueil : affiché seulement s'il est activé et utile", HomeButtons.shown(true, true) && !HomeButtons.shown(false, true) && !HomeButtons.shown(true, false));
+        check("boutons de l'accueil : ordre à l'écran", HomeButtons.index(HomeButtons.NOTIFS) == 0 && HomeButtons.index(HomeButtons.SETTINGS) == HomeButtons.IDS.length - 1 && HomeButtons.index("x") == -1);
+        check("recherche : « boutons » mène à la page des boutons de l'accueil", !SettingsIndex.search("boutons", 6).isEmpty() && SettingsIndex.search("boutons", 6).get(0).page == SettingsIndex.BOUTONS);
+        check("recherche : « réglages » ouvre les réglages même sans leur bouton", !SettingsIndex.search("reglages", 6).isEmpty());
         check("écran de nuit : minuit et désactivé", Greeting.night(0, 0) && !Greeting.night(23, 0) && !Greeting.night(2, -1));
         check("messages : jamais technique", !Messages.download("Hôte non autorisé : thumb.wikimedia.org").contains("Hôte")
                 && Messages.download("java.net.UnknownHostException").startsWith("Pas d'accès"));

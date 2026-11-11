@@ -153,15 +153,17 @@ final class NotifyUi implements NotifyService.Listener {
 
     // ------------------------------------------------------------------ bouton cloche et liste
 
-    /** Bouton cloche de l'accueil : seulement quand des notifications attendent. */
+    /** Bouton cloche de l'accueil : son nom donne le nombre ; il n'apparaît que si des notifications attendent. */
     void updateBell() {
         Tile b = a.bellButton;
         if (b == null) return;
-        int n = on() ? visibleCount() : 0;
-        if (n == 0) a.moveFocusOff(b);
-        b.setVisibility(n == 0 ? View.GONE : View.VISIBLE);
+        int n = pending();
         b.setGlyph(Glyph.BELL, n == 1 ? L.t("1 notification") : n + L.t(" notifications"));
+        a.updateButtons();
     }
+
+    /** Notifications qui attendent sous la cloche (0 si elles sont coupées ou dans un profil enfant). */
+    int pending() { return on() ? visibleCount() : 0; }
 
     private int visibleCount() {
         int n = 0;

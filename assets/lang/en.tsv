@@ -655,7 +655,6 @@ Nouvelle notification	New notification
 Nouvelle saison disponible	New season available
 Quand une appli annonce une nouvelle sortie, un épisode ou un message, Lumen l'affiche en grand en haut de l'écran, puis la garde sous la cloche de l'accueil. Retour l'efface. Rien n'est enregistré ni envoyé ; rien dans un profil enfant.	When an app announces a new release, an episode or a message, Lumen shows it in large at the top of the screen, then keeps it under the bell on the home screen. Back dismisses it. Nothing is stored or sent; nothing in a kids profile.
 Réglages › Notifications : les nouvelles sorties et messages des applis s'affichent en grand	Settings › Notifications: new releases and messages from apps are shown in large
-Réglages › Sons : le bouton haut-parleur de l'accueil coupe ou remet les sons d'un appui	Settings › Sounds: the speaker button on the home screen mutes or unmutes sounds in one press
 Réseau et Internet	Network and Internet
 Résolution, mode d'image	Resolution, picture mode
 Son	Sound
@@ -668,4 +667,13 @@ Wi-Fi, câble	Wi-Fi, cable
 À autoriser	To allow
 À autoriser · OK	To allow · OK
 À jour · 	Up to date · 
-◀ ▶ pour changer de jeu ou de volume : le son se fait entendre aussitôt. Seuls les sons de Lumen changent, pas le volume de la TV, des applis ni des vidéos. Le bouton Sons de l'accueil coupe ou remet les sons d'un appui.	◀ ▶ to change the sound set or volume: you hear it right away. Only Lumen's sounds change, not the volume of the TV, apps or videos. The Sounds button on the home screen mutes or unmutes in one press.
+# 4.28.0 : boutons de l'accueil
+Boutons de l'accueil	Home screen buttons
+Chaque bouton rond du haut de l'accueil s'affiche ou se masque ici, pour ce profil. Les réglages restent accessibles par la touche Menu de la télécommande, ou ▼ puis la recherche « réglages ».	Show or hide each round button at the top of the home screen, for this profile. Settings stay reachable with the remote's Menu key, or ▼ then searching “settings”.
+Maison (Home Assistant)	Home (Home Assistant)
+Réglages toujours là : touche Menu, ou ▼ puis rechercher « réglages »	Settings still there: Menu key, or ▼ then search “settings”
+Réglages › Accueil et applis › Boutons de l'accueil : afficher ou masquer chaque bouton rond	Settings › Home and apps › Home screen buttons: show or hide each round button
+dès deux profils	from two profiles
+quand une appli en envoie	when an app sends one
+si la TV en a	if the TV has any
+◀ ▶ pour changer de jeu ou de volume : le son se fait entendre aussitôt. Seuls les sons de Lumen changent, pas le volume de la TV, des applis ni des vidéos. Le bouton Sons de l'accueil (Accueil et applis › Boutons de l'accueil) coupe ou remet les sons d'un appui.	◀ ▶ to change the sound set or volume: you hear it right away. Only Lumen's sounds change, not the volume of the TV, apps or videos. The Sounds button on the home screen (Home and apps › Home screen buttons) mutes or unmutes in one press.
