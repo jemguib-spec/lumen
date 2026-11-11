@@ -49,7 +49,7 @@ final class SyncPanel {
         col.addView(a.listRow(L.t("Recevoir les réglages d'une autre TV"), new MainActivity.Value() {
             @Override public String get() { return L.t("Afficher un code"); }
         }, new View.OnClickListener() {
-            @Override public void onClick(View v) { openReceive(a); }
+            @Override public void onClick(View v) { openReceive(a, null); }
         }), a.rowLp());
         col.addView(a.section(L.t("Envoyer les réglages de cette TV")));
         for (int i = 0; i < groups.length; i++) {
@@ -223,20 +223,38 @@ final class SyncPanel {
 
     // ------------------------------------------------------------------ recevoir
 
-    /** Affiche le code et attend un envoi (3 min au plus). Fermer l'écran arrête tout. */
-    static void openReceive(final MainActivity a) {
+    /** Fin de la réception (assistant du premier démarrage) : applied = réglages appliqués. */
+    interface Done { void on(boolean applied); }
+
+    /** Prévient « done » une seule fois, après la fermeture de l'écran en cours. */
+    private static Done once(final MainActivity a, final Done done) {
+        if (done == null) return null;
+        final boolean[] said = {false};
+        return new Done() {
+            @Override public void on(final boolean applied) {
+                if (said[0]) return;
+                said[0] = true;
+                a.h.post(new Runnable() { @Override public void run() { done.on(applied); } });
+            }
+        };
+    }
+
+    /** Affiche le code et attend un envoi (3 min au plus). Fermer l'écran arrête tout. done peut être null. */
+    static void openReceive(final MainActivity a, Done whenDone) {
+        final Done done = once(a, whenDone);
         final String name = tvName(a);
+        final boolean[] received = {false};
         final String[] got = SyncLink.startReceiving(a, name, new SyncLink.Received() {
-            @Override public void on(String fromIp, String json) { a.closeOverlay(false); confirm(a, fromIp, json); }
+            @Override public void on(String fromIp, String json) { received[0] = true; a.closeOverlay(false); confirm(a, fromIp, json, done); }
         }, new SyncLink.Stopped() {
             @Override public void on(int why) {
                 a.closeOverlay(true);
                 a.showNotice(why == SyncLink.TOO_MANY ? L.t("Trop de codes faux · réception arrêtée") : L.t("Réception arrêtée (rien reçu en 3 min)"), 3500);
             }
         });
-        if (got == null) { a.showNotice(L.t("Pas de connexion réseau")); return; }
+        if (got == null) { a.showNotice(L.t("Pas de connexion réseau")); if (done != null) done.on(false); return; }
         FrameLayout o = a.openOverlay(new Runnable() {
-            @Override public void run() { SyncLink.stopReceiving(a); }
+            @Override public void run() { SyncLink.stopReceiving(a); if (!received[0] && done != null) done.on(false); }
         });
         LinearLayout card = a.glassCard(Radius.CARD);
         card.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -271,7 +289,7 @@ final class SyncPanel {
     }
 
     /** Envoi reçu et signé : on montre d'où il vient et ce qu'il change, rien n'est appliqué sans « Appliquer ». */
-    private static void confirm(final MainActivity a, String fromIp, String json) {
+    private static void confirm(final MainActivity a, String fromIp, String json, final Done done) {
         final JSONObject settings;
         final boolean[] g;
         String from;
@@ -284,11 +302,15 @@ final class SyncPanel {
             from = TvSync.cleanName(o.optString("from", fromIp));
         } catch (Exception e) {
             a.showNotice(L.t("Réglages reçus illisibles"));
+            if (done != null) done.on(false);
             return;
         }
         StringBuilder what = new StringBuilder();
         for (int i = 0; i < g.length; i++) if (g[i]) what.append(what.length() == 0 ? "" : ", ").append(L.t(TvSync.GROUP_NAMES[i]));
-        FrameLayout o = a.openOverlay(null);
+        final boolean[] answered = {false};
+        FrameLayout o = a.openOverlay(new Runnable() {
+            @Override public void run() { if (!answered[0] && done != null) done.on(false); } // Retour = refusé
+        });
         LinearLayout card = a.menuCard(40);
         card.addView(a.menuHeader(null, false, L.t("Réglages reçus"), L.t("De « ") + from + L.t(" »") + " (" + fromIp + ")"));
         TextView why = a.text(22, "sans-serif", Palette.TEXT_2);
@@ -300,6 +322,8 @@ final class SyncPanel {
         card.addView(why);
         LinearLayout apply = a.iconRow(Glyph.UPDATE, L.t("Appliquer sur cette TV"), null, new View.OnClickListener() {
             @Override public void onClick(View v) {
+                answered[0] = true;
+                if (done != null) done.on(true); // avant la reconstruction de l'écran
                 a.closeOverlay(true);
                 try {
                     int n = a.prefs.importSync(settings, g);

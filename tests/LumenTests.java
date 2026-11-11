@@ -235,6 +235,27 @@ public class LumenTests {
         check("sauvegarde : durée des notifications restaurée (bornée)", Backup.intOk("notif_secs", 10) && !Backup.intOk("notif_secs", 0) && !Backup.intOk("notif_secs", 999));
     }
 
+    /** Assistant du premier démarrage : quand il s'affiche, ordre des étapes (SetupFlow). */
+    static void setupFlow() {
+        check("assistant : installation neuve → page d'accueil", SetupFlow.start(SetupFlow.UNSET, 5000, 5000) == SetupFlow.WELCOME);
+        check("assistant : TV qui avait déjà Lumen (mise à jour) → pas d'assistant", SetupFlow.start(SetupFlow.UNSET, 5000, 9000) == SetupFlow.DONE);
+        check("assistant : date d'installation inconnue → pas d'assistant", SetupFlow.start(SetupFlow.UNSET, 0, 0) == SetupFlow.DONE);
+        check("assistant : reprend à l'étape enregistrée, même après une mise à jour", SetupFlow.start(SetupFlow.LOOK, 5000, 9000) == SetupFlow.LOOK);
+        check("assistant : terminé reste terminé", SetupFlow.start(SetupFlow.DONE, 5000, 5000) == SetupFlow.DONE);
+        check("assistant : étape enregistrée abîmée ignorée", SetupFlow.start(42, 5000, 9000) == SetupFlow.DONE);
+        check("assistant : ordre accueil → profil → accueil → boutons → clés → prêt → fin",
+                SetupFlow.next(SetupFlow.WELCOME) == SetupFlow.PROFILE && SetupFlow.next(SetupFlow.PROFILE) == SetupFlow.LOOK
+                && SetupFlow.next(SetupFlow.LOOK) == SetupFlow.BUTTONS && SetupFlow.next(SetupFlow.BUTTONS) == SetupFlow.KEYS
+                && SetupFlow.next(SetupFlow.KEYS) == SetupFlow.READY && SetupFlow.next(SetupFlow.READY) == SetupFlow.DONE);
+        check("assistant : Retour remonte d'une étape, l'accueil reste l'accueil", SetupFlow.prev(SetupFlow.KEYS) == SetupFlow.BUTTONS
+                && SetupFlow.prev(SetupFlow.PROFILE) == SetupFlow.WELCOME && SetupFlow.prev(SetupFlow.WELCOME) == SetupFlow.WELCOME);
+        check("assistant : « Étape n sur 4 » seulement pour les étapes de zéro", SetupFlow.number(SetupFlow.WELCOME) == 0 && SetupFlow.number(SetupFlow.PROFILE) == 1
+                && SetupFlow.number(SetupFlow.KEYS) == SetupFlow.count() && SetupFlow.number(SetupFlow.READY) == 0);
+        check("assistant : après la copie depuis une autre TV, il ne reste que les clés", SetupFlow.afterSync() == SetupFlow.KEYS
+                && TvSync.groupOf("tmdb_key") < 0 && TvSync.groupOf("pexels_key") < 0);
+        check("assistant : l'étape n'est pas dans la sauvegarde ni copiée", Backup.typeOf("setup_step") == Backup.NONE && TvSync.groupOf("setup_step") < 0);
+    }
+
     public static void main(String[] args) throws Exception {
         // ---- politique réseau
         // ---- catalogue fermé des vidéos d'ambiance
@@ -997,6 +1018,7 @@ public class LumenTests {
         } catch (Exception sealErr) { check("chiffrement : " + sealErr, false); }
         try { phoneGate(); } catch (Exception gateErr) { check("contrôles de la page du téléphone : " + gateErr, false); }
         try { tvSync(); } catch (Exception syncErr) { check("copie entre TV : " + syncErr, false); }
+        setupFlow();
 
         profilesTests();
 

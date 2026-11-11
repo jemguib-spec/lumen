@@ -57,6 +57,7 @@ final class SettingsIndex {
             new Entry("Paysages Lumen animés et météo", F, PAYSAGES, "paysages animes meteo pluie neige saison decors"),
             new Entry("Qualité et espace des vidéos", F, FOND_AVANCE, "qualite 4k hd espace go videos theme villes telecharger"),
             new Entry("Journal d'erreurs et mesures", S, DIAG, "journal erreurs mesures diagnostic redemarrer parametres tv conseils"),
+            new Entry("Assistant de premier démarrage", S, SYSTEME, "assistant premier demarrage bienvenue configuration configurer recommencer profil cles"),
             new Entry("Installation", S, INSTALL, "installation installer adb accueil par defaut google launcher desactiver commandes"),
             new Entry("Nouveautés de la version", S, SYSTEME, "nouveautes version changements quoi de neuf"),
             new Entry("Touches de la télécommande", "Réglages", TOUCHES, "telecommande touche touches bouton boutons relier raccourci guide info couleur chiffre"),

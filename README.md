@@ -90,7 +90,9 @@ Bouton Maison de l'accueil, une fois Home Assistant relié depuis le téléphone
 
 ## Plusieurs TV dans la maison
 
-Pour que toutes les TV aient les mêmes réglages : sur la TV qui doit les recevoir, Réglages › Système › Autres TV › **Recevoir** affiche un code à 6 chiffres. Sur la TV de référence, même page : coche ce qui part (**Apparence et sons**, **Fond d'écran et veille**, **Accueil et boutons**, **Favoris et applis masquées**), choisis l'autre TV dans la liste (trouvée toute seule sur le Wi-Fi, ou par son adresse) et tape le code. L'autre TV montre ce qu'elle reçoit et attend « Appliquer ». Les deux TV doivent avoir Lumen 4.31 ou plus et être sur le même réseau.
+Une TV neuve peut tout récupérer dès l'installation : l'assistant du premier démarrage propose « Me synchroniser avec une autre TV du foyer ». Plus tard, c'est la page ci-dessous.
+
+Pour que toutes les TV aient les mêmes réglages : sur la TV qui doit les recevoir, Réglages › Système › Autres TV › **Recevoir** affiche un code à 6 chiffres. Sur la TV de référence, même page : coche ce qui part (**Apparence et sons**, **Fond d'écran et veille**, **Accueil et boutons**, **Favoris et applis masquées**), choisis l'autre TV dans la liste (trouvée toute seule sur le Wi-Fi, ou par son adresse) et tape le code. L'autre TV montre ce qu'elle reçoit et attend « Appliquer ». Les deux TV doivent avoir Lumen 4.31 ou plus (4.32 pour le faire depuis l'assistant du premier démarrage) et être sur le même réseau.
 
 Les réglages des groupes cochés que la TV de référence n'a jamais changés reviennent aussi à leur valeur par défaut sur l'autre TV : les deux sont vraiment pareilles. Le code PIN, Home Assistant, les clés, les habitudes, les touches de la télécommande et les vidéos téléchargées restent propres à chaque TV. Les réglages vont au profil ouvert sur la TV qui reçoit.
 
@@ -113,7 +115,7 @@ Bouton Réglages ou touche Menu. Les réglages à deux états ont un interrupteu
 | **Profils** | Ajouter, renommer, supprimer, profil enfant, profil au démarrage |
 | **Réglages depuis le téléphone** | QR code, accès du téléphone (complet ou télécommande seulement), télécommande dans les autres applis |
 | **Télécommande** | Relier les touches sans rôle (Guide, Info, couleurs, chiffres…) à une fonction ou à une appli |
-| **Système** | Mises à jour (automatiques, nouveautés), stockage, code PIN, sauvegarde des réglages, autres TV (copier les réglages), assistant d'installation, diagnostic (mesures à l'écran, journal d'erreurs, redémarrer Lumen), à propos, licences |
+| **Système** | Mises à jour (automatiques, nouveautés), stockage, code PIN, sauvegarde des réglages, autres TV (copier les réglages), assistant de premier démarrage, assistant d'installation, diagnostic (mesures à l'écran, journal d'erreurs, redémarrer Lumen), à propos, licences |
 
 ## Accessibilité
 
@@ -125,7 +127,7 @@ Aucune publicité, aucun compte, aucune télémétrie. Internet sert seulement �
 
 ## Installer
 
-En bref (détails et commandes exactes dans [INSTALLATION.md](INSTALLATION.md)) : activer le débogage USB sur la TV, `adb install Lumen.apk`, puis désactiver l'accueil Google (réversible). Au premier lancement, Lumen affiche lui-même un **assistant d'installation** avec l'état de la TV, les commandes à copier (adresse IP déjà remplie) et un QR code vers le guide. Ensuite, Lumen se met à jour tout seul depuis les Releases GitHub, après vérification de la signature.
+En bref (détails et commandes exactes dans [INSTALLATION.md](INSTALLATION.md)) : activer le débogage USB sur la TV, `adb install Lumen.apk`, puis désactiver l'accueil Google (réversible). Au premier lancement, un **assistant de premier démarrage** demande s'il faut démarrer de zéro (prénom, accueil, boutons, clés via le téléphone) ou se synchroniser avec une autre TV du foyer ; puis Lumen affiche lui-même un **assistant d'installation** avec l'état de la TV, les commandes à copier (adresse IP déjà remplie) et un QR code vers le guide. Ensuite, Lumen se met à jour tout seul depuis les Releases GitHub, après vérification de la signature.
 
 ---
 

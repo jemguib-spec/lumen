@@ -76,7 +76,7 @@ final class Install {
 
     /** Au premier démarrage, si Lumen n'est pas l'accueil : la page s'ouvre une fois. */
     static void maybeShowAtStart(MainActivity a) {
-        if (a.prefs.installHelpShown() || a.overlay != null || a.splashing || a.ambiance != null || a.ambientOn || WhoPage.isShowing(a)) return;
+        if (a.prefs.installHelpShown() || Onboarding.pending(a) || a.overlay != null || a.splashing || a.ambiance != null || a.ambientOn || WhoPage.isShowing(a)) return;
         if (isHome(a)) { a.prefs.setInstallHelpShown(true); return; } // tout est déjà en place : on ne dérange pas
         a.prefs.setInstallHelpShown(true);
         SettingsPanel.openAt(a, SettingsPanel.INSTALL);

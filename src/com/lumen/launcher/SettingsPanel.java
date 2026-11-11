@@ -868,6 +868,11 @@ final class SettingsPanel {
                     @Override public String get() { return L.t("Copier les réglages"); }
                 }, SYNC), a.rowLp());
                 col.addView(a.section(L.t("Informations")));
+                col.addView(a.listRow(L.t("Assistant de premier démarrage"), new MainActivity.Value() {
+                    @Override public String get() { return L.t("Recommencer"); }
+                }, new View.OnClickListener() {
+                    @Override public void onClick(View v) { a.closeOverlay(false); Onboarding.restart(a); }
+                }), a.rowLp());
                 col.addView(rubric(a, card, Glyph.HOME, L.t("Installation"), new MainActivity.Value() {
                     @Override public String get() { return Install.isHome(a) ? "Terminée" : "À finir"; }
                 }, INSTALL), a.rowLp());

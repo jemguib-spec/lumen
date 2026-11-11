@@ -44,7 +44,12 @@ final class PhoneBridge implements PhoneServer.Host {
             @Override public void run() { if (!done[0]) { done[0] = true; a.closeOverlay(true); cb.answer(false, false); a.showNotice("Téléphone refusé (pas de réponse)"); } }
         };
         FrameLayout o = a.openOverlay(new Runnable() {
-            @Override public void run() { a.h.removeCallbacks(timeout); if (!done[0]) { done[0] = true; cb.answer(false, false); } }
+            @Override public void run() {
+                a.h.removeCallbacks(timeout);
+                if (!done[0]) { done[0] = true; cb.answer(false, false); }
+                // téléphone scanné pendant l'assistant du premier démarrage : on y revient
+                a.h.postDelayed(new Runnable() { @Override public void run() { Onboarding.resume(a); } }, 400);
+            }
         });
         LinearLayout card = a.menuCard(40);
         card.addView(a.menuHeader(null, false, L.t("Nouveau téléphone"), name));

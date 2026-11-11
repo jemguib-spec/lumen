@@ -19,6 +19,12 @@ adb logcat -c
 adb shell am start -W -n $PKG/com.lumen.launcher.MainActivity >/dev/null
 sleep 8
 alive || { echo "ÉCHEC : Lumen ne tourne plus après le démarrage"; adb logcat -d | tail -80; exit 1; }
+# installation neuve : l'assistant du premier démarrage s'affiche. Capture, puis « Plus tard »
+# (troisième choix) ; seulement s'il est bien à l'écran, pour ne rien lancer par erreur sinon.
+if adb shell uiautomator dump /sdcard/lumen-ui.xml >/dev/null 2>&1 && adb shell cat /sdcard/lumen-ui.xml | grep -qE 'Plus tard|"Later"'; then
+  shot 00-assistant
+  key DPAD_DOWN; key DPAD_DOWN; key DPAD_CENTER 2
+fi
 shot 01-accueil
 key DPAD_RIGHT; key DPAD_RIGHT
 shot 02-accueil-selection

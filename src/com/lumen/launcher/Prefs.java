@@ -223,6 +223,9 @@ final class Prefs {
     /** Assistant d'installation déjà proposé au démarrage (ou refusé). */
     boolean installHelpShown() { return sp.getBoolean("install_help_shown", false); }
     void setInstallHelpShown(boolean b) { sp.edit().putBoolean("install_help_shown", b).apply(); }
+    /** Étape de l'assistant du premier démarrage (SetupFlow ; DONE = terminé, UNSET = jamais décidé). Commun à la TV. */
+    int setupStep() { return sp.raw().getInt("setup_step", SetupFlow.UNSET); }
+    void setSetupStep(int s) { sp.raw().edit().putInt("setup_step", s).commit(); }
     /** Nouveautés annoncées par latest.json pour une version (affichées quand c'est celle installée ou prête). */
     String updateNotes(String version) { return version != null && version.equals(sp.getString("update_notes_v", "")) ? sp.getString("update_notes", "") : ""; }
     void setUpdateNotes(String version, String notes) { sp.edit().putString("update_notes_v", version).putString("update_notes", notes == null ? "" : notes).apply(); }

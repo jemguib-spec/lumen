@@ -229,6 +229,10 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         registerReceiver(screenOff, new IntentFilter(Intent.ACTION_SCREEN_OFF));
         registerReceiver(screenOn, new IntentFilter(Intent.ACTION_SCREEN_ON));
         if (SettingsPanel.reopenPage >= 0) h.post(new Runnable() { @Override public void run() { SettingsPanel.reopen(MainActivity.this); } });
+        if (Onboarding.reopenAfterRebuild) {
+            Onboarding.reopenAfterRebuild = false; // langue ou taille du texte changée dans l'assistant : il revient à la même étape
+            h.postDelayed(new Runnable() { @Override public void run() { Onboarding.resume(MainActivity.this); } }, 300);
+        }
     }
 
     /** Taille du texte ou contraste changés : on reconstruit l'interface, puis on revient dans les réglages. */
@@ -329,7 +333,8 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         super.onNewIntent(intent);
         stopMoving();
         // « Qui regarde ? » reste affichée : au démarrage, Android rouvre souvent Lumen plusieurs fois
-        if (WhoPage.isShowing(this)) return;
+        // l'assistant du premier démarrage aussi : la touche Accueil ne le fait pas perdre
+        if (WhoPage.isShowing(this) || Onboarding.isShowing(this)) return;
         closeOverlay(false);
         if (appsOpen) closeApps(false);
         for (HorizontalScrollView hs : rowScrolls) hs.smoothScrollTo(0, 0);
@@ -340,6 +345,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
         if (overlay != null || appsOpen) Sounds.get(this).back();
         if (recoOpen && RecoPanel.back()) return; // fiche ou « similaires » → retour d'un niveau
         if (movingTile != null) { stopMoving(); return; }
+        if (overlay != null && Onboarding.back(this)) return; // assistant du premier démarrage : étape précédente
         if (overlay != null && SettingsPanel.back(this)) return; // sous-page des réglages : on remonte d'un niveau
         if (overlay != null) { closeOverlay(true); return; }
         if (appsOpen && appsPage.clearSearch()) return; // Retour efface d'abord la recherche
@@ -772,8 +778,13 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
             }
             // trois conseils, un par démarrage, puis plus rien
             h.postDelayed(new Runnable() { @Override public void run() { if (!isFinishing() && overlay == null) Tips.showNext(MainActivity.this); } }, 4000);
-            // premier démarrage sans être l'écran d'accueil : l'assistant d'installation s'ouvre (une fois)
-            h.postDelayed(new Runnable() { @Override public void run() { if (!isFinishing()) Install.maybeShowAtStart(MainActivity.this); } }, 1500);
+            // installation neuve : l'assistant du premier démarrage (jusqu'au bout ou « Plus tard ») ;
+            // puis, si Lumen n'est pas l'écran d'accueil, l'assistant d'installation (une fois)
+            h.postDelayed(new Runnable() { @Override public void run() {
+                if (isFinishing()) return;
+                Onboarding.maybeShowAtStart(MainActivity.this);
+                Install.maybeShowAtStart(MainActivity.this);
+            } }, 1500);
         }
     };
 

@@ -2,6 +2,14 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.32.0
+
+- Assistant du premier démarrage, juste après l'installation. Première page : « Démarrer de zéro » ou « Me synchroniser avec une autre TV du foyer ».
+- Se synchroniser : la nouvelle TV affiche un code ; sur une TV qui a déjà Lumen, Réglages › Système › Autres TV, choisis la nouvelle TV et tape le code. Fond, accueil, boutons, favoris et sons arrivent d'un coup ; il ne reste que les clés à renseigner.
+- De zéro, en quatre étapes : ton prénom (ton profil, et d'autres personnes si tu veux), ton accueil (langue, fond, vignettes, applis par ligne, taille du texte, horloge, sons, appliqués aussitôt), les boutons de l'accueil, puis les clés et services (TMDB, Pexels, Home Assistant) à taper sur le téléphone grâce au QR code, avec l'état de chacun qui se met à jour. Pour finir, « Faire de Lumen l'accueil de la TV » mène à la page Installation.
+- Retour revient à l'étape précédente, la touche Accueil ne fait pas perdre l'assistant, et il reprend où il en était (changement de langue, téléphone accepté, redémarrage). « Plus tard » le range dans Réglages › Système › Assistant de premier démarrage, d'où il se relance.
+- Une TV qui avait déjà Lumen ne voit pas l'assistant après la mise à jour.
+
 ## 4.31.0
 
 - Copier les réglages vers une autre TV de la maison : Réglages › Système › Autres TV. Sur la TV qui reçoit, « Recevoir les réglages d'une autre TV » affiche un code à 6 chiffres ; sur la TV de référence, coche ce qui part (apparence et sons, fond d'écran et veille, accueil et boutons, favoris et applis masquées), choisis l'autre TV, trouvée toute seule sur le Wi-Fi (ou tape son adresse), puis tape le code. L'autre TV montre d'où viennent les réglages et ne change rien sans « Appliquer ».
