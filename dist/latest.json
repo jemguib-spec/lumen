@@ -1,7 +1,7 @@
 {
-  "version": "4.26.1",
+  "version": "4.26.2",
   "size": 4077056,
-  "sha256": "0135612b3904ec7cb08ad88dfee31fc0067e3a1e780ac2c342a4cdf56bd7d74d",
-  "file": "Lumen-4.26.1.apk",
-  "notes": "- Une seule règle pour tous les coins arrondis, partout : quand un élément arrondi est posé dans un autre, son coin suit celui qui l'entoure (rayon extérieur = rayon intérieur + marge). Menus, réglages et leurs pastilles de rubrique, fenêtres de saisie, code PIN, À l'affiche, tuiles Maison, vignettes à cocher, barre de progression des programmes.\n- Page du téléphone : même règle pour les listes et tout ce qui touche leur bord (icônes, cases, boutons, menus déroulants, interrupteurs), les onglets, les vignettes et leurs pastilles.\n- Les pastilles (puces, notifications, recherche) sont arrondies en entier ; plus aucun rayon n'est choisi au cas par cas.\n- Code PIN : les touches occupent toute la largeur de la fenêtre."
+  "sha256": "ccdd3a4afd3db9ca29fb1c2d833790ecf0491859ebbae620ed7ea73c6e1f0bbb",
+  "file": "Lumen-4.26.2.apk",
+  "notes": "- Arrondis, suite : les anneaux de sélection (À l'affiche, Reprendre, tuiles Maison, vignettes à cocher), le liseré des applis habituelles, le contour du mode déplacement et le filet du verre de toutes les cartes suivent eux aussi la règle : un trait posé au bord prend le rayon de la forme moins sa demi-épaisseur.\n- Les pastilles de suggestions de l'accueil et de la Maison sont arrondies en entier, comme les autres pastilles."
 }
