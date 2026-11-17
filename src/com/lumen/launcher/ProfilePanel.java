@@ -70,6 +70,11 @@ final class ProfilePanel {
     private static void edit(final MainActivity a, final Profiles.Profile p) {
         FrameLayout o = a.openOverlay(null);
         LinearLayout card = a.menuCard(40);
+        WhoPage.Face face = new WhoPage.Face(a, a.prefs.avatarOf(p.id), p.name, 48);
+        LinearLayout.LayoutParams fl = new LinearLayout.LayoutParams(a.u(112), a.u(112));
+        fl.gravity = Gravity.CENTER_HORIZONTAL;
+        fl.topMargin = a.u(8);
+        card.addView(face.view, fl);
         card.addView(a.menuHeader(null, false, p.name, p.id == Profiles.MAIN ? L.t("Profil principal") : p.kid ? L.t("Profil enfant") : null));
         LinearLayout use = a.iconRow(Glyph.PERSON, L.t("Utiliser ce profil"), null, new View.OnClickListener() {
             @Override public void onClick(View v) { a.closeOverlay(true); switchTo(a, p.id); }
@@ -97,6 +102,14 @@ final class ProfilePanel {
                 }
             }, false), a.rowLp());
         }
+        card.addView(a.iconRow(Glyph.IMAGE, L.t("Image du profil"), new MainActivity.Value() {
+            @Override public String get() {
+                int i = a.prefs.avatarOf(p.id);
+                return (AvatarArt.valid(i) ? L.t(AvatarArt.NAMES[i]) : L.t("Initiale")) + "   ›";
+            }
+        }, new View.OnClickListener() {
+            @Override public void onClick(View v) { a.closeOverlay(false); pickAvatar(a, p); }
+        }, false), a.rowLp());
         card.addView(a.iconRow(Glyph.DOC, L.t("Renommer"), null, new View.OnClickListener() {
             @Override public void onClick(View v) {
                 a.closeOverlay(false);
@@ -116,6 +129,66 @@ final class ProfilePanel {
         }
         o.addView(card, new FrameLayout.LayoutParams(a.u(760), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         use.requestFocus();
+    }
+
+    /** Choix de l'image du profil : l'initiale ou l'un des dessins de Lumen (voir AvatarArt). */
+    static void pickAvatar(final MainActivity a, final Profiles.Profile p) {
+        FrameLayout o = a.openOverlay(null);
+        LinearLayout card = a.menuCard(40);
+        card.setClipChildren(false);
+        card.setClipToPadding(false);
+        card.addView(a.menuHeader(null, false, L.t("Image de ") + p.name, null));
+        final TextView name = a.text(26, "sans-serif", Palette.TEXT_2);
+        name.setGravity(Gravity.CENTER);
+        final int current = a.prefs.avatarOf(p.id);
+        final int perRow = 6, size = a.u(112), gap = a.u(16);
+        View focus = null;
+        LinearLayout row = null;
+        for (int k = 0; k <= AvatarArt.count(); k++) {
+            final int idx = k - 1; // d'abord l'initiale, puis les dessins
+            if (k % perRow == 0) {
+                row = new LinearLayout(a);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setGravity(Gravity.CENTER_HORIZONTAL);
+                row.setClipChildren(false);
+                row.setClipToPadding(false);
+                LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                rl.topMargin = k == 0 ? 0 : gap;
+                card.addView(row, rl);
+            }
+            final WhoPage.Face f = new WhoPage.Face(a, idx, p.name, 48);
+            final String label = AvatarArt.valid(idx) ? L.t(AvatarArt.NAMES[idx]) : L.t("Initiale");
+            f.view.setFocusable(true);
+            f.view.setClickable(true);
+            f.view.setSoundEffectsEnabled(false);
+            f.view.setContentDescription(label);
+            f.view.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override public void onFocusChange(View v, boolean on) {
+                    f.setSelected(on);
+                    v.animate().scaleX(on ? 1.12f : 1f).scaleY(on ? 1.12f : 1f).setDuration(Motion.FAST).start();
+                    v.setElevation(on ? a.u(14) : 0);
+                    if (on) { name.setText(label); Sounds.get(a).tick(); }
+                }
+            });
+            f.view.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    Sounds.get(a).tock();
+                    a.prefs.setAvatar(p.id, idx);
+                    a.updateProfileButton();
+                    a.closeOverlay(false);
+                    edit(a, p);
+                }
+            });
+            LinearLayout.LayoutParams l = new LinearLayout.LayoutParams(size, size);
+            if (k % perRow != 0) l.leftMargin = gap;
+            row.addView(f.view, l);
+            if (idx == current || focus == null) focus = f.view;
+        }
+        LinearLayout.LayoutParams nl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        nl.topMargin = a.u(26);
+        card.addView(name, nl);
+        o.addView(card, new FrameLayout.LayoutParams(a.u(1000), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        focus.requestFocus();
     }
 
     interface Name { boolean take(String name); }
@@ -193,10 +266,11 @@ final class ProfilePanel {
         return true;
     }
 
-    /** Passer au profil « id » oblige-t-il à reconstruire tout l'écran (taille du texte, contraste) ? */
+    /** Passer au profil « id » oblige-t-il à reconstruire tout l'écran (taille du texte, contraste, langue) ? */
     static boolean needsRebuild(MainActivity a, int id) {
         if (id == a.prefs.activeProfile()) return false;
-        return Prefs.TEXT_SCALES[a.prefs.textScaleOf(id)] != a.textScale || a.prefs.highContrastOf(id) != a.highContrast;
+        return Prefs.TEXT_SCALES[a.prefs.textScaleOf(id)] != a.textScale || a.prefs.highContrastOf(id) != a.highContrast
+                || !L.choose(a.prefs.langOf(id), java.util.Locale.getDefault().getLanguage()).equals(L.lang());
     }
 
     /**

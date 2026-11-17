@@ -547,6 +547,16 @@ final class Prefs {
     /** Lisibilité d'un autre profil (sans en changer) : faudra-t-il reconstruire l'écran ? */
     int textScaleOf(int profile) { return Math.max(0, Math.min(2, sp.raw().getInt(Profiles.key("text_scale", profile), 0))); }
     boolean highContrastOf(int profile) { return sp.raw().getBoolean(Profiles.key("high_contrast", profile), false); }
+    /** Image du profil (voir AvatarArt) ; AvatarArt.NONE : son initiale. */
+    int avatarOf(int profile) {
+        int i = sp.raw().getInt(Profiles.key("avatar", profile), AvatarArt.NONE);
+        return AvatarArt.valid(i) ? i : AvatarArt.NONE;
+    }
+    void setAvatar(int profile, int index) {
+        String k = Profiles.key("avatar", profile);
+        if (AvatarArt.valid(index)) sp.raw().edit().putInt(k, index).apply(); else sp.raw().edit().remove(k).apply();
+    }
+    String langOf(int profile) { return sp.raw().getString(Profiles.key("lang", profile), ""); }
     void setHighContrast(boolean b) { sp.edit().putBoolean("high_contrast", b).commit(); }
 
     // ------------------------------------------------------------------ habitudes selon l'heure (local)

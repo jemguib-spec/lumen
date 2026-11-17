@@ -46,7 +46,7 @@ final class SyncState {
             "reco_filter", "reco_mode", "reco_type", "reco_hist", "tmdb_shared_ok",
             // maison, profils, sécurité, système
             "ha_url", "ha_cert", "ha_cine_open", "ha_film", "ha_pause", "ha_pinned", "ha_home", "ha_cine_apps",
-            Profiles.LIST_KEY, "profile_ask", "pin", "phone_remote_only", "auto_update",
+            Profiles.LIST_KEY, "avatar", "profile_ask", "pin", "phone_remote_only", "auto_update",
             // secrets : envoyés en clair dans l'échange chiffré, rangés chiffrés (Vault) à l'arrivée
             "tmdb_key", "pexels_key", "ha_token",
             // météo (réglages à part : « weather: »)

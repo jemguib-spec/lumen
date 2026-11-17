@@ -84,7 +84,7 @@ Bouton Maison de l'accueil, une fois Home Assistant relié depuis le téléphone
 
 <img src="docs/captures/profils.jpg" width="49%" alt="Profils : un par personne, « Qui regarde ? » au démarrage">
 
-- Un **profil** par personne : favoris, fond, affichage, mode veille, sons, recherches et habitudes. Dès deux profils, « Qui regarde ? » s'affiche au démarrage.
+- Un **profil** par personne : favoris, fond, affichage, mode veille, sons, recherches et habitudes, et une **image** au choix (un personnage ou un motif dessinés par Lumen, sinon l'initiale). Dès deux profils, « Qui regarde ? » s'affiche au démarrage.
 - **Profil enfant** : seulement ses applis favorites ; tout le reste (réglages, autres applis, sortir du profil) demande le code.
 - **Code PIN** facultatif pour les réglages, la désinstallation et les applis verrouillées.
 
@@ -110,7 +110,7 @@ Bouton Réglages ou touche Menu. Les réglages à deux états ont un interrupteu
 | **Ambiances** | Ouvrir, choisir les vidéos, son de la vidéo |
 | **Sons** | Sons de l'interface, jeu de sons (Cristal, Bois, Gouttes, Ouate), volume propre à Lumen, écouter |
 | **Notifications** | Afficher les notifications sur l'accueil, accès aux notifications, durée à l'écran (6, 10 ou 20 s), applis qui notifient (les couper une à une), dernières notifications, essayer |
-| **Profils** | Ajouter, renommer, supprimer, profil enfant, profil au démarrage |
+| **Profils** | Ajouter, renommer, image du profil, supprimer, profil enfant, profil au démarrage |
 | **Réglages depuis le téléphone** | QR code, accès du téléphone (complet ou télécommande seulement), télécommande dans les autres applis |
 | **Télécommande** | Relier les touches sans rôle (Guide, Info, couleurs, chiffres…) à une fonction ou à une appli |
 | **Système** | Mises à jour (automatiques, nouveautés), stockage, code PIN, sauvegarde des réglages, autres TV (relier deux TV pour qu'elles restent identiques), assistant de premier démarrage, assistant d'installation, diagnostic (mesures à l'écran, journal d'erreurs, redémarrer Lumen), à propos, licences |

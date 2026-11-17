@@ -2,6 +2,12 @@
 
 Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte de la section dans la GitHub Release et dans `dist/latest.json` : c'est ce que la TV affiche dans Réglages › Système › Nouveautés.
 
+## 4.35.0
+
+- Images de profil : chaque personne peut choisir un personnage (chat, renard, ours, lapin, hibou, panda, pingouin, grenouille, souris, robot, petit monstre, fantôme, astronaute) ou un motif (étoile, lune, montagne) à la place de son initiale. Réglages › Profils › un profil › Image du profil. Il apparaît dans « Qui regarde ? » et passe sur la TV reliée.
+- En changeant pour un profil dans une autre langue, « Bonjour… » reste à l'écran jusqu'au bout au lieu d'être coupé.
+- Le mode veille ne se lance plus pendant que Lumen est caché (TV en veille, autre appli ouverte) : au retour, c'est bien l'accueil qui s'affiche.
+
 ## 4.34.0
 
 - Deux TV reliées restent identiques, en permanence. Réglages › Système › Autres TV : sur la TV qui doit suivre, « Recevoir » affiche un code ; sur la TV de référence, choisis-la et tape le code. Elle prend tous les réglages, puis chaque changement fait sur l'une arrive sur l'autre en quelques secondes (dès que Lumen revient à l'écran si l'une était éteinte ou dans une appli).

@@ -1028,7 +1028,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
 
     final Runnable idleRun = new Runnable() {
         @Override public void run() {
-            if (overlay != null || movingTile != null || appsOpen || ambiance != null || !prefs.idleFade()) return;
+            if (!resumedNow || overlay != null || movingTile != null || appsOpen || ambiance != null || !prefs.idleFade()) return;
             idle = true;
             immersive.clear(true); // l'interface s'efface : le paysage revient
             homeLayer.animate().alpha(0f).setDuration(1800).start();
@@ -1272,8 +1272,13 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
             homeLayer.animate().alpha(1f).setDuration(350).start();
             clockBox.animate().alpha(appsOpen ? 0f : 1f).setDuration(350).start();
         }
-        h.postDelayed(idleRun, IDLE_MS);
         h.removeCallbacks(ambientRun);
+        // Lumen caché (TV en veille, autre appli) : rien à estomper ni de mode veille à lancer ;
+        // onResume relancera les délais. Sinon une ambiance fermée en quittant l'écran (onStop) ou un
+        // réglage reçu du téléphone réarmait le mode veille, qui démarrait dans le noir et
+        // accueillait au retour à la place de l'accueil.
+        if (!resumedNow) return;
+        h.postDelayed(idleRun, IDLE_MS);
         int m = prefs.ambientMinutes();
         if (m > 0) h.postDelayed(ambientRun, m * 60_000L);
     }
@@ -1316,7 +1321,7 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
 
     private final Runnable ambientRun = new Runnable() {
         @Override public void run() {
-            if (overlay != null || movingTile != null || ambientOn || ambiance != null) return;
+            if (!resumedNow || overlay != null || movingTile != null || ambientOn || ambiance != null) return;
             enterAmbient();
         }
     };

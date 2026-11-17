@@ -212,17 +212,8 @@ final class WhoPage {
         box.setPadding(a.u(18), a.u(18), a.u(18), 0); // place pour l'agrandissement et l'anneau
 
         final int size = a.u(176);
-        // monochrome comme le reste de Lumen : pastille de verre, initiale blanche ; sélectionnée,
-        // elle devient blanche avec l'initiale foncée (comme les boutons de l'accueil)
-        final TextView disc = a.text(68, "sans-serif-light", Palette.TEXT);
-        disc.setText(initial(p.name));
-        disc.setGravity(Gravity.CENTER);
-        final GradientDrawable bg = new GradientDrawable();
-        bg.setShape(GradientDrawable.OVAL);
-        bg.setColor(0x1FFFFFFF);
-        bg.setStroke(Math.max(1, a.u(2)), 0x40FFFFFF);
-        disc.setBackground(bg);
-        box.addView(disc, new LinearLayout.LayoutParams(size, size));
+        final Face disc = new Face(a, a.prefs.avatarOf(p.id), p.name, 68);
+        box.addView(disc.view, new LinearLayout.LayoutParams(size, size));
 
         final TextView name = a.text(28, "sans-serif", Palette.TEXT_2);
         name.setText(p.name);
@@ -235,12 +226,10 @@ final class WhoPage {
         box.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View v, boolean f) {
                 if (f) Sounds.get(a).tick();
-                disc.animate().scaleX(f ? 1.12f : 1f).scaleY(f ? 1.12f : 1f).setDuration(Motion.FAST)
+                disc.view.animate().scaleX(f ? 1.12f : 1f).scaleY(f ? 1.12f : 1f).setDuration(Motion.FAST)
                         .setInterpolator(new DecelerateInterpolator(2f)).start();
-                bg.setColor(f ? Palette.SELECTED : 0x1FFFFFFF);
-                bg.setStroke(Math.max(1, a.u(2)), f ? Palette.SELECTED : 0x40FFFFFF);
-                disc.setTextColor(f ? Palette.ON_SELECTED : Palette.TEXT);
-                disc.setElevation(f ? a.u(20) : 0);
+                disc.setSelected(f);
+                disc.view.setElevation(f ? a.u(20) : 0);
                 name.setTextColor(f ? 0xFFFFFFFF : Palette.TEXT_2);
             }
         });
@@ -277,6 +266,47 @@ final class WhoPage {
                 if (a.overlay == o) a.closeOverlay(true);
             }
         }, 2000);
+    }
+
+    /**
+     * Pastille d'une personne : son image (voir AvatarArt) ou, à défaut, son initiale. Monochrome
+     * comme le reste de Lumen : disque de verre, dessin blanc ; sélectionnée, elle devient blanche
+     * avec le dessin foncé (comme les boutons de l'accueil). Sert aussi au choix de l'image.
+     */
+    static final class Face {
+        final View view;
+        final GradientDrawable bg = new GradientDrawable();
+        private final AvatarDrawable art;
+        private final TextView letter;
+        private final int stroke;
+
+        Face(MainActivity a, int avatar, String name, int letterSize) {
+            stroke = Math.max(1, a.u(2));
+            bg.setShape(GradientDrawable.OVAL);
+            if (AvatarArt.valid(avatar)) {
+                art = new AvatarDrawable(avatar, Palette.TEXT);
+                android.widget.ImageView iv = new android.widget.ImageView(a);
+                iv.setScaleType(android.widget.ImageView.ScaleType.FIT_XY);
+                iv.setImageDrawable(art);
+                view = iv;
+                letter = null;
+            } else {
+                art = null;
+                letter = a.text(letterSize, "sans-serif-light", Palette.TEXT);
+                letter.setText(initial(name));
+                letter.setGravity(Gravity.CENTER);
+                view = letter;
+            }
+            view.setBackground(bg);
+            setSelected(false);
+        }
+
+        void setSelected(boolean f) {
+            bg.setColor(f ? Palette.SELECTED : 0x1FFFFFFF);
+            bg.setStroke(stroke, f ? Palette.SELECTED : 0x40FFFFFF);
+            if (art != null) art.setColor(f ? Palette.ON_SELECTED : Palette.TEXT);
+            if (letter != null) letter.setTextColor(f ? Palette.ON_SELECTED : Palette.TEXT);
+        }
     }
 
     static String initial(String name) {

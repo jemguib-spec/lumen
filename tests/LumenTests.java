@@ -899,6 +899,32 @@ public class LumenTests {
         check("météo : cache abîmé ignoré", Forecast.parse("") == null && Forecast.parse("x;y") == null && Forecast.parse("1;2;3,4;5;6;7") == null && Forecast.parse(null) == null);
         check("date : jour court pour la prévision", DateLine.shortDay(new java.util.GregorianCalendar(2026, java.util.Calendar.NOVEMBER, 12), "fr").equals("Jeu.")
                 && DateLine.shortDay(new java.util.GregorianCalendar(2026, java.util.Calendar.NOVEMBER, 12), "en").equals("Thu"));
+        // ---- images de profil
+        check("images de profil : un nom par image", AvatarArt.NAMES.length == AvatarArt.ART.length && AvatarArt.count() >= 12);
+        boolean artOk = true, inside = true;
+        for (int i = 0; i < AvatarArt.count(); i++) {
+            final float[] box = {1e9f, 1e9f, -1e9f, -1e9f};
+            final int[] shapes = {0};
+            try {
+                AvatarArt.draw(i, new AvatarArt.Sink() {
+                    void at(float x, float y) { box[0] = Math.min(box[0], x); box[1] = Math.min(box[1], y); box[2] = Math.max(box[2], x); box[3] = Math.max(box[3], y); }
+                    public void begin(int tone, float stroke) { shapes[0]++; }
+                    public void moveTo(float x, float y) { at(x, y); }
+                    public void lineTo(float x, float y) { at(x, y); }
+                    public void quadTo(float x1, float y1, float x, float y) { at(x1, y1); at(x, y); }
+                    public void cubicTo(float x1, float y1, float x2, float y2, float x, float y) { at(x, y); }
+                    public void close() { }
+                    public void end() { }
+                });
+            } catch (RuntimeException e) { artOk = false; System.out.println("image " + AvatarArt.NAMES[i] + " : " + e.getMessage()); }
+            if (shapes[0] == 0) artOk = false;
+            if (box[0] < 0 || box[1] < 0 || box[2] > 100 || box[3] > 100) { inside = false; System.out.println("image " + AvatarArt.NAMES[i] + " déborde"); }
+        }
+        check("images de profil : toutes se lisent", artOk);
+        check("images de profil : toutes tiennent dans le disque", inside);
+        check("images de profil : hors catalogue, l'initiale", !AvatarArt.valid(AvatarArt.NONE) && !AvatarArt.valid(AvatarArt.count()) && AvatarArt.valid(0));
+        check("images de profil : propres à chaque profil et synchronisées", Profiles.personal("avatar") && SyncState.synced("p3.avatar") && SyncState.synced("avatar"));
+
         // ---- « Qui regarde ? » : une seule fois par séance
         long H = 3600_000L, M = 60_000L, boot = 1_000_000_000L, t = boot + 5 * H;
         check("qui regarde : premier lancement, on demande", WhoPolicy.askAtLaunch(t, boot, 0, 0, 0));
