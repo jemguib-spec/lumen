@@ -57,6 +57,7 @@ final class SyncState {
             "remote_keys", "remote_ask", "video_disk_gb", "video_4k", "show_perf",
             Profiles.ACTIVE_KEY, "pin_fails", "pin_last_fail", "trusted_phones", "tmdb_shared", "ha_last_scene",
             "notif_seen", "setup_step", "install_help_shown", "tip_step", "watch_next_asked", "restarting",
+            "who_chosen", "who_chosen_boot", "who_off",
             "update_check", "update_from", "update_notes", "update_notes_v", "update_prompted", "update_ready", "update_system_tried")));
 
     /** Gardés sur leur TV aussi : tout ce qui commence ainsi (dates de téléchargement par thème). */

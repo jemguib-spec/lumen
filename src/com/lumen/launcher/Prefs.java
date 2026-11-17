@@ -39,6 +39,14 @@ final class Prefs {
     boolean askProfileAtStart() { return sp.getBoolean("profile_ask", true); }
     void setAskProfileAtStart(boolean b) { sp.edit().putBoolean("profile_ask", b).apply(); }
 
+    /** Dernier choix sur « Qui regarde ? » : heure, et heure de démarrage de la TV à ce moment (voir WhoPolicy). Propres à la TV. */
+    long whoChosenAt() { return sp.getLong("who_chosen", 0); }
+    long whoChosenBoot() { return sp.getLong("who_chosen_boot", 0); }
+    void setWhoChosen(long at, long boot) { sp.edit().putLong("who_chosen", at).putLong("who_chosen_boot", boot).apply(); }
+    /** Dernière mise en veille de la TV vue par Lumen. */
+    long whoOffAt() { return sp.getLong("who_off", 0); }
+    void setWhoOffAt(long t) { sp.edit().putLong("who_off", t).apply(); }
+
     /** Profil actif « enfant » : seules ses applis favorites existent, le reste demande le code PIN. */
     boolean isKidProfile() { Profiles.Profile p = Profiles.find(profiles(), activeProfile()); return p != null && p.kid; }
     boolean isKidProfile(int id) { Profiles.Profile p = Profiles.find(profiles(), id); return p != null && p.kid; }

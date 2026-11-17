@@ -18,7 +18,7 @@ import java.util.Locale;
  * « Qui regarde ? » en plein écran : au démarrage et au réveil de la TV (seulement s'il y a
  * plusieurs profils), et depuis le bouton « Profils » de l'accueil. Une pastille ronde par
  * personne avec son initiale ; une fois choisie, « Bonjour Léa » (ou Bonsoir…) puis l'accueil.
- * Retour : on garde le profil actuel.
+ * Retour : on garde le profil actuel. Une seule fois par séance : voir WhoPolicy.
  */
 final class WhoPage {
     private WhoPage() { }
@@ -34,11 +34,38 @@ final class WhoPage {
     private static final long WAKE_WINDOW = 10 * 60_000L;
     private static FrameLayout showing;
     private static int tries;
+    /** Écran éteint (horloge de la TV, ms) ; 0 : pas vu dans ce processus. */
+    private static long offSince;
 
-    /** La TV vient de se rallumer. */
-    static void tvWoke() {
+    /** La TV se met en veille. */
+    static void tvSlept(Prefs prefs) {
+        offSince = android.os.SystemClock.elapsedRealtime();
+        prefs.setWhoOffAt(System.currentTimeMillis());
+    }
+
+    /**
+     * La TV vient de se rallumer. Rien si la page est déjà là, si l'écran n'a fait que clignoter, ou
+     * si quelqu'un vient tout juste de choisir (avis « écran allumé » en retard ou en double, fréquent
+     * au démarrage et avec le HDMI-CEC : c'est ce qui faisait demander deux fois de suite).
+     */
+    static void tvWoke(MainActivity a) {
+        long now = android.os.SystemClock.elapsedRealtime();
+        long offFor = offSince > 0 ? now - offSince : -1;
+        offSince = 0;
+        if (isShowing(a)) return;
+        long chosen = a.prefs.whoChosenAt();
+        long sinceChosen = chosen > 0 ? System.currentTimeMillis() - chosen : -1;
+        if (!WhoPolicy.askAtWake(offFor, sinceChosen)) return;
         pending = true;
-        pendingSince = android.os.SystemClock.elapsedRealtime();
+        pendingSince = now;
+    }
+
+    /** Quelqu'un a répondu (choix ou Retour) : rien à redemander avant la prochaine mise en veille. */
+    private static void answered(MainActivity a) {
+        pending = false;
+        a.h.removeCallbacks(retry);
+        long now = System.currentTimeMillis();
+        a.prefs.setWhoChosen(now, now - android.os.SystemClock.elapsedRealtime());
     }
 
     /** La page « Qui regarde ? » est-elle à l'écran ? (la touche Accueil ne la ferme pas) */
@@ -47,8 +74,10 @@ final class WhoPage {
     /** Affiche la page si elle est attendue et que Lumen est prêt ; sinon réessaie un peu plus tard. */
     static void tryShow(final MainActivity a) {
         if (!pending) return;
+        if (isShowing(a)) { pending = false; return; } // déjà ouverte (bouton « Profils ») : elle suffit
         if (!a.prefs.hasProfiles() || !a.prefs.askProfileAtStart()
-                || (pendingSince > 0 && android.os.SystemClock.elapsedRealtime() - pendingSince > WAKE_WINDOW)) {
+                || (pendingSince > 0 && android.os.SystemClock.elapsedRealtime() - pendingSince > WAKE_WINDOW)
+                || (pendingSince == 0 && !askAtLaunch(a))) {
             pending = false;
             return;
         }
@@ -66,14 +95,24 @@ final class WhoPage {
         show(a, false);
     }
 
+    /** Lumen relancé par Android en pleine séance (plantage, mise à jour, mémoire) : pas de nouvelle question. */
+    private static boolean askAtLaunch(MainActivity a) {
+        long now = System.currentTimeMillis();
+        return WhoPolicy.askAtLaunch(now, now - android.os.SystemClock.elapsedRealtime(),
+                a.prefs.whoChosenAt(), a.prefs.whoChosenBoot(), a.prefs.whoOffAt());
+    }
+
     private static MainActivity retryOn;
     private static final Runnable retry = new Runnable() {
         @Override public void run() { if (retryOn != null) tryShow(retryOn); }
     };
 
     static void show(final MainActivity a, boolean withManage) {
+        // la page est là : une demande en attente (démarrage, réveil) est satisfaite, elle ne se rouvrira pas derrière
+        pending = false;
+        a.h.removeCallbacks(retry);
         final FrameLayout o = a.openOverlay(new Runnable() {
-            @Override public void run() { showing = null; }
+            @Override public void run() { showing = null; answered(a); }
         });
         showing = o;
         // fond presque opaque : le fond d'écran transparaît à peine
@@ -107,7 +146,10 @@ final class WhoPage {
             View card = person(a, p, new Runnable() {
                 @Override public void run() {
                     ProfilePanel.switchGuarded(a, p.id, new Runnable() {
-                        @Override public void run() { if (showing == o) chosen(a, o, col, p); else { a.closeOverlay(false); ProfilePanel.switchTo(a, p.id); } }
+                        @Override public void run() {
+                            answered(a);
+                            if (showing == o) chosen(a, o, col, p); else { a.closeOverlay(false); ProfilePanel.switchTo(a, p.id); }
+                        }
                     });
                 }
             });

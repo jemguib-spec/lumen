@@ -1547,13 +1547,13 @@ public final class MainActivity extends Activity implements Wall.Listener, Onlin
     /** TV rallumée : « Qui regarde ? » au retour de Lumen à l'écran (s'il y a plusieurs profils). */
     private final BroadcastReceiver screenOn = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) {
-            WhoPage.tvWoke();
+            WhoPage.tvWoke(MainActivity.this);
             WhoPage.tryShow(MainActivity.this);
         }
     };
 
     private final BroadcastReceiver screenOff = new BroadcastReceiver() {
-        @Override public void onReceive(Context c, Intent i) { phone.disconnect(); SyncLink.stopAll(c); }
+        @Override public void onReceive(Context c, Intent i) { phone.disconnect(); SyncLink.stopAll(c); WhoPage.tvSlept(prefs); }
     };
 
 }

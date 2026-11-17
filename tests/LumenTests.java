@@ -899,6 +899,21 @@ public class LumenTests {
         check("météo : cache abîmé ignoré", Forecast.parse("") == null && Forecast.parse("x;y") == null && Forecast.parse("1;2;3,4;5;6;7") == null && Forecast.parse(null) == null);
         check("date : jour court pour la prévision", DateLine.shortDay(new java.util.GregorianCalendar(2026, java.util.Calendar.NOVEMBER, 12), "fr").equals("Jeu.")
                 && DateLine.shortDay(new java.util.GregorianCalendar(2026, java.util.Calendar.NOVEMBER, 12), "en").equals("Thu"));
+        // ---- « Qui regarde ? » : une seule fois par séance
+        long H = 3600_000L, M = 60_000L, boot = 1_000_000_000L, t = boot + 5 * H;
+        check("qui regarde : premier lancement, on demande", WhoPolicy.askAtLaunch(t, boot, 0, 0, 0));
+        check("qui regarde : Lumen relancé juste après le choix, on ne redemande pas", !WhoPolicy.askAtLaunch(t, boot, t - 10_000, boot, 0));
+        check("qui regarde : relancé pendant un film, on ne redemande pas", !WhoPolicy.askAtLaunch(t, boot + 3_000, t - 2 * H, boot, t - 4 * H));
+        check("qui regarde : mise en veille depuis le choix, on redemande", WhoPolicy.askAtLaunch(t, boot, t - 2 * H, boot, t - H));
+        check("qui regarde : TV redémarrée, on redemande", WhoPolicy.askAtLaunch(t, boot + H, t - 10 * M, boot, 0));
+        check("qui regarde : choix trop ancien, on redemande", WhoPolicy.askAtLaunch(t, boot, t - 7 * H, boot, 0));
+        check("qui regarde : horloge revenue en arrière, on redemande", WhoPolicy.askAtLaunch(t, boot, t + H, boot, 0));
+        check("qui regarde : réveil après une vraie veille", WhoPolicy.askAtWake(30 * M, 2 * H));
+        check("qui regarde : réveil sans choix connu", WhoPolicy.askAtWake(30 * M, -1));
+        check("qui regarde : écran qui clignote (HDMI-CEC), rien", !WhoPolicy.askAtWake(3_000, 2 * H));
+        check("qui regarde : avis « écran allumé » juste après le choix, rien", !WhoPolicy.askAtWake(-1, 15_000));
+        check("qui regarde : avis « écran allumé » sans veille vue, longtemps après", WhoPolicy.askAtWake(-1, 2 * H));
+
         check("écran de nuit : minuit et désactivé", Greeting.night(0, 0) && !Greeting.night(23, 0) && !Greeting.night(2, -1));
         check("messages : jamais technique", !Messages.download("Hôte non autorisé : thumb.wikimedia.org").contains("Hôte")
                 && Messages.download("java.net.UnknownHostException").startsWith("Pas d'accès"));

@@ -10,6 +10,7 @@ Chaque version a sa section « ## version ». `tools/publish.sh` publie le texte
 - La page Autres TV montre l'état (« Synchronisées il y a 2 min », « Injoignable »), « Synchroniser maintenant » et « Délier les deux TV » (chaque TV garde alors ses réglages).
 - Échanges chiffrés avec une clé de liaison établie grâce au code. Il faut Lumen 4.34 sur les deux TV ; une TV plus ancienne le dit.
 - L'ancienne copie ponctuelle (groupes à cocher) est remplacée par la liaison.
+- « Qui regarde ? » ne se rouvre plus juste après avoir choisi son profil : une seule fois par séance devant la TV, même si Android relance Lumen ou que l'écran clignote au rallumage.
 
 ## 4.33.0
 
